@@ -1,3 +1,23 @@
+# PrivyPeriod
+
+Prototype demos:
+
+### Android / Light-mode
+
+
+https://github.com/user-attachments/assets/2e7ee61d-1325-4faa-82f6-08934fffe9a1
+
+
+
+### iPhone / Dark-mode
+
+
+https://github.com/user-attachments/assets/54719073-8a58-44cd-850b-e482eb5aa571
+
+
+
+
+
 # Welcome to your Expo app 👋
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
