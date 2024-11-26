@@ -4,19 +4,20 @@ Prototype demos:
 
 ### Android / Light-mode
 
-
 https://github.com/user-attachments/assets/2e7ee61d-1325-4faa-82f6-08934fffe9a1
-
-
 
 ### iPhone / Dark-mode
 
-
 https://github.com/user-attachments/assets/54719073-8a58-44cd-850b-e482eb5aa571
 
+## Running The Project
 
+Due to using Expo SQLite for the database, this project will only run on mobile devices
 
-
+- Download the repo
+- `npm install`
+- `npx expo start`
+- On your mobile phone (iOS or Android), download the Expo Go app and then scan the QR code in the terminal
 
 # Welcome to your Expo app 👋
 
