@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "PrivyPeriod",
-    "slug": "PrivyPeriod",
+    "slug": "privyperiod",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -43,6 +43,15 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "7cc933e5-cf1c-454c-8e2f-e548703cac7a"
+      }
+    },
+    "owner": "elective0206"
   }
 }
