@@ -3,11 +3,15 @@ import { StyleSheet, View, ScrollView, Platform, StatusBar } from "react-native"
 import { Calendar } from "react-native-calendars"
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context"
 import DayView from "@/components/DayView"
-import { getOneDay, getAllDays } from "@/db/database"
+import { getDatabase, getDay, getAllDays } from "@/db/database"
 import type { DayData } from "@/constants/Interfaces"
 import { Button } from "react-native-paper"
 import { useTheme, Divider } from "react-native-paper"
 import { FlowColors } from "@/constants/Colors"
+import { useLiveQuery, drizzle } from "drizzle-orm/expo-sqlite"
+import * as schema from "@/db/schema"
+const DB_NAME = "test.db"
+import { openDatabaseSync } from "expo-sqlite"
 
 export default function FlowCalendar() {
   const theme = useTheme()
@@ -19,6 +23,15 @@ export default function FlowCalendar() {
   }
   const [todayData, setTodayData] = useState<DayData | null>(null)
   const [markedDatesObj, setMarkedDates] = useState<any>({})
+  const expo = openDatabaseSync(DB_NAME, { enableChangeListener: true })
+  const db = drizzle(expo, { schema })
+  const { data } = useLiveQuery(db.select().from(schema.days))
+
+  useEffect(() => {
+    console.log("Data changed: ")
+    console.log(JSON.stringify(data))
+    refreshCalendar(data)
+  }, [data])
 
   // Since iOS bar uses absolute positon for blur affect, we have to adjust padding to bottom of container
   const styles = StyleSheet.create({
@@ -33,8 +46,12 @@ export default function FlowCalendar() {
     },
   })
 
-  async function refreshCalendar() {
-    const allDays = await getAllDays()
+  async function refreshCalendar(allDays?: any) {
+    if (!allDays) {
+      allDays = await getAllDays()
+    }
+    console.log("all days: ")
+    console.log(allDays as DayData[])
     const newMarkedDates: {
       [key: string]: { marked: boolean; dotColor: string }
     } = {}
@@ -66,7 +83,7 @@ export default function FlowCalendar() {
     if (!selectedDate) return
 
     async function fetchData(selectedDate: string) {
-      const day = await getOneDay(selectedDate)
+      const day = await getDay(selectedDate)
       const newMarkedDates = { ...markedDatesObj }
 
       //reset old selected date
@@ -97,7 +114,7 @@ export default function FlowCalendar() {
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
         <View style={{ backgroundColor: theme.colors.background, padding: 4 }}>
-          <Button mode="elevated" onPress={refreshCalendar}>
+          <Button mode="elevated" onPress={() => refreshCalendar()}>
             Refresh Calendar
           </Button>
           <Calendar

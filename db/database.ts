@@ -1,74 +1,58 @@
 import * as SQLite from "expo-sqlite"
+import { drizzle, ExpoSQLiteDatabase } from "drizzle-orm/expo-sqlite"
+import { eq } from "drizzle-orm"
+import { days } from "./schema"
+import * as schema from "./schema"
 
-let db: SQLite.SQLiteDatabase
+const DATABASE_NAME = "test.db"
 
-export const openDatabase = async () => {
-  db = await SQLite.openDatabaseAsync("test.db")
+let expoDb = SQLite.openDatabaseSync(DATABASE_NAME)
+let db = drizzle(expoDb, { schema })
 
-  await db.execAsync(
-    `CREATE TABLE IF NOT EXISTS days (id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, flow_intensity INTEGER);`
-  )
-
-  if (db) {
-    console.log("Database opened")
-    return db
-  } else {
-    console.log("Error opening database")
-  }
+function log(message: any) {
+  console.log("\n### Database message:\n", message)
+  console.log("\n")
 }
 
-export const insertDay = async (date: string, flowIntensity: number) => {
-  if (!db) {
-    await openDatabase()
+export const getDatabase = () => {
+  if (!expoDb || !db) {
+    expoDb = SQLite.openDatabaseSync(DATABASE_NAME)
+    db = drizzle(expoDb, { schema })
   }
-  // first check if the day already exists
-  const result = await getOneDay(date)
+  return db
+}
 
-  if (result) {
-    // if it does, update the day
-    await updateDay(date, flowIntensity)
-  } else {
-    await db.execAsync(
-      `INSERT INTO days (date, flow_intensity) VALUES ("${date}", ${flowIntensity});`
-    )
-  }
-
-  console.log("Inserted day into database")
+export const getDay = async (date: string) => {
+  const day = await db.select().from(days).where(eq(days.date, date))
+  return day[0]
 }
 
 export const getAllDays = async () => {
-  if (!db) {
-    await openDatabase()
-  }
-  const result = await db.getAllAsync(`SELECT * FROM days;`)
-  return result
-}
-
-export const getOneDay = async (date: string) => {
-  if (!db) {
-    await openDatabase()
-  }
-  const result = await db.getFirstAsync(
-    `SELECT * FROM days WHERE date = "${date}";`
-  )
-  return result
+  const allDays = await db.select().from(days)
+  return allDays
 }
 
 export const updateDay = async (date: string, flowIntensity: number) => {
-  if (!db) {
-    await openDatabase()
-  }
-  await db.execAsync(
-    `UPDATE days SET flow_intensity = ${flowIntensity} WHERE date = "${date}";`
-  )
+  await db
+    .update(days)
+    .set({ flow_intensity: flowIntensity })
+    .where(eq(days.date, date))
+}
 
-  console.log("Updated day in database")
+export const insertDay = async (date: string, flowIntensity: number) => {
+  // first check if the day already exists
+  const day = await getDay(date)
+  if (day) {
+    await updateDay(date, flowIntensity)
+  } else {
+    await db.insert(days).values({ date: date, flow_intensity: flowIntensity })
+  }
+}
+
+export const deleteDay = async (date: string) => {
+  await db.delete(days).where(eq(days.date, date))
 }
 
 export const deleteAllDays = async () => {
-  if (!db) {
-    await openDatabase()
-  }
-  await db.execAsync(`DELETE FROM days;`)
-  console.log("Deleted all days from database")
+  await db.delete(days)
 }
