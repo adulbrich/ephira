@@ -20,16 +20,12 @@ export default function FlowCalendar() {
   }
   const [todayData, setTodayData] = useState<DayData | null>(null)
   const [markedDatesObj, setMarkedDates] = useState<any>({})
-
-  // Testing Drizzle's useLiveQuery
   const db = getDrizzleDatabase()
   const { data } = useLiveQuery(db.select().from(schema.days))
-  console.log(data)
 
+  // useLiveQuery will automatically update the calendar when the db data changes
   useEffect(() => {
-    console.log(`Data changed (${data.length}): `)
-    console.log(JSON.stringify(data))
-    refreshCalendar(data)
+    refreshCalendar(data as DayData[])
   }, [data])
 
   // Since iOS bar uses absolute positon for blur affect, we have to adjust padding to bottom of container
@@ -45,12 +41,7 @@ export default function FlowCalendar() {
     },
   })
 
-  async function refreshCalendar(allDays?: any) {
-    if (!allDays) {
-      allDays = await getAllDays()
-    }
-    //console.log("all days: ")
-    //console.log(allDays as DayData[])
+  async function refreshCalendar(allDays: DayData[]) {
     const newMarkedDates: {
       [key: string]: { marked: boolean; dotColor: string }
     } = {}
@@ -70,11 +61,6 @@ export default function FlowCalendar() {
       setSelectedDate(today)
     }
   }
-
-  // get all days and create markedDates on mount
-  useEffect(() => {
-    refreshCalendar()
-  }, [])
 
   // get data for selected date on calendar (when user presses a different day)
   useEffect(() => {
@@ -112,9 +98,6 @@ export default function FlowCalendar() {
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
         <View style={{ backgroundColor: theme.colors.background, padding: 4 }}>
-          <Button mode="elevated" onPress={() => refreshCalendar()}>
-            Refresh Calendar
-          </Button>
           <Calendar
             key={markedDatesObj}
             maxDate={today}

@@ -24,8 +24,10 @@ export const getDrizzleDatabase = () => {
 }
 
 export const getDay = async (date: string) => {
-  const day = await db.select().from(days).where(eq(days.date, date))
-  return day[0]
+  const day = await db.query.days.findFirst({
+    where: eq(days.date, date),
+  })
+  return day
 }
 
 export const getAllDays = async () => {
