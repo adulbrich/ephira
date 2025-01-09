@@ -1,24 +1,25 @@
 import * as SQLite from "expo-sqlite"
-import { drizzle, ExpoSQLiteDatabase } from "drizzle-orm/expo-sqlite"
+import { drizzle } from "drizzle-orm/expo-sqlite"
 import { eq } from "drizzle-orm"
 import { days } from "./schema"
 import * as schema from "./schema"
 
-const DATABASE_NAME = "test.db"
+const DATABASE_NAME = "testing.db"
 
-let expoDb = SQLite.openDatabaseSync(DATABASE_NAME)
-let db = drizzle(expoDb, { schema })
-
-function log(message: any) {
-  console.log("\n### Database message:\n", message)
-  console.log("\n")
-}
+let expoDb: SQLite.SQLiteDatabase
 
 export const getDatabase = () => {
-  if (!expoDb || !db) {
-    expoDb = SQLite.openDatabaseSync(DATABASE_NAME)
-    db = drizzle(expoDb, { schema })
+  if (!expoDb) {
+    expoDb = SQLite.openDatabaseSync(DATABASE_NAME, {
+      enableChangeListener: true,
+    })
   }
+  return expoDb
+}
+
+let db = drizzle(getDatabase(), { schema })
+
+export const getDrizzleDatabase = () => {
   return db
 }
 

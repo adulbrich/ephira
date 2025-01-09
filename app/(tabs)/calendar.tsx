@@ -3,19 +3,16 @@ import { StyleSheet, View, ScrollView, Platform, StatusBar } from "react-native"
 import { Calendar } from "react-native-calendars"
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context"
 import DayView from "@/components/DayView"
-import { getDatabase, getDay, getAllDays } from "@/db/database"
+import { getDay, getAllDays, getDrizzleDatabase } from "@/db/database"
 import type { DayData } from "@/constants/Interfaces"
 import { Button } from "react-native-paper"
 import { useTheme, Divider } from "react-native-paper"
 import { FlowColors } from "@/constants/Colors"
-import { useLiveQuery, drizzle } from "drizzle-orm/expo-sqlite"
+import { useLiveQuery } from "drizzle-orm/expo-sqlite"
 import * as schema from "@/db/schema"
-const DB_NAME = "test.db"
-import { openDatabaseSync } from "expo-sqlite"
 
 export default function FlowCalendar() {
   const theme = useTheme()
-  // get today's date
   const today = new Date().toISOString().split("T")[0]
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const handleSelectDate = (date: string) => {
@@ -23,12 +20,14 @@ export default function FlowCalendar() {
   }
   const [todayData, setTodayData] = useState<DayData | null>(null)
   const [markedDatesObj, setMarkedDates] = useState<any>({})
-  const expo = openDatabaseSync(DB_NAME, { enableChangeListener: true })
-  const db = drizzle(expo, { schema })
+
+  // Testing Drizzle's useLiveQuery
+  const db = getDrizzleDatabase()
   const { data } = useLiveQuery(db.select().from(schema.days))
+  console.log(data)
 
   useEffect(() => {
-    console.log("Data changed: ")
+    console.log(`Data changed (${data.length}): `)
     console.log(JSON.stringify(data))
     refreshCalendar(data)
   }, [data])
@@ -50,8 +49,8 @@ export default function FlowCalendar() {
     if (!allDays) {
       allDays = await getAllDays()
     }
-    console.log("all days: ")
-    console.log(allDays as DayData[])
+    //console.log("all days: ")
+    //console.log(allDays as DayData[])
     const newMarkedDates: {
       [key: string]: { marked: boolean; dotColor: string }
     } = {}
@@ -68,7 +67,6 @@ export default function FlowCalendar() {
         }
       })
       setMarkedDates(newMarkedDates)
-      console.log("Marked dates: ", markedDatesObj)
       setSelectedDate(today)
     }
   }

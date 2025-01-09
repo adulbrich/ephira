@@ -50,12 +50,11 @@ export default function DayView({
   const [flow, setFlow] = useState<number>(dateFlow)
 
   function onSave() {
-    console.log("save: " + date + " " + flow)
     insertDay(date, flow)
+    setFlow(flow)
   }
 
   useEffect(() => {
-    console.log("dateFlow: " + dateFlow)
     setFlow(dateFlow)
   }, [dateFlow])
 

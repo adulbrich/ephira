@@ -13,20 +13,19 @@ import { useColorScheme, View, Text } from "react-native"
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context"
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator"
 import migrations from "@/drizzle/migrations"
-import { SQLiteProvider, openDatabaseSync } from "expo-sqlite"
+import { SQLiteProvider } from "expo-sqlite"
 import { Suspense } from "react"
 import { ActivityIndicator } from "react-native"
-import { drizzle } from "drizzle-orm/expo-sqlite"
-import * as schema from "@/db/schema"
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin"
+import { getDatabase, getDrizzleDatabase } from "@/db/database"
 
-const DB_NAME = "test.db"
+const DB_NAME = "testing.db"
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync()
 
 export default function RootLayout() {
-  const expoDb = openDatabaseSync(DB_NAME)
-  const db = drizzle(expoDb, { schema })
+  const expoDb = getDatabase()
+  const db = getDrizzleDatabase()
   useDrizzleStudio(expoDb)
   const { success, error } = useMigrations(db, migrations)
   const [loaded] = useFonts({
@@ -65,10 +64,7 @@ export default function RootLayout() {
 
   return (
     <Suspense fallback={<ActivityIndicator size="large" />}>
-      <SQLiteProvider
-        databaseName={DB_NAME}
-        options={{ enableChangeListener: true }}
-      >
+      <SQLiteProvider databaseName={DB_NAME} useSuspense>
         <PaperProvider theme={theme}>
           <SafeAreaProvider>
             <SafeAreaView
