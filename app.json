@@ -9,13 +9,15 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.capucity.privyperiod"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.capucity.privyperiod"
     },
     "web": {
       "bundler": "metro",
@@ -52,6 +54,6 @@
         "projectId": "7cc933e5-cf1c-454c-8e2f-e548703cac7a"
       }
     },
-    "owner": "elective0206"
+    "owner": "capucity"
   }
 }
