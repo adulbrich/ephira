@@ -48,15 +48,19 @@ export default function DayView({
 }) {
   const theme = useTheme()
   const [flow, setFlow] = useState<number>(dateFlow)
+  // Track expanded dropdown menus
+  const [expandedAccordion, setExpandedAccordion] = useState<string | null>(null) 
 
   function onSave() {
     console.log("save: " + date + " " + flow)
     insertDay(date, flow)
+    setExpandedAccordion(null) // Close all dropdowns when data is saved
   }
 
   useEffect(() => {
     console.log("dateFlow: " + dateFlow)
     setFlow(dateFlow)
+    setExpandedAccordion(null) // Close all dropdowns when selected date changes
   }, [dateFlow])
 
   const [notes, setNotes] = useState<string>("")
@@ -73,6 +77,12 @@ export default function DayView({
         <List.Section>
           <List.Accordion
             title={"Flow Intensity   |   " + options[flow]}
+            expanded={expandedAccordion === "flow"}
+            onPress={() =>
+              setExpandedAccordion(
+                expandedAccordion === "flow" ? null : "flow"
+              )
+            }
             left={(props) => <List.Icon {...props} icon="water" />}
           >
             <FlowRadioButtons
@@ -84,6 +94,12 @@ export default function DayView({
 
           <List.Accordion
             title="Pain"
+            expanded={expandedAccordion === "pain"}
+            onPress={() =>
+              setExpandedAccordion(
+                expandedAccordion === "pain" ? null : "pain"
+              )
+            }
             left={(props) => <List.Icon {...props} icon="alert-decagram" />}
           >
             <View style={{ padding: 16 }}>
@@ -94,6 +110,12 @@ export default function DayView({
 
           <List.Accordion
             title="Notes"
+            expanded={expandedAccordion === "notes"}
+            onPress={() =>
+              setExpandedAccordion(
+                expandedAccordion === "notes" ? null : "notes"
+              )
+            }
             left={(props) => <List.Icon {...props} icon="note" />}
           >
             <View style={{ padding: 16 }}>

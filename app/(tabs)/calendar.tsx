@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { StyleSheet, View, ScrollView, Platform, StatusBar } from "react-native"
+import { StyleSheet, View, ScrollView, Platform, StatusBar, KeyboardAvoidingView, Keyboard, TouchableWithoutFeedback } from "react-native"
 import { Calendar } from "react-native-calendars"
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context"
 import DayView from "@/components/DayView"
@@ -93,53 +93,65 @@ export default function FlowCalendar() {
     fetchData(selectedDate)
   }, [selectedDate])
 
+  const dismissKeyboard = () => {
+    Keyboard.dismiss();
+  };
+
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={styles.container}>
-        <View style={{ backgroundColor: theme.colors.background, padding: 4 }}>
-          <Button mode="elevated" onPress={refreshCalendar}>
-            Refresh Calendar
-          </Button>
-          <Calendar
-            key={markedDatesObj}
-            maxDate={today}
-            markedDates={markedDatesObj}
-            onDayPress={(day: { dateString: string }) =>
-              handleSelectDate(day.dateString)
-            }
-            theme={{
-              calendarBackground: theme.colors.background,
-              textSectionTitleColor: theme.colors.secondary,
-              selectedDayBackgroundColor: theme.colors.primary,
-              selectedDayTextColor: theme.colors.onPrimary,
-              todayTextColor: theme.colors.primary,
-              dayTextColor: theme.colors.onBackground,
-              textDisabledColor: theme.colors.surfaceVariant,
-              arrowColor: theme.colors.primary,
-              monthTextColor: theme.colors.primary,
-              textDayFontFamily: "monospace",
-              textMonthFontFamily: "monospace",
-              textDayHeaderFontFamily: "monospace",
-              textDayFontSize: 16,
-              textMonthFontSize: 16,
-              textDayHeaderFontSize: 16,
-            }}
-          />
-          <Divider />
-        </View>
-        <ScrollView>
-          <View>
-            {selectedDate && (
-              <DayView
-                date={selectedDate}
-                dateFlow={
-                  todayData?.flow_intensity ? todayData.flow_intensity : 0
+      <TouchableWithoutFeedback onPress={dismissKeyboard}>
+        <KeyboardAvoidingView
+          style={{flex: 1}}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
+          <SafeAreaView style={styles.container}>
+            <View style={{ backgroundColor: theme.colors.background, padding: 4 }}>
+              <Button mode="elevated" onPress={refreshCalendar}>
+                Refresh Calendar
+              </Button>
+              <Calendar
+                key={markedDatesObj}
+                maxDate={today}
+                markedDates={markedDatesObj}
+                enableSwipeMonths={true}
+                onDayPress={(day: { dateString: string }) =>
+                  handleSelectDate(day.dateString)
                 }
+                theme={{
+                  calendarBackground: theme.colors.background,
+                  textSectionTitleColor: theme.colors.secondary,
+                  selectedDayBackgroundColor: theme.colors.primary,
+                  selectedDayTextColor: theme.colors.onPrimary,
+                  todayTextColor: theme.colors.primary,
+                  dayTextColor: theme.colors.onBackground,
+                  textDisabledColor: theme.colors.surfaceVariant,
+                  arrowColor: theme.colors.primary,
+                  monthTextColor: theme.colors.primary,
+                  textDayFontFamily: "monospace",
+                  textMonthFontFamily: "monospace",
+                  textDayHeaderFontFamily: "monospace",
+                  textDayFontSize: 16,
+                  textMonthFontSize: 16,
+                  textDayHeaderFontSize: 16,
+                }}
               />
-            )}
-          </View>
-        </ScrollView>
-      </SafeAreaView>
+              <Divider />
+            </View>
+            <ScrollView>
+              <View>
+                {selectedDate && (
+                  <DayView
+                    date={selectedDate}
+                    dateFlow={
+                      todayData?.flow_intensity ? todayData.flow_intensity : 0
+                    }
+                  />
+                )}
+              </View>
+            </ScrollView>
+          </SafeAreaView>
+        </KeyboardAvoidingView>
+      </TouchableWithoutFeedback>
     </SafeAreaProvider>
   )
 }
