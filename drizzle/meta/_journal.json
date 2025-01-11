@@ -8,6 +8,13 @@
       "when": 1736358742621,
       "tag": "0000_polite_genesis",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1736618461759,
+      "tag": "0001_light_whiplash",
+      "breakpoints": true
     }
   ]
 }
