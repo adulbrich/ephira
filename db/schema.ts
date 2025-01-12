@@ -4,15 +4,15 @@ export const days = sqliteTable("days", {
   id: integer().primaryKey({ autoIncrement: true }),
   date: text().notNull().unique(),
   flow_intensity: integer(),
-  is_cycle_start: integer({ mode: "boolean" }),
-  is_cycle_end: integer({ mode: "boolean" }),
+  is_cycle_start: integer({ mode: "boolean" }).default(false),
+  is_cycle_end: integer({ mode: "boolean" }).default(false),
   notes: text(),
 })
 
 export const moods = sqliteTable("moods", {
   id: integer().primaryKey({ autoIncrement: true }),
   name: text().notNull().unique(),
-  visible: integer({ mode: "boolean" }),
+  visible: integer({ mode: "boolean" }).default(true),
   description: text(),
 })
 
@@ -31,7 +31,7 @@ export const moodEntries = sqliteTable("mood_entries", {
 export const symptoms = sqliteTable("symptoms", {
   id: integer().primaryKey({ autoIncrement: true }),
   name: text().notNull().unique(),
-  visible: integer({ mode: "boolean" }),
+  visible: integer({ mode: "boolean" }).default(true),
   description: text(),
 })
 
@@ -51,7 +51,7 @@ export const medications = sqliteTable("medications", {
   id: integer().primaryKey({ autoIncrement: true }),
   name: text().notNull(),
   dose: text(),
-  visible: integer({ mode: "boolean" }),
+  visible: integer({ mode: "boolean" }).default(true),
   type: text(), // e.g. "birth control", "pain relief"
   description: text(),
 })
