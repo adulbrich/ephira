@@ -1,2 +1,2 @@
 // cool gradient tool: https://cssgradient.io/
-export const FlowColors = ["#fff", "#ffafaf", "#ff6666", "#da2020", "#990000"];
+export const FlowColors = ["#ffffff", "#ffafaf", "#ff7272", "#e62929", "#990000"];
