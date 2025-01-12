@@ -52,13 +52,12 @@ export default function DayView({
   const [expandedAccordion, setExpandedAccordion] = useState<string | null>(null) 
 
   function onSave() {
-    console.log("save: " + date + " " + flow)
     insertDay(date, flow)
+    setFlow(flow)
     setExpandedAccordion(null) // Close all dropdowns when data is saved
   }
 
   useEffect(() => {
-    console.log("dateFlow: " + dateFlow)
     setFlow(dateFlow)
     setExpandedAccordion(null) // Close all dropdowns when selected date changes
   }, [dateFlow])

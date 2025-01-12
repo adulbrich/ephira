@@ -3,15 +3,16 @@ import { StyleSheet, View, ScrollView, Platform, StatusBar, KeyboardAvoidingView
 import { Calendar } from "react-native-calendars"
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context"
 import DayView from "@/components/DayView"
-import { getOneDay, getAllDays } from "@/db/database"
+import { getDay, getAllDays, getDrizzleDatabase } from "@/db/database"
 import type { DayData } from "@/constants/Interfaces"
 import { Button } from "react-native-paper"
 import { useTheme, Divider } from "react-native-paper"
 import { FlowColors } from "@/constants/Colors"
+import { useLiveQuery } from "drizzle-orm/expo-sqlite"
+import * as schema from "@/db/schema"
 
 export default function FlowCalendar() {
   const theme = useTheme()
-  // get today's date
   const today = new Date().toISOString().split("T")[0]
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const handleSelectDate = (date: string) => {
@@ -19,6 +20,13 @@ export default function FlowCalendar() {
   }
   const [todayData, setTodayData] = useState<DayData | null>(null)
   const [markedDatesObj, setMarkedDates] = useState<any>({})
+  const db = getDrizzleDatabase()
+  const { data } = useLiveQuery(db.select().from(schema.days))
+
+  // useLiveQuery will automatically update the calendar when the db data changes
+  useEffect(() => {
+    refreshCalendar(data as DayData[])
+  }, [data])
 
   // Since iOS bar uses absolute positon for blur affect, we have to adjust padding to bottom of container
   const styles = StyleSheet.create({
@@ -33,8 +41,7 @@ export default function FlowCalendar() {
     },
   })
 
-  async function refreshCalendar() {
-    const allDays = await getAllDays()
+  async function refreshCalendar(allDays: DayData[]) {
     const newMarkedDates: {
       [key: string]: { marked: boolean; dotColor: string }
     } = {}
@@ -51,22 +58,16 @@ export default function FlowCalendar() {
         }
       })
       setMarkedDates(newMarkedDates)
-      console.log("Marked dates: ", markedDatesObj)
       setSelectedDate(today)
     }
   }
-
-  // get all days and create markedDates on mount
-  useEffect(() => {
-    refreshCalendar()
-  }, [])
 
   // get data for selected date on calendar (when user presses a different day)
   useEffect(() => {
     if (!selectedDate) return
 
     async function fetchData(selectedDate: string) {
-      const day = await getOneDay(selectedDate)
+      const day = await getDay(selectedDate)
       const newMarkedDates = { ...markedDatesObj }
 
       //reset old selected date
@@ -106,9 +107,6 @@ export default function FlowCalendar() {
         >
           <SafeAreaView style={styles.container}>
             <View style={{ backgroundColor: theme.colors.background, padding: 4 }}>
-              <Button mode="elevated" onPress={refreshCalendar}>
-                Refresh Calendar
-              </Button>
               <Calendar
                 key={markedDatesObj}
                 maxDate={today}
