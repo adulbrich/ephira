@@ -1,5 +1,5 @@
-import { Text } from "react-native-paper"
-import { ThemedView } from "@/components/ThemedView"
+import { Text } from "react-native-paper";
+import { ThemedView } from "@/components/ThemedView";
 
 export default function Settings() {
   return (
@@ -8,5 +8,5 @@ export default function Settings() {
         Settings will go in here
       </Text>
     </ThemedView>
-  )
+  );
 }

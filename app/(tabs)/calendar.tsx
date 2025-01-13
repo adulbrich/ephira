@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -8,33 +8,33 @@ import {
   KeyboardAvoidingView,
   Keyboard,
   TouchableWithoutFeedback,
-} from "react-native"
-import { Calendar } from "react-native-calendars"
-import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context"
-import DayView from "@/components/DayView"
-import { getDay, getDrizzleDatabase } from "@/db/database"
-import type { DayData, MarkedDates } from "@/constants/Interfaces"
-import { useTheme, Divider } from "react-native-paper"
-import { FlowColors } from "@/constants/Colors"
-import { useLiveQuery } from "drizzle-orm/expo-sqlite"
-import * as schema from "@/db/schema"
+} from "react-native";
+import { Calendar } from "react-native-calendars";
+import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
+import DayView from "@/components/DayView";
+import { getDay, getDrizzleDatabase } from "@/db/database";
+import type { DayData, MarkedDates } from "@/constants/Interfaces";
+import { useTheme, Divider } from "react-native-paper";
+import { FlowColors } from "@/constants/Colors";
+import { useLiveQuery } from "drizzle-orm/expo-sqlite";
+import * as schema from "@/db/schema";
 
 export default function FlowCalendar() {
-  const theme = useTheme()
-  const today = new Date().toISOString().split("T")[0]
-  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const theme = useTheme();
+  const today = new Date().toISOString().split("T")[0];
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const handleSelectDate = (date: string) => {
-    setSelectedDate(date)
-  }
-  const [todayData, setTodayData] = useState<DayData | null>(null)
-  const [markedDatesObj, setMarkedDates] = useState<any>({})
-  const db = getDrizzleDatabase()
-  const { data } = useLiveQuery(db.select().from(schema.days))
+    setSelectedDate(date);
+  };
+  const [todayData, setTodayData] = useState<DayData | null>(null);
+  const [markedDatesObj, setMarkedDates] = useState<any>({});
+  const db = getDrizzleDatabase();
+  const { data } = useLiveQuery(db.select().from(schema.days));
 
   // useLiveQuery will automatically update the calendar when the db data changes
   useEffect(() => {
     function refreshCalendar(allDays: DayData[]) {
-      const newMarkedDates: MarkedDates = {}
+      const newMarkedDates: MarkedDates = {};
       if (allDays) {
         allDays.forEach((day: any) => {
           newMarkedDates[day.date] = {
@@ -44,15 +44,15 @@ export default function FlowCalendar() {
                 ? FlowColors[day.flow_intensity]
                 : "transparent",
             selected: day.date === today,
-          }
-        })
-        setMarkedDates(newMarkedDates)
-        setSelectedDate(today)
+          };
+        });
+        setMarkedDates(newMarkedDates);
+        setSelectedDate(today);
       }
     }
 
-    refreshCalendar(data as DayData[])
-  }, [data, today])
+    refreshCalendar(data as DayData[]);
+  }, [data, today]);
 
   // Since iOS bar uses absolute positon for blur affect, we have to adjust padding to bottom of container
   const styles = StyleSheet.create({
@@ -65,44 +65,44 @@ export default function FlowCalendar() {
         default: 0,
       }),
     },
-  })
+  });
 
   // get data for selected date on calendar (when user presses a different day)
   useEffect(() => {
-    if (!selectedDate) return
+    if (!selectedDate) return;
 
     async function fetchData(selectedDate: string) {
-      const day = await getDay(selectedDate)
+      const day = await getDay(selectedDate);
 
       setMarkedDates((prevMarkedDates: MarkedDates) => {
-        const newMarkedDates = { ...prevMarkedDates }
+        const newMarkedDates = { ...prevMarkedDates };
 
         // reset old selected date
         Object.keys(newMarkedDates).forEach((date) => {
           newMarkedDates[date] = {
             ...newMarkedDates[date],
             selected: false,
-          }
-        })
+          };
+        });
 
         // set new selected date
         newMarkedDates[selectedDate] = {
           ...newMarkedDates[selectedDate],
           selected: true,
-        }
+        };
 
-        return newMarkedDates
-      })
+        return newMarkedDates;
+      });
 
-      setTodayData(day ? (day as DayData) : null)
+      setTodayData(day ? (day as DayData) : null);
     }
 
-    fetchData(selectedDate)
-  }, [selectedDate])
+    fetchData(selectedDate);
+  }, [selectedDate]);
 
   const dismissKeyboard = () => {
-    Keyboard.dismiss()
-  }
+    Keyboard.dismiss();
+  };
 
   return (
     <SafeAreaProvider>
@@ -159,5 +159,5 @@ export default function FlowCalendar() {
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>
     </SafeAreaProvider>
-  )
+  );
 }

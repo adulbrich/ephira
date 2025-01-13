@@ -1,5 +1,5 @@
-import { SymbolView, SymbolViewProps, SymbolWeight } from "expo-symbols"
-import { StyleProp, ViewStyle } from "react-native"
+import { SymbolView, SymbolViewProps, SymbolWeight } from "expo-symbols";
+import { StyleProp, ViewStyle } from "react-native";
 
 // convert rgba to hex
 function rgba2hex(rgba: string) {
@@ -7,10 +7,10 @@ function rgba2hex(rgba: string) {
     .replace("rgba(", "")
     .replace(")", "")
     .split(",")
-    .map((x) => parseFloat(x))
+    .map((x) => parseFloat(x));
   return `#${Math.round(r).toString(16)}${Math.round(g).toString(
-    16
-  )}${Math.round(b).toString(16)}${Math.round(a * 255).toString(16)}`
+    16,
+  )}${Math.round(b).toString(16)}${Math.round(a * 255).toString(16)}`;
 }
 
 export function IconSymbol({
@@ -20,14 +20,14 @@ export function IconSymbol({
   style,
   weight = "regular",
 }: {
-  name: SymbolViewProps["name"]
-  size?: number
-  color: string
-  style?: StyleProp<ViewStyle>
-  weight?: SymbolWeight
+  name: SymbolViewProps["name"];
+  size?: number;
+  color: string;
+  style?: StyleProp<ViewStyle>;
+  weight?: SymbolWeight;
 }) {
   if (color.startsWith("rgba")) {
-    color = rgba2hex(color)
+    color = rgba2hex(color);
   }
   return (
     <SymbolView
@@ -43,5 +43,5 @@ export function IconSymbol({
         style,
       ]}
     />
-  )
+  );
 }
