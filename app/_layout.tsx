@@ -32,7 +32,7 @@ export default function RootLayout() {
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   })
 
-  const theme = useColorScheme() == "dark" ? DarkTheme : DefaultTheme
+  const theme = useColorScheme() === "dark" ? DarkTheme : DefaultTheme
 
   useEffect(() => {
     if (loaded && success) {

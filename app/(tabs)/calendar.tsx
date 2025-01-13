@@ -1,11 +1,19 @@
 import { useState, useEffect } from "react"
-import { StyleSheet, View, ScrollView, Platform, StatusBar, KeyboardAvoidingView, Keyboard, TouchableWithoutFeedback } from "react-native"
+import {
+  StyleSheet,
+  View,
+  ScrollView,
+  Platform,
+  StatusBar,
+  KeyboardAvoidingView,
+  Keyboard,
+  TouchableWithoutFeedback,
+} from "react-native"
 import { Calendar } from "react-native-calendars"
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context"
 import DayView from "@/components/DayView"
-import { getDay, getAllDays, getDrizzleDatabase } from "@/db/database"
-import type { DayData } from "@/constants/Interfaces"
-import { Button } from "react-native-paper"
+import { getDay, getDrizzleDatabase } from "@/db/database"
+import type { DayData, MarkedDates } from "@/constants/Interfaces"
 import { useTheme, Divider } from "react-native-paper"
 import { FlowColors } from "@/constants/Colors"
 import { useLiveQuery } from "drizzle-orm/expo-sqlite"
@@ -25,8 +33,26 @@ export default function FlowCalendar() {
 
   // useLiveQuery will automatically update the calendar when the db data changes
   useEffect(() => {
+    function refreshCalendar(allDays: DayData[]) {
+      const newMarkedDates: MarkedDates = {}
+      if (allDays) {
+        allDays.forEach((day: any) => {
+          newMarkedDates[day.date] = {
+            marked: true,
+            dotColor:
+              day.flow_intensity > 0
+                ? FlowColors[day.flow_intensity]
+                : "transparent",
+            selected: day.date === today,
+          }
+        })
+        setMarkedDates(newMarkedDates)
+        setSelectedDate(today)
+      }
+    }
+
     refreshCalendar(data as DayData[])
-  }, [data])
+  }, [data, today])
 
   // Since iOS bar uses absolute positon for blur affect, we have to adjust padding to bottom of container
   const styles = StyleSheet.create({
@@ -41,72 +67,54 @@ export default function FlowCalendar() {
     },
   })
 
-  async function refreshCalendar(allDays: DayData[]) {
-    const newMarkedDates: {
-      [key: string]: { marked: boolean; dotColor: string }
-    } = {}
-    if (allDays) {
-      const newMarkedDates: any = {}
-      allDays.forEach((day: any) => {
-        newMarkedDates[day.date] = {
-          marked: true,
-          dotColor:
-            day.flow_intensity > 0
-              ? FlowColors[day.flow_intensity]
-              : "transparent",
-          selected: day.date === today,
-        }
-      })
-      setMarkedDates(newMarkedDates)
-      setSelectedDate(today)
-    }
-  }
-
   // get data for selected date on calendar (when user presses a different day)
   useEffect(() => {
     if (!selectedDate) return
 
     async function fetchData(selectedDate: string) {
       const day = await getDay(selectedDate)
-      const newMarkedDates = { ...markedDatesObj }
 
-      //reset old selected date
-      Object.keys(newMarkedDates).forEach((date) => {
-        newMarkedDates[date] = {
-          ...newMarkedDates[date],
-          selected: false,
+      setMarkedDates((prevMarkedDates: MarkedDates) => {
+        const newMarkedDates = { ...prevMarkedDates }
+
+        // reset old selected date
+        Object.keys(newMarkedDates).forEach((date) => {
+          newMarkedDates[date] = {
+            ...newMarkedDates[date],
+            selected: false,
+          }
+        })
+
+        // set new selected date
+        newMarkedDates[selectedDate] = {
+          ...newMarkedDates[selectedDate],
+          selected: true,
         }
+
+        return newMarkedDates
       })
 
-      // set new selected date
-      newMarkedDates[selectedDate] = {
-        ...newMarkedDates[selectedDate],
-        selected: true,
-      }
-      setMarkedDates(newMarkedDates)
-
-      if (day) {
-        setTodayData(day as DayData)
-      } else {
-        setTodayData(null)
-      }
+      setTodayData(day ? (day as DayData) : null)
     }
+
     fetchData(selectedDate)
   }, [selectedDate])
 
   const dismissKeyboard = () => {
-    Keyboard.dismiss();
-  };
+    Keyboard.dismiss()
+  }
 
   return (
     <SafeAreaProvider>
       <TouchableWithoutFeedback onPress={dismissKeyboard}>
         <KeyboardAvoidingView
-          style={{flex: 1}}
+          style={{ flex: 1 }}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
           <SafeAreaView style={styles.container}>
-            <View style={{ backgroundColor: theme.colors.background, padding: 4 }}>
+            <View
+              style={{ backgroundColor: theme.colors.background, padding: 4 }}
+            >
               <Calendar
                 key={markedDatesObj}
                 maxDate={today}
