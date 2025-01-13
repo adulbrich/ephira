@@ -1,0 +1,78 @@
+import { getDrizzleDatabase } from "@/db/operations/setup"
+import { days } from "@/db/schema"
+import { eq } from "drizzle-orm"
+
+const db = getDrizzleDatabase()
+
+export const getDay = async (date: string) => {
+  const day = await db.query.days.findFirst({
+    where: eq(days.date, date),
+  })
+  return day
+}
+
+export const getAllDays = async () => {
+  const allDays = await db.select().from(days)
+  return allDays
+}
+
+export const updateDay = async (
+  date: string,
+  flowIntensity: number,
+  notes?: string
+) => {
+  let updateData: Object = { flow_intensity: flowIntensity }
+  if (notes) updateData = { ...updateData, notes }
+  await db.update(days).set(updateData).where(eq(days.date, date))
+}
+
+export const updateDayFlow = async (date: string, flowIntensity: number) => {
+  await db
+    .update(days)
+    .set({ flow_intensity: flowIntensity })
+    .where(eq(days.date, date))
+}
+
+export const updateDayCycleStart = async (
+  date: string,
+  isCycleStart: boolean
+) => {
+  await db
+    .update(days)
+    .set({ is_cycle_start: isCycleStart })
+    .where(eq(days.date, date))
+}
+
+export const updateDayCycleEnd = async (date: string, isCycleEnd: boolean) => {
+  await db
+    .update(days)
+    .set({ is_cycle_end: isCycleEnd })
+    .where(eq(days.date, date))
+}
+
+export const updateDayNotes = async (date: string, notes: string) => {
+  await db.update(days).set({ notes }).where(eq(days.date, date))
+}
+
+export const insertDay = async (
+  date: string,
+  flowIntensity: number,
+  notes?: string
+) => {
+  const day = await getDay(date)
+  if (day) {
+    await updateDay(date, flowIntensity, notes)
+  } else {
+    await db
+      .insert(days)
+      .values({ date: date, flow_intensity: flowIntensity, notes: notes })
+  }
+}
+
+export const deleteDay = async (date: string) => {
+  await db.delete(days).where(eq(days.date, date))
+}
+
+export const deleteAllDays = async () => {
+  await db.delete(days)
+}
