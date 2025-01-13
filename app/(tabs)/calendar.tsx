@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -13,7 +13,7 @@ import { Calendar } from "react-native-calendars";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import DayView from "@/components/DayView";
 import { getDay, getDrizzleDatabase } from "@/db/database";
-import type { DayData, MarkedDate, MarkedDates } from "@/constants/Interfaces";
+import type { DayData, MarkedDates } from "@/constants/Interfaces";
 import { useTheme, Divider } from "react-native-paper";
 import { FlowColors } from "@/constants/Colors";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
