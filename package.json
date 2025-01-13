@@ -10,6 +10,7 @@
     "web": "expo start --web",
     "test": "jest --watchAll",
     "lint": "expo lint",
+    "format": "prettier --write . && eslint --fix .",
     "postinstall": "patch-package"
   },
   "jest": {
