@@ -1,32 +1,58 @@
-import { useState, useEffect } from "react"
-import { StyleSheet, View, ScrollView, Platform, StatusBar, KeyboardAvoidingView, Keyboard, TouchableWithoutFeedback } from "react-native"
-import { Calendar } from "react-native-calendars"
-import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context"
-import DayView from "@/components/DayView"
-import { getDay, getAllDays, getDrizzleDatabase } from "@/db/database"
-import type { DayData } from "@/constants/Interfaces"
-import { Button } from "react-native-paper"
-import { useTheme, Divider } from "react-native-paper"
-import { FlowColors } from "@/constants/Colors"
-import { useLiveQuery } from "drizzle-orm/expo-sqlite"
-import * as schema from "@/db/schema"
+import { useState, useEffect } from "react";
+import {
+  StyleSheet,
+  View,
+  ScrollView,
+  Platform,
+  StatusBar,
+  KeyboardAvoidingView,
+  Keyboard,
+  TouchableWithoutFeedback,
+} from "react-native";
+import { Calendar } from "react-native-calendars";
+import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
+import DayView from "@/components/DayView";
+import { getDay, getDrizzleDatabase } from "@/db/database";
+import type { DayData, MarkedDates } from "@/constants/Interfaces";
+import { useTheme, Divider } from "react-native-paper";
+import { FlowColors } from "@/constants/Colors";
+import { useLiveQuery } from "drizzle-orm/expo-sqlite";
+import * as schema from "@/db/schema";
 
 export default function FlowCalendar() {
-  const theme = useTheme()
-  const today = new Date().toISOString().split("T")[0]
-  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const theme = useTheme();
+  const today = new Date().toISOString().split("T")[0];
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const handleSelectDate = (date: string) => {
-    setSelectedDate(date)
-  }
-  const [todayData, setTodayData] = useState<DayData | null>(null)
-  const [markedDatesObj, setMarkedDates] = useState<any>({})
-  const db = getDrizzleDatabase()
-  const { data } = useLiveQuery(db.select().from(schema.days))
+    setSelectedDate(date);
+  };
+  const [todayData, setTodayData] = useState<DayData | null>(null);
+  const [markedDatesObj, setMarkedDates] = useState<any>({});
+  const db = getDrizzleDatabase();
+  const { data } = useLiveQuery(db.select().from(schema.days));
 
   // useLiveQuery will automatically update the calendar when the db data changes
   useEffect(() => {
-    refreshCalendar(data as DayData[])
-  }, [data])
+    function refreshCalendar(allDays: DayData[]) {
+      const newMarkedDates: MarkedDates = {};
+      if (allDays) {
+        allDays.forEach((day: any) => {
+          newMarkedDates[day.date] = {
+            marked: true,
+            dotColor:
+              day.flow_intensity > 0
+                ? FlowColors[day.flow_intensity]
+                : "transparent",
+            selected: day.date === today,
+          };
+        });
+        setMarkedDates(newMarkedDates);
+        setSelectedDate(today);
+      }
+    }
+
+    refreshCalendar(data as DayData[]);
+  }, [data, today]);
 
   // Since iOS bar uses absolute positon for blur affect, we have to adjust padding to bottom of container
   const styles = StyleSheet.create({
@@ -39,60 +65,40 @@ export default function FlowCalendar() {
         default: 0,
       }),
     },
-  })
-
-  async function refreshCalendar(allDays: DayData[]) {
-    const newMarkedDates: {
-      [key: string]: { marked: boolean; dotColor: string }
-    } = {}
-    if (allDays) {
-      const newMarkedDates: any = {}
-      allDays.forEach((day: any) => {
-        newMarkedDates[day.date] = {
-          marked: true,
-          dotColor:
-            day.flow_intensity > 0
-              ? FlowColors[day.flow_intensity]
-              : "transparent",
-          selected: day.date === today,
-        }
-      })
-      setMarkedDates(newMarkedDates)
-      setSelectedDate(today)
-    }
-  }
+  });
 
   // get data for selected date on calendar (when user presses a different day)
   useEffect(() => {
-    if (!selectedDate) return
+    if (!selectedDate) return;
 
     async function fetchData(selectedDate: string) {
-      const day = await getDay(selectedDate)
-      const newMarkedDates = { ...markedDatesObj }
+      const day = await getDay(selectedDate);
 
-      //reset old selected date
-      Object.keys(newMarkedDates).forEach((date) => {
-        newMarkedDates[date] = {
-          ...newMarkedDates[date],
-          selected: false,
-        }
-      })
+      setMarkedDates((prevMarkedDates: MarkedDates) => {
+        const newMarkedDates = { ...prevMarkedDates };
 
-      // set new selected date
-      newMarkedDates[selectedDate] = {
-        ...newMarkedDates[selectedDate],
-        selected: true,
-      }
-      setMarkedDates(newMarkedDates)
+        // reset old selected date
+        Object.keys(newMarkedDates).forEach((date) => {
+          newMarkedDates[date] = {
+            ...newMarkedDates[date],
+            selected: false,
+          };
+        });
 
-      if (day) {
-        setTodayData(day as DayData)
-      } else {
-        setTodayData(null)
-      }
+        // set new selected date
+        newMarkedDates[selectedDate] = {
+          ...newMarkedDates[selectedDate],
+          selected: true,
+        };
+
+        return newMarkedDates;
+      });
+
+      setTodayData(day ? (day as DayData) : null);
     }
-    fetchData(selectedDate)
-  }, [selectedDate])
+
+    fetchData(selectedDate);
+  }, [selectedDate]);
 
   const dismissKeyboard = () => {
     Keyboard.dismiss();
@@ -102,11 +108,13 @@ export default function FlowCalendar() {
     <SafeAreaProvider>
       <TouchableWithoutFeedback onPress={dismissKeyboard}>
         <KeyboardAvoidingView
-          style={{flex: 1}}
+          style={{ flex: 1 }}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
           <SafeAreaView style={styles.container}>
-            <View style={{ backgroundColor: theme.colors.background, padding: 4 }}>
+            <View
+              style={{ backgroundColor: theme.colors.background, padding: 4 }}
+            >
               <Calendar
                 key={markedDatesObj}
                 maxDate={today}
@@ -151,5 +159,5 @@ export default function FlowCalendar() {
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>
     </SafeAreaProvider>
-  )
+  );
 }

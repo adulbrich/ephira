@@ -1,19 +1,19 @@
-import { useState } from "react"
-import { StyleSheet, View } from "react-native"
-import { ThemedView } from "@/components/ThemedView"
-import { getAllDays, deleteAllDays } from "@/db/database"
-import { Button, Text } from "react-native-paper"
-const flows = ["None", "Spotting", "Light", "Medium", "Heavy"]
+import { useState } from "react";
+import { StyleSheet, View } from "react-native";
+import { ThemedView } from "@/components/ThemedView";
+import { getAllDays, deleteAllDays } from "@/db/database";
+import { Button, Text } from "react-native-paper";
+const flows = ["None", "Spotting", "Light", "Medium", "Heavy"];
 
 export default function HomeScreen() {
-  const [showData, setShowData] = useState(false)
-  const [data, setData] = useState<any>(null)
+  const [showData, setShowData] = useState(false);
+  const [data, setData] = useState<any>(null);
 
   function refreshData() {
-    setShowData(true)
+    setShowData(true);
     getAllDays().then((result) => {
-      setData(result)
-    })
+      setData(result);
+    });
   }
 
   return (
@@ -44,7 +44,7 @@ export default function HomeScreen() {
         ) : null}
       </View>
     </ThemedView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -58,4 +58,4 @@ const styles = StyleSheet.create({
     display: "flex",
     gap: 10,
   },
-})
+});

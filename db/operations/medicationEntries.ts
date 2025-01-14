@@ -1,5 +1,9 @@
-import { getDrizzleDatabase } from "@/db/operations/setup"
-import { medicationEntries } from "@/db/schema"
-import { eq, and } from "drizzle-orm"
+import { getDrizzleDatabase } from "@/db/operations/setup";
+import { medicationEntries } from "@/db/schema";
 
-const db = getDrizzleDatabase()
+const db = getDrizzleDatabase();
+
+export const getAllMedicationEntries = async () => {
+  const entries = db.select().from(medicationEntries);
+  return entries;
+};
