@@ -54,9 +54,10 @@ export default function DayView({
   );
 
   function onSave() {
-    insertDay(date, flow);
-    setFlow(flow);
-    setExpandedAccordion(null); // Close all dropdowns when data is saved
+    insertDay(date, flow).then(() => {
+      setFlow(flow)
+      setExpandedAccordion(null) // Close all dropdowns when data is saved
+    })
   }
 
   useEffect(() => {
