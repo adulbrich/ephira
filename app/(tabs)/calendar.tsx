@@ -19,7 +19,11 @@ import { FlowColors } from "@/constants/Colors";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/db/schema";
 
+import { useSelectedDate } from "@/assets/src/date-storage";
+
 export default function FlowCalendar() {
+  const {setData, setDate, id, date, flow_intensity} = useSelectedDate();
+
   const theme = useTheme();
   const today = new Date().toISOString().split("T")[0];
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -47,7 +51,7 @@ export default function FlowCalendar() {
           };
         });
         setMarkedDates(newMarkedDates);
-        setSelectedDate(today);
+        setDate(today);
       }
     }
 
@@ -69,7 +73,7 @@ export default function FlowCalendar() {
 
   // get data for selected date on calendar (when user presses a different day)
   useEffect(() => {
-    if (!selectedDate) return;
+    if (!date) return;
 
     async function fetchData(selectedDate: string) {
       const day = await getDay(selectedDate);
@@ -97,8 +101,8 @@ export default function FlowCalendar() {
       setTodayData(day ? (day as DayData) : null);
     }
 
-    fetchData(selectedDate);
-  }, [selectedDate]);
+    fetchData(date);
+  }, [date]);
 
   const dismissKeyboard = () => {
     Keyboard.dismiss();
@@ -121,7 +125,7 @@ export default function FlowCalendar() {
                 markedDates={markedDatesObj}
                 enableSwipeMonths={true}
                 onDayPress={(day: { dateString: string }) =>
-                  handleSelectDate(day.dateString)
+                  setDate(day.dateString)
                 }
                 theme={{
                   calendarBackground: theme.colors.background,
@@ -145,9 +149,9 @@ export default function FlowCalendar() {
             </View>
             <ScrollView>
               <View>
-                {selectedDate && (
+                {date && (
                   <DayView
-                    date={selectedDate}
+                    date={date}
                     dateFlow={
                       todayData?.flow_intensity ? todayData.flow_intensity : 0
                     }
