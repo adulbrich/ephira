@@ -7,3 +7,7 @@ export const getAllSymptomEntries = async () => {
   const entries = db.select().from(symptomEntries);
   return entries;
 };
+
+export const deleteAllSymptomEntries = async () => {
+  await db.delete(symptomEntries).execute();
+};
