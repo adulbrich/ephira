@@ -42,7 +42,9 @@ function NoAuthenticationDialog({
         </Dialog.Content>
         <Dialog.Actions>
           <Button onPress={handleCancel}>Cancel</Button>
-          <Button onPress={handleConfirm}>Confirm</Button>
+          <Button mode="elevated" onPress={handleConfirm}>
+            Confirm
+          </Button>
         </Dialog.Actions>
       </Dialog>
     </Portal>
@@ -82,7 +84,9 @@ function BiometricDialog({
         </Dialog.Content>
         <Dialog.Actions>
           <Button onPress={handleCancel}>Cancel</Button>
-          <Button onPress={handleConfirm}>Confirm</Button>
+          <Button mode="elevated" onPress={handleConfirm}>
+            Confirm
+          </Button>
         </Dialog.Actions>
       </Dialog>
     </Portal>
@@ -209,6 +213,7 @@ function PasswordDialog({
             disabled={
               passwordError || password === "" || confirmPassword === ""
             }
+            mode="elevated"
             onPress={() => handleConfirm(password)}
           >
             Confirm
