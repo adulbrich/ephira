@@ -4,7 +4,7 @@ import * as SplashScreen from "expo-splash-screen";
 import * as LocalAuthentication from "expo-local-authentication";
 import * as SecureStore from "expo-secure-store";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import "react-native-reanimated";
 import {
   PaperProvider,
@@ -39,55 +39,28 @@ export default function RootLayout() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isPasswordModalVisible, setIsPasswordModalVisible] = useState(false);
 
-  // re-authenticate user if needed when app is brought back to the foreground
-  useEffect(() => {
-    const subscription = AppState.addEventListener("change", (nextAppState) => {
-      if (
-        appState.current.match(/inactive|background/) &&
-        nextAppState === "active"
-      ) {
-        checkAuthentication();
-      } else if (
-        appState.current === "active" &&
-        nextAppState.match(/inactive|background/)
-      ) {
-        setIsAuthenticated(false);
-      }
-
-      appState.current = nextAppState;
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (loaded && success) {
-      checkAuthentication();
-    }
-  }, [loaded, success]);
-
-  const checkAuthentication = async () => {
+  const checkAuthentication = useCallback(async () => {
     try {
-      const isBiometricEnabled =
-        await SecureStore.getItemAsync("biometricEnabled");
-      const isPasswordEnabled =
-        await SecureStore.getItemAsync("passwordEnabled");
+      if (!isAuthenticated) {
+        const isBiometricEnabled =
+          await SecureStore.getItemAsync("biometricEnabled");
+        const isPasswordEnabled =
+          await SecureStore.getItemAsync("passwordEnabled");
 
-      if (isBiometricEnabled === "true") {
-        const result = await LocalAuthentication.authenticateAsync({
-          promptMessage: "Authenticate to access the app",
-        });
-        if (result.success) {
-          setIsAuthenticated(true);
+        if (isBiometricEnabled === "true") {
+          const result = await LocalAuthentication.authenticateAsync({
+            promptMessage: "Authenticate to access the app",
+          });
+          if (result.success) {
+            setIsAuthenticated(true);
+          } else {
+            setIsAuthenticated(false);
+          }
+        } else if (isPasswordEnabled === "true") {
+          setIsPasswordModalVisible(true);
         } else {
-          setIsAuthenticated(false);
+          setIsAuthenticated(true);
         }
-      } else if (isPasswordEnabled === "true") {
-        setIsPasswordModalVisible(true);
-      } else {
-        setIsAuthenticated(true);
       }
     } catch (err) {
       console.error("Authentication error:", err);
@@ -95,7 +68,29 @@ export default function RootLayout() {
     } finally {
       SplashScreen.hideAsync();
     }
-  };
+  }, [isAuthenticated]);
+
+  // re-authenticate user if needed when app is brought back to the foreground
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
+      if (appState.current === "background" && nextAppState === "active") {
+        checkAuthentication();
+      } else if (nextAppState === "background") {
+        setIsAuthenticated(false);
+      }
+      appState.current = nextAppState;
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [checkAuthentication]);
+
+  useEffect(() => {
+    if (loaded && success) {
+      checkAuthentication();
+    }
+  }, [loaded, success, checkAuthentication]);
 
   const handlePasswordSubmit = async (passwordInput: string) => {
     const storedPassword = await SecureStore.getItemAsync("password");
