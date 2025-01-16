@@ -21,7 +21,7 @@ import * as schema from "@/db/schema";
 
 export default function FlowCalendar() {
   const theme = useTheme();
-  const today = new Date().toISOString().split("T")[0];
+  const today = new Date().toLocaleDateString("en-CA");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const handleSelectDate = (date: string) => {
     setSelectedDate(date);
@@ -109,7 +109,6 @@ export default function FlowCalendar() {
       <TouchableWithoutFeedback onPress={dismissKeyboard}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
           <SafeAreaView style={styles.container}>
             <View
@@ -143,7 +142,10 @@ export default function FlowCalendar() {
               />
               <Divider />
             </View>
-            <ScrollView>
+            <ScrollView
+              contentContainerStyle={{ flexGrow: 1, backgroundColor: theme.colors.background }}
+              automaticallyAdjustKeyboardInsets={true}
+            >
               <View>
                 {selectedDate && (
                   <DayView
