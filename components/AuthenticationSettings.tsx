@@ -255,7 +255,10 @@ export default function AuthenticationSettings() {
       setSelectedAuth(AUTH_TYPES.BIOMETRIC);
       Alert.alert("Success", "Biometric authentication enabled!");
     } else {
-      Alert.alert("Failed", "Biometric authentication failed.");
+      Alert.alert(
+        "Failed",
+        "Biometric authentication failed. This could be due to a lack of biometric data on the device or not having the proper permissions granted.",
+      );
     }
   };
 

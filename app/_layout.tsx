@@ -41,26 +41,24 @@ export default function RootLayout() {
 
   const checkAuthentication = useCallback(async () => {
     try {
-      if (!isAuthenticated) {
-        const isBiometricEnabled =
-          await SecureStore.getItemAsync("biometricEnabled");
-        const isPasswordEnabled =
-          await SecureStore.getItemAsync("passwordEnabled");
+      const isBiometricEnabled =
+        await SecureStore.getItemAsync("biometricEnabled");
+      const isPasswordEnabled =
+        await SecureStore.getItemAsync("passwordEnabled");
 
-        if (isBiometricEnabled === "true") {
-          const result = await LocalAuthentication.authenticateAsync({
-            promptMessage: "Authenticate to access the app",
-          });
-          if (result.success) {
-            setIsAuthenticated(true);
-          } else {
-            setIsAuthenticated(false);
-          }
-        } else if (isPasswordEnabled === "true") {
-          setIsPasswordModalVisible(true);
-        } else {
+      if (isBiometricEnabled === "true") {
+        const result = await LocalAuthentication.authenticateAsync({
+          promptMessage: "Authenticate to access the app",
+        });
+        if (result.success) {
           setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
         }
+      } else if (isPasswordEnabled === "true") {
+        setIsPasswordModalVisible(true);
+      } else {
+        setIsAuthenticated(true);
       }
     } catch (err) {
       console.error("Authentication error:", err);
@@ -68,12 +66,15 @@ export default function RootLayout() {
     } finally {
       SplashScreen.hideAsync();
     }
-  }, [isAuthenticated]);
+  }, []);
 
   // re-authenticate user if needed when app is brought back to the foreground
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (nextAppState) => {
-      if (appState.current === "background" && nextAppState === "active") {
+      if (
+        appState.current.match(/inactive|background/) &&
+        nextAppState === "active"
+      ) {
         checkAuthentication();
       } else if (nextAppState === "background") {
         setIsAuthenticated(false);
