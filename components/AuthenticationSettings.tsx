@@ -90,12 +90,10 @@ function BiometricDialog({
 }
 
 function PasswordDialog({
-  handleSetPassword,
   handleConfirm,
   handleCancel,
 }: {
-  handleSetPassword: (password: string) => void;
-  handleConfirm: () => void;
+  handleConfirm: (password: string) => void;
   handleCancel: () => void;
 }) {
   const theme = useTheme();
@@ -112,8 +110,7 @@ function PasswordDialog({
       "keyboardDidShow",
       (e) => {
         setKeyboardMargin(e.endCoordinates.height);
-        console.log("keyboardDidShow", e.endCoordinates.height);
-      }
+      },
     );
 
     return () => {
@@ -128,11 +125,6 @@ function PasswordDialog({
       setPasswordError(false);
     }
   }, [password, confirmPassword]);
-
-  const handleConfirmButton = () => {
-    handleConfirm();
-    handleSetPassword(password);
-  };
 
   return (
     <Portal>
@@ -159,9 +151,7 @@ function PasswordDialog({
             reset the password when trying to authenticate, all data will be
             deleted from the app in order to maintain data privacy.
           </Text>
-
           <Text>
-            {" "}
             If you want to reset the password from the this settings screen
             while you are logged in, you will not lose any data.
           </Text>
@@ -219,7 +209,7 @@ function PasswordDialog({
             disabled={
               passwordError || password === "" || confirmPassword === ""
             }
-            onPress={handleConfirmButton}
+            onPress={() => handleConfirm(password)}
           >
             Confirm
           </Button>
@@ -231,7 +221,6 @@ function PasswordDialog({
 
 export default function AuthenticationSettings() {
   const [selectedAuth, setSelectedAuth] = useState(AUTH_TYPES.NONE);
-  const [password, setPassword] = useState("");
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [showNoAuthDialog, setShowNoAuthDialog] = useState(false);
   const [showBiometricDialog, setShowBiometricDialog] = useState(false);
@@ -241,11 +230,11 @@ export default function AuthenticationSettings() {
     const loadPreferences = async () => {
       const biometricEnabled =
         await SecureStore.getItemAsync("biometricEnabled");
-      const passcodeEnabled = await SecureStore.getItemAsync("passcodeEnabled");
+      const passwordEnabled = await SecureStore.getItemAsync("passwordEnabled");
 
       if (biometricEnabled === "true") {
         setSelectedAuth(AUTH_TYPES.BIOMETRIC);
-      } else if (passcodeEnabled === "true") {
+      } else if (passwordEnabled === "true") {
         setSelectedAuth(AUTH_TYPES.PASSWORD);
       } else {
         setSelectedAuth(AUTH_TYPES.NONE);
@@ -262,26 +251,26 @@ export default function AuthenticationSettings() {
 
     if (result.success) {
       await SecureStore.setItemAsync("biometricEnabled", "true");
-      await SecureStore.setItemAsync("passcodeEnabled", "false");
-      setSelectedAuth("biometric");
+      await SecureStore.setItemAsync("passwordEnabled", "false");
+      setSelectedAuth(AUTH_TYPES.BIOMETRIC);
       Alert.alert("Success", "Biometric authentication enabled!");
     } else {
       Alert.alert("Failed", "Biometric authentication failed.");
     }
   };
 
-  const handleSetPasscode = async () => {
+  const handleSetPassword = async (password: string) => {
     await SecureStore.setItemAsync("password", password);
-    await SecureStore.setItemAsync("passcodeEnabled", "true");
+    await SecureStore.setItemAsync("passwordEnabled", "true");
     await SecureStore.setItemAsync("biometricEnabled", "false");
-    setSelectedAuth("password");
-    setIsSettingPasscode(false);
+    setSelectedAuth(AUTH_TYPES.PASSWORD);
     Alert.alert("Success", "Password set successfully!");
+    setShowPasswordDialog(false);
   };
 
   const handleDisableAuthentication = async () => {
     await SecureStore.setItemAsync("biometricEnabled", "false");
-    await SecureStore.setItemAsync("passcodeEnabled", "false");
+    await SecureStore.setItemAsync("passwordEnabled", "false");
     setSelectedAuth(AUTH_TYPES.NONE);
     Alert.alert("Success", "Authentication disabled.");
   };
@@ -339,10 +328,7 @@ export default function AuthenticationSettings() {
 
       {showPasswordDialog && (
         <PasswordDialog
-          handleSetPassword={setPassword}
-          handleConfirm={async () => {
-            await handleSetPasscode();
-          }}
+          handleConfirm={handleSetPassword}
           handleCancel={() => setShowPasswordDialog(false)}
         />
       )}
