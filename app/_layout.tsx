@@ -4,14 +4,14 @@ import * as SplashScreen from "expo-splash-screen";
 import * as LocalAuthentication from "expo-local-authentication";
 import * as SecureStore from "expo-secure-store";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import "react-native-reanimated";
 import {
   PaperProvider,
   MD3LightTheme as DefaultTheme,
   MD3DarkTheme as DarkTheme,
 } from "react-native-paper";
-import { useColorScheme, View } from "react-native";
+import { useColorScheme, View, AppState, AppStateStatus } from "react-native";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import migrations from "@/drizzle/migrations";
@@ -27,6 +27,7 @@ const DB_NAME = "testing.db";
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  const theme = useColorScheme() === "dark" ? DarkTheme : DefaultTheme;
   const expoDb = getDatabase();
   const db = getDrizzleDatabase();
   useDrizzleStudio(expoDb);
@@ -34,9 +35,32 @@ export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
-  const theme = useColorScheme() === "dark" ? DarkTheme : DefaultTheme;
+  const appState = useRef<AppStateStatus>(AppState.currentState);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isPasswordModalVisible, setIsPasswordModalVisible] = useState(false);
+
+  // re-authenticate user if needed when app is brought back to the foreground
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
+      if (
+        appState.current.match(/inactive|background/) &&
+        nextAppState === "active"
+      ) {
+        checkAuthentication();
+      } else if (
+        appState.current === "active" &&
+        nextAppState.match(/inactive|background/)
+      ) {
+        setIsAuthenticated(false);
+      }
+
+      appState.current = nextAppState;
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   useEffect(() => {
     if (loaded && success) {
