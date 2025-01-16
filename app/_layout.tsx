@@ -115,22 +115,28 @@ export default function RootLayout() {
   if (!isAuthenticated) {
     return (
       <PaperProvider theme={theme}>
-        <View
-          style={{
-            flex: 1,
-            height: "100%",
-            width: "100%",
-            backgroundColor: theme.colors.surface,
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          {isPasswordModalVisible && (
-            <PasswordAuthenticationView
-              handlePasswordSubmit={handlePasswordSubmit}
-            />
-          )}
-        </View>
+        <SafeAreaProvider>
+          <SafeAreaView
+            style={{ flex: 1, backgroundColor: theme.colors.background }}
+          >
+            <View
+              style={{
+                flex: 1,
+                height: "100%",
+                width: "100%",
+                backgroundColor: theme.colors.surface,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              {isPasswordModalVisible && (
+                <PasswordAuthenticationView
+                  handlePasswordSubmit={handlePasswordSubmit}
+                />
+              )}
+            </View>
+          </SafeAreaView>
+        </SafeAreaProvider>
       </PaperProvider>
     );
   }
