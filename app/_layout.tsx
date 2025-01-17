@@ -71,10 +71,7 @@ export default function RootLayout() {
   // re-authenticate user if needed when app is brought back to the foreground
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (nextAppState) => {
-      if (
-        appState.current.match(/inactive|background/) &&
-        nextAppState === "active"
-      ) {
+      if (appState.current === "background" && nextAppState === "active") {
         checkAuthentication();
       } else if (nextAppState === "background") {
         setIsAuthenticated(false);
