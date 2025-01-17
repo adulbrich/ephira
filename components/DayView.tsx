@@ -80,6 +80,112 @@ function FlowRadioButtons({
   );
 }
 
+function SymptomSelection({
+  selectedSymptoms,
+  setSelectedSymptoms,
+}: {
+  selectedSymptoms: string[];
+  setSelectedSymptoms: React.Dispatch<React.SetStateAction<string[]>>;
+}) {
+  const theme = useTheme();
+  
+  return (
+    <View style={{ padding: 16 }}>
+      <Text style={{  
+        color: theme.colors.onBackground, 
+        fontSize: 16, 
+        fontWeight: 'semibold', 
+        paddingBottom: 6 
+      }}>
+        Select Symptoms:
+      </Text>
+      <View style={styles.chipContainer}>
+        {symptomOptions.map((symptom) => (
+          <Chip
+            mode={"outlined"}
+            key={symptom.value}
+            selected={selectedSymptoms.includes(symptom.value)}
+            showSelectedCheck={false}
+            onPress={() => {
+              setSelectedSymptoms((prev) =>
+                prev.includes(symptom.value)
+                  ? prev.filter((val) => val !== symptom.value)
+                  : [...prev, symptom.value]
+              );
+            }}
+            style={{
+              backgroundColor: selectedSymptoms.includes(symptom.value)
+                ? theme.colors.onSecondary
+                : theme.colors.secondary,
+              margin: 4,
+            }}
+            textStyle={{
+              color: selectedSymptoms.includes(symptom.value)
+                ? theme.colors.onSecondaryContainer
+                : theme.colors.secondaryContainer,
+            }}
+          >
+            {symptom.label}
+          </Chip>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+function MoodSelection({
+  selectedMoods,
+  setSelectedMoods,
+}: {
+  selectedMoods: string[];
+  setSelectedMoods: React.Dispatch<React.SetStateAction<string[]>>;
+}) {
+  const theme = useTheme();
+  
+  return (
+    <View style={{ padding: 16 }}>
+      <Text style={{  
+        color: theme.colors.onBackground, 
+        fontSize: 16, 
+        fontWeight: 'semibold', 
+        paddingBottom: 6 
+      }}>
+        Select Moods:
+      </Text>
+      <View style={styles.chipContainer}>
+        {moodOptions.map((mood) => (
+          <Chip
+            mode={"outlined"}
+            key={mood.value}
+            selected={selectedMoods.includes(mood.value)}
+            showSelectedCheck={false}
+            onPress={() => {
+              setSelectedMoods((prev) =>
+                prev.includes(mood.value)
+                  ? prev.filter((val) => val !== mood.value)
+                  : [...prev, mood.value]
+              );
+            }}
+            style={{
+              backgroundColor: selectedMoods.includes(mood.value)
+                ? theme.colors.onSecondary
+                : theme.colors.secondary,
+              margin: 4,
+            }}
+            textStyle={{
+              color: selectedMoods.includes(mood.value)
+                ? theme.colors.onSecondaryContainer
+                : theme.colors.secondaryContainer,
+            }}
+          >
+            {mood.label}
+          </Chip>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 export default function DayView({
   date,
   dateFlow,
@@ -89,26 +195,22 @@ export default function DayView({
 }) {
   const theme = useTheme();
   const [flow, setFlow] = useState<number>(dateFlow);
-  // Track expanded dropdown menus
-  const [expandedAccordion, setExpandedAccordion] = useState<string | null>(
-    null,
-  );
+  const [notes, setNotes] = useState<string>("");
+  const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
+  const [selectedMoods, setSelectedMoods] = useState<string[]>([]);
+  const [expandedAccordion, setExpandedAccordion] = useState<string | null>(null);
 
   function onSave() {
     insertDay(date, flow).then(() => {
       setFlow(flow);
-      setExpandedAccordion(null); // Close all dropdowns when data is saved
+      setExpandedAccordion(null);
     });
   }
 
   useEffect(() => {
     setFlow(dateFlow);
-    setExpandedAccordion(null); // Close all dropdowns when selected date changes
+    setExpandedAccordion(null);
   }, [dateFlow]);
-
-  const [notes, setNotes] = useState<string>("");
-  const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
-  const [selectedMoods, setSelectedMoods] = useState<string[]>([]);
 
   return (
     <View style={{ backgroundColor: theme.colors.background }}>
@@ -150,41 +252,10 @@ export default function DayView({
             }
             left={(props) => <List.Icon {...props} icon="alert-decagram" />}
           >
-            <View style={{ padding: 16 }}>
-              <Text style={{ color: theme.colors.onBackground, fontSize: 16, fontWeight: 'normal' }}>
-                Select Symptoms:
-              </Text>
-              <View style={styles.chipContainer}>
-                {symptomOptions.map((symptom) => (
-                  <Chip
-                    mode={"outlined"}
-                    key={symptom.value}
-                    selected={selectedSymptoms.includes(symptom.value)}
-                    showSelectedCheck={false}
-                    onPress={() => {
-                      setSelectedSymptoms((prev) =>
-                        prev.includes(symptom.value)
-                          ? prev.filter((val) => val !== symptom.value)
-                          : [...prev, symptom.value]
-                      );
-                    }}
-                    style={{
-                      backgroundColor: selectedSymptoms.includes(symptom.value)
-                        ? theme.colors.onSecondary // Color for selected chip
-                        : theme.colors.secondary, // Color for unselected chip
-                      margin: 4,
-                    }}
-                    textStyle={{
-                      color: selectedSymptoms.includes(symptom.value)
-                        ? theme.colors.onSecondaryContainer // Text color for selected chip
-                        : theme.colors.secondaryContainer, // Text color for unselected chip
-                    }}
-                  >
-                    {symptom.label}
-                  </Chip>
-                ))}
-              </View>
-            </View>
+            <SymptomSelection
+              selectedSymptoms={selectedSymptoms}
+              setSelectedSymptoms={setSelectedSymptoms}
+            />
           </List.Accordion>
           <Divider />
           <List.Accordion
@@ -212,41 +283,10 @@ export default function DayView({
             }
             left={(props) => <List.Icon {...props} icon="emoticon" />}
           >
-            <View style={{ padding: 16 }}>
-              <Text style={{ color: theme.colors.onBackground, fontSize: 16, fontWeight: 'normal' }}>
-                Select Moods:
-              </Text>
-              <View style={styles.chipContainer}>
-                {moodOptions.map((mood) => (
-                  <Chip
-                    mode={"outlined"}
-                    key={mood.value}
-                    selected={selectedMoods.includes(mood.value)}
-                    showSelectedCheck={false}
-                    onPress={() => {
-                      setSelectedMoods((prev) =>
-                        prev.includes(mood.value)
-                          ? prev.filter((val) => val !== mood.value)
-                          : [...prev, mood.value]
-                      );
-                    }}
-                    style={{
-                      backgroundColor: selectedMoods.includes(mood.value)
-                        ? theme.colors.onSecondary // Color for selected chip
-                        : theme.colors.secondary, // Color for unselected chip
-                      margin: 4,
-                    }}
-                    textStyle={{
-                      color: selectedMoods.includes(mood.value)
-                        ? theme.colors.onSecondaryContainer // Text color for selected chip
-                        : theme.colors.secondaryContainer, // Text color for unselected chip
-                    }}
-                  >
-                    {mood.label}
-                  </Chip>
-                ))}
-              </View>
-            </View>
+            <MoodSelection
+              selectedMoods={selectedMoods}
+              setSelectedMoods={setSelectedMoods}
+            />
           </List.Accordion>
           <Divider />
           <List.Accordion
