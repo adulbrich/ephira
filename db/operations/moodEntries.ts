@@ -7,3 +7,7 @@ export const getAllMoodEntries = async () => {
   const entries = db.select().from(moodEntries);
   return entries;
 };
+
+export const deleteAllMoodEntries = async () => {
+  await db.delete(moodEntries);
+};
