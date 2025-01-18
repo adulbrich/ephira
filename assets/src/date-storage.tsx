@@ -1,6 +1,6 @@
 import {create} from 'zustand';
 
-interface DayData {
+export interface DayData {
     id: number;
     date: string;
     flow_intensity: number;
@@ -11,7 +11,17 @@ interface DayData {
     setDate: (day: string) => void;
   }
 
-  export const useSelectedDate = create <DayData>(set => ({
+export interface MarkedDate {
+    marked: boolean;
+    selected: boolean;
+    dotColor: string;
+  }
+  
+export interface MarkedDates {
+    [key: string]: MarkedDate;
+  }
+
+export const useSelectedDate = create <DayData>(set => ({
     id: 0,
     date: "",
     flow_intensity: 0,
@@ -23,3 +33,7 @@ interface DayData {
     }
 
   }))
+
+export const useMarkedDates = create <MarkedDates>(set => ({
+    
+}))

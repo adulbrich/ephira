@@ -13,35 +13,41 @@ import { Calendar } from "react-native-calendars";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import DayView from "@/components/DayView";
 import { getDay, getDrizzleDatabase } from "@/db/database";
-import type { DayData, MarkedDates } from "@/constants/Interfaces";
+import type { MarkedDates } from "@/constants/Interfaces";
 import { useTheme, Divider } from "react-native-paper";
 import { FlowColors } from "@/constants/Colors";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/db/schema";
 
-import { useSelectedDate } from "@/assets/src/date-storage";
+import { useSelectedDate, useMarkedDates, DayData } from "@/assets/src/date-storage";
 
 export default function FlowCalendar() {
-  const {setData, setDate, id, date, flow_intensity} = useSelectedDate();
+  const markedDatesState = useMarkedDates();
+
+  const selectedDateState = useSelectedDate();
 
   const theme = useTheme();
-  const today = new Date().toISOString().split("T")[0];
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const handleSelectDate = (date: string) => {
-    setSelectedDate(date);
-  };
-  const [todayData, setTodayData] = useState<DayData | null>(null);
-  const [markedDatesObj, setMarkedDates] = useState<any>({});
+
+  const day = new Date()
+  
+  const offset = day.getTimezoneOffset()
+
+  const localDate = new Date(day.getTime() - offset * 60 * 1000)
+
+  const today = localDate.toISOString().split("T")[0]
+
   const db = getDrizzleDatabase();
   const { data } = useLiveQuery(db.select().from(schema.days));
+  console.log("data1", data)
 
   // useLiveQuery will automatically update the calendar when the db data changes
   useEffect(() => {
     function refreshCalendar(allDays: DayData[]) {
-      const newMarkedDates: MarkedDates = {};
+      
       if (allDays) {
+        console.log("allDays1", allDays)
         allDays.forEach((day: any) => {
-          newMarkedDates[day.date] = {
+          markedDatesState[day.date] = {
             marked: true,
             dotColor:
               day.flow_intensity > 0
@@ -50,11 +56,12 @@ export default function FlowCalendar() {
             selected: day.date === today,
           };
         });
-        setMarkedDates(newMarkedDates);
-        setDate(today);
+        selectedDateState.setDate(today);
+        console.log("markedDatesState1", markedDatesState)
       }
-    }
 
+
+    }
     refreshCalendar(data as DayData[]);
   }, [data, today]);
 
@@ -73,36 +80,32 @@ export default function FlowCalendar() {
 
   // get data for selected date on calendar (when user presses a different day)
   useEffect(() => {
-    if (!date) return;
+    if (!selectedDateState.date) return;
 
-    async function fetchData(selectedDate: string) {
-      const day = await getDay(selectedDate);
-
-      setMarkedDates((prevMarkedDates: MarkedDates) => {
-        const newMarkedDates = { ...prevMarkedDates };
-
+    async function fetchData() { 
+      const day = await getDay(selectedDateState.date);
+      console.log("markedDatesState2", markedDatesState)
         // reset old selected date
-        Object.keys(newMarkedDates).forEach((date) => {
-          newMarkedDates[date] = {
-            ...newMarkedDates[date],
+        Object.keys(markedDatesState).forEach((date) => {
+          markedDatesState[date] = {
+            ...markedDatesState[date],
             selected: false,
           };
         });
 
         // set new selected date
-        newMarkedDates[selectedDate] = {
-          ...newMarkedDates[selectedDate],
+        markedDatesState[selectedDateState.date] = {
+          ...markedDatesState[selectedDateState.date],
           selected: true,
         };
+        
+      console.log("markedDatesState3", markedDatesState)
 
-        return newMarkedDates;
-      });
-
-      setTodayData(day ? (day as DayData) : null);
+      selectedDateState.setData(day as DayData);
     }
 
-    fetchData(date);
-  }, [date]);
+    fetchData();
+  }, [selectedDateState.date]);
 
   const dismissKeyboard = () => {
     Keyboard.dismiss();
@@ -119,13 +122,13 @@ export default function FlowCalendar() {
             <View
               style={{ backgroundColor: theme.colors.background, padding: 4 }}
             >
+              
               <Calendar
-                key={markedDatesObj}
                 maxDate={today}
-                markedDates={markedDatesObj}
+                markedDates={markedDatesState}
                 enableSwipeMonths={true}
                 onDayPress={(day: { dateString: string }) =>
-                  setDate(day.dateString)
+                  selectedDateState.setDate(day.dateString)
                 }
                 theme={{
                   calendarBackground: theme.colors.background,
@@ -149,11 +152,11 @@ export default function FlowCalendar() {
             </View>
             <ScrollView>
               <View>
-                {date && (
+                {selectedDateState.date && (
                   <DayView
-                    date={date}
+                    date={selectedDateState.date}
                     dateFlow={
-                      todayData?.flow_intensity ? todayData.flow_intensity : 0
+                      selectedDateState.flow_intensity ? selectedDateState.flow_intensity : 0
                     }
                   />
                 )}
