@@ -194,7 +194,10 @@ export default function DayView({
         type === "symptom" ? setSelectedSymptoms : setSelectedMoods;
 
       const day = await getDay(date);
-      if (!day) return;
+      if (!day) {
+        setSelected([]);
+        return;
+      }
 
       const entries = await getEntries(day.id);
       const values = await Promise.all(
