@@ -20,7 +20,7 @@ export const updateSymptomEntry = async (
   day_id: number,
   symptom_id: number,
   intensity?: number,
-  notes?: string
+  notes?: string,
 ) => {
   let updateData: object = { day_id, symptom_id };
   if (intensity) {
@@ -35,8 +35,8 @@ export const updateSymptomEntry = async (
     .where(
       and(
         eq(symptomEntries.day_id, day_id),
-        eq(symptomEntries.symptom_id, symptom_id)
-      )
+        eq(symptomEntries.symptom_id, symptom_id),
+      ),
     );
 };
 
@@ -44,11 +44,11 @@ export const insertSymptomEntry = async (
   day_id: number,
   symptom_id: number,
   intensity?: number,
-  notes?: string
+  notes?: string,
 ) => {
   const existingEntries = await getSymptomEntriesForDay(day_id);
   const existingEntry = existingEntries.find(
-    (entry) => entry.symptom_id === symptom_id
+    (entry) => entry.symptom_id === symptom_id,
   );
 
   if (existingEntry) {

@@ -20,7 +20,7 @@ export const updateMoodEntry = async (
   day_id: number,
   mood_id: number,
   intensity?: number,
-  notes?: string
+  notes?: string,
 ) => {
   let updateData: object = { day_id, mood_id };
   if (intensity) {
@@ -33,7 +33,7 @@ export const updateMoodEntry = async (
     .update(moodEntries)
     .set(updateData)
     .where(
-      and(eq(moodEntries.day_id, day_id), eq(moodEntries.mood_id, mood_id))
+      and(eq(moodEntries.day_id, day_id), eq(moodEntries.mood_id, mood_id)),
     );
 };
 
@@ -41,11 +41,11 @@ export const insertMoodEntry = async (
   day_id: number,
   mood_id: number,
   intensity?: number,
-  notes?: string
+  notes?: string,
 ) => {
   const existingEntries = await getMoodEntriesForDay(day_id);
   const existingEntry = existingEntries.find(
-    (entry) => entry.mood_id === mood_id
+    (entry) => entry.mood_id === mood_id,
   );
 
   if (existingEntry) {

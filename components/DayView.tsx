@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { StyleSheet, View } from "react-native";
 import {
   insertDay,
@@ -92,7 +92,7 @@ function ChipSelection({
               setSelectedValues((prev) =>
                 prev.includes(option.value)
                   ? prev.filter((val) => val !== option.value)
-                  : [...prev, option.value]
+                  : [...prev, option.value],
               );
             }}
             style={{
@@ -128,13 +128,13 @@ export default function DayView({
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [selectedMoods, setSelectedMoods] = useState<string[]>([]);
   const [expandedAccordion, setExpandedAccordion] = useState<string | null>(
-    null
+    null,
   );
 
   const syncEntries = async (
     date: string,
     selectedValues: string[],
-    type: "symptom" | "mood"
+    type: "symptom" | "mood",
   ) => {
     const day = await getDay(date);
     if (!day) return;
@@ -167,7 +167,7 @@ export default function DayView({
         const item =
           type === "symptom" ? await getSymptom(value) : await getMood(value);
         return item?.id ?? null;
-      })
+      }),
     );
 
     const validIds = selectedIds.filter((id) => id !== null);
@@ -185,39 +185,42 @@ export default function DayView({
     }
   };
 
-  const fetchEntries = async (type: "symptom" | "mood") => {
-    const getEntries =
-      type === "symptom" ? getSymptomEntriesForDay : getMoodEntriesForDay;
-    const getById = type === "symptom" ? getSymptomByID : getMoodByID;
-    const setSelected =
-      type === "symptom" ? setSelectedSymptoms : setSelectedMoods;
+  const fetchEntries = useCallback(
+    async (type: "symptom" | "mood") => {
+      const getEntries =
+        type === "symptom" ? getSymptomEntriesForDay : getMoodEntriesForDay;
+      const getById = type === "symptom" ? getSymptomByID : getMoodByID;
+      const setSelected =
+        type === "symptom" ? setSelectedSymptoms : setSelectedMoods;
 
-    const day = await getDay(date);
-    if (!day) return;
+      const day = await getDay(date);
+      if (!day) return;
 
-    const entries = await getEntries(day.id);
-    const values = await Promise.all(
-      entries.map(async (entry) => {
-        const id =
-          type === "symptom"
-            ? (entry as { symptom_id: number }).symptom_id
-            : (entry as { mood_id: number }).mood_id;
-        const item = await getById(id);
-        return item?.name ?? null;
-      })
-    );
+      const entries = await getEntries(day.id);
+      const values = await Promise.all(
+        entries.map(async (entry) => {
+          const id =
+            type === "symptom"
+              ? (entry as { symptom_id: number }).symptom_id
+              : (entry as { mood_id: number }).mood_id;
+          const item = await getById(id);
+          return item?.name ?? null;
+        }),
+      );
 
-    setSelected(values.filter((value) => value !== null) as string[]);
-  };
+      setSelected(values.filter((value) => value !== null) as string[]);
+    },
+    [date],
+  );
 
-  const fetchNotes = async () => {
+  const fetchNotes = useCallback(async () => {
     const day = await getDay(date);
     if (day && day.notes) {
       setNotes(day.notes);
     } else {
       setNotes("");
     }
-  };
+  }, [date]);
 
   function onSave() {
     insertDay(date, flow, notes).then(async () => {
@@ -237,7 +240,7 @@ export default function DayView({
     fetchEntries("mood");
     fetchNotes();
     setExpandedAccordion(null);
-  }, [dateFlow]);
+  }, [dateFlow, fetchEntries, fetchNotes]);
 
   return (
     <View style={{ backgroundColor: theme.colors.background }}>
@@ -276,7 +279,7 @@ export default function DayView({
             expanded={expandedAccordion === "symptoms"}
             onPress={() =>
               setExpandedAccordion(
-                expandedAccordion === "symptoms" ? null : "symptoms"
+                expandedAccordion === "symptoms" ? null : "symptoms",
               )
             }
             left={(props) => <List.Icon {...props} icon="alert-decagram" />}
@@ -310,7 +313,7 @@ export default function DayView({
             expanded={expandedAccordion === "medications"}
             onPress={() =>
               setExpandedAccordion(
-                expandedAccordion === "medications" ? null : "medications"
+                expandedAccordion === "medications" ? null : "medications",
               )
             }
             left={(props) => <List.Icon {...props} icon="pill" />}
@@ -325,7 +328,7 @@ export default function DayView({
             expanded={expandedAccordion === "notes"}
             onPress={() =>
               setExpandedAccordion(
-                expandedAccordion === "notes" ? null : "notes"
+                expandedAccordion === "notes" ? null : "notes",
               )
             }
             left={(props) => <List.Icon {...props} icon="note" />}

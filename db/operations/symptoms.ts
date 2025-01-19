@@ -34,7 +34,7 @@ export const getAllVisibleSymptoms = async () => {
 export const updateSymptom = async (
   name: string,
   visible: boolean,
-  description?: string
+  description?: string,
 ) => {
   let updateData: object = { name, visible };
   if (description) {
@@ -45,14 +45,14 @@ export const updateSymptom = async (
 
 export const updateSymptomVisibility = async (
   name: string,
-  visible: boolean
+  visible: boolean,
 ) => {
   await db.update(symptoms).set({ visible }).where(eq(symptoms.name, name));
 };
 
 export const updateSymptomDescription = async (
   name: string,
-  description: string
+  description: string,
 ) => {
   await db.update(symptoms).set({ description }).where(eq(symptoms.name, name));
 };
@@ -67,7 +67,7 @@ export const updateSymptomName = async (oldName: string, newName: string) => {
 export const insertSymptom = async (
   name: string,
   visible: boolean,
-  description?: string
+  description?: string,
 ) => {
   const symptom = await getSymptom(name);
   if (symptom) {
