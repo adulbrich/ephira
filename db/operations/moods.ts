@@ -11,6 +11,13 @@ export const getMood = async (name: string) => {
   return mood;
 };
 
+export const getMoodByID = async (id: number) => {
+  const mood = await db.query.moods.findFirst({
+    where: eq(moods.id, id),
+  });
+  return mood;
+};
+
 export const getAllMoods = async () => {
   const allMoods = await db.select().from(moods);
   return allMoods;
