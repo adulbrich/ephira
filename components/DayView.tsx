@@ -1,20 +1,20 @@
 import { useState, useEffect } from "react";
 import { StyleSheet, View } from "react-native";
-import { 
-  insertDay, 
-  insertSymptom, 
+import {
+  insertDay,
+  insertSymptom,
   insertMood,
-  getDay, 
-  getSymptom, 
+  getDay,
+  getSymptom,
   getMood,
   getSymptomEntriesForDay,
-  getMoodEntriesForDay, 
+  getMoodEntriesForDay,
   getSymptomByID,
   getMoodByID,
-  deleteSymptomEntry, 
+  deleteSymptomEntry,
   deleteMoodEntry,
-  insertSymptomEntry, 
-  insertMoodEntry
+  insertSymptomEntry,
+  insertMoodEntry,
 } from "@/db/database";
 import {
   List,
@@ -24,7 +24,7 @@ import {
   RadioButton,
   Divider,
   TextInput,
-  Chip
+  Chip,
 } from "react-native-paper";
 import { symptomOptions } from "@/constants/Symptoms";
 import { moodOptions } from "@/constants/Moods";
@@ -40,7 +40,7 @@ function FlowRadioButtons({
   setSelectedOption: (option: number) => void;
 }) {
   const theme = useTheme();
-  
+
   return (
     <View style={{ width: "100%" }}>
       <RadioButton.Group
@@ -53,10 +53,11 @@ function FlowRadioButtons({
             label={button}
             value={button}
             labelStyle={{
-              color: selectedOption === index
-                ? theme.colors.onSecondaryContainer
-                : theme.colors.onSurfaceVariant,
-            }}            
+              color:
+                selectedOption === index
+                  ? theme.colors.onSecondaryContainer
+                  : theme.colors.onSurfaceVariant,
+            }}
           ></RadioButton.Item>
         ))}
       </RadioButton.Group>
@@ -126,24 +127,30 @@ export default function DayView({
   const [notes, setNotes] = useState<string>("");
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [selectedMoods, setSelectedMoods] = useState<string[]>([]);
-  const [expandedAccordion, setExpandedAccordion] = useState<string | null>(null);
+  const [expandedAccordion, setExpandedAccordion] = useState<string | null>(
+    null
+  );
 
   const syncEntries = async (
-    date: string, 
-    selectedValues: string[], 
+    date: string,
+    selectedValues: string[],
     type: "symptom" | "mood"
   ) => {
     const day = await getDay(date);
     if (!day) return;
-  
+
     const existingEntries =
-      type === "symptom" ? await getSymptomEntriesForDay(day.id) : await getMoodEntriesForDay(day.id);
-    
-    const insertEntry = type === "symptom" ? insertSymptomEntry : insertMoodEntry;
-    const deleteEntry = type === "symptom" ? deleteSymptomEntry : deleteMoodEntry;
+      type === "symptom"
+        ? await getSymptomEntriesForDay(day.id)
+        : await getMoodEntriesForDay(day.id);
+
+    const insertEntry =
+      type === "symptom" ? insertSymptomEntry : insertMoodEntry;
+    const deleteEntry =
+      type === "symptom" ? deleteSymptomEntry : deleteMoodEntry;
     const getItem = type === "symptom" ? getSymptom : getMood;
     const insertItem = type === "symptom" ? insertSymptom : insertMood;
-  
+
     for (const value of selectedValues) {
       let item = await getItem(value);
       if (!item) {
@@ -154,45 +161,52 @@ export default function DayView({
         await insertEntry(day.id, item.id);
       }
     }
-  
+
     const selectedIds = await Promise.all(
       selectedValues.map(async (value) => {
-        const item = type === "symptom" ? await getSymptom(value) : await getMood(value);
+        const item =
+          type === "symptom" ? await getSymptom(value) : await getMood(value);
         return item?.id ?? null;
       })
     );
-    
+
     const validIds = selectedIds.filter((id) => id !== null);
     for (const entry of existingEntries) {
-      const entryId = type === "symptom" ? (entry as { symptom_id: number }).symptom_id : (entry as { mood_id: number }).mood_id;
+      const entryId =
+        type === "symptom"
+          ? (entry as { symptom_id: number }).symptom_id
+          : (entry as { mood_id: number }).mood_id;
       if (
-        type === "symptom" && !validIds.includes(entryId) ||
-        type === "mood" && !validIds.includes(entryId)
+        (type === "symptom" && !validIds.includes(entryId)) ||
+        (type === "mood" && !validIds.includes(entryId))
       ) {
         await deleteEntry(entry.id);
       }
     }
-  }
+  };
 
-  const fetchEntries = async (
-    type: "symptom" | "mood"
-  ) => {
-    const getEntries = type === "symptom" ? getSymptomEntriesForDay : getMoodEntriesForDay;
+  const fetchEntries = async (type: "symptom" | "mood") => {
+    const getEntries =
+      type === "symptom" ? getSymptomEntriesForDay : getMoodEntriesForDay;
     const getById = type === "symptom" ? getSymptomByID : getMoodByID;
-    const setSelected = type === "symptom" ? setSelectedSymptoms : setSelectedMoods;
-  
+    const setSelected =
+      type === "symptom" ? setSelectedSymptoms : setSelectedMoods;
+
     const day = await getDay(date);
     if (!day) return;
-  
+
     const entries = await getEntries(day.id);
     const values = await Promise.all(
       entries.map(async (entry) => {
-        const id = type === "symptom" ? (entry as { symptom_id: number }).symptom_id : (entry as { mood_id: number }).mood_id;
+        const id =
+          type === "symptom"
+            ? (entry as { symptom_id: number }).symptom_id
+            : (entry as { mood_id: number }).mood_id;
         const item = await getById(id);
         return item?.name ?? null;
       })
     );
-  
+
     setSelected(values.filter((value) => value !== null) as string[]);
   };
 
@@ -206,8 +220,7 @@ export default function DayView({
   };
 
   function onSave() {
-    insertDay(date, flow, notes)
-    .then(async () => {
+    insertDay(date, flow, notes).then(async () => {
       setFlow(flow);
       setExpandedAccordion(null);
       await syncEntries(date, selectedSymptoms, "symptom");
@@ -215,8 +228,8 @@ export default function DayView({
       await fetchEntries("symptom");
       await fetchEntries("mood");
       await fetchNotes();
-    })
-  };
+    });
+  }
 
   useEffect(() => {
     setFlow(dateFlow);
@@ -262,7 +275,9 @@ export default function DayView({
             title={"Symptoms   |   " + selectedSymptoms.length + " Selected"}
             expanded={expandedAccordion === "symptoms"}
             onPress={() =>
-              setExpandedAccordion(expandedAccordion === "symptoms" ? null : "symptoms")
+              setExpandedAccordion(
+                expandedAccordion === "symptoms" ? null : "symptoms"
+              )
             }
             left={(props) => <List.Icon {...props} icon="alert-decagram" />}
           >
@@ -278,9 +293,7 @@ export default function DayView({
             title={"Moods   |   " + selectedMoods.length + " Selected"}
             expanded={expandedAccordion === "mood"}
             onPress={() =>
-              setExpandedAccordion(
-                expandedAccordion === "mood" ? null : "mood"
-              )
+              setExpandedAccordion(expandedAccordion === "mood" ? null : "mood")
             }
             left={(props) => <List.Icon {...props} icon="emoticon" />}
           >
@@ -303,7 +316,7 @@ export default function DayView({
             left={(props) => <List.Icon {...props} icon="pill" />}
           >
             <View style={{ padding: 16 }}>
-            <Text>Nothing here yet!</Text>
+              <Text>Nothing here yet!</Text>
             </View>
           </List.Accordion>
           <Divider />
@@ -312,7 +325,7 @@ export default function DayView({
             expanded={expandedAccordion === "notes"}
             onPress={() =>
               setExpandedAccordion(
-                expandedAccordion === "notes" ? null : "notes",
+                expandedAccordion === "notes" ? null : "notes"
               )
             }
             left={(props) => <List.Icon {...props} icon="note" />}
@@ -340,8 +353,8 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   chipContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
   },
   sectionLabel: {
     fontSize: 16,

@@ -20,7 +20,7 @@ export const updateSymptomEntry = async (
   day_id: number,
   symptom_id: number,
   intensity?: number,
-  notes?: string,
+  notes?: string
 ) => {
   let updateData: object = { day_id, symptom_id };
   if (intensity) {
@@ -29,29 +29,40 @@ export const updateSymptomEntry = async (
   if (notes) {
     updateData = { ...updateData, notes };
   }
-  await db.update(symptomEntries)
+  await db
+    .update(symptomEntries)
     .set(updateData)
-    .where(and(eq(symptomEntries.day_id, day_id), eq(symptomEntries.symptom_id, symptom_id)));
+    .where(
+      and(
+        eq(symptomEntries.day_id, day_id),
+        eq(symptomEntries.symptom_id, symptom_id)
+      )
+    );
 };
 
 export const insertSymptomEntry = async (
   day_id: number,
   symptom_id: number,
   intensity?: number,
-  notes?: string,
+  notes?: string
 ) => {
   const existingEntries = await getSymptomEntriesForDay(day_id);
-  const existingEntry = existingEntries.find(entry => entry.symptom_id === symptom_id);
+  const existingEntry = existingEntries.find(
+    (entry) => entry.symptom_id === symptom_id
+  );
 
   if (existingEntry) {
     await updateSymptomEntry(day_id, symptom_id, intensity, notes);
   } else {
-    await db.insert(symptomEntries).values({
-      day_id,
-      symptom_id,
-      intensity,
-      notes,      
-    }).execute();
+    await db
+      .insert(symptomEntries)
+      .values({
+        day_id,
+        symptom_id,
+        intensity,
+        notes,
+      })
+      .execute();
   }
 };
 

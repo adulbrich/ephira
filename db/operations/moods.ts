@@ -34,7 +34,7 @@ export const getAllVisibleMoods = async () => {
 export const updateMood = async (
   name: string,
   visible: boolean,
-  description?: string,
+  description?: string
 ) => {
   let updateData: object = { name, visible };
   if (description) {
@@ -49,7 +49,7 @@ export const updateMoodVisibility = async (name: string, visible: boolean) => {
 
 export const updateMoodDescription = async (
   name: string,
-  description: string,
+  description: string
 ) => {
   await db.update(moods).set({ description }).where(eq(moods.name, name));
 };
@@ -61,7 +61,7 @@ export const updateMoodName = async (oldName: string, newName: string) => {
 export const insertMood = async (
   name: string,
   visible: boolean,
-  description?: string,
+  description?: string
 ) => {
   const mood = await getMood(name);
   if (mood) {
