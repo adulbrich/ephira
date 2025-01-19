@@ -71,5 +71,5 @@ export const deleteSymptomEntry = async (id: number) => {
 };
 
 export const deleteAllSymptomEntries = async () => {
-  await db.delete(symptomEntries);
+  await db.delete(symptomEntries).execute;
 };
