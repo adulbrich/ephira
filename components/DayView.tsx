@@ -39,17 +39,24 @@ function FlowRadioButtons({
   selectedOption: number;
   setSelectedOption: (option: number) => void;
 }) {
+  const theme = useTheme();
+  
   return (
     <View style={{ width: "100%" }}>
       <RadioButton.Group
         value={flowOptions[selectedOption]}
         onValueChange={(value) => setSelectedOption(flowOptions.indexOf(value))}
       >
-        {flowOptions.map((button) => (
+        {flowOptions.map((button, index) => (
           <RadioButton.Item
             key={button}
             label={button}
             value={button}
+            labelStyle={{
+              color: selectedOption === index
+                ? theme.colors.onSecondaryContainer
+                : theme.colors.onSurfaceVariant,
+            }}            
           ></RadioButton.Item>
         ))}
       </RadioButton.Group>
