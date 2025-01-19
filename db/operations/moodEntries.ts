@@ -68,5 +68,5 @@ export const deleteMoodEntry = async (id: number) => {
 };
 
 export const deleteAllMoodEntries = async () => {
-  await db.delete(moodEntries).execute;
+  await db.delete(moodEntries).execute();
 };

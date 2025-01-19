@@ -7,3 +7,7 @@ export const getAllMedicationEntries = async () => {
   const entries = db.select().from(medicationEntries);
   return entries;
 };
+
+export const deleteAllMedicationEntries = async () => {
+  await db.delete(medicationEntries);
+};
