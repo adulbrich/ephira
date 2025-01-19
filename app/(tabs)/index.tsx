@@ -1,19 +1,21 @@
-import { useState } from "react";
+
 import { StyleSheet, View } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { getAllDays, deleteAllDays } from "@/db/database";
 import { Button, Text } from "react-native-paper";
+import { useData} from "@/assets/src/date-storage";
+import { DayData } from "@/constants/Interfaces";
 const flows = ["None", "Spotting", "Light", "Medium", "Heavy"];
 
 export default function HomeScreen() {
-  const [showData, setShowData] = useState(false);
-  const [data, setData] = useState<any>(null);
+  const useDataState = useData();
+  
 
   function refreshData() {
-    setShowData(true);
-    getAllDays().then((result) => {
-      setData(result);
-    });
+    useDataState.setShow(true);
+    getAllDays().then((result)=>{
+      useDataState.setData(result as DayData[])
+    })
   }
 
   return (
@@ -31,9 +33,9 @@ export default function HomeScreen() {
         Delete DB Data
       </Button>
       <View style={styles.stepContainer}>
-        {showData ? (
-          data && data.length > 0 ? (
-            data.map((day: any) => (
+        {useDataState.show ? (
+          useDataState.data && useDataState.data.length > 0 ? (
+            useDataState.data.map((day: any) => (
               <Text variant="bodyMedium" key={day.id}>
                 {day.date}: {flows[day.flow_intensity]}
               </Text>

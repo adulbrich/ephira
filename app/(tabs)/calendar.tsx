@@ -13,41 +13,35 @@ import { Calendar } from "react-native-calendars";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import DayView from "@/components/DayView";
 import { getDay, getDrizzleDatabase } from "@/db/database";
-import type { MarkedDates } from "@/constants/Interfaces";
+import type { DayData } from "@/constants/Interfaces";
 import { useTheme, Divider } from "react-native-paper";
 import { FlowColors } from "@/constants/Colors";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/db/schema";
 
-import { useSelectedDate, useMarkedDates, DayData } from "@/assets/src/date-storage";
+import { useSelectedDate, useMarkedDates} from "@/assets/src/date-storage";
 
 export default function FlowCalendar() {
-  const markedDatesState = useMarkedDates();
-
+  const storedDatesState = useMarkedDates();
   const selectedDateState = useSelectedDate();
 
   const theme = useTheme();
 
   const day = new Date()
-  
   const offset = day.getTimezoneOffset()
-
   const localDate = new Date(day.getTime() - offset * 60 * 1000)
-
   const today = localDate.toISOString().split("T")[0]
 
   const db = getDrizzleDatabase();
   const { data } = useLiveQuery(db.select().from(schema.days));
-  console.log("data1", data)
 
   // useLiveQuery will automatically update the calendar when the db data changes
   useEffect(() => {
     function refreshCalendar(allDays: DayData[]) {
-      
+
       if (allDays) {
-        console.log("allDays1", allDays)
         allDays.forEach((day: any) => {
-          markedDatesState[day.date] = {
+          storedDatesState[day.date] = {
             marked: true,
             dotColor:
               day.flow_intensity > 0
@@ -56,10 +50,8 @@ export default function FlowCalendar() {
             selected: day.date === today,
           };
         });
-        selectedDateState.setDate(today);
-        console.log("markedDatesState1", markedDatesState)
+        selectedDateState.setDate(today)
       }
-
 
     }
     refreshCalendar(data as DayData[]);
@@ -84,24 +76,38 @@ export default function FlowCalendar() {
 
     async function fetchData() { 
       const day = await getDay(selectedDateState.date);
-      console.log("markedDatesState2", markedDatesState)
+
+      selectedDateState.setFlow((day?.flow_intensity ? day.flow_intensity : 0))
+      selectedDateState.setId(day?.id ? day.id : 0)
+
         // reset old selected date
-        Object.keys(markedDatesState).forEach((date) => {
-          markedDatesState[date] = {
-            ...markedDatesState[date],
+        Object.keys(storedDatesState).forEach((date) => {
+
+          // iterate through all stored dates, set selected = false
+          storedDatesState[date] = {
+            ...storedDatesState[date],
             selected: false,
           };
+
+          // if an item isn't marked and isn't the selected date, remove it from the stored dates
+          if(!(storedDatesState[date].marked)){
+            if(date != selectedDateState.date){
+              delete storedDatesState[date]
+            }
+          }
+          
         });
 
         // set new selected date
-        markedDatesState[selectedDateState.date] = {
-          ...markedDatesState[selectedDateState.date],
+        storedDatesState[selectedDateState.date] = {
+          ...storedDatesState[selectedDateState.date],
           selected: true,
         };
-        
-      console.log("markedDatesState3", markedDatesState)
+  
+      //set other values of DayData, flow_intensity and id
 
-      selectedDateState.setData(day as DayData);
+
+      return
     }
 
     fetchData();
@@ -125,7 +131,7 @@ export default function FlowCalendar() {
               
               <Calendar
                 maxDate={today}
-                markedDates={markedDatesState}
+                markedDates={{...storedDatesState}}
                 enableSwipeMonths={true}
                 onDayPress={(day: { dateString: string }) =>
                   selectedDateState.setDate(day.dateString)
@@ -153,12 +159,7 @@ export default function FlowCalendar() {
             <ScrollView>
               <View>
                 {selectedDateState.date && (
-                  <DayView
-                    date={selectedDateState.date}
-                    dateFlow={
-                      selectedDateState.flow_intensity ? selectedDateState.flow_intensity : 0
-                    }
-                  />
+                  <DayView/>
                 )}
               </View>
             </ScrollView>
