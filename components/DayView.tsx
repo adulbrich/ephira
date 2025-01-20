@@ -130,7 +130,6 @@ export default function DayView() {
     selectedValues: string[],
     type: "symptom" | "mood",
   ) => {
-    console.log(selectedValues)
     const day = await getDay(date);
     if (!day) return;
 
@@ -206,8 +205,6 @@ export default function DayView() {
         }),
       );
       setSelected(values.filter((value) => value !== null) as string[]);
-      console.log("selectedMoods", selectedMoods)
-      console.log("selectedSymptoms", selectedSymptoms)
     },
     [date],
   );
