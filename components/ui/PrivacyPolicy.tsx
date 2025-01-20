@@ -1,5 +1,5 @@
-import { List, Divider } from "react-native-paper"
-import { ThemedView } from "@/components/ThemedView"
+import { List, Divider } from "react-native-paper";
+import { ThemedView } from "@/components/ThemedView";
 
 export default function PrivacyPolicy() {
   return (
@@ -27,5 +27,5 @@ export default function PrivacyPolicy() {
       </List.Section>
       <Divider />
     </ThemedView>
-  )
-} 
+  );
+}
