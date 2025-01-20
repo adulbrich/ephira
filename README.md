@@ -1,6 +1,12 @@
 # PrivyPeriod
 
-Prototype demos:
+## Sprint 1 demo:
+
+### Running on IOS phone
+
+https://github.com/user-attachments/assets/4d6b3db8-5197-4b03-8747-7f4fc25c1aa1
+
+## Prototype demos:
 
 ### Android / Light-mode
 
