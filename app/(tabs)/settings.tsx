@@ -1,9 +1,7 @@
 import { ThemedView } from "@/components/ThemedView";
 import AuthenticationSettings from "@/components/AuthenticationSettings";
 import PrivacyPolicy from "@/components/ui/PrivacyPolicy";
-import { View } from "react-native"
-import { Text, List, Divider } from "react-native-paper"
-import { Link } from "expo-router"
+import { Text } from "react-native-paper"
 
 export default function Settings() {
   return (
