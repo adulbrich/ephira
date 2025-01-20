@@ -37,3 +37,12 @@ export interface Accordion{
   setExpandedAccordion: (state: string | null) => void;
 }
 
+export interface Mood{
+  selectedMoods: string [],
+  setSelectedMoods: (values: string[]) => void;
+}
+
+export interface Symptoms{
+  selectedSymptoms: string [],
+  setSelectedSymptoms: (values: string[]) => void;
+}

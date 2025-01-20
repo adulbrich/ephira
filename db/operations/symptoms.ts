@@ -11,6 +11,13 @@ export const getSymptom = async (name: string) => {
   return symptom;
 };
 
+export const getSymptomByID = async (id: number) => {
+  const symptom = await db.query.symptoms.findFirst({
+    where: eq(symptoms.id, id),
+  });
+  return symptom;
+};
+
 export const getAllSymptoms = async () => {
   const allSymptoms = await db.select().from(symptoms);
   return allSymptoms;

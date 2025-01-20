@@ -124,10 +124,7 @@ export default function FlowCalendar() {
   return (
     <SafeAreaProvider>
       <TouchableWithoutFeedback onPress={dismissKeyboard}>
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-        >
+        <KeyboardAvoidingView style={{ flex: 1 }}>
           <SafeAreaView style={styles.container}>
             <View
               style={{ backgroundColor: theme.colors.background, padding: 4 }}
@@ -160,7 +157,13 @@ export default function FlowCalendar() {
               />
               <Divider />
             </View>
-            <ScrollView>
+            <ScrollView
+              contentContainerStyle={{
+                flexGrow: 1,
+                backgroundColor: theme.colors.background,
+              }}
+              automaticallyAdjustKeyboardInsets={true}
+            >
               <View>
                 {date && (
                   <DayView/>
