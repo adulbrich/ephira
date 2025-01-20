@@ -46,3 +46,8 @@ export interface Symptoms{
   selectedSymptoms: string [],
   setSelectedSymptoms: (values: string[]) => void;
 }
+
+export interface Values{
+  selectedValues: string [],
+  setSelectedValues: (values: string[]) => void;
+}
