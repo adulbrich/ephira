@@ -19,14 +19,19 @@ import { FlowColors } from "@/constants/Colors";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/db/schema";
 
-import { useSelectedDate, useMarkedDates} from "@/assets/src/date-storage";
+import { useSelectedDate, useMarkedDates} from "@/assets/src/calendar-storage";
 
 export default function FlowCalendar() {
+  // access state management
+  const {date, setDate, setFlow, setId} = useSelectedDate()
   const storedDatesState = useMarkedDates();
-  const selectedDateState = useSelectedDate();
+
+  // can also be used like this
+  // const selectedDate = useSelectedDate().date
 
   const theme = useTheme();
 
+  // get date in local time
   const day = new Date()
   const offset = day.getTimezoneOffset()
   const localDate = new Date(day.getTime() - offset * 60 * 1000)
@@ -50,7 +55,7 @@ export default function FlowCalendar() {
             selected: day.date === today,
           };
         });
-        selectedDateState.setDate(today)
+        setDate(today)
       }
 
     }
@@ -72,13 +77,14 @@ export default function FlowCalendar() {
 
   // get data for selected date on calendar (when user presses a different day)
   useEffect(() => {
-    if (!selectedDateState.date) return;
+    if (!date) return;
 
     async function fetchData() { 
-      const day = await getDay(selectedDateState.date);
-
-      selectedDateState.setFlow((day?.flow_intensity ? day.flow_intensity : 0))
-      selectedDateState.setId(day?.id ? day.id : 0)
+      const day = await getDay(date);
+      
+      //set other values of selecteDateState (if they exist)
+      setFlow((day?.flow_intensity ? day.flow_intensity : 0))
+      setId(day?.id ? day.id : 0)
 
         // reset old selected date
         Object.keys(storedDatesState).forEach((date) => {
@@ -91,7 +97,7 @@ export default function FlowCalendar() {
 
           // if an item isn't marked and isn't the selected date, remove it from the stored dates
           if(!(storedDatesState[date].marked)){
-            if(date != selectedDateState.date){
+            if(date != date){
               delete storedDatesState[date]
             }
           }
@@ -99,19 +105,17 @@ export default function FlowCalendar() {
         });
 
         // set new selected date
-        storedDatesState[selectedDateState.date] = {
-          ...storedDatesState[selectedDateState.date],
+        storedDatesState[date] = {
+          ...storedDatesState[date],
           selected: true,
         };
-  
-      //set other values of DayData, flow_intensity and id
 
 
       return
     }
 
     fetchData();
-  }, [selectedDateState.date]);
+  }, [date]);
 
   const dismissKeyboard = () => {
     Keyboard.dismiss();
@@ -134,7 +138,7 @@ export default function FlowCalendar() {
                 markedDates={{...storedDatesState}}
                 enableSwipeMonths={true}
                 onDayPress={(day: { dateString: string }) =>
-                  selectedDateState.setDate(day.dateString)
+                  setDate(day.dateString)
                 }
                 theme={{
                   calendarBackground: theme.colors.background,
@@ -158,7 +162,7 @@ export default function FlowCalendar() {
             </View>
             <ScrollView>
               <View>
-                {selectedDateState.date && (
+                {date && (
                   <DayView/>
                 )}
               </View>

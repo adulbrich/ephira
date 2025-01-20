@@ -3,7 +3,7 @@ import { StyleSheet, View } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { getAllDays, deleteAllDays } from "@/db/database";
 import { Button, Text } from "react-native-paper";
-import { useData} from "@/assets/src/date-storage";
+import { useData} from "@/assets/src/calendar-storage";
 import { DayData } from "@/constants/Interfaces";
 const flows = ["None", "Spotting", "Light", "Medium", "Heavy"];
 

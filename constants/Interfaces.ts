@@ -16,3 +16,24 @@ export interface MarkedDate {
 export interface MarkedDates {
   [key: string]: MarkedDate;
 }
+
+export interface DayDataStore extends DayData{
+  setData: (data: DayData) => void;
+  setDate: (date: string) => void;
+  setId: (num : number) => void;
+  setFlow: (flow: number) => void;
+  reset: () => void;
+}
+
+export interface LoadData{
+  data : DayData[],
+  show: boolean,
+  setData: (data: DayData[]) => void;
+  setShow: (show: boolean) => void;
+}
+
+export interface Accordion{
+  state: string | null,
+  setExpandedAccordion: (state: string | null) => void;
+}
+
