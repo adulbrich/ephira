@@ -74,5 +74,9 @@ export const deleteDay = async (date: string) => {
 };
 
 export const deleteAllDays = async () => {
+  // delete first day manually to trigger useLiveQuery update in Calendar.tsx
+  const firstDay = await db.query.days.findFirst();
+  if (!firstDay) return;
+  await deleteDay(firstDay.date);
   await db.delete(days);
 };
