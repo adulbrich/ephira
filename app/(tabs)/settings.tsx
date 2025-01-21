@@ -1,6 +1,7 @@
 import { ThemedView } from "@/components/ThemedView";
 import AuthenticationSettings from "@/components/AuthenticationSettings";
 import PrivacyPolicy from "@/components/ui/PrivacyPolicy";
+import DeleteData from "@/components/DeleteData";
 import { Text } from "react-native-paper";
 
 export default function Settings() {
@@ -10,6 +11,7 @@ export default function Settings() {
         Settings
       </Text>
       <AuthenticationSettings />
+      <DeleteData />
       <PrivacyPolicy />
     </ThemedView>
   );
