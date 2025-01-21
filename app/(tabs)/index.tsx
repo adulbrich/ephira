@@ -1,4 +1,3 @@
-
 import { StyleSheet } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { Text } from "react-native-paper";
