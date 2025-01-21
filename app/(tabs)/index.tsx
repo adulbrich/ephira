@@ -1,21 +1,19 @@
-
 import { StyleSheet, View } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { getAllDays, deleteAllDays } from "@/db/database";
 import { Button, Text } from "react-native-paper";
-import { useData} from "@/assets/src/calendar-storage";
+import { useData } from "@/assets/src/calendar-storage";
 import { DayData } from "@/constants/Interfaces";
 const flows = ["None", "Spotting", "Light", "Medium", "Heavy"];
 
 export default function HomeScreen() {
   const useDataState = useData();
-  
 
   function refreshData() {
     useDataState.setShow(true);
-    getAllDays().then((result)=>{
-      useDataState.setData(result as DayData[])
-    })
+    getAllDays().then((result) => {
+      useDataState.setData(result as DayData[]);
+    });
   }
 
   return (
