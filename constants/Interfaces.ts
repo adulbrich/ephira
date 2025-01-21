@@ -46,4 +46,3 @@ export interface Symptoms {
   selectedSymptoms: string[];
   setSelectedSymptoms: (values: string[]) => void;
 }
-

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -58,7 +58,7 @@ export default function FlowCalendar() {
       }
     }
     refreshCalendar(data as DayData[]);
-  }, [data, today]);
+  }, [data, today]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Since iOS bar uses absolute positon for blur affect, we have to adjust padding to bottom of container
   const styles = StyleSheet.create({
@@ -94,7 +94,7 @@ export default function FlowCalendar() {
 
         // if an item isn't marked and isn't the selected date, remove it from the stored dates
         if (!storedDatesState[date].marked) {
-          if (date != date) {
+          if (date !== date) {
             delete storedDatesState[date];
           }
         }
@@ -110,7 +110,7 @@ export default function FlowCalendar() {
     }
 
     fetchData();
-  }, [date]);
+  }, [date]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const dismissKeyboard = () => {
     Keyboard.dismiss();

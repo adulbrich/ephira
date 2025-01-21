@@ -71,4 +71,3 @@ export const useSymptoms = create<Symptoms>((set) => ({
   setSelectedSymptoms: (values: string[]) =>
     set(() => ({ selectedSymptoms: values })),
 }));
-

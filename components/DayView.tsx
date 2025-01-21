@@ -212,7 +212,7 @@ export default function DayView() {
       );
       setSelected(values.filter((value) => value !== null) as string[]);
     },
-    [date],
+    [date], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const fetchNotes = useCallback(async () => {
@@ -243,7 +243,7 @@ export default function DayView() {
     fetchEntries("mood");
     fetchNotes();
     setExpandedAccordion(null);
-  }, [setFlow, fetchEntries, fetchNotes]);
+  }, [setFlow, fetchEntries, fetchNotes]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <View style={{ backgroundColor: theme.colors.background }}>
