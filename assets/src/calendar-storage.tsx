@@ -37,6 +37,9 @@ export const useSelectedDate = create<DayDataStore>((set) => ({
   setFlow: (flow: number) => {
     set(() => ({ flow_intensity: flow }));
   },
+  setNotes: (text: string) => {
+    set(() => ({ notes: text }));
+  },
   reset: () => set(initialDay),
 }));
 

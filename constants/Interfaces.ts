@@ -22,6 +22,7 @@ export interface DayDataStore extends DayData {
   setDate: (date: string) => void;
   setId: (num: number) => void;
   setFlow: (flow: number) => void;
+  setNotes: (text: string) => void;
   reset: () => void;
 }
 

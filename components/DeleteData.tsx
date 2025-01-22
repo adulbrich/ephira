@@ -11,12 +11,14 @@ import {
 } from "react-native-paper";
 import { deleteAllDataInDatabase } from "@/db/database";
 import { ThemedView } from "@/components/ThemedView";
+import { useSelectedDate } from "@/assets/src/calendar-storage";
 
 export default function DeleteData() {
   const theme = useTheme();
   const [inputValue, setInputValue] = useState("");
   const [buttonDisabled, setButtonDisabled] = useState(true);
   const [loading, setLoading] = useState(false);
+  const {setDate} = useSelectedDate();
 
   const handleDeleteData = async () => {
     setLoading(true);
@@ -25,6 +27,7 @@ export default function DeleteData() {
     setButtonDisabled(true);
     Alert.alert("Data deleted", "All data has been deleted from this device.");
     setLoading(false);
+    setDate("")
   };
 
   if (loading) {

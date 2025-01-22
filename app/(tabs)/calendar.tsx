@@ -43,7 +43,7 @@ export default function FlowCalendar() {
   // useLiveQuery will automatically update the calendar when the db data changes
   useEffect(() => {
     function refreshCalendar(allDays: DayData[]) {
-      if (allDays) {
+      if (allDays.length != 0) {
         allDays.forEach((day: any) => {
           storedDatesState[day.date] = {
             marked: true,
@@ -55,10 +55,19 @@ export default function FlowCalendar() {
           };
         });
         setDate(today);
+      }else{
+        Object.keys(storedDatesState).forEach((date) => {
+          // if no dates are stored, iterate through and remove set all stored dates as "marked: false"
+          storedDatesState[date] = {
+            ...storedDatesState[date],
+            marked: false,
+          };
+        })
+        setDate(today);
       }
     }
     refreshCalendar(data as DayData[]);
-  }, [data, today]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data, today]); 
 
   // Since iOS bar uses absolute positon for blur affect, we have to adjust padding to bottom of container
   const styles = StyleSheet.create({
@@ -110,7 +119,7 @@ export default function FlowCalendar() {
     }
 
     fetchData();
-  }, [date]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [date]); 
 
   const dismissKeyboard = () => {
     Keyboard.dismiss();

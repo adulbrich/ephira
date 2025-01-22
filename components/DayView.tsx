@@ -29,6 +29,7 @@ import {
 import { symptomOptions } from "@/constants/Symptoms";
 import { moodOptions } from "@/constants/Moods";
 import {
+  useAccordion,
   useMoods,
   useSelectedDate,
   useSymptoms,
@@ -122,14 +123,10 @@ function ChipSelection({
 
 export default function DayView() {
   const theme = useTheme();
-
-  const [notes, setNotes] = useState<string>("");
-  const [expandedAccordion, setExpandedAccordion] = useState<string | null>(
-    null,
-  );
+  const {state, setExpandedAccordion} = useAccordion()
 
   const { selectedMoods, setSelectedMoods } = useMoods();
-  const { date, flow_intensity, setFlow } = useSelectedDate();
+  const { date, flow_intensity, notes, setFlow, setNotes } = useSelectedDate();
   const { selectedSymptoms, setSelectedSymptoms } = useSymptoms();
 
   const syncEntries = async (
@@ -264,9 +261,9 @@ export default function DayView() {
         <List.Section>
           <List.Accordion
             title={"Flow Intensity   |   " + flowOptions[flow_intensity]}
-            expanded={expandedAccordion === "flow"}
+            expanded={state === "flow"}
             onPress={() =>
-              setExpandedAccordion(expandedAccordion === "flow" ? null : "flow")
+              setExpandedAccordion(state === "flow" ? null : "flow")
             }
             left={(props) => <List.Icon {...props} icon="water" />}
           >
@@ -279,10 +276,10 @@ export default function DayView() {
 
           <List.Accordion
             title={"Symptoms   |   " + selectedSymptoms.length + " Selected"}
-            expanded={expandedAccordion === "symptoms"}
+            expanded={state === "symptoms"}
             onPress={() =>
               setExpandedAccordion(
-                expandedAccordion === "symptoms" ? null : "symptoms",
+                state === "symptoms" ? null : "symptoms",
               )
             }
             left={(props) => <List.Icon {...props} icon="alert-decagram" />}
@@ -297,9 +294,9 @@ export default function DayView() {
           <Divider />
           <List.Accordion
             title={"Moods   |   " + selectedMoods.length + " Selected"}
-            expanded={expandedAccordion === "mood"}
+            expanded={state === "mood"}
             onPress={() =>
-              setExpandedAccordion(expandedAccordion === "mood" ? null : "mood")
+              setExpandedAccordion(state === "mood" ? null : "mood")
             }
             left={(props) => <List.Icon {...props} icon="emoticon" />}
           >
@@ -313,10 +310,10 @@ export default function DayView() {
           <Divider />
           <List.Accordion
             title="Medications"
-            expanded={expandedAccordion === "medications"}
+            expanded={state === "medications"}
             onPress={() =>
               setExpandedAccordion(
-                expandedAccordion === "medications" ? null : "medications",
+                state === "medications" ? null : "medications",
               )
             }
             left={(props) => <List.Icon {...props} icon="pill" />}
@@ -328,10 +325,10 @@ export default function DayView() {
           <Divider />
           <List.Accordion
             title="Notes"
-            expanded={expandedAccordion === "notes"}
+            expanded={state === "notes"}
             onPress={() =>
               setExpandedAccordion(
-                expandedAccordion === "notes" ? null : "notes",
+                state === "notes" ? null : "notes",
               )
             }
             left={(props) => <List.Icon {...props} icon="note" />}
