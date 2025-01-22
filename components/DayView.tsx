@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useCallback } from "react";
 import { StyleSheet, View } from "react-native";
 import {
   insertDay,
@@ -123,7 +123,7 @@ function ChipSelection({
 
 export default function DayView() {
   const theme = useTheme();
-  const {state, setExpandedAccordion} = useAccordion()
+  const { state, setExpandedAccordion } = useAccordion();
 
   const { selectedMoods, setSelectedMoods } = useMoods();
   const { date, flow_intensity, notes, setFlow, setNotes } = useSelectedDate();
@@ -219,7 +219,7 @@ export default function DayView() {
     } else {
       setNotes("");
     }
-  }, [date]);
+  }, [date]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function onSave() {
     insertDay(date, flow_intensity, notes).then(async () => {
@@ -278,9 +278,7 @@ export default function DayView() {
             title={"Symptoms   |   " + selectedSymptoms.length + " Selected"}
             expanded={state === "symptoms"}
             onPress={() =>
-              setExpandedAccordion(
-                state === "symptoms" ? null : "symptoms",
-              )
+              setExpandedAccordion(state === "symptoms" ? null : "symptoms")
             }
             left={(props) => <List.Icon {...props} icon="alert-decagram" />}
           >
@@ -327,9 +325,7 @@ export default function DayView() {
             title="Notes"
             expanded={state === "notes"}
             onPress={() =>
-              setExpandedAccordion(
-                state === "notes" ? null : "notes",
-              )
+              setExpandedAccordion(state === "notes" ? null : "notes")
             }
             left={(props) => <List.Icon {...props} icon="note" />}
           >

@@ -18,7 +18,7 @@ export default function DeleteData() {
   const [inputValue, setInputValue] = useState("");
   const [buttonDisabled, setButtonDisabled] = useState(true);
   const [loading, setLoading] = useState(false);
-  const {setDate} = useSelectedDate();
+  const { setDate } = useSelectedDate();
 
   const handleDeleteData = async () => {
     setLoading(true);
@@ -27,7 +27,7 @@ export default function DeleteData() {
     setButtonDisabled(true);
     Alert.alert("Data deleted", "All data has been deleted from this device.");
     setLoading(false);
-    setDate("")
+    setDate("");
   };
 
   if (loading) {
