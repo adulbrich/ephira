@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useCallback } from "react";
 import { StyleSheet, View } from "react-native";
 import {
   insertDay,
@@ -28,6 +28,12 @@ import {
 } from "react-native-paper";
 import { symptomOptions } from "@/constants/Symptoms";
 import { moodOptions } from "@/constants/Moods";
+import {
+  useAccordion,
+  useMoods,
+  useSelectedDate,
+  useSymptoms,
+} from "@/assets/src/calendar-storage";
 
 const flowOptions = ["None", "Spotting", "Light", "Medium", "Heavy"];
 
@@ -73,7 +79,7 @@ function ChipSelection({
 }: {
   options: { label: string; value: string }[];
   selectedValues: string[];
-  setSelectedValues: React.Dispatch<React.SetStateAction<string[]>>;
+  setSelectedValues: (values: string[]) => void;
   label: string;
 }) {
   const theme = useTheme();
@@ -89,10 +95,10 @@ function ChipSelection({
             selected={selectedValues.includes(option.value)}
             showSelectedCheck={false}
             onPress={() => {
-              setSelectedValues((prev) =>
-                prev.includes(option.value)
-                  ? prev.filter((val) => val !== option.value)
-                  : [...prev, option.value],
+              setSelectedValues(
+                selectedValues.includes(option.value)
+                  ? selectedValues.filter((val) => val !== option.value)
+                  : [...selectedValues, option.value],
               );
             }}
             style={{
@@ -115,24 +121,15 @@ function ChipSelection({
   );
 }
 
-export default function DayView({
-  date,
-  dateFlow,
-}: {
-  date: string;
-  dateFlow: number;
-}) {
+export default function DayView() {
   const theme = useTheme();
-  const [flow, setFlow] = useState<number>(dateFlow);
-  const [notes, setNotes] = useState<string>("");
-  const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
-  const [selectedMoods, setSelectedMoods] = useState<string[]>([]);
-  const [expandedAccordion, setExpandedAccordion] = useState<string | null>(
-    null,
-  );
+  const { state, setExpandedAccordion } = useAccordion();
+
+  const { selectedMoods, setSelectedMoods } = useMoods();
+  const { date, flow_intensity, notes, setFlow, setNotes } = useSelectedDate();
+  const { selectedSymptoms, setSelectedSymptoms } = useSymptoms();
 
   const syncEntries = async (
-    date: string,
     selectedValues: string[],
     type: "symptom" | "mood",
   ) => {
@@ -210,10 +207,9 @@ export default function DayView({
           return item?.name ?? null;
         }),
       );
-
       setSelected(values.filter((value) => value !== null) as string[]);
     },
-    [date],
+    [date], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const fetchNotes = useCallback(async () => {
@@ -223,14 +219,15 @@ export default function DayView({
     } else {
       setNotes("");
     }
-  }, [date]);
+  }, [date]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function onSave() {
-    insertDay(date, flow, notes).then(async () => {
-      setFlow(flow);
+    insertDay(date, flow_intensity, notes).then(async () => {
+      setFlow(flow_intensity);
       setExpandedAccordion(null);
-      await syncEntries(date, selectedSymptoms, "symptom");
-      await syncEntries(date, selectedMoods, "mood");
+
+      await syncEntries(selectedSymptoms, "symptom");
+      await syncEntries(selectedMoods, "mood");
       await fetchEntries("symptom");
       await fetchEntries("mood");
       await fetchNotes();
@@ -238,12 +235,12 @@ export default function DayView({
   }
 
   useEffect(() => {
-    setFlow(dateFlow);
+    setFlow(flow_intensity);
     fetchEntries("symptom");
     fetchEntries("mood");
     fetchNotes();
     setExpandedAccordion(null);
-  }, [dateFlow, fetchEntries, fetchNotes]);
+  }, [setFlow, fetchEntries, fetchNotes]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <View style={{ backgroundColor: theme.colors.background }}>
@@ -263,15 +260,15 @@ export default function DayView({
       <View>
         <List.Section>
           <List.Accordion
-            title={"Flow Intensity   |   " + flowOptions[flow]}
-            expanded={expandedAccordion === "flow"}
+            title={"Flow Intensity   |   " + flowOptions[flow_intensity]}
+            expanded={state === "flow"}
             onPress={() =>
-              setExpandedAccordion(expandedAccordion === "flow" ? null : "flow")
+              setExpandedAccordion(state === "flow" ? null : "flow")
             }
             left={(props) => <List.Icon {...props} icon="water" />}
           >
             <FlowRadioButtons
-              selectedOption={flow}
+              selectedOption={flow_intensity}
               setSelectedOption={setFlow}
             />
           </List.Accordion>
@@ -279,11 +276,9 @@ export default function DayView({
 
           <List.Accordion
             title={"Symptoms   |   " + selectedSymptoms.length + " Selected"}
-            expanded={expandedAccordion === "symptoms"}
+            expanded={state === "symptoms"}
             onPress={() =>
-              setExpandedAccordion(
-                expandedAccordion === "symptoms" ? null : "symptoms",
-              )
+              setExpandedAccordion(state === "symptoms" ? null : "symptoms")
             }
             left={(props) => <List.Icon {...props} icon="alert-decagram" />}
           >
@@ -297,9 +292,9 @@ export default function DayView({
           <Divider />
           <List.Accordion
             title={"Moods   |   " + selectedMoods.length + " Selected"}
-            expanded={expandedAccordion === "mood"}
+            expanded={state === "mood"}
             onPress={() =>
-              setExpandedAccordion(expandedAccordion === "mood" ? null : "mood")
+              setExpandedAccordion(state === "mood" ? null : "mood")
             }
             left={(props) => <List.Icon {...props} icon="emoticon" />}
           >
@@ -313,10 +308,10 @@ export default function DayView({
           <Divider />
           <List.Accordion
             title="Medications"
-            expanded={expandedAccordion === "medications"}
+            expanded={state === "medications"}
             onPress={() =>
               setExpandedAccordion(
-                expandedAccordion === "medications" ? null : "medications",
+                state === "medications" ? null : "medications",
               )
             }
             left={(props) => <List.Icon {...props} icon="pill" />}
@@ -328,11 +323,9 @@ export default function DayView({
           <Divider />
           <List.Accordion
             title="Notes"
-            expanded={expandedAccordion === "notes"}
+            expanded={state === "notes"}
             onPress={() =>
-              setExpandedAccordion(
-                expandedAccordion === "notes" ? null : "notes",
-              )
+              setExpandedAccordion(state === "notes" ? null : "notes")
             }
             left={(props) => <List.Icon {...props} icon="note" />}
           >
