@@ -1,29 +1,7 @@
 import { useEffect, useCallback } from "react";
 import { StyleSheet, View } from "react-native";
-import {
-  insertDay,
-  insertSymptom,
-  insertMood,
-  getDay,
-  getSymptom,
-  getMood,
-  getSymptomEntriesForDay,
-  getMoodEntriesForDay,
-  getSymptomByID,
-  getMoodByID,
-  deleteSymptomEntry,
-  deleteMoodEntry,
-  insertSymptomEntry,
-  insertMoodEntry,
-} from "@/db/database";
-import {
-  List,
-  Button,
-  Text,
-  useTheme,
-  Divider,
-  TextInput,
-} from "react-native-paper";
+import { insertDay, getDay } from "@/db/database";
+import { List, Button, Text, useTheme, Divider } from "react-native-paper";
 import {
   useAccordion,
   useMoods,
@@ -35,6 +13,8 @@ import MedicationsAccordion from "./MedicationsAccordion";
 import SymptomsAccordion from "./SymptomsAccordion";
 import MoodsAccordion from "./MoodsAccordion";
 import NotesAccordion from "./NotesAccordion";
+import { useSyncEntries } from "@/hooks/useSyncEntries";
+import { useFetchEntries } from "@/hooks/useFetchEntries";
 
 export default function DayView() {
   const theme = useTheme();
@@ -42,88 +22,11 @@ export default function DayView() {
   const { selectedMoods, setSelectedMoods } = useMoods();
   const { date, flow_intensity, notes, setFlow, setNotes } = useSelectedDate();
   const { selectedSymptoms, setSelectedSymptoms } = useSymptoms();
-
-  const syncEntries = async (
-    selectedValues: string[],
-    type: "symptom" | "mood"
-  ) => {
-    const day = await getDay(date);
-    if (!day) return;
-
-    const existingEntries =
-      type === "symptom"
-        ? await getSymptomEntriesForDay(day.id)
-        : await getMoodEntriesForDay(day.id);
-
-    const insertEntry =
-      type === "symptom" ? insertSymptomEntry : insertMoodEntry;
-    const deleteEntry =
-      type === "symptom" ? deleteSymptomEntry : deleteMoodEntry;
-    const getItem = type === "symptom" ? getSymptom : getMood;
-    const insertItem = type === "symptom" ? insertSymptom : insertMood;
-
-    for (const value of selectedValues) {
-      let item = await getItem(value);
-      if (!item) {
-        await insertItem(value, true);
-        item = await getItem(value);
-      }
-      if (item) {
-        await insertEntry(day.id, item.id);
-      }
-    }
-
-    const selectedIds = await Promise.all(
-      selectedValues.map(async (value) => {
-        const item =
-          type === "symptom" ? await getSymptom(value) : await getMood(value);
-        return item?.id ?? null;
-      })
-    );
-
-    const validIds = selectedIds.filter((id) => id !== null);
-    for (const entry of existingEntries) {
-      const entryId =
-        type === "symptom"
-          ? (entry as { symptom_id: number }).symptom_id
-          : (entry as { mood_id: number }).mood_id;
-      if (
-        (type === "symptom" && !validIds.includes(entryId)) ||
-        (type === "mood" && !validIds.includes(entryId))
-      ) {
-        await deleteEntry(entry.id);
-      }
-    }
-  };
-
-  const fetchEntries = useCallback(
-    async (type: "symptom" | "mood") => {
-      const getEntries =
-        type === "symptom" ? getSymptomEntriesForDay : getMoodEntriesForDay;
-      const getById = type === "symptom" ? getSymptomByID : getMoodByID;
-      const setSelected =
-        type === "symptom" ? setSelectedSymptoms : setSelectedMoods;
-
-      const day = await getDay(date);
-      if (!day) {
-        setSelected([]);
-        return;
-      }
-
-      const entries = await getEntries(day.id);
-      const values = await Promise.all(
-        entries.map(async (entry) => {
-          const id =
-            type === "symptom"
-              ? (entry as { symptom_id: number }).symptom_id
-              : (entry as { mood_id: number }).mood_id;
-          const item = await getById(id);
-          return item?.name ?? null;
-        })
-      );
-      setSelected(values.filter((value) => value !== null) as string[]);
-    },
-    [date] // eslint-disable-line react-hooks/exhaustive-deps
+  const { syncEntries } = useSyncEntries(date);
+  const { fetchEntries } = useFetchEntries(
+    date,
+    setSelectedSymptoms,
+    setSelectedMoods
   );
 
   const fetchNotes = useCallback(async () => {
@@ -133,7 +36,7 @@ export default function DayView() {
     } else {
       setNotes("");
     }
-  }, [date]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [date, setNotes]);
 
   function onSave() {
     insertDay(date, flow_intensity, notes).then(async () => {
