@@ -23,10 +23,7 @@ import {
   useTheme,
   Divider,
   TextInput,
-  Chip,
 } from "react-native-paper";
-import { symptomOptions } from "@/constants/Symptoms";
-import { moodOptions } from "@/constants/Moods";
 import {
   useAccordion,
   useMoods,
@@ -34,61 +31,14 @@ import {
   useSymptoms,
 } from "@/assets/src/calendar-storage";
 import FlowAccordion from "@/components/dayView/FlowAccordion";
-
-function ChipSelection({
-  options,
-  selectedValues,
-  setSelectedValues,
-  label,
-}: {
-  options: { label: string; value: string }[];
-  selectedValues: string[];
-  setSelectedValues: (values: string[]) => void;
-  label: string;
-}) {
-  const theme = useTheme();
-
-  return (
-    <View style={{ padding: 16 }}>
-      <Text style={styles.sectionLabel}>{label}</Text>
-      <View style={styles.chipContainer}>
-        {options.map((option) => (
-          <Chip
-            mode="outlined"
-            key={option.value}
-            selected={selectedValues.includes(option.value)}
-            showSelectedCheck={false}
-            onPress={() => {
-              setSelectedValues(
-                selectedValues.includes(option.value)
-                  ? selectedValues.filter((val) => val !== option.value)
-                  : [...selectedValues, option.value]
-              );
-            }}
-            style={{
-              backgroundColor: selectedValues.includes(option.value)
-                ? theme.colors.onSecondary
-                : theme.colors.secondary,
-              margin: 4,
-            }}
-            textStyle={{
-              color: selectedValues.includes(option.value)
-                ? theme.colors.onSecondaryContainer
-                : theme.colors.secondaryContainer,
-            }}
-          >
-            {option.label}
-          </Chip>
-        ))}
-      </View>
-    </View>
-  );
-}
+import MedicationsAccordion from "./MedicationsAccordion";
+import SymptomsAccordion from "./SymptomsAccordion";
+import MoodsAccordion from "./MoodsAccordion";
+import NotesAccordion from "./NotesAccordion";
 
 export default function DayView() {
   const theme = useTheme();
   const { state, setExpandedAccordion } = useAccordion();
-
   const { selectedMoods, setSelectedMoods } = useMoods();
   const { date, flow_intensity, notes, setFlow, setNotes } = useSelectedDate();
   const { selectedSymptoms, setSelectedSymptoms } = useSymptoms();
@@ -230,71 +180,31 @@ export default function DayView() {
             setFlow={setFlow}
           />
           <Divider />
-
-          <List.Accordion
-            title={"Symptoms   |   " + selectedSymptoms.length + " Selected"}
-            expanded={state === "symptoms"}
-            onPress={() =>
-              setExpandedAccordion(state === "symptoms" ? null : "symptoms")
-            }
-            left={(props) => <List.Icon {...props} icon="alert-decagram" />}
-          >
-            <ChipSelection
-              options={symptomOptions}
-              selectedValues={selectedSymptoms}
-              setSelectedValues={setSelectedSymptoms}
-              label="Select Symptoms:"
-            />
-          </List.Accordion>
+          <SymptomsAccordion
+            state={state}
+            setExpandedAccordion={setExpandedAccordion}
+            selectedSymptoms={selectedSymptoms}
+            setSelectedSymptoms={setSelectedSymptoms}
+          />
           <Divider />
-          <List.Accordion
-            title={"Moods   |   " + selectedMoods.length + " Selected"}
-            expanded={state === "mood"}
-            onPress={() =>
-              setExpandedAccordion(state === "mood" ? null : "mood")
-            }
-            left={(props) => <List.Icon {...props} icon="emoticon" />}
-          >
-            <ChipSelection
-              options={moodOptions}
-              selectedValues={selectedMoods}
-              setSelectedValues={setSelectedMoods}
-              label="Select Moods:"
-            />
-          </List.Accordion>
+          <MoodsAccordion
+            state={state}
+            setExpandedAccordion={setExpandedAccordion}
+            selectedMoods={selectedMoods}
+            setSelectedMoods={setSelectedMoods}
+          />
           <Divider />
-          <List.Accordion
-            title="Medications"
-            expanded={state === "medications"}
-            onPress={() =>
-              setExpandedAccordion(
-                state === "medications" ? null : "medications"
-              )
-            }
-            left={(props) => <List.Icon {...props} icon="pill" />}
-          >
-            <View style={{ padding: 16 }}>
-              <Text>Nothing here yet!</Text>
-            </View>
-          </List.Accordion>
+          <MedicationsAccordion
+            state={state}
+            setExpandedAccordion={setExpandedAccordion}
+          />
           <Divider />
-          <List.Accordion
-            title="Notes"
-            expanded={state === "notes"}
-            onPress={() =>
-              setExpandedAccordion(state === "notes" ? null : "notes")
-            }
-            left={(props) => <List.Icon {...props} icon="note" />}
-          >
-            <View style={{ padding: 16 }}>
-              <TextInput
-                label="Notes"
-                value={notes}
-                onChangeText={(notes) => setNotes(notes)}
-                placeholder="Add Notes..."
-              />
-            </View>
-          </List.Accordion>
+          <NotesAccordion
+            state={state}
+            setExpandedAccordion={setExpandedAccordion}
+            notes={notes}
+            setNotes={setNotes}
+          />
         </List.Section>
       </View>
     </View>
@@ -307,14 +217,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     padding: 16,
-  },
-  chipContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-  },
-  sectionLabel: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 8,
   },
 });
