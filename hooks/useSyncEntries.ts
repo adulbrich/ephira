@@ -47,7 +47,7 @@ export function useSyncEntries(date: string) {
           const item =
             type === "symptom" ? await getSymptom(value) : await getMood(value);
           return item?.id ?? null;
-        })
+        }),
       );
 
       const validIds = selectedIds.filter((id) => id !== null);
@@ -64,7 +64,7 @@ export function useSyncEntries(date: string) {
         }
       }
     },
-    [date]
+    [date],
   );
   return { syncEntries };
 }

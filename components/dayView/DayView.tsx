@@ -26,7 +26,7 @@ export default function DayView() {
   const { fetchEntries } = useFetchEntries(
     date,
     setSelectedSymptoms,
-    setSelectedMoods
+    setSelectedMoods,
   );
 
   const fetchNotes = useCallback(async () => {
@@ -52,12 +52,17 @@ export default function DayView() {
   }
 
   useEffect(() => {
-    setFlow(flow_intensity);
+    if (flow_intensity !== null) {
+      setFlow(flow_intensity);
+    }
+  }, [flow_intensity, setFlow]);
+
+  useEffect(() => {
     fetchEntries("symptom");
     fetchEntries("mood");
     fetchNotes();
     setExpandedAccordion(null);
-  }, [setFlow, fetchEntries, fetchNotes]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fetchEntries, fetchNotes, setExpandedAccordion]);
 
   return (
     <View style={{ backgroundColor: theme.colors.background }}>

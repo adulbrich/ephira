@@ -10,7 +10,7 @@ import {
 export function useFetchEntries(
   date: string,
   setSelectedSymptoms: (values: string[]) => void,
-  setSelectedMoods: (values: string[]) => void
+  setSelectedMoods: (values: string[]) => void,
 ) {
   const fetchEntries = useCallback(
     async (type: "symptom" | "mood") => {
@@ -35,11 +35,11 @@ export function useFetchEntries(
               : (entry as { mood_id: number }).mood_id;
           const item = await getById(id);
           return item?.name ?? null;
-        })
+        }),
       );
       setSelected(values.filter((value) => value !== null) as string[]);
     },
-    [date, setSelectedMoods, setSelectedSymptoms]
+    [date, setSelectedMoods, setSelectedSymptoms],
   );
 
   return { fetchEntries };

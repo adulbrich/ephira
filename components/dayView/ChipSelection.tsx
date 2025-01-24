@@ -28,7 +28,7 @@ export default function ChipSelection({
               setSelectedValues(
                 selectedValues.includes(option.value)
                   ? selectedValues.filter((val) => val !== option.value)
-                  : [...selectedValues, option.value]
+                  : [...selectedValues, option.value],
               );
             }}
             style={{
