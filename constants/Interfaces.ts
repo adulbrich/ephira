@@ -47,3 +47,33 @@ export interface Symptoms {
   selectedSymptoms: string[];
   setSelectedSymptoms: (values: string[]) => void;
 }
+
+export interface Medications {
+  selectedMedications: string[];
+  setSelectedMedications: (values: string[]) => void;
+}
+
+export interface BirthControl {
+  selectedBirthControl: string | null;
+  setSelectedBirthControl: (value: string | null) => void;
+}
+
+export interface BirthControlNotes {
+  birthControlNotes: string;
+  setBirthControlNotes: (notes: string) => void;
+}
+
+export interface TimeTaken {
+  timeTaken: string;
+  setTimeTaken: (time: string) => void;
+}
+
+export interface TimePickerState {
+  showTimePicker: boolean;
+  setShowTimePicker: (show: boolean) => void;
+}
+
+export interface TempSelectedTime {
+  tempSelectedTime: Date | null;
+  setTempSelectedTime: (time: Date | null) => void;
+}
