@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { Calendar } from "react-native-calendars";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
-import DayView from "@/components/DayView";
+import DayView from "@/components/dayView/DayView";
 import { getDay, getDrizzleDatabase } from "@/db/database";
 import type { DayData } from "@/constants/Interfaces";
 import { useTheme, Divider } from "react-native-paper";
