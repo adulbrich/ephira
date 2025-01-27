@@ -254,7 +254,7 @@ export default function DayView() {
           buttonColor= {theme.colors.secondary}
           style={{ flex: 1 }}
         >
-          Select Time Taken
+          {timeTaken !== "" ? `Time Taken: ${timeTaken}` : "Select Time Taken"}
         </Button>
         <Modal
           visible={showTimePicker}
@@ -311,11 +311,6 @@ export default function DayView() {
             </View>
           </View>
         </Modal>
-        {timeTaken !== "" ? (
-          <Text style={styles.text}>Selected Time: {timeTaken}</Text>
-        ) : (
-          <Text style={styles.text}>Selected Time: No time selected yet!</Text>
-        )}
         {birthControlNotesInput}
       </View>
     );
