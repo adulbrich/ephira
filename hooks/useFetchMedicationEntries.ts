@@ -4,7 +4,7 @@ import {
   getMedicationEntriesForDay,
   getMedicationByID,
 } from "@/db/database";
-import { birthControlOptions } from "@/constants/BirthControlTypes"; // Update as needed
+import { birthControlOptions } from "@/constants/BirthControlTypes";
 
 export function useFetchMedicationEntries(
   date: string,
@@ -44,7 +44,6 @@ export function useFetchMedicationEntries(
     if (birthControlEntry) {
       setSelectedBirthControl(birthControlEntry.name);
       setBirthControlNotes(birthControlEntry.notes ?? "");
-      console.log("Birth Control Notes: ", birthControlEntry.notes);
     } else {
       setSelectedBirthControl(null);
       setBirthControlNotes("");
@@ -55,7 +54,6 @@ export function useFetchMedicationEntries(
       .map((value) => value.name);
 
     setSelectedMedications(medicationsWithoutBirthControl);
-    console.log("Medications Without Birth Control: ", medicationsWithoutBirthControl);
   }, [date, setSelectedBirthControl, setSelectedMedications, setBirthControlNotes]);
 
   return { fetchMedicationEntries };

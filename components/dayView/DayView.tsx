@@ -36,11 +36,7 @@ export default function DayView() {
   const { selectedMedications, setSelectedMedications } = useMedications();
   const { selectedBirthControl, setSelectedBirthControl } = useBirthControl();
   const { birthControlNotes, setBirthControlNotes } = useBirthControlNotes();
-  const { timeTaken, setTimeTaken } = useTimeTaken();
-  const { showTimePicker, setShowTimePicker } = useTimePickerState();
-  const { tempSelectedTime, setTempSelectedTime } = useTempSelectedTime();
-
-
+  const { timeTaken } = useTimeTaken();
 
   const { syncEntries } = useSyncEntries(date);
   const { fetchEntries } = useFetchEntries(

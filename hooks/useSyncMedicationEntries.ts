@@ -1,5 +1,3 @@
-
-
 import { useCallback } from "react";
 import {
   getDay,
@@ -9,7 +7,7 @@ import {
   deleteMedicationEntry,
   insertMedication,
 } from "@/db/database";
-import { birthControlOptions } from "@/constants/BirthControlTypes";  // Assuming this is where you store birth control options.
+import { birthControlOptions } from "@/constants/BirthControlTypes";
 
 export function useSyncMedicationEntries(
   date: string,
@@ -42,10 +40,8 @@ export function useSyncMedicationEntries(
         if (item) {
           const isBirthControl = birthControlOptions.find((option: { value: string; }) => option.value === value);
           if (isBirthControl) {
-            console.log("isBirthControl is true");
             await insertEntry(day.id, item.id, time_taken, notes);
           } else {
-            console.log("isBirthControl is false");
             await insertEntry(day.id, item.id); 
           }
         }

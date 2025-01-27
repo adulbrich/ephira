@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { View, Modal, Platform } from "react-native";
 import { List, Text, Button, TextInput } from "react-native-paper";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -6,18 +6,11 @@ import { birthControlOptions } from "@/constants/BirthControlTypes";
 import SingleChipSelection from "./SingleChipSelection";
 import { useTheme } from "react-native-paper";
 import {
-    useAccordion,
-    useMoods,
-    useSelectedDate,
-    useSymptoms,
-    useMedications,
-    useBirthControl,
     useBirthControlNotes,
     useTimeTaken,
     useTimePickerState,
     useTempSelectedTime,
-  } from "@/assets/src/calendar-storage";
-
+} from "@/assets/src/calendar-storage";
 
 export default function BirthControlAccordion({
   state,
@@ -32,7 +25,6 @@ export default function BirthControlAccordion({
 }) {
   const theme = useTheme();
 
-  // State for time picker and notes
   const { showTimePicker, setShowTimePicker } = useTimePickerState();
   const { tempSelectedTime, setTempSelectedTime } = useTempSelectedTime();
   const { timeTaken, setTimeTaken } = useTimeTaken();
@@ -75,16 +67,10 @@ export default function BirthControlAccordion({
     <View>
       <Text style={{ marginVertical: 8 }}>Notes</Text>
       <TextInput
-        placeholder="Enter notes, reminders, appointments, etc."
+        placeholder="Enter reminders, appointments, etc."
         value={birthControlNotes}
         onChangeText={setBirthControlNotes}
-        style={{
-          backgroundColor: theme.colors.background,
-          padding: 8,
-          borderRadius: 4,
-          borderWidth: 1,
-          borderColor: theme.colors.outline,
-        }}
+        style={{ width: '90%' }}
       />
     </View>
   );
