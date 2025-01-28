@@ -11,6 +11,7 @@ export function useFetchMedicationEntries(
   setSelectedBirthControl: (value: string | null) => void,
   setSelectedMedications: (values: string[]) => void,
   setBirthControlNotes: (notes: string) => void,
+  setTimeTaken: (time: string) => void,
 ) {
   const fetchMedicationEntries = useCallback(async () => {
     const day = await getDay(date);
@@ -18,6 +19,7 @@ export function useFetchMedicationEntries(
       setSelectedBirthControl(null);
       setSelectedMedications([]);
       setBirthControlNotes("");
+      setTimeTaken("");
       return;
     }
 
@@ -28,6 +30,7 @@ export function useFetchMedicationEntries(
         return {
           name: item?.name ?? null,
           notes: entry.notes ?? null,
+          time_taken: entry.time_taken ?? null,
         };
       }),
     );
@@ -35,6 +38,7 @@ export function useFetchMedicationEntries(
     const filteredValues = values.filter((value) => value.name !== null) as {
       name: string;
       notes: string | null;
+      time_taken: string | null;
     }[];
 
     const birthControlEntry = filteredValues.find((value) =>
@@ -44,9 +48,11 @@ export function useFetchMedicationEntries(
     if (birthControlEntry) {
       setSelectedBirthControl(birthControlEntry.name);
       setBirthControlNotes(birthControlEntry.notes ?? "");
+      setTimeTaken(birthControlEntry.time_taken ?? "");
     } else {
       setSelectedBirthControl(null);
       setBirthControlNotes("");
+      setTimeTaken("");
     }
 
     const medicationsWithoutBirthControl = filteredValues
@@ -62,6 +68,7 @@ export function useFetchMedicationEntries(
     setSelectedBirthControl,
     setSelectedMedications,
     setBirthControlNotes,
+    setTimeTaken,
   ]);
 
   return { fetchMedicationEntries };

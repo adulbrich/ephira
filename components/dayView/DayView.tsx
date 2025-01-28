@@ -32,7 +32,7 @@ export default function DayView() {
   const { selectedMedications, setSelectedMedications } = useMedications();
   const { selectedBirthControl, setSelectedBirthControl } = useBirthControl();
   const { birthControlNotes, setBirthControlNotes } = useBirthControlNotes();
-  const { timeTaken } = useTimeTaken();
+  const { timeTaken, setTimeTaken } = useTimeTaken();
 
   const { syncEntries } = useSyncEntries(date);
   const { fetchEntries } = useFetchEntries(
@@ -46,6 +46,7 @@ export default function DayView() {
     setSelectedBirthControl,
     setSelectedMedications,
     setBirthControlNotes,
+    setTimeTaken,
   );
 
   const fetchNotes = useCallback(async () => {

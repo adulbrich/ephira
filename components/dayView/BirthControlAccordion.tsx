@@ -69,7 +69,6 @@ export default function BirthControlAccordion({
   const cancelTimeSelection = () => {
     setTempSelectedTime(null);
     setShowTimePicker(false);
-    setTimeTaken("");
   };
 
   const birthControlNotesInput = (
