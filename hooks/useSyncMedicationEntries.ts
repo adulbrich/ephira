@@ -9,22 +9,20 @@ import {
 } from "@/db/database";
 import { birthControlOptions } from "@/constants/BirthControlTypes";
 
-export function useSyncMedicationEntries(
-  date: string,
-) {
+export function useSyncMedicationEntries(date: string) {
   const syncMedicationEntries = useCallback(
-    async (
-      selectedValues: string[],
-      time_taken?: string,
-      notes?: string
-    ) => {
+    async (selectedValues: string[], time_taken?: string, notes?: string) => {
       const day = await getDay(date);
       if (!day) return;
 
       const existingEntries = await getMedicationEntriesForDay(day.id);
 
-      const insertEntry = async (dayId: number, itemId: number, time_taken?: string, notes?: string) =>
-        insertMedicationEntry(dayId, itemId, time_taken, notes);
+      const insertEntry = async (
+        dayId: number,
+        itemId: number,
+        time_taken?: string,
+        notes?: string,
+      ) => insertMedicationEntry(dayId, itemId, time_taken, notes);
 
       const deleteEntry = (entryId: number) => deleteMedicationEntry(entryId);
 
@@ -38,11 +36,13 @@ export function useSyncMedicationEntries(
           item = await getItem(value);
         }
         if (item) {
-          const isBirthControl = birthControlOptions.find((option: { value: string; }) => option.value === value);
+          const isBirthControl = birthControlOptions.find(
+            (option: { value: string }) => option.value === value,
+          );
           if (isBirthControl) {
             await insertEntry(day.id, item.id, time_taken, notes);
           } else {
-            await insertEntry(day.id, item.id); 
+            await insertEntry(day.id, item.id);
           }
         }
       }
@@ -63,7 +63,7 @@ export function useSyncMedicationEntries(
         }
       }
     },
-    [date]
+    [date],
   );
 
   return { syncMedicationEntries };

@@ -25,22 +25,27 @@ export default function SingleChipSelection({
             selected={selectedValue === option.value}
             showSelectedCheck={false}
             elevated={true}
+            elevated={true}
             onPress={() =>
-              setSelectedValue(selectedValue === option.value ? null : option.value)
+              setSelectedValue(
+                selectedValue === option.value ? null : option.value,
+              )
             }
             style={{
-              backgroundColor: selectedValue === option.value
-                ? theme.colors.onSecondary
-                : theme.colors.secondary,
+              backgroundColor:
+                selectedValue === option.value
+                  ? theme.colors.onSecondary
+                  : theme.colors.secondary,
               margin: 4,
               borderRadius: 20,
-              height: 36, 
+              height: 36,
               justifyContent: "center",
             }}
             textStyle={{
-              color: selectedValue === option.value
-                ? theme.colors.onSecondaryContainer
-                : theme.colors.secondaryContainer,
+              color:
+                selectedValue === option.value
+                  ? theme.colors.onSecondaryContainer
+                  : theme.colors.secondaryContainer,
             }}
           >
             {option.label}

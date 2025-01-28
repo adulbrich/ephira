@@ -1,4 +1,4 @@
-import { List, Text } from "react-native-paper";
+import { List } from "react-native-paper";
 import { medicationOptions } from "@/constants/Medications";
 import ChipSelection from "./ChipSelection";
 import { birthControlOptions } from "@/constants/BirthControlTypes";
@@ -17,12 +17,16 @@ export default function MedicationsAccordion({
   // Filter out birth control medications to calculate the count
   const medicationsWithoutBirthControl = selectedMedications.filter(
     (medication) =>
-      !birthControlOptions.some((option) => option.value === medication)
+      !birthControlOptions.some((option) => option.value === medication),
   );
 
   return (
     <List.Accordion
-      title={"Medications   |   " + medicationsWithoutBirthControl.length + " Selected"}
+      title={
+        "Medications   |   " +
+        medicationsWithoutBirthControl.length +
+        " Selected"
+      }
       expanded={state === "medications"}
       onPress={() =>
         setExpandedAccordion(state === "medications" ? null : "medications")
@@ -30,11 +34,11 @@ export default function MedicationsAccordion({
       left={(props) => <List.Icon {...props} icon="pill" />}
     >
       <ChipSelection
-          options={medicationOptions}
-          selectedValues={selectedMedications}
-          setSelectedValues={setSelectedMedications}
-          label="Select Medications:"
-        />
+        options={medicationOptions}
+        selectedValues={selectedMedications}
+        setSelectedValues={setSelectedMedications}
+        label="Select Medications:"
+      />
     </List.Accordion>
   );
 }

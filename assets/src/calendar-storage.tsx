@@ -89,12 +89,14 @@ export const useMedications = create<Medications>((set) => ({
 
 export const useBirthControl = create<BirthControl>((set) => ({
   selectedBirthControl: null,
-  setSelectedBirthControl: (value) => set(() => ({ selectedBirthControl: value })),
+  setSelectedBirthControl: (value) =>
+    set(() => ({ selectedBirthControl: value })),
 }));
 
 export const useBirthControlNotes = create<BirthControlNotes>((set) => ({
   birthControlNotes: "",
-  setBirthControlNotes: (notes: string) => set(() => ({ birthControlNotes: notes })),
+  setBirthControlNotes: (notes: string) =>
+    set(() => ({ birthControlNotes: notes })),
 }));
 
 export const useTimeTaken = create<TimeTaken>((set) => ({
@@ -109,5 +111,6 @@ export const useTimePickerState = create<TimePickerState>((set) => ({
 
 export const useTempSelectedTime = create<TempSelectedTime>((set) => ({
   tempSelectedTime: null,
-  setTempSelectedTime: (time: Date | null) => set(() => ({ tempSelectedTime: time })),
+  setTempSelectedTime: (time: Date | null) =>
+    set(() => ({ tempSelectedTime: time })),
 }));

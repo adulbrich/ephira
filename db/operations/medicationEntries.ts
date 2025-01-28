@@ -55,7 +55,12 @@ export const insertMedicationEntry = async (
   const sanitizedNotes = notes?.trim() || null;
 
   if (existingEntry) {
-    await updateMedicationEntry(day_id, medication_id, sanitizedTimeTaken, sanitizedNotes);
+    await updateMedicationEntry(
+      day_id,
+      medication_id,
+      sanitizedTimeTaken,
+      sanitizedNotes,
+    );
   } else {
     await db
       .insert(medicationEntries)

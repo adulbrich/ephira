@@ -25,6 +25,7 @@ export default function ChipSelection({
             selected={selectedValues.includes(option.value)}
             showSelectedCheck={false}
             elevated={true}
+            elevated={true}
             onPress={() => {
               setSelectedValues(
                 selectedValues.includes(option.value)
@@ -38,7 +39,7 @@ export default function ChipSelection({
                 : theme.colors.secondary,
               margin: 4,
               borderRadius: 20,
-              height: 36, 
+              height: 36,
               justifyContent: "center",
             }}
             textStyle={{

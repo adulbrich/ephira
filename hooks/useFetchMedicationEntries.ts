@@ -38,7 +38,7 @@ export function useFetchMedicationEntries(
     }[];
 
     const birthControlEntry = filteredValues.find((value) =>
-      birthControlOptions.some((option) => option.value === value.name)
+      birthControlOptions.some((option) => option.value === value.name),
     );
 
     if (birthControlEntry) {
@@ -50,12 +50,19 @@ export function useFetchMedicationEntries(
     }
 
     const medicationsWithoutBirthControl = filteredValues
-      .filter((value) => !birthControlOptions.some((option) => option.value === value.name))
+      .filter(
+        (value) =>
+          !birthControlOptions.some((option) => option.value === value.name),
+      )
       .map((value) => value.name);
 
     setSelectedMedications(medicationsWithoutBirthControl);
-  }, [date, setSelectedBirthControl, setSelectedMedications, setBirthControlNotes]);
+  }, [
+    date,
+    setSelectedBirthControl,
+    setSelectedMedications,
+    setBirthControlNotes,
+  ]);
 
   return { fetchMedicationEntries };
 }
-

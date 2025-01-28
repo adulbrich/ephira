@@ -11,8 +11,6 @@ import {
   useBirthControl,
   useBirthControlNotes,
   useTimeTaken,
-  useTimePickerState,
-  useTempSelectedTime,
 } from "@/assets/src/calendar-storage";
 import FlowAccordion from "@/components/dayView/FlowAccordion";
 import MedicationsAccordion from "./MedicationsAccordion";
@@ -24,8 +22,6 @@ import { useSyncEntries } from "@/hooks/useSyncEntries";
 import { useFetchEntries } from "@/hooks/useFetchEntries";
 import { useFetchMedicationEntries } from "@/hooks/useFetchMedicationEntries";
 import { useSyncMedicationEntries } from "@/hooks/useSyncMedicationEntries";
-
-
 
 export default function DayView() {
   const theme = useTheme();
@@ -71,7 +67,11 @@ export default function DayView() {
       if (selectedBirthControl != null) {
         selectedMedications.push(selectedBirthControl);
       }
-      await syncMedicationEntries(selectedMedications, timeTaken, birthControlNotes);
+      await syncMedicationEntries(
+        selectedMedications,
+        timeTaken,
+        birthControlNotes,
+      );
 
       await fetchEntries("symptom");
       await fetchEntries("mood");

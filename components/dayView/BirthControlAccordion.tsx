@@ -6,10 +6,10 @@ import { birthControlOptions } from "@/constants/BirthControlTypes";
 import SingleChipSelection from "./SingleChipSelection";
 import { useTheme } from "react-native-paper";
 import {
-    useBirthControlNotes,
-    useTimeTaken,
-    useTimePickerState,
-    useTempSelectedTime,
+  useBirthControlNotes,
+  useTimeTaken,
+  useTimePickerState,
+  useTempSelectedTime,
 } from "@/assets/src/calendar-storage";
 
 export default function BirthControlAccordion({
@@ -35,21 +35,21 @@ export default function BirthControlAccordion({
       setTimeTaken("");
       setShowTimePicker(false);
     }
-  }, [selectedBirthControl]);
+  }, [selectedBirthControl, setTimeTaken, setShowTimePicker]);
 
   const handleTimeChange = (event: any, selectedTime?: Date) => {
     if (Platform.OS === "android") {
-        if (event.type === "set" && selectedTime) {
-          setTempSelectedTime(selectedTime);
-          finalizeTimeSelection();
-        } else if (event.type === "dismissed") {
-          cancelTimeSelection();
-        }
-      } else if (Platform.OS === "ios") {
-        if (selectedTime) {
-          setTempSelectedTime(selectedTime);
-        }
+      if (event.type === "set" && selectedTime) {
+        setTempSelectedTime(selectedTime);
+        finalizeTimeSelection();
+      } else if (event.type === "dismissed") {
+        cancelTimeSelection();
       }
+    } else if (Platform.OS === "ios") {
+      if (selectedTime) {
+        setTempSelectedTime(selectedTime);
+      }
+    }
   };
 
 
@@ -80,7 +80,7 @@ export default function BirthControlAccordion({
         placeholder="Enter reminders, appointments, etc."
         value={birthControlNotes}
         onChangeText={setBirthControlNotes}
-        style={{ width: '90%' }}
+        style={{ width: "90%" }}
       />
     </View>
   );
@@ -92,7 +92,7 @@ export default function BirthControlAccordion({
         onPress={() => setShowTimePicker(true)}
         textColor={theme.colors.onSecondary}
         buttonColor={theme.colors.secondary}
-        style={{ flex: 1, width: "90%"}}
+        style={{ flex: 1, width: "90%" }}
       >
         {timeTaken !== "" ? `Time Taken: ${timeTaken}` : "Select Time Taken"}
       </Button>
@@ -112,55 +112,61 @@ export default function BirthControlAccordion({
         >
           {Platform.OS === "ios" ? (
             <View
-                style={{
+              style={{
                 backgroundColor: theme.colors.surface,
                 padding: 20,
                 borderRadius: 10,
                 width: "80%",
                 alignItems: "center",
-                }}
+              }}
             >
-                <DateTimePicker
+              <DateTimePicker
                 value={tempSelectedTime || new Date()}
                 mode="time"
                 is24Hour={false}
                 display="spinner"
                 onChange={handleTimeChange}
                 style={{ width: "100%", paddingHorizontal: 10 }}
-                />
-                <View style={{ flexDirection: "row", marginTop: 8, width: "100%" }}>
+              />
+              <View
+                style={{
+                  flexDirection: "row",
+                  marginTop: 8,
+                  width: "100%",
+                }}
+              >
                 <Button
-                    mode="elevated"
-                    onPress={cancelTimeSelection}
-                    textColor={theme.colors.onSecondary}
-                    buttonColor={theme.colors.secondary}
-                    style={{ flex: 1, marginHorizontal: 5 }}
+                  mode="elevated"
+                  onPress={cancelTimeSelection}
+                  textColor={theme.colors.onSecondary}
+                  buttonColor={theme.colors.secondary}
+                  style={{ flex: 1, marginHorizontal: 5 }}
                 >
-                    Cancel
+                  Cancel
                 </Button>
                 <Button
-                    mode="elevated"
-                    onPress={finalizeTimeSelection}
-                    textColor={theme.colors.onSecondary}
-                    buttonColor={theme.colors.secondary}
-                    style={{ flex: 1, marginHorizontal: 5 }}
+                  mode="elevated"
+                  onPress={finalizeTimeSelection}
+                  textColor={theme.colors.onSecondary}
+                  buttonColor={theme.colors.secondary}
+                  style={{ flex: 1, marginHorizontal: 5 }}
                 >
-                    Done
+                  Done
                 </Button>
-                </View>
+              </View>
             </View>
-            ) : (
+          ) : (
             <DateTimePicker
-                value={tempSelectedTime || new Date()}
-                mode="time"
-                is24Hour={false}
-                display="spinner"
-                onChange={(event, selectedTime) => {
+              value={tempSelectedTime || new Date()}
+              mode="time"
+              is24Hour={false}
+              display="spinner"
+              onChange={(event, selectedTime) => {
                 handleTimeChange(event, selectedTime);
                 setShowTimePicker(false);
-                }}
+              }}
             />
-            )}
+          )}
         </View>
         </Modal>
       {birthControlNotesInput}
@@ -188,14 +194,14 @@ export default function BirthControlAccordion({
     }
   };
 
-  const selectedBirthControlLabel = 
-  birthControlOptions.find((option) => option.value === selectedBirthControl)
-  ?.label || "None";
+  const selectedBirthControlLabel =
+    birthControlOptions.find((option) => option.value === selectedBirthControl)
+      ?.label || "None";
 
   return (
     <List.Accordion
-        title={"Birth Control   |   " + selectedBirthControlLabel}
-        expanded={state === "birthControl"}
+      title={"Birth Control   |   " + selectedBirthControlLabel}
+      expanded={state === "birthControl"}
       onPress={() =>
         setExpandedAccordion(state === "birthControl" ? null : "birthControl")
       }
