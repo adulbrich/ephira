@@ -124,7 +124,7 @@ export default function FlowCalendar() {
   const dismissKeyboard = () => {
     Keyboard.dismiss();
   };
-  
+
   const themeKey = theme.dark ? "dark-theme" : "light-theme";
 
   return (
@@ -170,36 +170,6 @@ export default function FlowCalendar() {
               }}
               automaticallyAdjustKeyboardInsets={true}
             >
-              <View
-                style={{ backgroundColor: theme.colors.background, padding: 4 }}
-              >
-                <Calendar
-                  maxDate={today}
-                  markedDates={{ ...storedDatesState }}
-                  enableSwipeMonths={true}
-                  onDayPress={(day: { dateString: string }) =>
-                    setDate(day.dateString)
-                  }
-                  theme={{
-                    calendarBackground: theme.colors.background,
-                    textSectionTitleColor: theme.colors.secondary,
-                    selectedDayBackgroundColor: theme.colors.primary,
-                    selectedDayTextColor: theme.colors.onPrimary,
-                    todayTextColor: theme.colors.primary,
-                    dayTextColor: theme.colors.onBackground,
-                    textDisabledColor: theme.colors.surfaceVariant,
-                    arrowColor: theme.colors.primary,
-                    monthTextColor: theme.colors.primary,
-                    textDayFontFamily: "monospace",
-                    textMonthFontFamily: "monospace",
-                    textDayHeaderFontFamily: "monospace",
-                    textDayFontSize: 16,
-                    textMonthFontSize: 16,
-                    textDayHeaderFontSize: 16,
-                  }}
-                />
-                <Divider />
-              </View>
               <View>{date && <DayView />}</View>
             </ScrollView>
           </SafeAreaView>
