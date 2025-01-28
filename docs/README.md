@@ -1,16 +1,13 @@
-# Astro Starter Kit: Basics
+# Docs
 
-```sh
-npm create astro@latest -- --template basics
-```
+Landing page, future documentation, privacy policy.
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/basics)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/astro/tree/latest/examples/basics)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/withastro/astro?devcontainer_path=.devcontainer/basics/devcontainer.json)
+## Stack
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
-
-![just-the-basics](https://github.com/withastro/astro/assets/2244813/a0a5533c-a856-4198-8470-2d67b1d7c554)
+- [astro](https://docs.astro.build/en/getting-started/)
+- [tailwindcss](https://tailwindcss.com/)
+- [tailwind typography](https://github.com/tailwindlabs/tailwindcss-typography)
+- [heroicons](https://heroicons.com/)
 
 ## 🚀 Project Structure
 
@@ -21,14 +18,25 @@ Inside of your Astro project, you'll see the following folders and files:
 ├── public/
 │   └── favicon.svg
 ├── src/
+│   ├── assets/
+│   ├── components/
+│   │   ├── Header.astro
+│   │   └── Footer.astro
 │   ├── layouts/
 │   │   └── Layout.astro
 │   └── pages/
-│       └── index.astro
+│       ├── index.astro
+│       └── privacy.astro
 └── package.json
 ```
 
 To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+
+In our case, the `Layout.astro` file is imported in both `index.astro` and `privacy.astro`, which applies the layout to all these pages (i.e., wraps these pages).
+
+The `Layout.astro` imports the `Header.astro` and `Footer.astro`, and defines page meta attributes (title, description), favicon, etc.
+
+We use the `prose` tailwindcss typography class in `privacy.astro` to make it look nicer to read without applying much styling.
 
 ## 🧞 Commands
 
@@ -42,7 +50,3 @@ All commands are run from the root of the project, from a terminal:
 | `npm run preview`         | Preview your build locally, before deploying     |
 | `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
 | `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
