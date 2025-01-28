@@ -124,6 +124,7 @@ export default function FlowCalendar() {
   const dismissKeyboard = () => {
     Keyboard.dismiss();
   };
+  const themeKey = theme.dark ? "dark-theme" : "light-theme";
 
   return (
     <SafeAreaProvider>
@@ -131,10 +132,10 @@ export default function FlowCalendar() {
         <KeyboardAvoidingView style={{ flex: 1 }}>
           <SafeAreaView style={styles.container}>
             <View
+              key={themeKey}
               style={{ backgroundColor: theme.colors.background, padding: 4 }}
             >
               <Calendar
-                key={`calendar-${theme.dark}`}
                 maxDate={today}
                 markedDates={{ ...storedDatesState }}
                 enableSwipeMonths={true}
