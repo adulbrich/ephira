@@ -38,10 +38,20 @@ export default function BirthControlAccordion({
   }, [selectedBirthControl]);
 
   const handleTimeChange = (event: any, selectedTime?: Date) => {
-    if (selectedTime) {
-      setTempSelectedTime(selectedTime);
-    }
+    if (Platform.OS === "android") {
+        if (event.type === "set" && selectedTime) {
+          setTempSelectedTime(selectedTime);
+          finalizeTimeSelection();
+        } else if (event.type === "dismissed") {
+          cancelTimeSelection();
+        }
+      } else if (Platform.OS === "ios") {
+        if (selectedTime) {
+          setTempSelectedTime(selectedTime);
+        }
+      }
   };
+
 
   const finalizeTimeSelection = () => {
     const finalTime = tempSelectedTime || new Date();
@@ -82,14 +92,14 @@ export default function BirthControlAccordion({
         onPress={() => setShowTimePicker(true)}
         textColor={theme.colors.onSecondary}
         buttonColor={theme.colors.secondary}
-        style={{ marginVertical: 8 }}
+        style={{ flex: 1, width: "90%"}}
       >
         {timeTaken !== "" ? `Time Taken: ${timeTaken}` : "Select Time Taken"}
       </Button>
       <Modal
         visible={showTimePicker}
         animationType="fade"
-        transparent
+        transparent={true}
         onRequestClose={cancelTimeSelection}
       >
         <View
@@ -100,46 +110,59 @@ export default function BirthControlAccordion({
             backgroundColor: "rgba(0, 0, 0, 0.5)",
           }}
         >
-          <View
-            style={{
-              backgroundColor: theme.colors.surface,
-              padding: 20,
-              borderRadius: 10,
-              width: "80%",
-              alignItems: "center",
-            }}
-          >
-            <DateTimePicker
-              value={tempSelectedTime || new Date()}
-              mode="time"
-              is24Hour={false}
-              display={Platform.OS === "ios" ? "spinner" : "clock"}
-              onChange={handleTimeChange}
-              style={{ width: "100%", paddingHorizontal: 10 }}
-            />
-            <View style={{ flexDirection: "row", marginTop: 8, width: "100%" }}>
-              <Button
-                mode="elevated"
-                onPress={cancelTimeSelection}
-                textColor={theme.colors.onSecondary}
-                buttonColor={theme.colors.secondary}
-                style={{ flex: 1, marginHorizontal: 5 }}
-              >
-                Cancel
-              </Button>
-              <Button
-                mode="elevated"
-                onPress={finalizeTimeSelection}
-                textColor={theme.colors.onSecondary}
-                buttonColor={theme.colors.secondary}
-                style={{ flex: 1, marginHorizontal: 5 }}
-              >
-                Done
-              </Button>
+          {Platform.OS === "ios" ? (
+            <View
+                style={{
+                backgroundColor: theme.colors.surface,
+                padding: 20,
+                borderRadius: 10,
+                width: "80%",
+                alignItems: "center",
+                }}
+            >
+                <DateTimePicker
+                value={tempSelectedTime || new Date()}
+                mode="time"
+                is24Hour={false}
+                display="spinner"
+                onChange={handleTimeChange}
+                style={{ width: "100%", paddingHorizontal: 10 }}
+                />
+                <View style={{ flexDirection: "row", marginTop: 8, width: "100%" }}>
+                <Button
+                    mode="elevated"
+                    onPress={cancelTimeSelection}
+                    textColor={theme.colors.onSecondary}
+                    buttonColor={theme.colors.secondary}
+                    style={{ flex: 1, marginHorizontal: 5 }}
+                >
+                    Cancel
+                </Button>
+                <Button
+                    mode="elevated"
+                    onPress={finalizeTimeSelection}
+                    textColor={theme.colors.onSecondary}
+                    buttonColor={theme.colors.secondary}
+                    style={{ flex: 1, marginHorizontal: 5 }}
+                >
+                    Done
+                </Button>
+                </View>
             </View>
-          </View>
+            ) : (
+            <DateTimePicker
+                value={tempSelectedTime || new Date()}
+                mode="time"
+                is24Hour={false}
+                display="spinner"
+                onChange={(event, selectedTime) => {
+                handleTimeChange(event, selectedTime);
+                setShowTimePicker(false);
+                }}
+            />
+            )}
         </View>
-      </Modal>
+        </Modal>
       {birthControlNotesInput}
     </View>
   );

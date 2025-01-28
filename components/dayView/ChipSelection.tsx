@@ -20,10 +20,11 @@ export default function ChipSelection({
       <View style={styles.chipContainer}>
         {options.map((option) => (
           <Chip
-            mode="outlined"
+            mode="flat"
             key={option.value}
             selected={selectedValues.includes(option.value)}
             showSelectedCheck={false}
+            elevated={true}
             onPress={() => {
               setSelectedValues(
                 selectedValues.includes(option.value)
@@ -36,6 +37,9 @@ export default function ChipSelection({
                 ? theme.colors.onSecondary
                 : theme.colors.secondary,
               margin: 4,
+              borderRadius: 20,
+              height: 36, 
+              justifyContent: "center",
             }}
             textStyle={{
               color: selectedValues.includes(option.value)

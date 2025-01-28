@@ -20,10 +20,11 @@ export default function SingleChipSelection({
       <View style={styles.chipContainer}>
         {options.map((option) => (
           <Chip
-            mode="outlined"
+            mode="flat"
             key={option.value}
             selected={selectedValue === option.value}
             showSelectedCheck={false}
+            elevated={true}
             onPress={() =>
               setSelectedValue(selectedValue === option.value ? null : option.value)
             }
@@ -32,6 +33,9 @@ export default function SingleChipSelection({
                 ? theme.colors.onSecondary
                 : theme.colors.secondary,
               margin: 4,
+              borderRadius: 20,
+              height: 36, 
+              justifyContent: "center",
             }}
             textStyle={{
               color: selectedValue === option.value
