@@ -52,7 +52,6 @@ export default function BirthControlAccordion({
     }
   };
 
-
   const finalizeTimeSelection = () => {
     const finalTime = tempSelectedTime || new Date();
     const hours = finalTime.getHours();
@@ -168,7 +167,7 @@ export default function BirthControlAccordion({
             />
           )}
         </View>
-        </Modal>
+      </Modal>
       {birthControlNotesInput}
     </View>
   );

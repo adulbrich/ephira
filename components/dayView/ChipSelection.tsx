@@ -25,7 +25,6 @@ export default function ChipSelection({
             selected={selectedValues.includes(option.value)}
             showSelectedCheck={false}
             elevated={true}
-            elevated={true}
             onPress={() => {
               setSelectedValues(
                 selectedValues.includes(option.value)

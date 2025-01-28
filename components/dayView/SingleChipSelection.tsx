@@ -25,7 +25,6 @@ export default function SingleChipSelection({
             selected={selectedValue === option.value}
             showSelectedCheck={false}
             elevated={true}
-            elevated={true}
             onPress={() =>
               setSelectedValue(
                 selectedValue === option.value ? null : option.value,
