@@ -41,19 +41,17 @@ export default function BirthControlAccordion({
     if (Platform.OS === "android") {
       if (event.type === "set" && selectedTime) {
         setTempSelectedTime(selectedTime);
-        finalizeTimeSelection();
+        finalizeTimeSelection(selectedTime);
       } else if (event.type === "dismissed") {
         cancelTimeSelection();
       }
-    } else if (Platform.OS === "ios") {
-      if (selectedTime) {
-        setTempSelectedTime(selectedTime);
-      }
+    } else if (Platform.OS === "ios" && selectedTime) {
+      setTempSelectedTime(selectedTime);
     }
   };
 
-  const finalizeTimeSelection = () => {
-    const finalTime = tempSelectedTime || new Date();
+  const finalizeTimeSelection = (selectedTime?: Date) => {
+    const finalTime = selectedTime || tempSelectedTime || new Date();
     const hours = finalTime.getHours();
     const minutes = finalTime.getMinutes();
     const isPM = hours >= 12;
@@ -144,7 +142,9 @@ export default function BirthControlAccordion({
                 </Button>
                 <Button
                   mode="elevated"
-                  onPress={finalizeTimeSelection}
+                  onPress={() =>
+                    finalizeTimeSelection(tempSelectedTime || undefined)
+                  }
                   textColor={theme.colors.onSecondary}
                   buttonColor={theme.colors.secondary}
                   style={{ flex: 1, marginHorizontal: 5 }}
