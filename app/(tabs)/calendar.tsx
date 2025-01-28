@@ -124,6 +124,7 @@ export default function FlowCalendar() {
   const dismissKeyboard = () => {
     Keyboard.dismiss();
   };
+  
   const themeKey = theme.dark ? "dark-theme" : "light-theme";
 
   return (
