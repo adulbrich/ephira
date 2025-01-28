@@ -22,6 +22,7 @@ import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
 import { getDatabase, getDrizzleDatabase } from "@/db/database";
 import DatabaseMigrationError from "@/components/DatabaseMigrationError";
 import PasswordAuthenticationView from "@/components/PasswordAuthenticationView";
+import Banner from "@/components/ui/Banner";
 
 const DB_NAME = "testing.db";
 SplashScreen.preventAutoHideAsync();
@@ -146,6 +147,7 @@ export default function RootLayout() {
             <SafeAreaView
               style={{ flex: 1, backgroundColor: theme.colors.background }}
             >
+              <Banner />
               <Stack>
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                 <Stack.Screen name="+not-found" />
