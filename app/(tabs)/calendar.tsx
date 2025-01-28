@@ -134,6 +134,7 @@ export default function FlowCalendar() {
               style={{ backgroundColor: theme.colors.background, padding: 4 }}
             >
               <Calendar
+                key={`calendar-${theme.dark}`}
                 maxDate={today}
                 markedDates={{ ...storedDatesState }}
                 enableSwipeMonths={true}
