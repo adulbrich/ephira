@@ -1,4 +1,4 @@
-# Docs
+# ephira docs
 
 Landing page, future documentation, privacy policy.
 
