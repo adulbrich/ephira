@@ -7,6 +7,12 @@ import {
   MarkedDates,
   Mood,
   Symptoms,
+  Medications,
+  BirthControl,
+  BirthControlNotes,
+  TimeTaken,
+  TimePickerState,
+  TempSelectedTime,
 } from "@/constants/Interfaces";
 
 const initialDay: DayData = {
@@ -73,4 +79,38 @@ export const useSymptoms = create<Symptoms>((set) => ({
   selectedSymptoms: [],
   setSelectedSymptoms: (values: string[]) =>
     set(() => ({ selectedSymptoms: values })),
+}));
+
+export const useMedications = create<Medications>((set) => ({
+  selectedMedications: [],
+  setSelectedMedications: (values: string[]) =>
+    set(() => ({ selectedMedications: values })),
+}));
+
+export const useBirthControl = create<BirthControl>((set) => ({
+  selectedBirthControl: null,
+  setSelectedBirthControl: (value) =>
+    set(() => ({ selectedBirthControl: value })),
+}));
+
+export const useBirthControlNotes = create<BirthControlNotes>((set) => ({
+  birthControlNotes: "",
+  setBirthControlNotes: (notes: string) =>
+    set(() => ({ birthControlNotes: notes })),
+}));
+
+export const useTimeTaken = create<TimeTaken>((set) => ({
+  timeTaken: "",
+  setTimeTaken: (time: string) => set(() => ({ timeTaken: time })),
+}));
+
+export const useTimePickerState = create<TimePickerState>((set) => ({
+  showTimePicker: false,
+  setShowTimePicker: (show: boolean) => set(() => ({ showTimePicker: show })),
+}));
+
+export const useTempSelectedTime = create<TempSelectedTime>((set) => ({
+  tempSelectedTime: null,
+  setTempSelectedTime: (time: Date | null) =>
+    set(() => ({ tempSelectedTime: time })),
 }));

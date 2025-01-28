@@ -7,14 +7,21 @@ import {
   useMoods,
   useSelectedDate,
   useSymptoms,
+  useMedications,
+  useBirthControl,
+  useBirthControlNotes,
+  useTimeTaken,
 } from "@/assets/src/calendar-storage";
 import FlowAccordion from "@/components/dayView/FlowAccordion";
 import MedicationsAccordion from "./MedicationsAccordion";
+import BirthControlAccordion from "./BirthControlAccordion";
 import SymptomsAccordion from "./SymptomsAccordion";
 import MoodsAccordion from "./MoodsAccordion";
 import NotesAccordion from "./NotesAccordion";
 import { useSyncEntries } from "@/hooks/useSyncEntries";
 import { useFetchEntries } from "@/hooks/useFetchEntries";
+import { useFetchMedicationEntries } from "@/hooks/useFetchMedicationEntries";
+import { useSyncMedicationEntries } from "@/hooks/useSyncMedicationEntries";
 
 export default function DayView() {
   const theme = useTheme();
@@ -22,11 +29,24 @@ export default function DayView() {
   const { selectedMoods, setSelectedMoods } = useMoods();
   const { date, flow_intensity, notes, setFlow, setNotes } = useSelectedDate();
   const { selectedSymptoms, setSelectedSymptoms } = useSymptoms();
+  const { selectedMedications, setSelectedMedications } = useMedications();
+  const { selectedBirthControl, setSelectedBirthControl } = useBirthControl();
+  const { birthControlNotes, setBirthControlNotes } = useBirthControlNotes();
+  const { timeTaken, setTimeTaken } = useTimeTaken();
+
   const { syncEntries } = useSyncEntries(date);
   const { fetchEntries } = useFetchEntries(
     date,
     setSelectedSymptoms,
     setSelectedMoods,
+  );
+  const { syncMedicationEntries } = useSyncMedicationEntries(date);
+  const { fetchMedicationEntries } = useFetchMedicationEntries(
+    date,
+    setSelectedBirthControl,
+    setSelectedMedications,
+    setBirthControlNotes,
+    setTimeTaken,
   );
 
   const fetchNotes = useCallback(async () => {
@@ -45,8 +65,18 @@ export default function DayView() {
 
       await syncEntries(selectedSymptoms, "symptom");
       await syncEntries(selectedMoods, "mood");
+      if (selectedBirthControl != null) {
+        selectedMedications.push(selectedBirthControl);
+      }
+      await syncMedicationEntries(
+        selectedMedications,
+        timeTaken,
+        birthControlNotes,
+      );
+
       await fetchEntries("symptom");
       await fetchEntries("mood");
+      await fetchMedicationEntries();
       await fetchNotes();
     });
   }
@@ -60,9 +90,10 @@ export default function DayView() {
   useEffect(() => {
     fetchEntries("symptom");
     fetchEntries("mood");
+    fetchMedicationEntries();
     fetchNotes();
     setExpandedAccordion(null);
-  }, [fetchEntries, fetchNotes, setExpandedAccordion]);
+  }, [fetchEntries, fetchNotes, fetchMedicationEntries, setExpandedAccordion]);
 
   return (
     <View style={{ backgroundColor: theme.colors.background }}>
@@ -105,6 +136,15 @@ export default function DayView() {
           <MedicationsAccordion
             state={state}
             setExpandedAccordion={setExpandedAccordion}
+            selectedMedications={selectedMedications}
+            setSelectedMedications={setSelectedMedications}
+          />
+          <Divider />
+          <BirthControlAccordion
+            state={state}
+            setExpandedAccordion={setExpandedAccordion}
+            selectedBirthControl={selectedBirthControl}
+            setSelectedBirthControl={setSelectedBirthControl}
           />
           <Divider />
           <NotesAccordion

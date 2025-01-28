@@ -11,6 +11,13 @@ export const getMedication = async (name: string) => {
   return medication;
 };
 
+export const getMedicationByID = async (id: number) => {
+  const medication = await db.query.medications.findFirst({
+    where: eq(medications.id, id),
+  });
+  return medication;
+};
+
 export const getAllMedications = async () => {
   const allMedications = await db.select().from(medications);
   return allMedications;
