@@ -18,7 +18,8 @@ import { useTheme, Divider } from "react-native-paper";
 import { FlowColors } from "@/constants/Colors";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/db/schema";
-
+import CalendarHeader from "@/components/CalendarHeader";
+import { CalendarHeaderProps } from "react-native-calendars/src/calendar/header";
 import { useSelectedDate, useMarkedDates } from "@/assets/src/calendar-storage";
 
 export default function FlowCalendar() {
@@ -141,6 +142,10 @@ export default function FlowCalendar() {
                 style={{ backgroundColor: theme.colors.background, padding: 4 }}
               >
                 <Calendar
+                  headerStyle={{ display: "none" }}
+                  customHeader={(props: CalendarHeaderProps) => (
+                    <CalendarHeader {...props} />
+                  )}
                   maxDate={today}
                   markedDates={{ ...storedDatesState }}
                   enableSwipeMonths={true}
