@@ -19,11 +19,12 @@ export default function Banner() {
         padding: 10,
       }}
     >
-      <TouchableOpacity 
-        onPress={navigateToHome} 
-        style={{ 
-          flexDirection: "row", 
-          alignItems: "center" }}
+      <TouchableOpacity
+        onPress={navigateToHome}
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+        }}
       >
         <Image
           source={require("@/assets/images/capstone-app-logo-transparent.png")}
