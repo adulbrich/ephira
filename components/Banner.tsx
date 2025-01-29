@@ -1,15 +1,20 @@
 import React from "react";
-import { View, Image, TouchableOpacity } from "react-native";
+import { View, Image, TouchableOpacity, useColorScheme } from "react-native";
 import { Text } from "react-native-paper";
 import { useRouter } from "expo-router";
 
 export default function Banner() {
   const router = useRouter();
+  const theme = useColorScheme();
 
   const navigateToHome = () => {
     // Leads to the home page (index.tsx)
     router.push("/");
   };
+
+  const logoSource = theme === "dark"
+    ? require("@/assets/images/capstone-app-logo-transparent.png") // Dark mode image
+    : require("@/assets/images/capstone-app-logo-circle.png"); // Light mode image
 
   return (
     <View
@@ -27,7 +32,7 @@ export default function Banner() {
         }}
       >
         <Image
-          source={require("@/assets/images/capstone-app-logo-transparent.png")}
+          source={logoSource}
           style={{
             width: 40,
             height: 40,
