@@ -31,8 +31,7 @@ export default function Banner() {
         <Text
           variant="headlineMedium"
           style={{
-            fontWeight: '700',
-            fontFamily: 'Roboto',
+            fontWeight: '600',
           }}
         >
           ephira
