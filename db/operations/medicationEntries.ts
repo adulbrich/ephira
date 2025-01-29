@@ -20,7 +20,7 @@ export const updateMedicationEntry = async (
   day_id: number,
   medication_id: number,
   time_taken?: string | null,
-  notes?: string | null
+  notes?: string | null,
 ) => {
   let updateData: object = { day_id, medication_id };
   if (time_taken !== null && time_taken !== undefined) {
@@ -35,8 +35,8 @@ export const updateMedicationEntry = async (
     .where(
       and(
         eq(medicationEntries.day_id, day_id),
-        eq(medicationEntries.medication_id, medication_id)
-      )
+        eq(medicationEntries.medication_id, medication_id),
+      ),
     );
 };
 
@@ -44,11 +44,11 @@ export const insertMedicationEntry = async (
   day_id: number,
   medication_id: number,
   time_taken?: string,
-  notes?: string
+  notes?: string,
 ) => {
   const existingEntries = await getMedicationEntriesForDay(day_id);
   const existingEntry = existingEntries.find(
-    (entry) => entry.medication_id === medication_id
+    (entry) => entry.medication_id === medication_id,
   );
 
   const sanitizedTimeTaken = time_taken?.trim() || null;
@@ -59,7 +59,7 @@ export const insertMedicationEntry = async (
       day_id,
       medication_id,
       sanitizedTimeTaken,
-      sanitizedNotes
+      sanitizedNotes,
     );
   } else {
     await db
