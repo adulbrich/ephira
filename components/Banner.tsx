@@ -12,9 +12,10 @@ export default function Banner() {
     router.push("/");
   };
 
-  const logoSource = theme === "dark"
-    ? require("@/assets/images/capstone-app-logo-transparent.png") // Dark mode image
-    : require("@/assets/images/capstone-app-logo-circle.png"); // Light mode image
+  const logoSource =
+    theme === "dark"
+      ? require("@/assets/images/capstone-app-logo-transparent.png") // Dark mode image
+      : require("@/assets/images/capstone-app-logo-circle.png"); // Light mode image
 
   return (
     <View
