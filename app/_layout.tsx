@@ -22,7 +22,7 @@ import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
 import { getDatabase, getDrizzleDatabase } from "@/db/database";
 import DatabaseMigrationError from "@/components/DatabaseMigrationError";
 import PasswordAuthenticationView from "@/components/PasswordAuthenticationView";
-import Banner from "@/components/ui/Banner";
+import Banner from "@/components/Banner";
 
 const DB_NAME = "testing.db";
 SplashScreen.preventAutoHideAsync();
