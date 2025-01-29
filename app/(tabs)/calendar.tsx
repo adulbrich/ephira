@@ -125,6 +125,8 @@ export default function FlowCalendar() {
     Keyboard.dismiss();
   };
 
+  const themeKey = theme.dark ? "dark-theme" : "light-theme";
+
   return (
     <SafeAreaProvider>
       <TouchableWithoutFeedback onPress={dismissKeyboard}>
@@ -138,6 +140,7 @@ export default function FlowCalendar() {
               automaticallyAdjustKeyboardInsets={true}
             >
               <View
+                key={themeKey}
                 style={{ backgroundColor: theme.colors.background, padding: 4 }}
               >
                 <Calendar
