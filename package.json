@@ -20,7 +20,6 @@
     "@expo/vector-icons": "^14.0.4",
     "@react-navigation/bottom-tabs": "^7.0.0",
     "@react-navigation/native": "^7.0.0",
-    "@react-navigation/stack": "^7.1.1",
     "babel-plugin-inline-import": "^3.0.0",
     "drizzle-orm": "^0.38.3",
     "expo": "^52.0.18",
