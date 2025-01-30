@@ -15,6 +15,7 @@ const MAPPING = {
   "chevron.left.forwardslash.chevron.right": "code",
   "chevron.right": "chevron-right",
   gearshape: "settings",
+  "slider.horizontal.3": "filter",
 } as Partial<
   Record<
     import("expo-symbols").SymbolViewProps["name"],

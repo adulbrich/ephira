@@ -1,46 +1,55 @@
-import { CalendarHeaderProps } from "react-native-calendars/src/calendar/header";
-import { HEADER_HEIGHT } from "react-native-calendars/src/expandableCalendar/style";
 import { useTheme, MD3Theme, IconButton } from "react-native-paper";
 import { View, Text, StyleSheet } from "react-native";
-import { formatNumbers } from "react-native-calendars/src/dateutils";
 
-export default function Header(props: CalendarHeaderProps) {
+const titleLength = 14;
+
+export default function CalendarHeader({ date }: { date: object }) {
+  console.log("date", date);
   const theme = useTheme();
   const styles = makeStyles({ theme });
-  const { month, addMonth } = props;
-  const formattedMonth = formatNumbers(month?.toString("MMMM yyyy"));
-  const changeMonth = (num: number) => {
-    if (addMonth) {
-      addMonth(num);
+  const dateObject = new Date(date.toString());
+  const month = dateObject.toLocaleString("default", { month: "long" });
+  const year = dateObject.getFullYear();
+
+  // we don't have access to the header component and setting the title to
+  // width 100% doesn't work, so we need to pad the title to keep it center
+  // and keep the buttons from shifting around
+  const padTitle = (title: string) => {
+    if (title.length < titleLength) {
+      const diff = titleLength - title.length;
+      console.log("diff: ", diff);
+      const pad = " ".repeat(diff / 2);
+      title = `${pad}${title}${pad}`;
+      // if diff is odd, add one to beginning
+      if (diff % 2 !== 0) {
+        title = ` ${title}`;
+      }
     }
+
+    return title;
   };
 
   return (
-    <View style={styles.container}>
-      <IconButton
-        icon="chevron-left"
-        iconColor={props.theme?.arrowColor}
-        onPress={() => changeMonth(-1)}
-        accessibilityLabel="Previous month"
-      />
+    <View
+      style={{
+        alignSelf: "stretch",
+        flexDirection: "row",
+        alignItems: "center",
+      }}
+    >
       <IconButton
         icon="calendar-end"
         onPress={() => console.log("jump to today")}
         iconColor={theme.colors.primary}
         accessibilityLabel="Jump to today"
       />
-      <Text style={styles.title}>{formattedMonth}</Text>
+
+      <Text style={styles.calendarTitle}>{padTitle(`${month} ${year}`)}</Text>
       <IconButton
         icon="filter"
         iconColor={theme.colors.primary}
         onPress={() => console.log("filter")}
         accessibilityLabel="Filter calendar"
-      />
-      <IconButton
-        icon="chevron-right"
-        iconColor={props.theme?.arrowColor}
-        onPress={() => changeMonth(1)}
-        accessibilityLabel="Next month"
       />
     </View>
   );
@@ -48,18 +57,18 @@ export default function Header(props: CalendarHeaderProps) {
 
 const makeStyles = ({ theme }: { theme: MD3Theme }) =>
   StyleSheet.create({
-    container: {
-      backgroundColor: theme.colors.background,
+    calendarButtons: {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
-      height: HEADER_HEIGHT,
+      padding: 4,
+      gap: 4,
     },
-    title: {
+    calendarTitle: {
       fontSize: 16,
       color: theme.colors.primary,
       textAlign: "center",
       fontFamily: "monospace",
-      flex: 1,
+      paddingHorizontal: 8,
     },
   });

@@ -14,13 +14,12 @@ import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import DayView from "@/components/dayView/DayView";
 import { getDay, getDrizzleDatabase } from "@/db/database";
 import type { DayData } from "@/constants/Interfaces";
-import { useTheme, Divider } from "react-native-paper";
+import { useTheme, MD3Theme, Divider } from "react-native-paper";
 import { FlowColors } from "@/constants/Colors";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/db/schema";
-import CalendarHeader from "@/components/CalendarHeader";
-import { CalendarHeaderProps } from "react-native-calendars/src/calendar/header";
 import { useSelectedDate, useMarkedDates } from "@/assets/src/calendar-storage";
+import CalendarHeader from "@/components/CalendarHeader";
 
 export default function FlowCalendar() {
   // access state management
@@ -31,6 +30,7 @@ export default function FlowCalendar() {
   // const selectedDate = useSelectedDate().date
 
   const theme = useTheme();
+  const styles = makeStyles({ theme });
 
   // get date in local time
   const day = new Date();
@@ -69,19 +69,6 @@ export default function FlowCalendar() {
     }
     refreshCalendar(data as DayData[]);
   }, [data, today]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Since iOS bar uses absolute positon for blur affect, we have to adjust padding to bottom of container
-  const styles = StyleSheet.create({
-    container: {
-      backgroundColor: theme.colors.background,
-      flex: 1,
-      paddingTop: StatusBar.currentHeight,
-      paddingBottom: Platform.select({
-        ios: 70,
-        default: 0,
-      }),
-    },
-  });
 
   // get data for selected date on calendar (when user presses a different day)
   useEffect(() => {
@@ -142,9 +129,8 @@ export default function FlowCalendar() {
                 style={{ backgroundColor: theme.colors.background, padding: 4 }}
               >
                 <Calendar
-                  headerStyle={{ display: "none" }}
-                  customHeader={(props: CalendarHeaderProps) => (
-                    <CalendarHeader {...props} />
+                  renderHeader={(date: object) => (
+                    <CalendarHeader date={date} />
                   )}
                   maxDate={today}
                   markedDates={{ ...storedDatesState }}
@@ -161,12 +147,9 @@ export default function FlowCalendar() {
                     dayTextColor: theme.colors.onBackground,
                     textDisabledColor: theme.colors.surfaceVariant,
                     arrowColor: theme.colors.primary,
-                    monthTextColor: theme.colors.primary,
                     textDayFontFamily: "monospace",
-                    textMonthFontFamily: "monospace",
                     textDayHeaderFontFamily: "monospace",
                     textDayFontSize: 16,
-                    textMonthFontSize: 16,
                     textDayHeaderFontSize: 16,
                   }}
                 />
@@ -180,3 +163,17 @@ export default function FlowCalendar() {
     </SafeAreaProvider>
   );
 }
+
+const makeStyles = ({ theme }: { theme: MD3Theme }) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: theme.colors.background,
+      flex: 1,
+      paddingTop: StatusBar.currentHeight,
+      // Since iOS bar uses absolute positon for blur affect, we have to adjust padding to bottom of container
+      paddingBottom: Platform.select({
+        ios: 70,
+        default: 0,
+      }),
+    },
+  });
