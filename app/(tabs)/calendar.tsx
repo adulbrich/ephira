@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   StyleSheet,
   View,
@@ -22,6 +22,8 @@ import { useSelectedDate, useMarkedDates } from "@/assets/src/calendar-storage";
 import CalendarHeader from "@/components/CalendarHeader";
 
 export default function FlowCalendar() {
+  const [key, setKey] = useState<string>("");
+
   // access state management
   const { date, setDate, setFlow, setId } = useSelectedDate();
   const storedDatesState = useMarkedDates();
@@ -113,6 +115,13 @@ export default function FlowCalendar() {
     Keyboard.dismiss();
   };
 
+  // the calendar doesn't expose a method to jump to today, so we have to
+  // change the key after setting the date to force a re-render
+  const jumpToToday = () => {
+    setDate(today);
+    setKey(date + String(Math.random()));
+  };
+
   return (
     <SafeAreaProvider>
       <TouchableWithoutFeedback onPress={dismissKeyboard}>
@@ -129,8 +138,10 @@ export default function FlowCalendar() {
                 style={{ backgroundColor: theme.colors.background, padding: 4 }}
               >
                 <Calendar
+                  allowSelectionOutOfRange={false}
+                  key={key}
                   renderHeader={(date: object) => (
-                    <CalendarHeader date={date} />
+                    <CalendarHeader onJumpToToday={jumpToToday} date={date} />
                   )}
                   maxDate={today}
                   markedDates={{ ...storedDatesState }}

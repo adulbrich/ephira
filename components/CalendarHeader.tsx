@@ -3,7 +3,13 @@ import { View, Text, StyleSheet } from "react-native";
 
 const titleLength = 14;
 
-export default function CalendarHeader({ date }: { date: object }) {
+export default function CalendarHeader({
+  date,
+  onJumpToToday,
+}: {
+  date: object;
+  onJumpToToday: () => void;
+}) {
   console.log("date", date);
   const theme = useTheme();
   const styles = makeStyles({ theme });
@@ -17,7 +23,6 @@ export default function CalendarHeader({ date }: { date: object }) {
   const padTitle = (title: string) => {
     if (title.length < titleLength) {
       const diff = titleLength - title.length;
-      console.log("diff: ", diff);
       const pad = " ".repeat(diff / 2);
       title = `${pad}${title}${pad}`;
       // if diff is odd, add one to beginning
@@ -39,7 +44,7 @@ export default function CalendarHeader({ date }: { date: object }) {
     >
       <IconButton
         icon="calendar-end"
-        onPress={() => console.log("jump to today")}
+        onPress={onJumpToToday}
         iconColor={theme.colors.primary}
         accessibilityLabel="Jump to today"
       />
