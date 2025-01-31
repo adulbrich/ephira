@@ -115,11 +115,13 @@ export default function FlowCalendar() {
     Keyboard.dismiss();
   };
 
+  const themeKey = theme.dark ? "dark-theme" : "light-theme";
+
   // the calendar doesn't expose a method to jump to today, so we have to
   // change the key after setting the date to force a re-render
   const jumpToToday = () => {
     setDate(today);
-    setKey(date + String(Math.random()));
+    setKey(themeKey + date + String(Math.random()));
   };
 
   return (
@@ -135,6 +137,7 @@ export default function FlowCalendar() {
               automaticallyAdjustKeyboardInsets={true}
             >
               <View
+                key={themeKey}
                 style={{ backgroundColor: theme.colors.background, padding: 4 }}
               >
                 <Calendar

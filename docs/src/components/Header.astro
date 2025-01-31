@@ -1,0 +1,13 @@
+---
+import { Picture } from "astro:assets";
+import logoImage from "../assets/logo.png";
+---
+
+<header
+  class="flex justify-between items-center h-32 shadow w-full shadow-slate-400 p-4"
+>
+  <Picture src={logoImage} formats={["avif", "webp"]} alt="logo" />
+  <h1 class="font-serif text-3xl font-bold text-white lowercase">
+    <a href="/">ephira</a>
+  </h1>
+</header>

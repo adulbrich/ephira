@@ -1,15 +1,15 @@
 import { View, StyleSheet } from "react-native";
 import { Text, Chip, useTheme } from "react-native-paper";
 
-export default function ChipSelection({
+export default function SingleChipSelection({
   options,
-  selectedValues,
-  setSelectedValues,
+  selectedValue,
+  setSelectedValue,
   label,
 }: {
   options: { label: string; value: string }[];
-  selectedValues: string[];
-  setSelectedValues: (values: string[]) => void;
+  selectedValue: string | null;
+  setSelectedValue: (value: string | null) => void;
   label: string;
 }) {
   const theme = useTheme();
@@ -22,29 +22,29 @@ export default function ChipSelection({
           <Chip
             mode="flat"
             key={option.value}
-            selected={selectedValues.includes(option.value)}
+            selected={selectedValue === option.value}
             showSelectedCheck={false}
             elevated={true}
-            onPress={() => {
-              setSelectedValues(
-                selectedValues.includes(option.value)
-                  ? selectedValues.filter((val) => val !== option.value)
-                  : [...selectedValues, option.value],
-              );
-            }}
+            onPress={() =>
+              setSelectedValue(
+                selectedValue === option.value ? null : option.value,
+              )
+            }
             style={{
-              backgroundColor: selectedValues.includes(option.value)
-                ? theme.colors.onSecondary
-                : theme.colors.secondary,
+              backgroundColor:
+                selectedValue === option.value
+                  ? theme.colors.onSecondary
+                  : theme.colors.secondary,
               margin: 4,
               borderRadius: 20,
               height: 36,
               justifyContent: "center",
             }}
             textStyle={{
-              color: selectedValues.includes(option.value)
-                ? theme.colors.onSecondaryContainer
-                : theme.colors.secondaryContainer,
+              color:
+                selectedValue === option.value
+                  ? theme.colors.onSecondaryContainer
+                  : theme.colors.secondaryContainer,
             }}
           >
             {option.label}
