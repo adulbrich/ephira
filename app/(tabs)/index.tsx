@@ -22,36 +22,49 @@ export default function HomeScreen() {
       >
         <FlowChart />
         <View style={styles.flowLogContainer}>
-          <Text
-            style={{
-              color: theme.colors.secondary,
-              fontSize: 24,
-              fontWeight: "bold",
-              paddingBottom: 16,
-              textAlign: "center",
-            }}
+        <Text
+              style={{
+                color: theme.colors.secondary,
+                fontSize: 24,
+                fontWeight: "bold",
+                paddingBottom: 16,
+                textAlign: "center",
+              }}
+            >
+              Your Most Recent Flow Dates This Month
+        </Text>
+        {recentFlowDays.length > 0 ? (
+          <>
+            {recentFlowDays.map((day, index) => {
+              const localDate = new Date(day.date + "T00:00:00");
+              const formattedDate = localDate.toLocaleDateString(undefined, {
+                weekday: "short",
+                month: "short",
+                day: "numeric",
+              });
+              return (
+                <View
+                  key={index}
+                  style={[
+                    styles.flowLogItem,
+                    { backgroundColor: FlowColors[day.flow_intensity] },
+                  ]}
+                >
+                  <Text style={styles.flowLogText}>{formattedDate}</Text>
+                </View>
+              );
+            })}
+          </>
+        ) : (
+          <View
+            style={[
+              styles.flowLogItem,
+              { backgroundColor: theme.colors.secondary, width:"90%" }
+            ]}
           >
-            Your Most Recent Flow Dates This Month
-          </Text>
-          {recentFlowDays.map((day, index) => {
-            const localDate = new Date(day.date + "T00:00:00");
-            const formattedDate = localDate.toLocaleDateString(undefined, {
-              weekday: "short",
-              month: "short",
-              day: "numeric",
-            });
-            return (
-              <View
-                key={index}
-                style={[
-                  styles.flowLogItem,
-                  { backgroundColor: FlowColors[day.flow_intensity] },
-                ]}
-              >
-                <Text style={styles.flowLogText}>{formattedDate}</Text>
-              </View>
-            );
-          })}
+                  <Text style={[styles.flowLogText, {fontSize: 16, color: theme.colors.onSecondary}]}>No Flow Dates Logged This Month!</Text>
+                </View>
+          )}
         </View>
       </View>
     </ThemedView>
