@@ -7,26 +7,8 @@ export function useFetchFlowData() {
 
   const fetchFlowData = async () => {
     const allDays = await getAllDays();
+    const flowDays = allDays.filter((day) => day.flow_intensity);
 
-    const today = new Date();
-    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const lastDayOfMonth = new Date(
-      today.getFullYear(),
-      today.getMonth() + 1,
-      0,
-    );
-
-    const flowDays = allDays.filter((day) => {
-      const dayDateString = day.date.split("T")[0];
-      const firstDayString = firstDayOfMonth.toISOString().split("T")[0];
-      const lastDayString = lastDayOfMonth.toISOString().split("T")[0];
-
-      return (
-        dayDateString >= firstDayString &&
-        dayDateString <= lastDayString &&
-        day.flow_intensity
-      );
-    });
     const sortedFlowDays: DayData[] = flowDays
       .map((day) => ({
         ...day,

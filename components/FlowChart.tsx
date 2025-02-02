@@ -1,10 +1,10 @@
 import { View } from "react-native";
 import { Dimensions } from "react-native";
 import Svg, { Circle, Text, TSpan, Path } from "react-native-svg";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { FlowColors } from "@/constants/Colors";
 import { useTheme } from "react-native-paper";
-import { useData } from "@/assets/src/calendar-storage";
+import { useData, useFlowData } from "@/assets/src/calendar-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import React from "react";
 import { useFetchFlowData } from "@/hooks/useFetchFlowData";
@@ -22,19 +22,27 @@ const { height } = Dimensions.get("window");
 export default function FlowChart() {
   const { data: flowData } = useData();
   const { fetchFlowData } = useFetchFlowData();
+  const { flowDataForCurrentMonth, setFlowDataForCurrentMonth } = useFlowData();
   const theme = useTheme();
-  const position = useSharedValue(278);
-  const initialPosition = useRef(278);
+
+  // Intial positioning for animated circle
+  const position = useSharedValue(275);
+  const initialPosition = useRef(275);
+
+  // Coordinates for rendering circles on the flow chart path
   const circleRadius = 45;
   const centerX = 50;
   const centerY = 50;
+
+  const startingPoint = 270; // This is the placement of the gap at the top of the flow chart
+
   const today = new Date();
+  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
   const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
   const numberOfDaysInMonth = lastDayOfMonth.getDate();
-  const startingPoint = 270;
 
   const renderMarks = () => {
-    return flowData.map((data, index) => {
+    return flowDataForCurrentMonth.map((data, index) => {
       // Convert date to day of the month
       const dayNumber = new Date(data.date + "T00:00:00Z").getUTCDate();
 
@@ -62,7 +70,7 @@ export default function FlowChart() {
 
     let newAngle = targetAngle;
     if (targetAngle < currentAngle) {
-      newAngle = targetAngle + 360; // Make travel around the circle
+      newAngle = targetAngle + 360; // Make marker wrap around the circle
     }
 
     position.value = withTiming(newAngle, {
@@ -71,7 +79,7 @@ export default function FlowChart() {
     });
   };
 
-  // Animated props for circle
+  // Animated props for today circle
   const animatedProps = useAnimatedProps(() => {
     const todayX =
       centerX + circleRadius * Math.cos((position.value * Math.PI) / 180);
@@ -83,7 +91,7 @@ export default function FlowChart() {
     };
   });
 
-  // Create a circular path
+  // Create a circular path for chart
   const arcstartX = 55.7;
   const arcstartY = 5.5;
   const arcendX = 44.3;
@@ -91,18 +99,15 @@ export default function FlowChart() {
   const arcPath = `M ${arcstartX},${arcstartY} A 45,45 0 0,1 95,50 A 45,45 0 0,1 50,95 A 45,45 0 0,1 5,50 A 45,45 0 0,1  ${arcendX},${arcendY}`;
 
   // Format the current month and today's date
-  const todayYearFormatted = today.toLocaleString("default", {
-    year: "numeric",
-  });
-  const todayMonthFormatted = today.toLocaleString("default", {
-    month: "long",
-  });
-  const todayDayFormatted = today.toLocaleString("default", { day: "numeric" });
-  const todayWeekdayFormatted = today.toLocaleString("default", {
-    weekday: "long",
-  });
-  const todayMonthYearFormatted = `${todayMonthFormatted} ${todayDayFormatted},`; // Day number with a comma
-  const todayWeekdayFormattedWithComma = `${todayWeekdayFormatted},`; // Weekday with a comma
+  const todayFormatted = {
+    year: today.toLocaleString("default", { year: "numeric" }),
+    month: today.toLocaleString("default", { month: "long" }),
+    day: today.toLocaleString("default", { day: "numeric" }),
+    weekday: today.toLocaleString("default", { weekday: "long" }),
+  };
+
+  const todayMonthDayFormatted = `${todayFormatted.month} ${todayFormatted.day},`;
+  const todayWeekdayFormattedWithComma = `${todayFormatted.weekday},`;
 
   // Use refs to satisfy lint
   const fetchFlowDataRef = useRef(fetchFlowData);
@@ -126,9 +131,34 @@ export default function FlowChart() {
     }, []),
   );
 
+  // Filter flow data for dates within the current month
+  const filterFlowDataForCurrentMonth = (flowData: any[]) => {
+    if (flowData.length === 0) {
+      setFlowDataForCurrentMonth([]);
+    } else {
+      const firstDayString = firstDayOfMonth.toISOString().split("T")[0];
+      const lastDayString = lastDayOfMonth.toISOString().split("T")[0];
+
+      const filteredData = flowData.filter((day) => {
+        const dayDateString = day.date.split("T")[0];
+        return (
+          dayDateString >= firstDayString &&
+          dayDateString <= lastDayString &&
+          day.flow_intensity
+        );
+      });
+      setFlowDataForCurrentMonth(filteredData);
+    }
+  };
+
+  // Updates the current month's data when there are changes in flowData
+  useEffect(() => {
+    filterFlowDataForCurrentMonth(flowData);
+  }, [flowData]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
-    <View style={{ padding: 16 }}>
-      <Svg height={height * 0.5} width="100%" viewBox="0 0 100 100">
+    <View style={{ padding: 2 }}>
+      <Svg height={height * 0.5} width="100%" viewBox="-5 -5 110 110">
         <Path
           d={arcPath}
           fill="transparent"
@@ -153,10 +183,10 @@ export default function FlowChart() {
             {todayWeekdayFormattedWithComma}
           </TSpan>
           <TSpan x="50" dy="12">
-            {todayMonthYearFormatted}
+            {todayMonthDayFormatted}
           </TSpan>
           <TSpan x="50" dy="12">
-            {todayYearFormatted}
+            {todayFormatted.year}
           </TSpan>
         </Text>
         {renderMarks()}

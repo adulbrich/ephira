@@ -22,48 +22,65 @@ export default function HomeScreen() {
       >
         <FlowChart />
         <View style={styles.flowLogContainer}>
-        <Text
-              style={{
-                color: theme.colors.secondary,
-                fontSize: 24,
-                fontWeight: "bold",
-                paddingBottom: 16,
-                textAlign: "center",
-              }}
-            >
-              Your Most Recent Flow Dates This Month
-        </Text>
-        {recentFlowDays.length > 0 ? (
-          <>
-            {recentFlowDays.map((day, index) => {
-              const localDate = new Date(day.date + "T00:00:00");
-              const formattedDate = localDate.toLocaleDateString(undefined, {
-                weekday: "short",
-                month: "short",
-                day: "numeric",
-              });
-              return (
-                <View
-                  key={index}
-                  style={[
-                    styles.flowLogItem,
-                    { backgroundColor: FlowColors[day.flow_intensity] },
-                  ]}
-                >
-                  <Text style={styles.flowLogText}>{formattedDate}</Text>
-                </View>
-              );
-            })}
-          </>
-        ) : (
-          <View
-            style={[
-              styles.flowLogItem,
-              { backgroundColor: theme.colors.secondary, width:"90%" }
-            ]}
+          <Text
+            style={{
+              color: theme.colors.secondary,
+              fontSize: 24,
+              fontWeight: "bold",
+              paddingVertical: 16,
+              textAlign: "center",
+            }}
           >
-                  <Text style={[styles.flowLogText, {fontSize: 16, color: theme.colors.onSecondary}]}>No Flow Dates Logged This Month!</Text>
-                </View>
+            Your Most Recent Flow Dates
+          </Text>
+          {recentFlowDays.length > 0 ? (
+            <>
+              {recentFlowDays.map((day, index) => {
+                const localDate = new Date(day.date + "T00:00:00");
+                const weekday = localDate.toLocaleDateString(undefined, {
+                  weekday: "short",
+                });
+                const month = localDate.toLocaleDateString(undefined, {
+                  month: "short",
+                });
+                const dayOfMonth = localDate.toLocaleDateString(undefined, {
+                  day: "numeric",
+                });
+
+                return (
+                  <View
+                    key={index}
+                    style={[
+                      styles.flowLogItem,
+                      { backgroundColor: FlowColors[day.flow_intensity] },
+                    ]}
+                  >
+                    <Text style={styles.flowLogText}>{weekday}</Text>
+                    <Text style={styles.flowLogText}>{month}</Text>
+                    <Text style={styles.flowLogText}>{dayOfMonth}</Text>
+                  </View>
+                );
+              })}
+            </>
+          ) : (
+            <View
+              style={[
+                styles.flowLogItem,
+                { backgroundColor: theme.colors.secondary, width: "90%" },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.flowLogText,
+                  {
+                    fontSize: 16,
+                    color: theme.colors.onSecondary,
+                  },
+                ]}
+              >
+                No Flow Dates Logged!
+              </Text>
+            </View>
           )}
         </View>
       </View>
@@ -82,20 +99,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-evenly",
-    padding: 10,
+    padding: 4,
   },
   flowLogItem: {
-    width: "15%",
+    width: "16%",
     height: "40%",
     padding: 10,
     margin: 4,
-    borderRadius: 25,
+    borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
   },
   flowLogText: {
     color: "white",
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "bold",
     textAlign: "center",
   },
