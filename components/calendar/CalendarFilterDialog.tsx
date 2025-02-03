@@ -9,7 +9,9 @@ import {
   Chip,
 } from "react-native-paper";
 import { ScrollView, View, Platform, StyleSheet } from "react-native";
-import { useState } from "react";
+import * as SecureStore from "expo-secure-store";
+import { StorageKeys } from "@/constants/SecureStore";
+import { useEffect, useState } from "react";
 import { symptomOptions } from "@/constants/Symptoms";
 import { moodOptions } from "@/constants/Moods";
 import { medicationOptions } from "@/constants/Medications";
@@ -50,9 +52,12 @@ function FilterSection({
           title={item.label}
           right={() => (
             <Switch
-              value={selectedFilters.includes(item)}
+              value={selectedFilters.some((f) => f.value === item.value)}
               onValueChange={() => onToggleSwitch(item)}
-              disabled={isMaxFiltersSelected && !selectedFilters.includes(item)}
+              disabled={
+                isMaxFiltersSelected &&
+                !selectedFilters.some((f) => f.value === item.value)
+              }
             />
           )}
         />
@@ -70,17 +75,40 @@ export default function CalendarFilterDialog({
 }) {
   const [selectedFilters, setSelectedFilters] = useState<
     { label: string; value: string }[]
-  >([flowOption, notesOption]);
+  >([]);
+
+  // load filters from secure store
+  useEffect(() => {
+    const loadFilters = async () => {
+      const filters = await SecureStore.getItemAsync(
+        StorageKeys.calendarFilters,
+      );
+      if (filters) {
+        setSelectedFilters(JSON.parse(filters));
+      } else {
+        // set Flow as first filter by default
+        setSelectedFilters([flowOption]);
+        await SecureStore.setItemAsync(
+          StorageKeys.calendarFilters,
+          JSON.stringify([flowOption]),
+        );
+      }
+    };
+    loadFilters();
+  }, [visible]);
 
   const applyFilter = () => {
-    console.log("Filtering!");
+    SecureStore.setItemAsync(
+      StorageKeys.calendarFilters,
+      JSON.stringify(selectedFilters),
+    );
     setVisible(false);
   };
 
   const onToggleSwitch = (filter: { label: string; value: string }) => {
-    if (selectedFilters.includes(filter)) {
+    if (selectedFilters.some((f) => f.value === filter.value)) {
       setSelectedFilters(
-        selectedFilters.filter((f) => f.value !== filter.value)
+        selectedFilters.filter((f) => f.value !== filter.value),
       );
     } else if (selectedFilters.length < 3) {
       setSelectedFilters([...selectedFilters, filter]);
@@ -91,7 +119,7 @@ export default function CalendarFilterDialog({
 
   return (
     <Portal>
-      <Dialog visible={visible} onDismiss={() => console.log("dismissed")}>
+      <Dialog visible={visible} onDismiss={() => setVisible(false)}>
         <Dialog.Title style={{ textAlign: "center" }}>
           Filter Calendar
         </Dialog.Title>
@@ -105,7 +133,7 @@ export default function CalendarFilterDialog({
                 key={filter.value}
                 onClose={() =>
                   setSelectedFilters(
-                    selectedFilters.filter((f) => f.value !== filter.value)
+                    selectedFilters.filter((f) => f.value !== filter.value),
                   )
                 }
                 style={styles.chip}
@@ -123,11 +151,13 @@ export default function CalendarFilterDialog({
                 title={flowOption.label}
                 right={() => (
                   <Switch
-                    value={selectedFilters.includes(flowOption)}
+                    value={selectedFilters.some(
+                      (f) => f.value === flowOption.value,
+                    )}
                     onValueChange={() => onToggleSwitch(flowOption)}
                     disabled={
                       isMaxFiltersSelected &&
-                      !selectedFilters.includes(flowOption)
+                      !selectedFilters.some((f) => f.value === flowOption.value)
                     }
                   />
                 )}
@@ -138,11 +168,15 @@ export default function CalendarFilterDialog({
                 title={notesOption.label}
                 right={() => (
                   <Switch
-                    value={selectedFilters.includes(notesOption)}
+                    value={selectedFilters.some(
+                      (f) => f.value === notesOption.value,
+                    )}
                     onValueChange={() => onToggleSwitch(notesOption)}
                     disabled={
                       isMaxFiltersSelected &&
-                      !selectedFilters.includes(notesOption)
+                      !selectedFilters.some(
+                        (f) => f.value === notesOption.value,
+                      )
                     }
                   />
                 )}

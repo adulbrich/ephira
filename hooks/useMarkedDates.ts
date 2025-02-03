@@ -10,7 +10,7 @@ import { ne } from "drizzle-orm";
 function getStartingAndEndingDay(
   day: string,
   prevDay: string | undefined,
-  nextDay: string | undefined
+  nextDay: string | undefined,
 ) {
   const DAY_LENGTH = 24 * 60 * 60 * 1000;
   const date = new Date(day);
@@ -39,7 +39,7 @@ export function useMarkedDates() {
       .select()
       .from(schema.days)
       .where(ne(schema.days.flow_intensity, 0))
-      .orderBy(schema.days.date)
+      .orderBy(schema.days.date),
   );
 
   // get date in local time
@@ -71,7 +71,7 @@ export function useMarkedDates() {
         const { isStartingDay, isEndingDay } = getStartingAndEndingDay(
           day.date,
           allDays[index - 1]?.date,
-          allDays[index + 1]?.date
+          allDays[index + 1]?.date,
         );
 
         newMarkedDates[day.date] = {
