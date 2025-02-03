@@ -14,10 +14,8 @@ export interface periodData {
 }
 
 export interface MarkedDate {
-  marked: boolean;
   selected: boolean;
-  dotColor: string;
-  periods?: periodData[];
+  periods: periodData[];
 }
 
 export interface MarkedDates {

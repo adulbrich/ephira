@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   StyleSheet,
   View,
@@ -72,6 +72,7 @@ export default function FlowCalendar() {
                     <CalendarHeader onJumpToToday={jumpToToday} date={date} />
                   )}
                   maxDate={today}
+                  markingType="multi-period"
                   markedDates={{ ...markedDates }}
                   enableSwipeMonths={true}
                   onDayPress={(day: { dateString: string }) =>

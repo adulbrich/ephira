@@ -5,6 +5,27 @@ import type { DayData, MarkedDates } from "@/constants/Interfaces";
 import { useSelectedDate } from "@/assets/src/calendar-storage";
 import * as schema from "@/db/schema";
 import { FlowColors } from "@/constants/Colors";
+import { ne } from "drizzle-orm";
+
+function getStartingAndEndingDay(
+  day: string,
+  prevDay: string | undefined,
+  nextDay: string | undefined
+) {
+  const DAY_LENGTH = 24 * 60 * 60 * 1000;
+  const date = new Date(day);
+
+  const isStartingDay =
+    !prevDay || date.getTime() - new Date(prevDay).getTime() > DAY_LENGTH;
+
+  const isEndingDay =
+    !nextDay || new Date(nextDay).getTime() - date.getTime() > DAY_LENGTH;
+
+  return {
+    isStartingDay: isStartingDay,
+    isEndingDay: isEndingDay,
+  };
+}
 
 export function useMarkedDates() {
   const [markedDates, setMarkedDates] = useState<MarkedDates>({});
@@ -13,7 +34,13 @@ export function useMarkedDates() {
   const { date, setDate, setFlow, setId } = useSelectedDate();
 
   const db = getDrizzleDatabase();
-  const { data } = useLiveQuery(db.select().from(schema.days));
+  const { data } = useLiveQuery(
+    db
+      .select()
+      .from(schema.days)
+      .where(ne(schema.days.flow_intensity, 0))
+      .orderBy(schema.days.date)
+  );
 
   // get date in local time
   const day = new Date();
@@ -24,11 +51,14 @@ export function useMarkedDates() {
   // useLiveQuery will automatically update the calendar when the db data changes
   useEffect(() => {
     function refreshCalendar(allDays: DayData[]) {
+      for (const day of allDays) {
+        console.log(day);
+      }
       if (!allDays || allDays.length === 0) {
         setMarkedDates((prev) => {
           const updated = { ...prev };
           Object.keys(updated).forEach((date) => {
-            updated[date] = { ...updated[date], marked: false };
+            updated[date] = { ...updated[date], periods: [] };
           });
           return updated;
         });
@@ -37,14 +67,22 @@ export function useMarkedDates() {
       }
 
       const newMarkedDates: MarkedDates = {};
-      allDays.forEach((day) => {
+      allDays.forEach((day, index) => {
+        const { isStartingDay, isEndingDay } = getStartingAndEndingDay(
+          day.date,
+          allDays[index - 1]?.date,
+          allDays[index + 1]?.date
+        );
+
         newMarkedDates[day.date] = {
-          marked: true,
-          dotColor:
-            day.flow_intensity > 0
-              ? FlowColors[day.flow_intensity]
-              : "transparent",
           selected: day.date === today,
+          periods: [
+            {
+              startingDay: isStartingDay,
+              endingDay: isEndingDay,
+              color: FlowColors[day.flow_intensity] || "transparent",
+            },
+          ],
         };
       });
 
@@ -52,7 +90,7 @@ export function useMarkedDates() {
       setDate(today);
     }
     refreshCalendar(data as DayData[]);
-  }, [data, today]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data, today, setDate]);
 
   // get data for selected date on calendar (when user presses a different day)
   useEffect(() => {
@@ -75,11 +113,6 @@ export function useMarkedDates() {
             ...updated[date],
             selected: false,
           };
-
-          // remove any unmarked dates
-          if (!updated[date].marked && date !== today) {
-            delete updated[date];
-          }
         });
 
         // update selected date to selected = true
@@ -93,7 +126,7 @@ export function useMarkedDates() {
     }
 
     fetchData();
-  }, [date]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [date, setFlow, setId, today]);
 
   return { markedDates };
 }
