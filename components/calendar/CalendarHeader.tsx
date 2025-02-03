@@ -1,6 +1,7 @@
 import { useTheme, MD3Theme, IconButton } from "react-native-paper";
 import { View, Text, StyleSheet } from "react-native";
-
+import CalendarFilterDialog from "@/components/calendar/CalendarFilterDialog";
+import { useState } from "react";
 const titleLength = 14;
 
 export default function CalendarHeader({
@@ -10,12 +11,12 @@ export default function CalendarHeader({
   date: object;
   onJumpToToday: () => void;
 }) {
-  console.log("date", date);
   const theme = useTheme();
   const styles = makeStyles({ theme });
   const dateObject = new Date(date.toString());
   const month = dateObject.toLocaleString("default", { month: "long" });
   const year = dateObject.getFullYear();
+  const [filterDialogVisible, setFilterDialogVisible] = useState(false);
 
   // we don't have access to the header component and setting the title to
   // width 100% doesn't work, so we need to pad the title to keep it center
@@ -53,8 +54,12 @@ export default function CalendarHeader({
       <IconButton
         icon="filter"
         iconColor={theme.colors.primary}
-        onPress={() => console.log("filter")}
+        onPress={() => setFilterDialogVisible(true)}
         accessibilityLabel="Filter calendar"
+      />
+      <CalendarFilterDialog
+        visible={filterDialogVisible}
+        setVisible={setFilterDialogVisible}
       />
     </View>
   );

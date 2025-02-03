@@ -19,7 +19,7 @@ import { FlowColors } from "@/constants/Colors";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/db/schema";
 import { useSelectedDate, useMarkedDates } from "@/assets/src/calendar-storage";
-import CalendarHeader from "@/components/CalendarHeader";
+import CalendarHeader from "@/components/calendar/CalendarHeader";
 
 export default function FlowCalendar() {
   const [key, setKey] = useState<string>("");
