@@ -14,6 +14,52 @@ import { symptomOptions } from "@/constants/Symptoms";
 import { moodOptions } from "@/constants/Moods";
 import { medicationOptions } from "@/constants/Medications";
 import { birthControlOptions } from "@/constants/BirthControlTypes";
+const flowOption = { label: "Flow", value: "flow" };
+const notesOption = { label: "Notes", value: "notes" };
+const anySymptomOption = { label: "Any Symptom", value: "any_symptom" };
+const anyMoodOption = { label: "Any Mood", value: "any_mood" };
+const anyMedicationOption = {
+  label: "Any Medication",
+  value: "any_medication",
+};
+const anyBirthControlOption = {
+  label: "Any Birth Control",
+  value: "any_birth_control",
+};
+
+function FilterSection({
+  selectedFilters,
+  onToggleSwitch,
+  isMaxFiltersSelected,
+  subheader,
+  listItems,
+}: {
+  selectedFilters: { label: string; value: string }[];
+  onToggleSwitch: (filter: { label: string; value: string }) => void;
+  isMaxFiltersSelected: boolean;
+  subheader: string;
+  listItems: { label: string; value: string }[];
+}) {
+  return (
+    <List.Section>
+      <List.Subheader>{subheader}</List.Subheader>
+      {listItems.map((item) => (
+        <List.Item
+          style={styles.listItem}
+          key={item.value}
+          title={item.label}
+          right={() => (
+            <Switch
+              value={selectedFilters.includes(item)}
+              onValueChange={() => onToggleSwitch(item)}
+              disabled={isMaxFiltersSelected && !selectedFilters.includes(item)}
+            />
+          )}
+        />
+      ))}
+    </List.Section>
+  );
+}
 
 export default function CalendarFilterDialog({
   visible,
@@ -22,16 +68,20 @@ export default function CalendarFilterDialog({
   visible: boolean;
   setVisible: (visible: boolean) => void;
 }) {
-  const [selectedFilters, setSelectedFilters] = useState<string[]>(["Flow"]);
+  const [selectedFilters, setSelectedFilters] = useState<
+    { label: string; value: string }[]
+  >([flowOption, notesOption]);
 
   const applyFilter = () => {
     console.log("Filtering!");
     setVisible(false);
   };
 
-  const onToggleSwitch = (filter: string) => {
+  const onToggleSwitch = (filter: { label: string; value: string }) => {
     if (selectedFilters.includes(filter)) {
-      setSelectedFilters(selectedFilters.filter((f) => f !== filter));
+      setSelectedFilters(
+        selectedFilters.filter((f) => f.value !== filter.value)
+      );
     } else if (selectedFilters.length < 3) {
       setSelectedFilters([...selectedFilters, filter]);
     }
@@ -52,20 +102,15 @@ export default function CalendarFilterDialog({
           <View style={styles.chipContainer}>
             {selectedFilters.map((filter) => (
               <Chip
-                key={filter}
+                key={filter.value}
                 onClose={() =>
                   setSelectedFilters(
-                    selectedFilters.filter((f) => f !== filter)
+                    selectedFilters.filter((f) => f.value !== filter.value)
                   )
                 }
-                style={{
-                  margin: 4,
-                  borderRadius: 20,
-                  height: 36,
-                  justifyContent: "center",
-                }}
+                style={styles.chip}
               >
-                {filter}
+                {filter.label}
               </Chip>
             ))}
           </View>
@@ -74,132 +119,67 @@ export default function CalendarFilterDialog({
             <List.Section>
               <List.Item
                 style={styles.listItem}
-                key={"flow"}
-                title={"Flow"}
+                key={flowOption.value}
+                title={flowOption.label}
                 right={() => (
                   <Switch
-                    value={selectedFilters.includes("Flow")}
-                    onValueChange={() => onToggleSwitch("Flow")}
-                    disabled={
-                      isMaxFiltersSelected && !selectedFilters.includes("Flow")
-                    }
-                  />
-                )}
-              />
-              <List.Item
-                style={styles.listItem}
-                key={"notes"}
-                title={"Notes"}
-                right={() => (
-                  <Switch
-                    value={selectedFilters.includes("Notes")}
-                    onValueChange={() => onToggleSwitch("Notes")}
-                    disabled={
-                      isMaxFiltersSelected && !selectedFilters.includes("Notes")
-                    }
-                  />
-                )}
-              />
-            </List.Section>
-            <Divider />
-            <List.Section>
-              <List.Subheader>Symptoms</List.Subheader>
-              <List.Item
-                style={styles.listItem}
-                key={"any_symptom"}
-                title={"Any Symptom"}
-                right={() => (
-                  <Switch
-                    value={selectedFilters.includes("Any Symptom")}
-                    onValueChange={() => onToggleSwitch("Any Symptom")}
+                    value={selectedFilters.includes(flowOption)}
+                    onValueChange={() => onToggleSwitch(flowOption)}
                     disabled={
                       isMaxFiltersSelected &&
-                      !selectedFilters.includes("Any Symptom")
+                      !selectedFilters.includes(flowOption)
                     }
                   />
                 )}
               />
-              {symptomOptions.map((symptom) => (
-                <List.Item
-                  style={styles.listItem}
-                  key={symptom.label}
-                  title={symptom.label}
-                  right={() => (
-                    <Switch
-                      value={selectedFilters.includes(symptom.label)}
-                      onValueChange={() => onToggleSwitch(symptom.label)}
-                      disabled={
-                        isMaxFiltersSelected &&
-                        !selectedFilters.includes(symptom.label)
-                      }
-                    />
-                  )}
-                />
-              ))}
+              <List.Item
+                style={styles.listItem}
+                key={notesOption.value}
+                title={notesOption.label}
+                right={() => (
+                  <Switch
+                    value={selectedFilters.includes(notesOption)}
+                    onValueChange={() => onToggleSwitch(notesOption)}
+                    disabled={
+                      isMaxFiltersSelected &&
+                      !selectedFilters.includes(notesOption)
+                    }
+                  />
+                )}
+              />
             </List.Section>
             <Divider />
-            <List.Section>
-              <List.Subheader>Moods</List.Subheader>
-              {moodOptions.map((mood) => (
-                <List.Item
-                  style={styles.listItem}
-                  key={mood.label}
-                  title={mood.label}
-                  right={() => (
-                    <Switch
-                      value={selectedFilters.includes(mood.label)}
-                      onValueChange={() => onToggleSwitch(mood.label)}
-                      disabled={
-                        isMaxFiltersSelected &&
-                        !selectedFilters.includes(mood.label)
-                      }
-                    />
-                  )}
-                />
-              ))}
-            </List.Section>
+            <FilterSection
+              selectedFilters={selectedFilters}
+              onToggleSwitch={onToggleSwitch}
+              isMaxFiltersSelected={isMaxFiltersSelected}
+              subheader="Symptoms"
+              listItems={[anySymptomOption, ...symptomOptions]}
+            />
             <Divider />
-            <List.Section>
-              <List.Subheader>Medications</List.Subheader>
-              {medicationOptions.map((medication) => (
-                <List.Item
-                  style={styles.listItem}
-                  key={medication.label}
-                  title={medication.label}
-                  right={() => (
-                    <Switch
-                      value={selectedFilters.includes(medication.label)}
-                      onValueChange={() => onToggleSwitch(medication.label)}
-                      disabled={
-                        isMaxFiltersSelected &&
-                        !selectedFilters.includes(medication.label)
-                      }
-                    />
-                  )}
-                />
-              ))}
-            </List.Section>
+            <FilterSection
+              selectedFilters={selectedFilters}
+              onToggleSwitch={onToggleSwitch}
+              isMaxFiltersSelected={isMaxFiltersSelected}
+              subheader="Moods"
+              listItems={[anyMoodOption, ...moodOptions]}
+            />
             <Divider />
-            <List.Section>
-              <List.Subheader>Birth Control</List.Subheader>
-              {birthControlOptions.map((birthControl) => (
-                <List.Item
-                  style={styles.listItem}
-                  key={birthControl.label}
-                  title={birthControl.label}
-                  right={() => (
-                    <Switch
-                      value={selectedFilters.includes(birthControl.label)}
-                      onValueChange={() => onToggleSwitch(birthControl.label)}
-                      disabled={
-                        isMaxFiltersSelected &&
-                        !selectedFilters.includes(birthControl.label)
-                      }
-                    />
-                  )}
-                />
-              ))}
-            </List.Section>
+            <FilterSection
+              selectedFilters={selectedFilters}
+              onToggleSwitch={onToggleSwitch}
+              isMaxFiltersSelected={isMaxFiltersSelected}
+              subheader="Medications"
+              listItems={[anyMedicationOption, ...medicationOptions]}
+            />
+            <Divider />
+            <FilterSection
+              selectedFilters={selectedFilters}
+              onToggleSwitch={onToggleSwitch}
+              isMaxFiltersSelected={isMaxFiltersSelected}
+              subheader="Birth Control"
+              listItems={[anyBirthControlOption, ...birthControlOptions]}
+            />
           </ScrollView>
         </Dialog.Content>
         <Dialog.Actions>
@@ -217,6 +197,12 @@ const styles = StyleSheet.create({
   chipContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
+  },
+  chip: {
+    margin: 4,
+    borderRadius: 20,
+    height: 36,
+    justifyContent: "center",
   },
   listItem: {
     paddingVertical: Platform.OS === "android" ? 0 : undefined,
