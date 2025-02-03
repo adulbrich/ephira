@@ -7,10 +7,17 @@ export interface DayData {
   notes?: string;
 }
 
+export interface periodData {
+  startingDay: boolean;
+  endingDay: boolean;
+  color: string;
+}
+
 export interface MarkedDate {
   marked: boolean;
   selected: boolean;
   dotColor: string;
+  periods?: periodData[];
 }
 
 export interface MarkedDates {

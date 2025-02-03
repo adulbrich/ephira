@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   StyleSheet,
   View,
@@ -12,21 +12,17 @@ import {
 import { Calendar } from "react-native-calendars";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import DayView from "@/components/dayView/DayView";
-import { getDay, getDrizzleDatabase } from "@/db/database";
-import type { DayData } from "@/constants/Interfaces";
 import { useTheme, MD3Theme, Divider } from "react-native-paper";
-import { FlowColors } from "@/constants/Colors";
-import { useLiveQuery } from "drizzle-orm/expo-sqlite";
-import * as schema from "@/db/schema";
-import { useSelectedDate, useMarkedDates } from "@/assets/src/calendar-storage";
+import { useSelectedDate } from "@/assets/src/calendar-storage";
 import CalendarHeader from "@/components/calendar/CalendarHeader";
+import { useMarkedDates } from "@/hooks/useMarkedDates";
 
 export default function FlowCalendar() {
+  const { markedDates } = useMarkedDates();
   const [key, setKey] = useState<string>("");
 
   // access state management
-  const { date, setDate, setFlow, setId } = useSelectedDate();
-  const storedDatesState = useMarkedDates();
+  const { date, setDate } = useSelectedDate();
 
   // can also be used like this
   // const selectedDate = useSelectedDate().date
@@ -39,77 +35,6 @@ export default function FlowCalendar() {
   const offset = day.getTimezoneOffset();
   const localDate = new Date(day.getTime() - offset * 60 * 1000);
   const today = localDate.toISOString().split("T")[0];
-
-  const db = getDrizzleDatabase();
-  const { data } = useLiveQuery(db.select().from(schema.days));
-
-  // useLiveQuery will automatically update the calendar when the db data changes
-  useEffect(() => {
-    function refreshCalendar(allDays: DayData[]) {
-      if (allDays.length !== 0) {
-        allDays.forEach((day: any) => {
-          storedDatesState[day.date] = {
-            marked: true,
-            dotColor:
-              day.flow_intensity > 0
-                ? FlowColors[day.flow_intensity]
-                : "transparent",
-            selected: day.date === today,
-          };
-        });
-        setDate(today);
-      } else {
-        Object.keys(storedDatesState).forEach((date) => {
-          // if no dates are stored, iterate through and remove set all stored dates as "marked: false"
-          storedDatesState[date] = {
-            ...storedDatesState[date],
-            marked: false,
-          };
-        });
-        setDate(today);
-      }
-    }
-    refreshCalendar(data as DayData[]);
-  }, [data, today]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // get data for selected date on calendar (when user presses a different day)
-  useEffect(() => {
-    if (!date) return;
-
-    async function fetchData() {
-      const day = await getDay(date);
-
-      //set other values of selecteDateState (if they exist)
-      setFlow(day?.flow_intensity ? day.flow_intensity : 0);
-      setId(day?.id ? day.id : 0);
-
-      // reset old selected date
-      Object.keys(storedDatesState).forEach((date) => {
-        // iterate through all stored dates, set selected = false
-        storedDatesState[date] = {
-          ...storedDatesState[date],
-          selected: false,
-        };
-
-        // if an item isn't marked and isn't the selected date, remove it from the stored dates
-        if (!storedDatesState[date].marked) {
-          if (date !== date) {
-            delete storedDatesState[date];
-          }
-        }
-      });
-
-      // set new selected date
-      storedDatesState[date] = {
-        ...storedDatesState[date],
-        selected: true,
-      };
-
-      return;
-    }
-
-    fetchData();
-  }, [date]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const dismissKeyboard = () => {
     Keyboard.dismiss();
@@ -147,7 +72,7 @@ export default function FlowCalendar() {
                     <CalendarHeader onJumpToToday={jumpToToday} date={date} />
                   )}
                   maxDate={today}
-                  markedDates={{ ...storedDatesState }}
+                  markedDates={{ ...markedDates }}
                   enableSwipeMonths={true}
                   onDayPress={(day: { dateString: string }) =>
                     setDate(day.dateString)
