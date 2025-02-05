@@ -106,9 +106,7 @@ export default function PrivacyPolicy() {
                   <Text>{"2." + " "}</Text>
                   <Text style={{ paddingLeft: 5, flex: 1 }}>
                     Type in "
-                    <Text
-                      style={{color: theme.colors.tertiary }}
-                    >
+                    <Text style={{ color: theme.colors.tertiary }}>
                       delete data
                     </Text>
                     "
@@ -242,9 +240,7 @@ export default function PrivacyPolicy() {
                     paddingLeft: 10,
                   }}
                 >
-                  <Text>
-                    {"\u2022" + " "}
-                  </Text>
+                  <Text>{"\u2022" + " "}</Text>
                   <Text style={{ paddingLeft: 5, flex: 1 }}>
                     By email: ephira@capucity.be
                   </Text>
