@@ -22,15 +22,15 @@ export default function HomeScreen() {
       >
         <FlowChart />
         <Text
-            style={{
-              color: theme.colors.secondary,
-              fontSize: 24,
-              fontWeight: "bold",
-              paddingVertical: 16,
-              textAlign: "center",
-            }}
-          >
-            Your Most Recent Flow Dates
+          style={{
+            color: theme.colors.secondary,
+            fontSize: 24,
+            fontWeight: "bold",
+            paddingVertical: 16,
+            textAlign: "center",
+          }}
+        >
+          Your Most Recent Flow Dates
         </Text>
         <View style={styles.flowLogContainer}>
           {recentFlowDays.length > 0 ? (
