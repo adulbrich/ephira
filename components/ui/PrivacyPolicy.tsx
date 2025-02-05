@@ -107,10 +107,7 @@ export default function PrivacyPolicy() {
                   <Text style={{ paddingLeft: 5, flex: 1 }}>
                     Type in "
                     <Text
-                      style={[
-                        styles.italicFont,
-                        { color: theme.colors.tertiary },
-                      ]}
+                      style={{color: theme.colors.tertiary }}
                     >
                       delete data
                     </Text>
@@ -237,7 +234,7 @@ export default function PrivacyPolicy() {
             description={
               <Text>
                 {"\n"}If you have any questions about this Privacy Polcy, you
-                can contact us:
+                can contact us:{"\n"}
                 <View
                   style={{
                     flexDirection: "row",
@@ -246,11 +243,10 @@ export default function PrivacyPolicy() {
                   }}
                 >
                   <Text>
-                    {"\n"}
                     {"\u2022" + " "}
                   </Text>
                   <Text style={{ paddingLeft: 5, flex: 1 }}>
-                    {"\n"}By email: ephira@capucity.be
+                    By email: ephira@capucity.be
                   </Text>
                 </View>
               </Text>
@@ -269,9 +265,5 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 15,
     fontFamily: Platform.OS === "ios" ? "Times New Roman" : "serif",
-  },
-  italicFont: {
-    fontStyle: "italic",
-    fontFamily: Platform.OS === "ios" ? "Arial-ItalicMT" : "sans-serif",
   },
 });
