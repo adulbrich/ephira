@@ -5,6 +5,7 @@ import { deleteAllMoods } from "@/db/operations/moods";
 import { deleteAllSymptomEntries } from "@/db/operations/symptomEntries";
 import { deleteAllSymptoms } from "@/db/operations/symptoms";
 import { deleteAllDays } from "@/db/operations/days";
+import { deleteAllSettings } from "@/db/operations/settings";
 
 export async function deleteAllDataInDatabase() {
   try {
@@ -15,6 +16,7 @@ export async function deleteAllDataInDatabase() {
     await deleteAllSymptomEntries();
     await deleteAllSymptoms();
     await deleteAllDays();
+    await deleteAllSettings();
 
     console.log("All database data has been deleted successfully.");
   } catch (error) {
@@ -22,6 +24,7 @@ export async function deleteAllDataInDatabase() {
   }
 }
 
+export * from "@/db/operations/settings";
 export * from "@/db/operations/setup";
 export * from "@/db/operations/days";
 export * from "@/db/operations/moods";

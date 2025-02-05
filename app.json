@@ -54,8 +54,7 @@
         {
           "faceIDPermission": "Allow PrivyPeriod to use Face ID."
         }
-      ],
-      "expo-secure-store"
+      ]
     ],
     "experiments": {
       "typedRoutes": true

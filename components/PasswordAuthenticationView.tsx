@@ -8,7 +8,6 @@ import {
   useTheme,
   ActivityIndicator,
 } from "react-native-paper";
-import * as SecureStore from "expo-secure-store";
 import { deleteAllDataInDatabase } from "@/db/database";
 
 function ForgotPassword({
@@ -97,9 +96,6 @@ export default function PasswordAuthenticationView({
     setDeleteData(true);
     setLoading(true);
     await deleteAllDataInDatabase();
-    await SecureStore.deleteItemAsync("password");
-    await SecureStore.deleteItemAsync("passwordEnabled");
-    await SecureStore.deleteItemAsync("biometricEnabled");
     setLoading(false);
   };
 
