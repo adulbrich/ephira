@@ -77,3 +77,8 @@ export interface TempSelectedTime {
   tempSelectedTime: Date | null;
   setTempSelectedTime: (time: Date | null) => void;
 }
+
+export interface FlowDataState {
+  flowDataForCurrentMonth: DayData[];
+  setFlowDataForCurrentMonth: (data: DayData[]) => void;
+}
