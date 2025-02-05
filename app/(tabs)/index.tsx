@@ -21,8 +21,7 @@ export default function HomeScreen() {
         style={{ flex: 1, justifyContent: "center", alignContent: "center" }}
       >
         <FlowChart />
-        <View style={styles.flowLogContainer}>
-          <Text
+        <Text
             style={{
               color: theme.colors.secondary,
               fontSize: 24,
@@ -32,7 +31,8 @@ export default function HomeScreen() {
             }}
           >
             Your Most Recent Flow Dates
-          </Text>
+        </Text>
+        <View style={styles.flowLogContainer}>
           {recentFlowDays.length > 0 ? (
             <>
               {recentFlowDays.map((day, index) => {
