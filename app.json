@@ -24,7 +24,11 @@
         "backgroundColor": "#ffffff"
       },
       "softwareKeyboardLayoutMode": "pan",
-      "package": "com.capucity.ephira"
+      "package": "com.capucity.ephira",
+      "permissions": [
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -65,7 +69,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "7cc933e5-cf1c-454c-8e2f-e548703cac7a"
+        "projectId": "2867c2b0-600b-4681-893b-487696051508"
       }
     },
     "owner": "capucity"
