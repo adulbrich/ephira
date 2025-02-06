@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "PrivyPeriod",
-    "slug": "privyperiod",
+    "name": "ephira",
+    "slug": "ephira",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.capucity.privyperiod",
+      "bundleIdentifier": "com.capucity.ephira",
       "config": {
         "usesNonExemptEncryption": false
       },
@@ -24,7 +24,7 @@
         "backgroundColor": "#ffffff"
       },
       "softwareKeyboardLayoutMode": "pan",
-      "package": "com.capucity.privyperiod"
+      "package": "com.capucity.ephira"
     },
     "web": {
       "bundler": "metro",
@@ -52,7 +52,7 @@
       [
         "expo-local-authentication",
         {
-          "faceIDPermission": "Allow PrivyPeriod to use Face ID."
+          "faceIDPermission": "Allow ephira to use Face ID."
         }
       ],
       "expo-secure-store"

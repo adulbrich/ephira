@@ -1,12 +1,12 @@
-# PrivyPeriod
+# ephira
 
-## Sprint 1 demo:
+## Demo
 
-### Running on IOS phone
+### Sprint 1: iOS
 
 https://github.com/user-attachments/assets/4d6b3db8-5197-4b03-8747-7f4fc25c1aa1
 
-## Prototype demos:
+### Fall Prototype
 
 ### Android / Light-mode
 
@@ -18,32 +18,16 @@ https://github.com/user-attachments/assets/54719073-8a58-44cd-850b-e482eb5aa571
 
 ## Running The Project
 
-Due to using Expo SQLite for the database, this project will only run on mobile devices
+This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+
+Due to using Expo SQLite for the database, this project will only run on mobile devices.
 
 - Download the repo
 - `npm install`
 - `npx expo start`
-- On your mobile phone (iOS or Android), download the Expo Go app and then scan the QR code in the terminal
+- On your mobile phone (iOS or Android), download the Expo Go app and then scan the QR code in the terminal.
 
-# Welcome to your Expo app 👋
-
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
-
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-    npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
+In the output, you'll find options to open the app in a:
 
 - [development build](https://docs.expo.dev/develop/development-builds/introduction/)
 - [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
@@ -51,16 +35,6 @@ In the output, you'll find options to open the app in a
 - [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
 You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
 
 ## Learn more
 
