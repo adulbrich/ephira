@@ -5,11 +5,15 @@ export interface DayData {
   is_cycle_start?: boolean;
   is_cycle_end?: boolean;
   notes?: string;
+  moods?: string[];
+  symptoms?: string[];
+  medications?: string[];
+  birth_control?: string;
 }
 
 export interface periodData {
-  startingDay: boolean;
-  endingDay: boolean;
+  startingDay?: boolean;
+  endingDay?: boolean;
   color: string;
 }
 
@@ -81,4 +85,15 @@ export interface TimePickerState {
 export interface TempSelectedTime {
   tempSelectedTime: Date | null;
   setTempSelectedTime: (time: Date | null) => void;
+}
+
+export interface CalendarFilter {
+  label: string;
+  value: string;
+  color: string;
+}
+
+export interface CalendarFilters {
+  selectedFilters: CalendarFilter[];
+  setSelectedFilters: (values: CalendarFilter[]) => void;
 }

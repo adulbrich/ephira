@@ -11,22 +11,27 @@ import {
 } from "react-native";
 import { Calendar } from "react-native-calendars";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
+import { SettingsKeys } from "@/constants/Settings";
 import DayView from "@/components/dayView/DayView";
-import { useTheme, MD3Theme, Divider } from "react-native-paper";
-import { useSelectedDate } from "@/assets/src/calendar-storage";
+import { useTheme, MD3Theme, Divider, Text } from "react-native-paper";
+import {
+  useSelectedDate,
+  useCalendarFilters,
+} from "@/assets/src/calendar-storage";
+import { getSetting, insertSetting } from "@/db/database";
 import CalendarHeader from "@/components/calendar/CalendarHeader";
 import { useMarkedDates } from "@/hooks/useMarkedDates";
 
 export default function FlowCalendar() {
-  const { markedDates } = useMarkedDates();
   const [key, setKey] = useState<string>("");
 
   // access state management
   const { date, setDate } = useSelectedDate();
-
+  const { selectedFilters, setSelectedFilters } = useCalendarFilters();
   // can also be used like this
   // const selectedDate = useSelectedDate().date
 
+  const { markedDates } = useMarkedDates(selectedFilters);
   const theme = useTheme();
   const styles = makeStyles({ theme });
 
@@ -42,12 +47,43 @@ export default function FlowCalendar() {
 
   const themeKey = theme.dark ? "dark-theme" : "light-theme";
 
+  // load filters from secure store
+  useEffect(() => {
+    const loadFilters = async () => {
+      const filters = await getSetting(SettingsKeys.calendarFilters);
+      if (filters?.value) {
+        setSelectedFilters(JSON.parse(filters.value));
+      } else {
+        // set Flow as first filter by default (filler color given since color isn't optional)
+        setSelectedFilters([
+          { label: "Flow", value: "flow", color: "#ff7272" },
+        ]);
+        await insertSetting(
+          SettingsKeys.calendarFilters,
+          JSON.stringify([{ label: "Flow", value: "flow" }]),
+        );
+      }
+    };
+    loadFilters();
+  }, [setSelectedFilters]);
+
   // the calendar doesn't expose a method to jump to today, so we have to
   // change the key after setting the date to force a re-render
   const jumpToToday = () => {
     setDate(today);
-    setKey(themeKey + date + String(Math.random()));
+    setKey(date + String(Math.random()));
   };
+  /*
+  // DELETE
+  useEffect(() => {
+    console.log("/n=========Marked dates: ========");
+
+    for (const date in markedDates) {
+      console.log(date);
+      console.log(markedDates[date]);
+    }
+  }, [markedDates]);
+  */
 
   return (
     <SafeAreaProvider>
@@ -93,6 +129,38 @@ export default function FlowCalendar() {
                     textDayHeaderFontSize: 16,
                   }}
                 />
+                <Divider />
+                <View
+                  style={{
+                    padding: 8,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-around",
+                  }}
+                >
+                  {selectedFilters.map((filter) => (
+                    <View
+                      key={filter.value}
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        padding: 4,
+                      }}
+                    >
+                      <View
+                        style={{
+                          width: 16,
+                          height: 16,
+                          backgroundColor:
+                            filter.value === "flow" ? "#ff7272" : filter.color,
+                          borderRadius: 8,
+                          marginRight: 8,
+                        }}
+                      />
+                      <Text>{filter.label}</Text>
+                    </View>
+                  ))}
+                </View>
                 <Divider />
               </View>
               <View>{date && <DayView />}</View>

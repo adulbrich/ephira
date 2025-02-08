@@ -7,27 +7,26 @@ import {
   Divider,
   List,
   Chip,
+  useTheme,
 } from "react-native-paper";
 import { ScrollView, View, Platform, StyleSheet } from "react-native";
-import * as SecureStore from "expo-secure-store";
-import { StorageKeys } from "@/constants/SecureStore";
-import { useEffect, useState } from "react";
-import { symptomOptions } from "@/constants/Symptoms";
-import { moodOptions } from "@/constants/Moods";
-import { medicationOptions } from "@/constants/Medications";
-import { birthControlOptions } from "@/constants/BirthControlTypes";
+import { useState, useEffect } from "react";
+import { SettingsKeys } from "@/constants/Settings";
+import { updateSetting } from "@/db/database";
+import { useCalendarFilters } from "@/assets/src/calendar-storage";
+import { symptomOptions, anySymptomOption } from "@/constants/Symptoms";
+import { moodOptions, anyMoodOption } from "@/constants/Moods";
+import {
+  medicationOptions,
+  anyMedicationOption,
+} from "@/constants/Medications";
+import {
+  birthControlOptions,
+  anyBirthControlOption,
+} from "@/constants/BirthControlTypes";
+import { FilterColorsDark, FilterColorsLight } from "@/constants/Colors";
 const flowOption = { label: "Flow", value: "flow" };
 const notesOption = { label: "Notes", value: "notes" };
-const anySymptomOption = { label: "Any Symptom", value: "any_symptom" };
-const anyMoodOption = { label: "Any Mood", value: "any_mood" };
-const anyMedicationOption = {
-  label: "Any Medication",
-  value: "any_medication",
-};
-const anyBirthControlOption = {
-  label: "Any Birth Control",
-  value: "any_birth_control",
-};
 
 function FilterSection({
   selectedFilters,
@@ -73,49 +72,45 @@ export default function CalendarFilterDialog({
   visible: boolean;
   setVisible: (visible: boolean) => void;
 }) {
-  const [selectedFilters, setSelectedFilters] = useState<
-    { label: string; value: string }[]
-  >([]);
+  const colors = useTheme().dark ? FilterColorsDark : FilterColorsLight;
+  const { selectedFilters, setSelectedFilters } = useCalendarFilters();
+  const [tempSelectedFilters, setTempSelectedFilters] = useState<
+    {
+      label: string;
+      value: string;
+      color?: string;
+    }[]
+  >(selectedFilters);
 
-  // load filters from secure store
   useEffect(() => {
-    const loadFilters = async () => {
-      const filters = await SecureStore.getItemAsync(
-        StorageKeys.calendarFilters,
-      );
-      if (filters) {
-        setSelectedFilters(JSON.parse(filters));
-      } else {
-        // set Flow as first filter by default
-        setSelectedFilters([flowOption]);
-        await SecureStore.setItemAsync(
-          StorageKeys.calendarFilters,
-          JSON.stringify([flowOption]),
-        );
-      }
-    };
-    loadFilters();
-  }, [visible]);
+    setTempSelectedFilters(selectedFilters);
+  }, [selectedFilters]);
 
-  const applyFilter = () => {
-    SecureStore.setItemAsync(
-      StorageKeys.calendarFilters,
-      JSON.stringify(selectedFilters),
+  const applyFilter = async () => {
+    // add colors to filters before saving
+    const updatedFilters = tempSelectedFilters.map((filter, index) => {
+      return { ...filter, color: colors[index] || "#000000" };
+    });
+
+    await updateSetting(
+      SettingsKeys.calendarFilters,
+      JSON.stringify(updatedFilters),
     );
+    setSelectedFilters(updatedFilters);
     setVisible(false);
   };
 
   const onToggleSwitch = (filter: { label: string; value: string }) => {
-    if (selectedFilters.some((f) => f.value === filter.value)) {
-      setSelectedFilters(
-        selectedFilters.filter((f) => f.value !== filter.value),
+    if (tempSelectedFilters.some((f) => f.value === filter.value)) {
+      setTempSelectedFilters(
+        tempSelectedFilters.filter((f) => f.value !== filter.value),
       );
-    } else if (selectedFilters.length < 3) {
-      setSelectedFilters([...selectedFilters, filter]);
+    } else if (tempSelectedFilters.length < 3) {
+      setTempSelectedFilters([...tempSelectedFilters, filter]);
     }
   };
 
-  const isMaxFiltersSelected = selectedFilters.length >= 3;
+  const isMaxFiltersSelected = tempSelectedFilters.length >= 3;
 
   return (
     <Portal>
@@ -125,15 +120,15 @@ export default function CalendarFilterDialog({
         </Dialog.Title>
         <Dialog.Content>
           <Text variant="labelLarge" style={{ marginBottom: 8 }}>
-            Current Filters ({selectedFilters.length}/3):
+            Current Filters ({tempSelectedFilters.length}/3):
           </Text>
           <View style={styles.chipContainer}>
-            {selectedFilters.map((filter) => (
+            {tempSelectedFilters.map((filter) => (
               <Chip
                 key={filter.value}
                 onClose={() =>
-                  setSelectedFilters(
-                    selectedFilters.filter((f) => f.value !== filter.value),
+                  setTempSelectedFilters(
+                    tempSelectedFilters.filter((f) => f.value !== filter.value),
                   )
                 }
                 style={styles.chip}
@@ -151,13 +146,15 @@ export default function CalendarFilterDialog({
                 title={flowOption.label}
                 right={() => (
                   <Switch
-                    value={selectedFilters.some(
+                    value={tempSelectedFilters.some(
                       (f) => f.value === flowOption.value,
                     )}
                     onValueChange={() => onToggleSwitch(flowOption)}
                     disabled={
                       isMaxFiltersSelected &&
-                      !selectedFilters.some((f) => f.value === flowOption.value)
+                      !tempSelectedFilters.some(
+                        (f) => f.value === flowOption.value,
+                      )
                     }
                   />
                 )}
@@ -168,13 +165,13 @@ export default function CalendarFilterDialog({
                 title={notesOption.label}
                 right={() => (
                   <Switch
-                    value={selectedFilters.some(
+                    value={tempSelectedFilters.some(
                       (f) => f.value === notesOption.value,
                     )}
                     onValueChange={() => onToggleSwitch(notesOption)}
                     disabled={
                       isMaxFiltersSelected &&
-                      !selectedFilters.some(
+                      !tempSelectedFilters.some(
                         (f) => f.value === notesOption.value,
                       )
                     }
@@ -184,7 +181,7 @@ export default function CalendarFilterDialog({
             </List.Section>
             <Divider />
             <FilterSection
-              selectedFilters={selectedFilters}
+              selectedFilters={tempSelectedFilters}
               onToggleSwitch={onToggleSwitch}
               isMaxFiltersSelected={isMaxFiltersSelected}
               subheader="Symptoms"
@@ -192,7 +189,7 @@ export default function CalendarFilterDialog({
             />
             <Divider />
             <FilterSection
-              selectedFilters={selectedFilters}
+              selectedFilters={tempSelectedFilters}
               onToggleSwitch={onToggleSwitch}
               isMaxFiltersSelected={isMaxFiltersSelected}
               subheader="Moods"
@@ -200,7 +197,7 @@ export default function CalendarFilterDialog({
             />
             <Divider />
             <FilterSection
-              selectedFilters={selectedFilters}
+              selectedFilters={tempSelectedFilters}
               onToggleSwitch={onToggleSwitch}
               isMaxFiltersSelected={isMaxFiltersSelected}
               subheader="Medications"
@@ -208,7 +205,7 @@ export default function CalendarFilterDialog({
             />
             <Divider />
             <FilterSection
-              selectedFilters={selectedFilters}
+              selectedFilters={tempSelectedFilters}
               onToggleSwitch={onToggleSwitch}
               isMaxFiltersSelected={isMaxFiltersSelected}
               subheader="Birth Control"

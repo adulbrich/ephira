@@ -13,6 +13,8 @@ import {
   TimeTaken,
   TimePickerState,
   TempSelectedTime,
+  CalendarFilter,
+  CalendarFilters,
 } from "@/constants/Interfaces";
 
 const initialDay: DayData = {
@@ -113,4 +115,10 @@ export const useTempSelectedTime = create<TempSelectedTime>((set) => ({
   tempSelectedTime: null,
   setTempSelectedTime: (time: Date | null) =>
     set(() => ({ tempSelectedTime: time })),
+}));
+
+export const useCalendarFilters = create<CalendarFilters>((set) => ({
+  selectedFilters: [],
+  setSelectedFilters: (values: CalendarFilter[]) =>
+    set(() => ({ selectedFilters: values })),
 }));

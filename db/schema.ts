@@ -1,5 +1,11 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 
+export const settings = sqliteTable("settings", {
+  id: integer().primaryKey({ autoIncrement: true }),
+  name: text().notNull().unique(),
+  value: text(),
+});
+
 export const days = sqliteTable("days", {
   id: integer().primaryKey({ autoIncrement: true }),
   date: text().notNull().unique(),
@@ -68,6 +74,7 @@ export const medicationEntries = sqliteTable("medication_entries", {
   notes: text(),
 });
 
+export type Settings = typeof settings.$inferSelect;
 export type Day = typeof days.$inferSelect;
 export type Mood = typeof moods.$inferSelect;
 export type MoodEntry = typeof moodEntries.$inferSelect;

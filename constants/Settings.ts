@@ -1,3 +1,3 @@
-export const StorageKeys = {
+export const SettingsKeys = {
   calendarFilters: "calendarFilters",
 };

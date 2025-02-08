@@ -1,11 +1,19 @@
 import { useState, useEffect } from "react";
-import { useLiveQuery } from "drizzle-orm/expo-sqlite";
-import { getDay, getDrizzleDatabase } from "@/db/database";
+import { getDay } from "@/db/database";
 import type { DayData, MarkedDates } from "@/constants/Interfaces";
 import { useSelectedDate } from "@/assets/src/calendar-storage";
-import * as schema from "@/db/schema";
 import { FlowColors } from "@/constants/Colors";
-import { ne } from "drizzle-orm";
+import { useLiveFilteredData } from "@/hooks/useLiveFilteredData";
+import { symptomOptions, anySymptomOption } from "@/constants/Symptoms";
+import { moodOptions, anyMoodOption } from "@/constants/Moods";
+import {
+  medicationOptions,
+  anyMedicationOption,
+} from "@/constants/Medications";
+import {
+  birthControlOptions,
+  anyBirthControlOption,
+} from "@/constants/BirthControlTypes";
 
 function getStartingAndEndingDay(
   day: string,
@@ -27,20 +35,195 @@ function getStartingAndEndingDay(
   };
 }
 
-export function useMarkedDates() {
+function applyFilterToMarkedDates({
+  markedDates,
+  filters,
+  day,
+  dayValues,
+  prevDayValues,
+  nextDayValues,
+  options,
+  anyOption,
+}: {
+  markedDates: MarkedDates;
+  filters: { label: string; value: string; color: string }[];
+  day: DayData;
+  dayValues: string[];
+  prevDayValues: string[];
+  nextDayValues: string[];
+  options: { label: string; value: string }[];
+  anyOption: { label: string; value: string };
+}) {
+  const relevantFilters = filters.filter(
+    (filter) =>
+      filter.value === anyOption.value ||
+      options.some((option) => option.value === filter.value),
+  );
+
+  if (relevantFilters.length > 0) {
+    if (!markedDates[day.date])
+      markedDates[day.date] = { selected: false, periods: [] };
+
+    if (dayValues?.length === 0) {
+      markedDates[day.date].periods.push({
+        color: "transparent",
+      });
+    }
+    for (const filter of relevantFilters) {
+      const match =
+        dayValues.includes(filter.value) || filter.value === anyOption.value;
+
+      if (match) {
+        const prevMatch =
+          prevDayValues.includes(filter.value) ||
+          (filter.value === anyOption.value && prevDayValues.length > 0);
+
+        const nextMatch =
+          nextDayValues.includes(filter.value) ||
+          (filter.value === anyOption.value && nextDayValues.length > 0);
+
+        const { isStartingDay, isEndingDay } = getStartingAndEndingDay(
+          day.date,
+          prevMatch ? prevDayValues[prevDayValues.length - 1] : undefined,
+          nextMatch ? nextDayValues[0] : undefined,
+        );
+
+        markedDates[day.date].periods.push({
+          startingDay: isStartingDay,
+          endingDay: isEndingDay,
+          color: filter.color,
+        });
+      } else {
+        markedDates[day.date].periods.push({
+          color: "transparent",
+        });
+      }
+    }
+  }
+}
+
+function markedDatesBuilder(
+  filters: { label: string; value: string; color: string }[],
+  data: DayData[],
+) {
+  const markedDates: MarkedDates = {};
+
+  data.forEach((day, index) => {
+    // flow
+    if (filters.some((filter) => filter.value === "flow")) {
+      const { isStartingDay, isEndingDay } = getStartingAndEndingDay(
+        day.date,
+        data[index - 1]?.flow_intensity > 0 ? data[index - 1]?.date : undefined,
+        data[index + 1]?.flow_intensity > 0 ? data[index + 1]?.date : undefined,
+      );
+      if (!markedDates[day.date])
+        markedDates[day.date] = { selected: false, periods: [] };
+      if (
+        day.flow_intensity === undefined ||
+        !day.flow_intensity ||
+        day.flow_intensity === 0
+      ) {
+        markedDates[day.date].periods.push({
+          color: "transparent",
+        });
+      } else {
+        markedDates[day.date].periods.push({
+          startingDay: isStartingDay,
+          endingDay: isEndingDay,
+          color: FlowColors[day.flow_intensity],
+        });
+      }
+    }
+
+    // notes
+    const notesFilter = filters.find((filter) => filter.value === "notes");
+    if (notesFilter) {
+      if (!markedDates[day.date])
+        markedDates[day.date] = { selected: false, periods: [] };
+
+      if (day.notes === "") {
+        markedDates[day.date].periods.push({
+          color: "transparent",
+        });
+      } else {
+        markedDates[day.date].periods.push({
+          startingDay: true,
+          endingDay: true,
+          color: notesFilter.color,
+        });
+      }
+    }
+
+    // symptoms
+    applyFilterToMarkedDates({
+      markedDates,
+      filters,
+      day,
+      dayValues: day.symptoms ?? [],
+      prevDayValues: data[index - 1]?.symptoms ?? [],
+      nextDayValues: data[index + 1]?.symptoms ?? [],
+      options: symptomOptions,
+      anyOption: anySymptomOption,
+    });
+
+    // moods
+    applyFilterToMarkedDates({
+      markedDates,
+      filters,
+      day,
+      dayValues: day.moods ?? [],
+      prevDayValues: data[index - 1]?.moods ?? [],
+      nextDayValues: data[index + 1]?.moods ?? [],
+      options: moodOptions,
+      anyOption: anyMoodOption,
+    });
+
+    // medications
+    applyFilterToMarkedDates({
+      markedDates,
+      filters,
+      day,
+      dayValues: day.medications ?? [],
+      prevDayValues: data[index - 1]?.medications ?? [],
+      nextDayValues: data[index + 1]?.medications ?? [],
+      options: medicationOptions,
+      anyOption: anyMedicationOption,
+    });
+
+    // birth control (it's stored in day's medication array)
+    applyFilterToMarkedDates({
+      markedDates,
+      filters,
+      day,
+      dayValues: day.medications ?? [],
+      prevDayValues: data[index - 1]?.medications ?? [],
+      nextDayValues: data[index + 1]?.medications ?? [],
+      options: birthControlOptions,
+      anyOption: anyBirthControlOption,
+    });
+  });
+
+  /*
+  for (const date in markedDates) {
+    console.log(date);
+    for (const period in markedDates[date].periods) {
+      console.log(markedDates[date].periods[period]);
+    }
+  } */
+
+  return markedDates;
+}
+
+export function useMarkedDates(
+  calendarFilters?: { label: string; value: string; color: string }[],
+) {
   const [markedDates, setMarkedDates] = useState<MarkedDates>({});
+  const filteredData = useLiveFilteredData(
+    calendarFilters ? calendarFilters : [],
+  );
 
   // access state management
   const { date, setDate, setFlow, setId } = useSelectedDate();
-
-  const db = getDrizzleDatabase();
-  const { data } = useLiveQuery(
-    db
-      .select()
-      .from(schema.days)
-      .where(ne(schema.days.flow_intensity, 0))
-      .orderBy(schema.days.date),
-  );
 
   // get date in local time
   const day = new Date();
@@ -51,9 +234,6 @@ export function useMarkedDates() {
   // useLiveQuery will automatically update the calendar when the db data changes
   useEffect(() => {
     function refreshCalendar(allDays: DayData[]) {
-      for (const day of allDays) {
-        console.log(day);
-      }
       if (!allDays || allDays.length === 0) {
         setMarkedDates((prev) => {
           const updated = { ...prev };
@@ -66,31 +246,20 @@ export function useMarkedDates() {
         return;
       }
 
-      const newMarkedDates: MarkedDates = {};
-      allDays.forEach((day, index) => {
-        const { isStartingDay, isEndingDay } = getStartingAndEndingDay(
-          day.date,
-          allDays[index - 1]?.date,
-          allDays[index + 1]?.date,
-        );
-
-        newMarkedDates[day.date] = {
-          selected: day.date === today,
-          periods: [
-            {
-              startingDay: isStartingDay,
-              endingDay: isEndingDay,
-              color: FlowColors[day.flow_intensity] || "transparent",
-            },
-          ],
-        };
-      });
+      const newMarkedDates = markedDatesBuilder(calendarFilters ?? [], allDays);
+      // log marked dates
+      // for (const date in newMarkedDates) {
+      //   console.log(date);
+      //   for (const period in newMarkedDates[date].periods) {
+      //     console.log(newMarkedDates[date].periods[period]);
+      //   }
+      // }
 
       setMarkedDates(newMarkedDates);
       setDate(today);
     }
-    refreshCalendar(data as DayData[]);
-  }, [data, today, setDate]);
+    refreshCalendar(filteredData as DayData[]);
+  }, [filteredData, today, setDate]);
 
   // get data for selected date on calendar (when user presses a different day)
   useEffect(() => {

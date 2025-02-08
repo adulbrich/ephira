@@ -6,3 +6,8 @@ export const birthControlOptions = [
   { label: "Shot", value: "shot" },
   { label: "Implant", value: "implant" },
 ];
+
+export const anyBirthControlOption = {
+  label: "Any Birth Control",
+  value: "any_birth_control",
+};
