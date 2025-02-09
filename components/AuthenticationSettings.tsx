@@ -12,14 +12,10 @@ import {
   TextInput,
 } from "react-native-paper";
 import { ThemedView } from "@/components/ThemedView";
+import { updateSetting, getSetting, deleteSetting } from "@/db/database";
 import * as LocalAuthentication from "expo-local-authentication";
-import * as SecureStore from "expo-secure-store";
-
-const AUTH_TYPES = {
-  NONE: "none",
-  BIOMETRIC: "biometric",
-  PASSWORD: "password",
-};
+import * as Crypto from "expo-crypto";
+import { AUTH_TYPES, SettingsKeys } from "@/constants/Settings";
 
 function NoAuthenticationDialog({
   handleConfirm,
@@ -230,20 +226,18 @@ export default function AuthenticationSettings() {
   const [showNoAuthDialog, setShowNoAuthDialog] = useState(false);
   const [showBiometricDialog, setShowBiometricDialog] = useState(false);
 
-  // load auth preference from secure store
+  // load auth preference from db
   useEffect(() => {
     const loadPreferences = async () => {
-      const biometricEnabled =
-        await SecureStore.getItemAsync("biometricEnabled");
-      const passwordEnabled = await SecureStore.getItemAsync("passwordEnabled");
-
-      if (biometricEnabled === "true") {
-        setSelectedAuth(AUTH_TYPES.BIOMETRIC);
-      } else if (passwordEnabled === "true") {
-        setSelectedAuth(AUTH_TYPES.PASSWORD);
-      } else {
-        setSelectedAuth(AUTH_TYPES.NONE);
-      }
+      await getSetting(SettingsKeys.authentication).then((authType) => {
+        if (!authType || authType.value === AUTH_TYPES.NONE) {
+          setSelectedAuth(AUTH_TYPES.NONE);
+        } else if (authType.value === AUTH_TYPES.BIOMETRIC) {
+          setSelectedAuth(AUTH_TYPES.BIOMETRIC);
+        } else if (authType.value === AUTH_TYPES.PASSWORD) {
+          setSelectedAuth(AUTH_TYPES.PASSWORD);
+        }
+      });
     };
 
     loadPreferences();
@@ -255,8 +249,8 @@ export default function AuthenticationSettings() {
     });
 
     if (result.success) {
-      await SecureStore.setItemAsync("biometricEnabled", "true");
-      await SecureStore.setItemAsync("passwordEnabled", "false");
+      await updateSetting(SettingsKeys.authentication, AUTH_TYPES.BIOMETRIC);
+      await deleteSetting(SettingsKeys.password);
       setSelectedAuth(AUTH_TYPES.BIOMETRIC);
       Alert.alert("Success", "Biometric authentication enabled!");
     } else {
@@ -268,17 +262,20 @@ export default function AuthenticationSettings() {
   };
 
   const handleSetPassword = async (password: string) => {
-    await SecureStore.setItemAsync("password", password);
-    await SecureStore.setItemAsync("passwordEnabled", "true");
-    await SecureStore.setItemAsync("biometricEnabled", "false");
+    await updateSetting(SettingsKeys.authentication, AUTH_TYPES.PASSWORD);
+    const hashedPassword = await Crypto.digestStringAsync(
+      Crypto.CryptoDigestAlgorithm.SHA256,
+      password,
+    );
+    await updateSetting(SettingsKeys.password, hashedPassword);
     setSelectedAuth(AUTH_TYPES.PASSWORD);
     Alert.alert("Success", "Password set successfully!");
     setShowPasswordDialog(false);
   };
 
   const handleDisableAuthentication = async () => {
-    await SecureStore.setItemAsync("biometricEnabled", "false");
-    await SecureStore.setItemAsync("passwordEnabled", "false");
+    await updateSetting(SettingsKeys.authentication, AUTH_TYPES.NONE);
+    await deleteSetting(SettingsKeys.password);
     setSelectedAuth(AUTH_TYPES.NONE);
     Alert.alert("Success", "Authentication disabled.");
   };

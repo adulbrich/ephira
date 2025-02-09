@@ -58,8 +58,7 @@
         {
           "faceIDPermission": "Allow ephira to use Face ID."
         }
-      ],
-      "expo-secure-store"
+      ]
     ],
     "experiments": {
       "typedRoutes": true
