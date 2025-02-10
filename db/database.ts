@@ -33,4 +33,3 @@ export * from "@/db/operations/medications";
 export * from "@/db/operations/medicationEntries";
 export * from "@/db/operations/symptoms";
 export * from "@/db/operations/symptomEntries";
-export * from "@/db/operations/settings";

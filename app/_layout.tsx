@@ -92,7 +92,7 @@ export default function RootLayout() {
     const storedPassword = await getSetting(SettingsKeys.password);
     const hashedInput = await Crypto.digestStringAsync(
       Crypto.CryptoDigestAlgorithm.SHA256,
-      passwordInput
+      passwordInput,
     );
     if (hashedInput === storedPassword?.value) {
       setIsAuthenticated(true);
