@@ -87,6 +87,11 @@ export interface TempSelectedTime {
   setTempSelectedTime: (time: Date | null) => void;
 }
 
+export interface FlowDataState {
+  flowDataForCurrentMonth: DayData[];
+  setFlowDataForCurrentMonth: (data: DayData[]) => void;
+}
+
 export interface CalendarFilter {
   label: string;
   value: string;

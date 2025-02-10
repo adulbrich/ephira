@@ -2,7 +2,7 @@ import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import * as LocalAuthentication from "expo-local-authentication";
-import * as SecureStore from "expo-secure-store";
+import * as Crypto from "expo-crypto";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState, useRef, useCallback } from "react";
 import "react-native-reanimated";
@@ -19,7 +19,8 @@ import { SQLiteProvider } from "expo-sqlite";
 import { Suspense } from "react";
 import { ActivityIndicator, Alert } from "react-native";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
-import { getDatabase, getDrizzleDatabase } from "@/db/database";
+import { AUTH_TYPES, SettingsKeys } from "@/constants/Settings";
+import { getDatabase, getDrizzleDatabase, getSetting } from "@/db/database";
 import DatabaseMigrationError from "@/components/DatabaseMigrationError";
 import PasswordAuthenticationView from "@/components/PasswordAuthenticationView";
 
@@ -41,12 +42,9 @@ export default function RootLayout() {
 
   const checkAuthentication = useCallback(async () => {
     try {
-      const isBiometricEnabled =
-        await SecureStore.getItemAsync("biometricEnabled");
-      const isPasswordEnabled =
-        await SecureStore.getItemAsync("passwordEnabled");
+      const authType = await getSetting(SettingsKeys.authentication);
 
-      if (isBiometricEnabled === "true") {
+      if (authType?.value === AUTH_TYPES.BIOMETRIC) {
         const result = await LocalAuthentication.authenticateAsync({
           promptMessage: "Authenticate to access the app",
         });
@@ -55,7 +53,7 @@ export default function RootLayout() {
         } else {
           setIsAuthenticated(false);
         }
-      } else if (isPasswordEnabled === "true") {
+      } else if (authType?.value === AUTH_TYPES.PASSWORD) {
         setIsPasswordModalVisible(true);
       } else {
         setIsAuthenticated(true);
@@ -91,8 +89,12 @@ export default function RootLayout() {
   }, [loaded, success, checkAuthentication]);
 
   const handlePasswordSubmit = async (passwordInput: string) => {
-    const storedPassword = await SecureStore.getItemAsync("password");
-    if (passwordInput === storedPassword) {
+    const storedPassword = await getSetting(SettingsKeys.password);
+    const hashedInput = await Crypto.digestStringAsync(
+      Crypto.CryptoDigestAlgorithm.SHA256,
+      passwordInput,
+    );
+    if (hashedInput === storedPassword?.value) {
       setIsAuthenticated(true);
       setIsPasswordModalVisible(false);
     } else {

@@ -24,6 +24,7 @@ export async function deleteAllDataInDatabase() {
   }
 }
 
+export * from "@/db/operations/settings";
 export * from "@/db/operations/setup";
 export * from "@/db/operations/days";
 export * from "@/db/operations/moods";

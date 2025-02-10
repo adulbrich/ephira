@@ -17,7 +17,9 @@ export const getSetting = async (name: string) => {
 };
 
 export const updateSetting = async (name: string, value: string) => {
-  await db.update(settings).set({ value }).where(eq(settings.name, name));
+  const setting = await getSetting(name);
+  if (!setting) await insertSetting(name, value);
+  else await db.update(settings).set({ value }).where(eq(settings.name, name));
 };
 
 export const insertSetting = async (name: string, value: string) => {
@@ -28,7 +30,7 @@ export const insertSetting = async (name: string, value: string) => {
   } else await db.insert(settings).values({ name, value });
 };
 
-export const deleteSettings = async (name: string) => {
+export const deleteSetting = async (name: string) => {
   await db.delete(settings).where(eq(settings.name, name));
 };
 
