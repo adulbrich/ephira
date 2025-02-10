@@ -82,7 +82,7 @@ export default function DeleteData() {
         </List.Accordion>
       </List.Section>
       {/* Divider wouldn't show up on Android with the margin added */}
-      <Divider style={{ marginBottom: 0.1 }} />
+      <Divider style={{ marginBottom: 0.2 }} />
     </ThemedView>
   );
 }
