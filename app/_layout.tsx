@@ -24,7 +24,7 @@ import { getDatabase, getDrizzleDatabase, getSetting } from "@/db/database";
 import DatabaseMigrationError from "@/components/DatabaseMigrationError";
 import PasswordAuthenticationView from "@/components/PasswordAuthenticationView";
 
-const DB_NAME = "testing.db";
+const DB_NAME = "ephira.db";
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -92,7 +92,7 @@ export default function RootLayout() {
     const storedPassword = await getSetting(SettingsKeys.password);
     const hashedInput = await Crypto.digestStringAsync(
       Crypto.CryptoDigestAlgorithm.SHA256,
-      passwordInput,
+      passwordInput
     );
     if (hashedInput === storedPassword?.value) {
       setIsAuthenticated(true);

@@ -1,3 +1,13 @@
+CREATE TABLE `days` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`date` text NOT NULL,
+	`flow_intensity` integer,
+	`is_cycle_start` integer DEFAULT false,
+	`is_cycle_end` integer DEFAULT false,
+	`notes` text
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `days_date_unique` ON `days` (`date`);--> statement-breakpoint
 CREATE TABLE `medication_entries` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`day_id` integer NOT NULL,
@@ -12,7 +22,7 @@ CREATE TABLE `medications` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`name` text NOT NULL,
 	`dose` text,
-	`visible` integer,
+	`visible` integer DEFAULT true,
 	`type` text,
 	`description` text
 );
@@ -30,11 +40,18 @@ CREATE TABLE `mood_entries` (
 CREATE TABLE `moods` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`name` text NOT NULL,
-	`visible` integer,
+	`visible` integer DEFAULT true,
 	`description` text
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `moods_name_unique` ON `moods` (`name`);--> statement-breakpoint
+CREATE TABLE `settings` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`name` text NOT NULL,
+	`value` text
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `settings_name_unique` ON `settings` (`name`);--> statement-breakpoint
 CREATE TABLE `symptom_entries` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`day_id` integer NOT NULL,
@@ -48,12 +65,8 @@ CREATE TABLE `symptom_entries` (
 CREATE TABLE `symptoms` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`name` text NOT NULL,
-	`visible` integer,
+	`visible` integer DEFAULT true,
 	`description` text
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `symptoms_name_unique` ON `symptoms` (`name`);--> statement-breakpoint
-ALTER TABLE `days` ADD `is_cycle_start` integer;--> statement-breakpoint
-ALTER TABLE `days` ADD `is_cycle_end` integer;--> statement-breakpoint
-ALTER TABLE `days` ADD `notes` text;--> statement-breakpoint
-CREATE UNIQUE INDEX `days_date_unique` ON `days` (`date`);
+CREATE UNIQUE INDEX `symptoms_name_unique` ON `symptoms` (`name`);
