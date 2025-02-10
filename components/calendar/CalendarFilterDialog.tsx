@@ -7,7 +7,6 @@ import {
   Divider,
   List,
   Chip,
-  useTheme,
 } from "react-native-paper";
 import { ScrollView, View, Platform, StyleSheet } from "react-native";
 import { useState, useEffect } from "react";
@@ -24,7 +23,6 @@ import {
   birthControlOptions,
   anyBirthControlOption,
 } from "@/constants/BirthControlTypes";
-import { FilterColorsDark, FilterColorsLight } from "@/constants/Colors";
 const flowOption = { label: "Flow", value: "flow" };
 const notesOption = { label: "Notes", value: "notes" };
 
@@ -72,13 +70,11 @@ export default function CalendarFilterDialog({
   visible: boolean;
   setVisible: (visible: boolean) => void;
 }) {
-  const colors = useTheme().dark ? FilterColorsDark : FilterColorsLight;
   const { selectedFilters, setSelectedFilters } = useCalendarFilters();
   const [tempSelectedFilters, setTempSelectedFilters] = useState<
     {
       label: string;
       value: string;
-      color?: string;
     }[]
   >(selectedFilters);
 
@@ -87,16 +83,11 @@ export default function CalendarFilterDialog({
   }, [selectedFilters]);
 
   const applyFilter = async () => {
-    // add colors to filters before saving
-    const updatedFilters = tempSelectedFilters.map((filter, index) => {
-      return { ...filter, color: colors[index] || "#000000" };
-    });
-
     await updateSetting(
       SettingsKeys.calendarFilters,
-      JSON.stringify(updatedFilters),
+      JSON.stringify(tempSelectedFilters),
     );
-    setSelectedFilters(updatedFilters);
+    setSelectedFilters(tempSelectedFilters);
     setVisible(false);
   };
 

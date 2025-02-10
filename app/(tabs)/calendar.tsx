@@ -21,6 +21,7 @@ import {
 import { getSetting, insertSetting } from "@/db/database";
 import CalendarHeader from "@/components/calendar/CalendarHeader";
 import { useMarkedDates } from "@/hooks/useMarkedDates";
+import { FilterColorsDark, FilterColorsLight } from "@/constants/Colors";
 
 export default function FlowCalendar() {
   const [key, setKey] = useState<string>("");
@@ -33,6 +34,7 @@ export default function FlowCalendar() {
 
   const { markedDates } = useMarkedDates(selectedFilters);
   const theme = useTheme();
+  const filterColors = theme.dark ? FilterColorsDark : FilterColorsLight;
   const styles = makeStyles({ theme });
 
   // get date in local time
@@ -138,7 +140,7 @@ export default function FlowCalendar() {
                     justifyContent: "space-around",
                   }}
                 >
-                  {selectedFilters.map((filter) => (
+                  {selectedFilters.map((filter, index) => (
                     <View
                       key={filter.value}
                       style={{
@@ -152,7 +154,9 @@ export default function FlowCalendar() {
                           width: 16,
                           height: 16,
                           backgroundColor:
-                            filter.value === "flow" ? "#ff7272" : filter.color,
+                            filter.value === "flow"
+                              ? "#ff7272"
+                              : filterColors[index],
                           borderRadius: 8,
                           marginRight: 8,
                         }}

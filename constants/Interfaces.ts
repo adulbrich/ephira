@@ -90,7 +90,6 @@ export interface TempSelectedTime {
 export interface CalendarFilter {
   label: string;
   value: string;
-  color: string;
 }
 
 export interface CalendarFilters {

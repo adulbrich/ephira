@@ -14,6 +14,8 @@ import {
   birthControlOptions,
   anyBirthControlOption,
 } from "@/constants/BirthControlTypes";
+import { useTheme } from "react-native-paper";
+import { FilterColorsDark, FilterColorsLight } from "@/constants/Colors";
 
 function getStartingAndEndingDay(
   day: string,
@@ -38,6 +40,7 @@ function getStartingAndEndingDay(
 function applyFilterToMarkedDates({
   markedDates,
   filters,
+  filterColors,
   day,
   dayValues,
   prevDayValues,
@@ -46,7 +49,8 @@ function applyFilterToMarkedDates({
   anyOption,
 }: {
   markedDates: MarkedDates;
-  filters: { label: string; value: string; color: string }[];
+  filters: { label: string; value: string }[];
+  filterColors: string[];
   day: DayData;
   dayValues: string[];
   prevDayValues: string[];
@@ -68,12 +72,15 @@ function applyFilterToMarkedDates({
       markedDates[day.date].periods.push({
         color: "transparent",
       });
+      return;
     }
+
     for (const filter of relevantFilters) {
       const match =
         dayValues.includes(filter.value) || filter.value === anyOption.value;
 
       if (match) {
+        const filterIndex = filters.findIndex((f) => f.value === filter.value);
         const prevMatch =
           prevDayValues.includes(filter.value) ||
           (filter.value === anyOption.value && prevDayValues.length > 0);
@@ -91,7 +98,7 @@ function applyFilterToMarkedDates({
         markedDates[day.date].periods.push({
           startingDay: isStartingDay,
           endingDay: isEndingDay,
-          color: filter.color,
+          color: filterColors[filterIndex],
         });
       } else {
         markedDates[day.date].periods.push({
@@ -103,8 +110,9 @@ function applyFilterToMarkedDates({
 }
 
 function markedDatesBuilder(
-  filters: { label: string; value: string; color: string }[],
+  filters: { label: string; value: string }[],
   data: DayData[],
+  filterColors: string[],
 ) {
   const markedDates: MarkedDates = {};
 
@@ -137,6 +145,7 @@ function markedDatesBuilder(
 
     // notes
     const notesFilter = filters.find((filter) => filter.value === "notes");
+    const notesIndex = filters.findIndex((filter) => filter.value === "notes");
     if (notesFilter) {
       if (!markedDates[day.date])
         markedDates[day.date] = { selected: false, periods: [] };
@@ -149,7 +158,7 @@ function markedDatesBuilder(
         markedDates[day.date].periods.push({
           startingDay: true,
           endingDay: true,
-          color: notesFilter.color,
+          color: filterColors[notesIndex],
         });
       }
     }
@@ -158,6 +167,7 @@ function markedDatesBuilder(
     applyFilterToMarkedDates({
       markedDates,
       filters,
+      filterColors,
       day,
       dayValues: day.symptoms ?? [],
       prevDayValues: data[index - 1]?.symptoms ?? [],
@@ -170,6 +180,7 @@ function markedDatesBuilder(
     applyFilterToMarkedDates({
       markedDates,
       filters,
+      filterColors,
       day,
       dayValues: day.moods ?? [],
       prevDayValues: data[index - 1]?.moods ?? [],
@@ -182,6 +193,7 @@ function markedDatesBuilder(
     applyFilterToMarkedDates({
       markedDates,
       filters,
+      filterColors,
       day,
       dayValues: day.medications ?? [],
       prevDayValues: data[index - 1]?.medications ?? [],
@@ -194,6 +206,7 @@ function markedDatesBuilder(
     applyFilterToMarkedDates({
       markedDates,
       filters,
+      filterColors,
       day,
       dayValues: day.medications ?? [],
       prevDayValues: data[index - 1]?.medications ?? [],
@@ -203,20 +216,14 @@ function markedDatesBuilder(
     });
   });
 
-  /*
-  for (const date in markedDates) {
-    console.log(date);
-    for (const period in markedDates[date].periods) {
-      console.log(markedDates[date].periods[period]);
-    }
-  } */
-
   return markedDates;
 }
 
 export function useMarkedDates(
-  calendarFilters?: { label: string; value: string; color: string }[],
+  calendarFilters?: { label: string; value: string }[],
 ) {
+  const theme = useTheme();
+  const colors = theme.dark ? FilterColorsDark : FilterColorsLight;
   const [markedDates, setMarkedDates] = useState<MarkedDates>({});
   const filteredData = useLiveFilteredData(
     calendarFilters ? calendarFilters : [],
@@ -246,20 +253,17 @@ export function useMarkedDates(
         return;
       }
 
-      const newMarkedDates = markedDatesBuilder(calendarFilters ?? [], allDays);
-      // log marked dates
-      // for (const date in newMarkedDates) {
-      //   console.log(date);
-      //   for (const period in newMarkedDates[date].periods) {
-      //     console.log(newMarkedDates[date].periods[period]);
-      //   }
-      // }
+      const newMarkedDates = markedDatesBuilder(
+        calendarFilters ?? [],
+        allDays,
+        colors,
+      );
 
       setMarkedDates(newMarkedDates);
       setDate(today);
     }
     refreshCalendar(filteredData as DayData[]);
-  }, [filteredData, today, setDate]);
+  }, [filteredData, today, setDate, calendarFilters, colors]);
 
   // get data for selected date on calendar (when user presses a different day)
   useEffect(() => {
