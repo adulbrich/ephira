@@ -106,5 +106,5 @@ export const useLiveFilteredData = (
     setLoading(false);
   }, [data, filters]);
 
-  return filteredData;
+  return { loading, filteredData };
 };

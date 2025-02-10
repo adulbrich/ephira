@@ -32,7 +32,7 @@ export default function FlowCalendar() {
   // can also be used like this
   // const selectedDate = useSelectedDate().date
 
-  const { markedDates } = useMarkedDates(selectedFilters);
+  const { loading, markedDates } = useMarkedDates(selectedFilters);
   const theme = useTheme();
   const filterColors = theme.dark ? FilterColorsDark : FilterColorsLight;
   const styles = makeStyles({ theme });
@@ -57,9 +57,7 @@ export default function FlowCalendar() {
         setSelectedFilters(JSON.parse(filters.value));
       } else {
         // set Flow as first filter by default (filler color given since color isn't optional)
-        setSelectedFilters([
-          { label: "Flow", value: "flow", color: "#ff7272" },
-        ]);
+        setSelectedFilters([{ label: "Flow", value: "flow" }]);
         await insertSetting(
           SettingsKeys.calendarFilters,
           JSON.stringify([{ label: "Flow", value: "flow" }]),
@@ -75,17 +73,6 @@ export default function FlowCalendar() {
     setDate(today);
     setKey(date + String(Math.random()));
   };
-  /*
-  // DELETE
-  useEffect(() => {
-    console.log("/n=========Marked dates: ========");
-
-    for (const date in markedDates) {
-      console.log(date);
-      console.log(markedDates[date]);
-    }
-  }, [markedDates]);
-  */
 
   return (
     <SafeAreaProvider>
@@ -116,6 +103,7 @@ export default function FlowCalendar() {
                   onDayPress={(day: { dateString: string }) =>
                     setDate(day.dateString)
                   }
+                  displayLoadingIndicator={loading}
                   theme={{
                     calendarBackground: theme.colors.background,
                     textSectionTitleColor: theme.colors.secondary,
@@ -132,14 +120,7 @@ export default function FlowCalendar() {
                   }}
                 />
                 <Divider />
-                <View
-                  style={{
-                    padding: 8,
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "space-around",
-                  }}
-                >
+                <View style={styles.legendContainer}>
                   {selectedFilters.map((filter, index) => (
                     <View
                       key={filter.value}
@@ -187,5 +168,11 @@ const makeStyles = ({ theme }: { theme: MD3Theme }) =>
         ios: 70,
         default: 0,
       }),
+    },
+    legendContainer: {
+      padding: 8,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-around",
     },
   });

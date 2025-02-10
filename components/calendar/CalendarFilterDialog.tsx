@@ -83,11 +83,23 @@ export default function CalendarFilterDialog({
   }, [selectedFilters]);
 
   const applyFilter = async () => {
+    let updatedFilters = tempSelectedFilters;
+    // make flow the first filter if it's included and not the first filter
+    if (
+      tempSelectedFilters.some((f) => f.value === flowOption.value) &&
+      tempSelectedFilters[0].value !== flowOption.value
+    ) {
+      updatedFilters = [
+        flowOption,
+        ...tempSelectedFilters.filter((f) => f.value !== flowOption.value),
+      ];
+    }
+
     await updateSetting(
       SettingsKeys.calendarFilters,
-      JSON.stringify(tempSelectedFilters),
+      JSON.stringify(updatedFilters),
     );
-    setSelectedFilters(tempSelectedFilters);
+    setSelectedFilters(updatedFilters);
     setVisible(false);
   };
 

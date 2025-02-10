@@ -225,7 +225,7 @@ export function useMarkedDates(
   const theme = useTheme();
   const colors = theme.dark ? FilterColorsDark : FilterColorsLight;
   const [markedDates, setMarkedDates] = useState<MarkedDates>({});
-  const filteredData = useLiveFilteredData(
+  const { loading, filteredData } = useLiveFilteredData(
     calendarFilters ? calendarFilters : [],
   );
 
@@ -301,5 +301,5 @@ export function useMarkedDates(
     fetchData();
   }, [date, setFlow, setId, today]);
 
-  return { markedDates };
+  return { loading, markedDates };
 }

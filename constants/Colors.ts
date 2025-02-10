@@ -7,6 +7,10 @@ export const FlowColors = [
   "#990000",
 ];
 
-export const FilterColorsDark = ["#07EEFF", "#BCFF6F", "#DE74FF"];
+const warmGold = "#E6B657";
+const peachOrange = "#FFA770";
+const sage = "#88A87D";
+const softBlue = "#809BFF";
 
-export const FilterColorsLight = ["#2A00D4", "#299A00", "#CBBB29"];
+export const FilterColorsDark = [peachOrange, softBlue, sage];
+export const FilterColorsLight = [warmGold, softBlue, sage];
