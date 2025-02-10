@@ -5,12 +5,21 @@ export interface DayData {
   is_cycle_start?: boolean;
   is_cycle_end?: boolean;
   notes?: string;
+  moods?: string[];
+  symptoms?: string[];
+  medications?: string[];
+  birth_control?: string;
+}
+
+export interface periodData {
+  startingDay?: boolean;
+  endingDay?: boolean;
+  color: string;
 }
 
 export interface MarkedDate {
-  marked: boolean;
   selected: boolean;
-  dotColor: string;
+  periods: periodData[];
 }
 
 export interface MarkedDates {
@@ -81,4 +90,14 @@ export interface TempSelectedTime {
 export interface FlowDataState {
   flowDataForCurrentMonth: DayData[];
   setFlowDataForCurrentMonth: (data: DayData[]) => void;
+}
+
+export interface CalendarFilter {
+  label: string;
+  value: string;
+}
+
+export interface CalendarFilters {
+  selectedFilters: CalendarFilter[];
+  setSelectedFilters: (values: CalendarFilter[]) => void;
 }

@@ -16,3 +16,8 @@ export const medicationOptions = [
   { label: "Allergy", value: "allergy" },
   { label: "Other", value: "other" },
 ];
+
+export const anyMedicationOption = {
+  label: "Any Medication",
+  value: "any_medication",
+};

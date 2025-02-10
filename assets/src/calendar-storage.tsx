@@ -14,6 +14,8 @@ import {
   TimePickerState,
   TempSelectedTime,
   FlowDataState,
+  CalendarFilter,
+  CalendarFilters,
 } from "@/constants/Interfaces";
 
 const initialDay: DayData = {
@@ -120,4 +122,10 @@ export const useFlowData = create<FlowDataState>((set) => ({
   flowDataForCurrentMonth: [],
   setFlowDataForCurrentMonth: (data: DayData[]) =>
     set(() => ({ flowDataForCurrentMonth: data })),
+}));
+
+export const useCalendarFilters = create<CalendarFilters>((set) => ({
+  selectedFilters: [],
+  setSelectedFilters: (values: CalendarFilter[]) =>
+    set(() => ({ selectedFilters: values })),
 }));
