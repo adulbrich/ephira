@@ -75,6 +75,7 @@ See `LICENSE.txt` for more information.
 - ![#f2e4bf](https://placehold.co/15x15/f2e4bf/f2e4bf.png) `#f2e4bf`
 - ![#9892a0](https://placehold.co/15x15/9892a0/9892a0.png) `#9892a0`
 - ![#65759a](https://placehold.co/15x15/65759a/65759a.png) `#65759a`
+- ![#312935](https://placehold.co/15x15/312935/312935.png) `#312935`
 
 ### Fonts
 [Minion Variable Concept](https://fonts.adobe.com/fonts/minion) 
