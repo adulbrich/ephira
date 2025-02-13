@@ -18,3 +18,5 @@ export const moodOptions = [
   { label: "Insecure", value: "insecure" },
   { label: "Grateful", value: "grateful" },
 ];
+
+export const anyMoodOption = { label: "Any Mood", value: "any_mood" };

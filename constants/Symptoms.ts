@@ -18,3 +18,5 @@ export const symptomOptions = [
   { label: "Decreased Appetite", value: "decreased_appetite" },
   { label: "Breast Tenderness", value: "breat_tenderness" },
 ];
+
+export const anySymptomOption = { label: "Any Symptom", value: "any_symptom" };

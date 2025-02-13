@@ -24,7 +24,7 @@ import { getDatabase, getDrizzleDatabase, getSetting } from "@/db/database";
 import DatabaseMigrationError from "@/components/DatabaseMigrationError";
 import PasswordAuthenticationView from "@/components/PasswordAuthenticationView";
 
-const DB_NAME = "testing.db";
+const DB_NAME = "ephira.db";
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   StyleSheet,
   View,
@@ -11,25 +11,32 @@ import {
 } from "react-native";
 import { Calendar } from "react-native-calendars";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
+import { SettingsKeys } from "@/constants/Settings";
 import DayView from "@/components/dayView/DayView";
-import { getDay, getDrizzleDatabase } from "@/db/database";
-import type { DayData } from "@/constants/Interfaces";
-import { useTheme, Divider } from "react-native-paper";
-import { FlowColors } from "@/constants/Colors";
-import { useLiveQuery } from "drizzle-orm/expo-sqlite";
-import * as schema from "@/db/schema";
-
-import { useSelectedDate, useMarkedDates } from "@/assets/src/calendar-storage";
+import { useTheme, MD3Theme, Divider, Text } from "react-native-paper";
+import {
+  useSelectedDate,
+  useCalendarFilters,
+} from "@/assets/src/calendar-storage";
+import { getSetting, insertSetting } from "@/db/database";
+import CalendarHeader from "@/components/calendar/CalendarHeader";
+import { useMarkedDates } from "@/hooks/useMarkedDates";
+import { FilterColorsDark, FilterColorsLight } from "@/constants/Colors";
+import { Image } from "react-native";
 
 export default function FlowCalendar() {
-  // access state management
-  const { date, setDate, setFlow, setId } = useSelectedDate();
-  const storedDatesState = useMarkedDates();
+  const [key, setKey] = useState<string>("");
 
+  // access state management
+  const { date, setDate } = useSelectedDate();
+  const { selectedFilters, setSelectedFilters } = useCalendarFilters();
   // can also be used like this
   // const selectedDate = useSelectedDate().date
 
+  const { loading, markedDates } = useMarkedDates(selectedFilters);
   const theme = useTheme();
+  const filterColors = theme.dark ? FilterColorsDark : FilterColorsLight;
+  const styles = makeStyles({ theme });
 
   // get date in local time
   const day = new Date();
@@ -37,95 +44,36 @@ export default function FlowCalendar() {
   const localDate = new Date(day.getTime() - offset * 60 * 1000);
   const today = localDate.toISOString().split("T")[0];
 
-  const db = getDrizzleDatabase();
-  const { data } = useLiveQuery(db.select().from(schema.days));
-
-  // useLiveQuery will automatically update the calendar when the db data changes
-  useEffect(() => {
-    function refreshCalendar(allDays: DayData[]) {
-      if (allDays.length !== 0) {
-        allDays.forEach((day: any) => {
-          storedDatesState[day.date] = {
-            marked: true,
-            dotColor:
-              day.flow_intensity > 0
-                ? FlowColors[day.flow_intensity]
-                : "transparent",
-            selected: day.date === today,
-          };
-        });
-        setDate(today);
-      } else {
-        Object.keys(storedDatesState).forEach((date) => {
-          // if no dates are stored, iterate through and remove set all stored dates as "marked: false"
-          storedDatesState[date] = {
-            ...storedDatesState[date],
-            marked: false,
-          };
-        });
-        setDate(today);
-      }
-    }
-    refreshCalendar(data as DayData[]);
-  }, [data, today]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Since iOS bar uses absolute positon for blur affect, we have to adjust padding to bottom of container
-  const styles = StyleSheet.create({
-    container: {
-      backgroundColor: theme.colors.background,
-      flex: 1,
-      paddingTop: StatusBar.currentHeight,
-      paddingBottom: Platform.select({
-        ios: 70,
-        default: 0,
-      }),
-    },
-  });
-
-  // get data for selected date on calendar (when user presses a different day)
-  useEffect(() => {
-    if (!date) return;
-
-    async function fetchData() {
-      const day = await getDay(date);
-
-      //set other values of selecteDateState (if they exist)
-      setFlow(day?.flow_intensity ? day.flow_intensity : 0);
-      setId(day?.id ? day.id : 0);
-
-      // reset old selected date
-      Object.keys(storedDatesState).forEach((date) => {
-        // iterate through all stored dates, set selected = false
-        storedDatesState[date] = {
-          ...storedDatesState[date],
-          selected: false,
-        };
-
-        // if an item isn't marked and isn't the selected date, remove it from the stored dates
-        if (!storedDatesState[date].marked) {
-          if (date !== date) {
-            delete storedDatesState[date];
-          }
-        }
-      });
-
-      // set new selected date
-      storedDatesState[date] = {
-        ...storedDatesState[date],
-        selected: true,
-      };
-
-      return;
-    }
-
-    fetchData();
-  }, [date]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const dismissKeyboard = () => {
     Keyboard.dismiss();
   };
 
   const themeKey = theme.dark ? "dark-theme" : "light-theme";
+
+  // load filters from secure store
+  useEffect(() => {
+    const loadFilters = async () => {
+      const filters = await getSetting(SettingsKeys.calendarFilters);
+      if (filters?.value) {
+        setSelectedFilters(JSON.parse(filters.value));
+      } else {
+        // set Flow as first filter by default (filler color given since color isn't optional)
+        setSelectedFilters([{ label: "Flow", value: "flow" }]);
+        await insertSetting(
+          SettingsKeys.calendarFilters,
+          JSON.stringify([{ label: "Flow", value: "flow" }]),
+        );
+      }
+    };
+    loadFilters();
+  }, [setSelectedFilters]);
+
+  // the calendar doesn't expose a method to jump to today, so we have to
+  // change the key after setting the date to force a re-render
+  const jumpToToday = () => {
+    setDate(today);
+    setKey(date + String(Math.random()));
+  };
 
   return (
     <SafeAreaProvider>
@@ -144,12 +92,19 @@ export default function FlowCalendar() {
                 style={{ backgroundColor: theme.colors.background, padding: 4 }}
               >
                 <Calendar
+                  allowSelectionOutOfRange={false}
+                  key={key}
+                  renderHeader={(date: object) => (
+                    <CalendarHeader onJumpToToday={jumpToToday} date={date} />
+                  )}
                   maxDate={today}
-                  markedDates={{ ...storedDatesState }}
+                  markingType="multi-period"
+                  markedDates={{ ...markedDates }}
                   enableSwipeMonths={true}
                   onDayPress={(day: { dateString: string }) =>
                     setDate(day.dateString)
                   }
+                  displayLoadingIndicator={loading}
                   theme={{
                     calendarBackground: theme.colors.background,
                     textSectionTitleColor: theme.colors.secondary,
@@ -159,15 +114,48 @@ export default function FlowCalendar() {
                     dayTextColor: theme.colors.onBackground,
                     textDisabledColor: theme.colors.surfaceVariant,
                     arrowColor: theme.colors.primary,
-                    monthTextColor: theme.colors.primary,
                     textDayFontFamily: "monospace",
-                    textMonthFontFamily: "monospace",
                     textDayHeaderFontFamily: "monospace",
                     textDayFontSize: 16,
-                    textMonthFontSize: 16,
                     textDayHeaderFontSize: 16,
                   }}
                 />
+                <Divider />
+                <View style={styles.legendContainer}>
+                  {selectedFilters.map((filter, index) => (
+                    <View
+                      key={filter.value}
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        padding: 4,
+                      }}
+                    >
+                      {filter.value === "flow" ? (
+                        <Image
+                          source={require("@/assets/images/flow_gradient_circle.png")}
+                          style={{
+                            width: 16,
+                            height: 16,
+                            borderRadius: 8,
+                            marginRight: 8,
+                          }}
+                        />
+                      ) : (
+                        <View
+                          style={{
+                            width: 16,
+                            height: 16,
+                            backgroundColor: filterColors[index],
+                            borderRadius: 8,
+                            marginRight: 8,
+                          }}
+                        />
+                      )}
+                      <Text>{filter.label}</Text>
+                    </View>
+                  ))}
+                </View>
                 <Divider />
               </View>
               <View>{date && <DayView />}</View>
@@ -178,3 +166,23 @@ export default function FlowCalendar() {
     </SafeAreaProvider>
   );
 }
+
+const makeStyles = ({ theme }: { theme: MD3Theme }) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: theme.colors.background,
+      flex: 1,
+      paddingTop: StatusBar.currentHeight,
+      // Since iOS bar uses absolute positon for blur affect, we have to adjust padding to bottom of container
+      paddingBottom: Platform.select({
+        ios: 70,
+        default: 0,
+      }),
+    },
+    legendContainer: {
+      padding: 8,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-around",
+    },
+  });
