@@ -105,10 +105,12 @@ This project uses [file-based routing](https://docs.expo.dev/router/introduction
 
 ### Learn more
 
-To learn more about developing your project with Expo, look at the following resources:
+To learn more about the libraries we use, look at the following resources:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- [Expo](https://docs.expo.dev/)
+- [React Native](https://reactnative.dev/)
+- [React Native Paper](https://reactnativepaper.com/)
+- [Drizzle (Expo SQLite)](https://orm.drizzle.team/docs/connect-expo-sqlite)
 
 
 
