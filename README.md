@@ -1,22 +1,89 @@
-# ephira
+<a id="readme-top"></a>
 
-## Demo
+<!-- PROJECT SHIELDS -->
+<!--
+*** Reference links are enclosed in brackets [ ] instead of parentheses ( ).
+*** See the bottom of this document for the declaration of the reference variables
+*** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
+*** https://www.markdownguide.org/basic-syntax/#reference-style-links
+-->
 
-### Sprint 1: iOS
+[![Angular][TypeScript.org]][TypeScript-url]
+[![React Native][React-Native.dev]][React-Native-url]
+[![Expo][Expo.dev]][expo-url]
+[![SQLite][SQLite.org]][SQLite-url]
+[![Android][Android.com]][Android-url]
+[![IOS][Apple.com]][Apple-url]
 
-https://github.com/user-attachments/assets/4d6b3db8-5197-4b03-8747-7f4fc25c1aa1
+<!-- PROJECT LOGO -->
 
-### Fall Prototype
+![Ephira Feature Graphic](https://github.com/user-attachments/assets/7b6e3dfe-63fc-4239-9e51-af8fa0c1aeb3)
 
-### Android / Light-mode
+<!-- ABOUT THE PROJECT -->
 
-https://github.com/user-attachments/assets/2e7ee61d-1325-4faa-82f6-08934fffe9a1
 
-### iPhone / Dark-mode
+## About The Project
 
-https://github.com/user-attachments/assets/54719073-8a58-44cd-850b-e482eb5aa571
+Stay aware of your cycle without sacrificing your privacy. Ephira is a secure period-tracker that keeps your data encrypted locally on your device. 
 
-## Running The Project
+Track Your Health: Log menstrual flow, symptoms, moods, medications, birth control, and notes. 
+
+Privacy First: Data is encrypted and never leaves your device. It can be locked behind biometrics (Face ID/Fingerprint) or a custom password, and can be deleted at any time. 
+
+Open and Transparent: Ephira is open source under the MIT license, and you can review the code at any time on Github.
+
+
+<!-- DEVELOPMENT GOALS -->
+## Development Goals
+
+- [ ] Android Play Store Deployment
+    - [ ] Review 
+    - [ ] User Testing 
+- [ ] Apple App Store Deployment
+    - [ ] Review 
+    - [ ] User Testing
+- [ ] App Features
+    - [ ] Cycle Prediction
+    - [ ] Data Export
+    - [ ] Animations
+    - [ ] Splash Screen
+    - [ ] Menstrual Cycle Insight
+
+See the [open issues](https://github.com/adulbrich/ephira/issues) for a full list of proposed features (and known issues).
+
+<!-- LICENSE -->
+## License
+
+[![License][license-shield]][license-url]
+
+See `LICENSE.txt` for more information.
+
+
+<!-- ACKNOWLEDGMENTS -->
+## Acknowledgments
+
+### Top contributors:
+
+<a href="https://github.com/adulbrich/ephira/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=adulbrich/ephira" alt="contrib.rocks image" />
+</a>
+
+
+<!-- DESIGN GUIDE -->
+## Design Guide
+### Logo Colors
+- ![#f2e4bf](https://placehold.co/15x15/f2e4bf/f2e4bf.png) `#f2e4bf`
+- ![#9892a0](https://placehold.co/15x15/9892a0/9892a0.png) `#9892a0`
+- ![#65759a](https://placehold.co/15x15/65759a/65759a.png) `#65759a`
+
+### Fonts
+[Minion Variable Concept](https://fonts.adobe.com/fonts/minion) 
+
+
+<!-- GETTING STARTED -->
+## Getting Started
+
+### Running the Project
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
@@ -34,18 +101,39 @@ In the output, you'll find options to open the app in a:
 - [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
 - [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction). 
 
-## Learn more
+### Learn more
 
 To learn more about developing your project with Expo, look at the following resources:
 
 - [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
 - [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
 
-## Join the community
+### Join the community
 
 Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+
+<!-- MARKDOWN LINKS & IMAGES -->
+<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
+[license-shield]: https://img.shields.io/github/license/adulbrich/ephira.svg?style=for-the-badge
+[license-url]: https://github.com/adulbrich/ephira/blob/master/LICENSE.txt
+[product-screenshot]: assets/images/feature-graphic.png
+[SQLite.org]: https://img.shields.io/badge/sqlite-%2307405e.svg?style=for-the-badge&logo=sqlite&logoColor=white
+[SQLite-url]: https://sqlite.org
+[Expo.dev]: https://img.shields.io/badge/expo-1C1E24?style=for-the-badge&logo=expo&logoColor=#D04A37
+[Expo-url]: https://expo.dev
+[React-Native.dev]: https://img.shields.io/badge/react_native-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB
+[React-Native-url]: https://reactnative.dev
+[TypeScript.org]: https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white
+[TypeScript-url]: https://typescriptlang.org
+[Android.com]: https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white
+[Android-url]: https://android.com
+[Apple.com]: https://img.shields.io/badge/IOS-%23000000.svg?style=for-the-badge&logo=apple&logoColor=white
+[Apple-url]: https://apple.com
+
+
