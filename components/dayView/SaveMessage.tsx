@@ -41,6 +41,6 @@ const SaveMessage = ({
       left: 0,
       right: 0,
     },
-});
+  });
 
 export default SaveMessage;

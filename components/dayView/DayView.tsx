@@ -69,7 +69,7 @@ export default function DayView() {
 
       await syncEntries(selectedSymptoms, "symptom");
       await syncEntries(selectedMoods, "mood");
-      
+
       if (selectedBirthControl != null) {
         selectedMedications.push(selectedBirthControl);
       }
@@ -77,7 +77,7 @@ export default function DayView() {
       await syncMedicationEntries(
         selectedMedications,
         timeTaken,
-        birthControlNotes,
+        birthControlNotes
       );
 
       await fetchEntries("symptom");
@@ -104,7 +104,7 @@ export default function DayView() {
       if (selectedBirthControl) {
         contentToSave.push("Birth Control");
       }
-      
+
       if (contentToSave.length > 0) {
         let message = "";
         if (contentToSave.length === 1) {
@@ -114,12 +114,15 @@ export default function DayView() {
         } else {
           // If user selects three or more tracking options, join with commas and add an "and" before the last item
           const multipleSelections = contentToSave.slice(0, -1).join(", ");
-          message = multipleSelections + " and " + contentToSave[contentToSave.length - 1] + " Saved!";
+          message =
+            multipleSelections +
+            " and " +
+            contentToSave[contentToSave.length - 1] +
+            " Saved!";
         }
         setSaveMessageContent([message]);
         setSaveMessageVisible(true);
       }
-
     });
   }
 
