@@ -4,7 +4,6 @@
     "slug": "ephira",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -16,12 +15,18 @@
       },
       "infoPlist": {
         "NSFaceIDUsageDescription": "This app uses Face ID to authenticate you."
+      },
+      "icon": {
+        "dark": "./assets/images/ios-dark.png",
+        "light": "./assets/images/ios-light.png",
+        "tinted": "./assets/images/ios-tinted.png"
       }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/images/android-adaptive-icon.png",
+        "monochromeImage": "./assets/images/android-adaptive-icon.png",
+        "backgroundColor": "#312935"
       },
       "softwareKeyboardLayoutMode": "pan",
       "package": "com.capucity.ephira",
@@ -40,10 +45,14 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/splash-icon-light.png",
+          "backgroundColor": "#9892a0",
+          "dark": {
+            "image": "./assets/images/splash-icon-dark.png",
+            "backgroundColor": "#312935"
+          },
           "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "resizeMode": "contain"
         }
       ],
       [
