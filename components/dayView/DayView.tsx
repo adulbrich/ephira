@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { StyleSheet, View } from "react-native";
 import { insertDay, getDay } from "@/db/database";
 import { List, Button, Text, useTheme, Divider } from "react-native-paper";
@@ -18,6 +18,7 @@ import BirthControlAccordion from "./BirthControlAccordion";
 import SymptomsAccordion from "./SymptomsAccordion";
 import MoodsAccordion from "./MoodsAccordion";
 import NotesAccordion from "./NotesAccordion";
+import SaveMessage from "./SaveMessage";
 import { useSyncEntries } from "@/hooks/useSyncEntries";
 import { useFetchEntries } from "@/hooks/useFetchEntries";
 import { useFetchMedicationEntries } from "@/hooks/useFetchMedicationEntries";
@@ -49,6 +50,9 @@ export default function DayView() {
     setTimeTaken,
   );
 
+  const [saveMessageVisible, setSaveMessageVisible] = useState(false);
+  const [saveMessageContent, setSaveMessageContent] = useState<string[]>([]);
+
   const fetchNotes = useCallback(async () => {
     const day = await getDay(date);
     if (day && day.notes) {
@@ -65,9 +69,11 @@ export default function DayView() {
 
       await syncEntries(selectedSymptoms, "symptom");
       await syncEntries(selectedMoods, "mood");
+      
       if (selectedBirthControl != null) {
         selectedMedications.push(selectedBirthControl);
       }
+
       await syncMedicationEntries(
         selectedMedications,
         timeTaken,
@@ -78,6 +84,42 @@ export default function DayView() {
       await fetchEntries("mood");
       await fetchMedicationEntries();
       await fetchNotes();
+
+      const contentToSave: string[] = [];
+      if (flow_intensity !== 0) {
+        contentToSave.push("Flow");
+      }
+      if (notes && notes.trim() !== "") {
+        contentToSave.push("Notes");
+      }
+      if (selectedSymptoms.length > 0) {
+        contentToSave.push("Symptoms");
+      }
+      if (selectedMoods.length > 0) {
+        contentToSave.push("Moods");
+      }
+      if (selectedMedications.length > 0) {
+        contentToSave.push("Medications");
+      }
+      if (selectedBirthControl) {
+        contentToSave.push("Birth Control");
+      }
+      
+      if (contentToSave.length > 0) {
+        let message = "";
+        if (contentToSave.length === 1) {
+          message = contentToSave[0] + " Saved!";
+        } else if (contentToSave.length === 2) {
+          message = contentToSave[0] + " and " + contentToSave[1] + " Saved!";
+        } else {
+          // If user selects three or more tracking options, join with commas and add an "and" before the last item
+          const allButLast = contentToSave.slice(0, -1).join(", ");
+          message = allButLast + " and " + contentToSave[contentToSave.length - 1] + " Saved!";
+        }
+        setSaveMessageContent([message]);
+        setSaveMessageVisible(true);
+      }
+
     });
   }
 
@@ -155,6 +197,11 @@ export default function DayView() {
           />
         </List.Section>
       </View>
+      <SaveMessage
+        visible={saveMessageVisible}
+        content={saveMessageContent}
+        onDismiss={() => setSaveMessageVisible(false)}
+      />
     </View>
   );
 }
