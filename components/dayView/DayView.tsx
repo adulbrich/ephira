@@ -39,7 +39,7 @@ export default function DayView() {
   const { fetchEntries } = useFetchEntries(
     date,
     setSelectedSymptoms,
-    setSelectedMoods
+    setSelectedMoods,
   );
   const { syncMedicationEntries } = useSyncMedicationEntries(date);
   const { fetchMedicationEntries } = useFetchMedicationEntries(
@@ -47,7 +47,7 @@ export default function DayView() {
     setSelectedBirthControl,
     setSelectedMedications,
     setBirthControlNotes,
-    setTimeTaken
+    setTimeTaken,
   );
 
   const [saveMessageVisible, setSaveMessageVisible] = useState(false);
