@@ -113,8 +113,8 @@ export default function DayView() {
           message = contentToSave[0] + " and " + contentToSave[1] + " Saved!";
         } else {
           // If user selects three or more tracking options, join with commas and add an "and" before the last item
-          const allButLast = contentToSave.slice(0, -1).join(", ");
-          message = allButLast + " and " + contentToSave[contentToSave.length - 1] + " Saved!";
+          const multipleSelections = contentToSave.slice(0, -1).join(", ");
+          message = multipleSelections + " and " + contentToSave[contentToSave.length - 1] + " Saved!";
         }
         setSaveMessageContent([message]);
         setSaveMessageVisible(true);
