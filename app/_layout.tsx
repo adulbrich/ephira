@@ -20,7 +20,13 @@ import { Suspense } from "react";
 import { ActivityIndicator, Alert } from "react-native";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
 import { AUTH_TYPES, SettingsKeys } from "@/constants/Settings";
-import { getDatabase, getDrizzleDatabase, getSetting } from "@/db/database";
+import {
+  getDatabase,
+  getDrizzleDatabase,
+  getSetting,
+  insertSetting,
+  setupEntryTypes,
+} from "@/db/database";
 import DatabaseMigrationError from "@/components/DatabaseMigrationError";
 import PasswordAuthenticationView from "@/components/PasswordAuthenticationView";
 import { DATABASE_NAME } from "@/constants/Settings";
@@ -83,16 +89,29 @@ export default function RootLayout() {
   }, [checkAuthentication]);
 
   useEffect(() => {
-    if (loaded && success) {
-      checkAuthentication();
-    }
+    const initializeDatabase = async () => {
+      const isDatabaseSetup = await getSetting(
+        SettingsKeys.databaseInitialSetup
+      );
+      console.log("isDatabaseSetup: ", isDatabaseSetup);
+      if (!isDatabaseSetup || isDatabaseSetup.value !== "true") {
+        await setupEntryTypes();
+        await insertSetting(SettingsKeys.databaseInitialSetup, "true");
+        console.log("Database setup complete");
+      }
+      if (loaded && success) {
+        checkAuthentication();
+      }
+    };
+
+    initializeDatabase();
   }, [loaded, success, checkAuthentication]);
 
   const handlePasswordSubmit = async (passwordInput: string) => {
     const storedPassword = await getSetting(SettingsKeys.password);
     const hashedInput = await Crypto.digestStringAsync(
       Crypto.CryptoDigestAlgorithm.SHA256,
-      passwordInput,
+      passwordInput
     );
     if (hashedInput === storedPassword?.value) {
       setIsAuthenticated(true);
