@@ -1,8 +1,7 @@
 import * as SQLite from "expo-sqlite";
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import * as schema from "@/db/schema";
-
-const DATABASE_NAME = "testing.db";
+import { DATABASE_NAME } from "@/constants/Settings";
 
 let expoDb: SQLite.SQLiteDatabase;
 
