@@ -14,7 +14,8 @@
         "usesNonExemptEncryption": false
       },
       "infoPlist": {
-        "NSFaceIDUsageDescription": "This app uses Face ID to authenticate you."
+        "NSFaceIDUsageDescription": "This app uses Face ID to authenticate you.",
+        "ITSAppUsesNonExemptEncryption": false
       },
       "icon": {
         "dark": "./assets/images/ios-dark.png",
