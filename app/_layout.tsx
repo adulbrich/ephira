@@ -23,8 +23,8 @@ import { AUTH_TYPES, SettingsKeys } from "@/constants/Settings";
 import { getDatabase, getDrizzleDatabase, getSetting } from "@/db/database";
 import DatabaseMigrationError from "@/components/DatabaseMigrationError";
 import PasswordAuthenticationView from "@/components/PasswordAuthenticationView";
+import { DATABASE_NAME } from "@/constants/Settings";
 
-const DB_NAME = "ephira.db";
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -142,7 +142,7 @@ export default function RootLayout() {
 
   return (
     <Suspense fallback={<ActivityIndicator size="large" />}>
-      <SQLiteProvider databaseName={DB_NAME} useSuspense>
+      <SQLiteProvider databaseName={DATABASE_NAME} useSuspense>
         <PaperProvider theme={theme}>
           <SafeAreaProvider>
             <SafeAreaView
