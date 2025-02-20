@@ -101,3 +101,8 @@ export interface CalendarFilters {
   selectedFilters: CalendarFilter[];
   setSelectedFilters: (values: CalendarFilter[]) => void;
 }
+
+export interface ThemeColor {
+  themeColor: string;
+  setThemeColor: (color: string) => void;
+}

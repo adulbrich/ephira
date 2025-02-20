@@ -23,12 +23,20 @@ import { AUTH_TYPES, SettingsKeys } from "@/constants/Settings";
 import { getDatabase, getDrizzleDatabase, getSetting } from "@/db/database";
 import DatabaseMigrationError from "@/components/DatabaseMigrationError";
 import PasswordAuthenticationView from "@/components/PasswordAuthenticationView";
+import { getTheme } from "@/components/ThemeHandler";
+import { useThemeColor } from "@/assets/src/calendar-storage";
 
 const DB_NAME = "ephira.db";
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const theme = useColorScheme() === "dark" ? DarkTheme : DefaultTheme;
+  const systemTheme = useColorScheme(); 
+  const isDarkMode = systemTheme === "dark";
+  const { themeColor } = useThemeColor(); 
+
+  const finalSelectedColor = themeColor as "blue" | "brown" | "green" | "pink" | "purple" | "yellow"; 
+  const theme = getTheme(finalSelectedColor, isDarkMode); 
+
   const expoDb = getDatabase();
   const db = getDrizzleDatabase();
   useDrizzleStudio(expoDb);

@@ -4,6 +4,7 @@ import PrivacyPolicy from "@/components/ui/PrivacyPolicy";
 import DeleteData from "@/components/DeleteData";
 import { Text } from "react-native-paper";
 import { ScrollView, SafeAreaView } from "react-native";
+import ThemeSelector from "@/components/ThemeSelector";
 
 export default function Settings() {
   return (
@@ -14,6 +15,7 @@ export default function Settings() {
         </Text>
         <ScrollView contentContainerStyle={{ paddingBottom: 60 }}>
           <AuthenticationSettings />
+          <ThemeSelector />
           <DeleteData />
           <PrivacyPolicy />
         </ScrollView>
