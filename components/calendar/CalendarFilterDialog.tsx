@@ -23,8 +23,8 @@ import {
   birthControlOptions,
   anyBirthControlOption,
 } from "@/constants/BirthControlTypes";
-const flowOption = { label: "Flow", value: "flow" };
-const notesOption = { label: "Notes", value: "notes" };
+const flowOption = "Flow";
+const notesOption = "Notes";
 
 function FilterSection({
   selectedFilters,
@@ -33,11 +33,11 @@ function FilterSection({
   subheader,
   listItems,
 }: {
-  selectedFilters: { label: string; value: string }[];
-  onToggleSwitch: (filter: { label: string; value: string }) => void;
+  selectedFilters: string[];
+  onToggleSwitch: (filter: string) => void;
   isMaxFiltersSelected: boolean;
   subheader: string;
-  listItems: { label: string; value: string }[];
+  listItems: string[];
 }) {
   return (
     <List.Section>
@@ -45,16 +45,13 @@ function FilterSection({
       {listItems.map((item) => (
         <List.Item
           style={styles.listItem}
-          key={item.value}
-          title={item.label}
+          key={item}
+          title={item}
           right={() => (
             <Switch
-              value={selectedFilters.some((f) => f.value === item.value)}
+              value={selectedFilters.includes(item)}
               onValueChange={() => onToggleSwitch(item)}
-              disabled={
-                isMaxFiltersSelected &&
-                !selectedFilters.some((f) => f.value === item.value)
-              }
+              disabled={isMaxFiltersSelected && !selectedFilters.includes(item)}
             />
           )}
         />
@@ -71,12 +68,8 @@ export default function CalendarFilterDialog({
   setVisible: (visible: boolean) => void;
 }) {
   const { selectedFilters, setSelectedFilters } = useCalendarFilters();
-  const [tempSelectedFilters, setTempSelectedFilters] = useState<
-    {
-      label: string;
-      value: string;
-    }[]
-  >(selectedFilters);
+  const [tempSelectedFilters, setTempSelectedFilters] =
+    useState<string[]>(selectedFilters);
 
   useEffect(() => {
     setTempSelectedFilters(selectedFilters);
@@ -86,12 +79,12 @@ export default function CalendarFilterDialog({
     let updatedFilters = tempSelectedFilters;
     // make flow the first filter if it's included and not the first filter
     if (
-      tempSelectedFilters.some((f) => f.value === flowOption.value) &&
-      tempSelectedFilters[0].value !== flowOption.value
+      tempSelectedFilters.includes(flowOption) &&
+      tempSelectedFilters[0] !== flowOption
     ) {
       updatedFilters = [
         flowOption,
-        ...tempSelectedFilters.filter((f) => f.value !== flowOption.value),
+        ...tempSelectedFilters.filter((f) => f !== flowOption),
       ];
     }
 
@@ -103,11 +96,9 @@ export default function CalendarFilterDialog({
     setVisible(false);
   };
 
-  const onToggleSwitch = (filter: { label: string; value: string }) => {
-    if (tempSelectedFilters.some((f) => f.value === filter.value)) {
-      setTempSelectedFilters(
-        tempSelectedFilters.filter((f) => f.value !== filter.value),
-      );
+  const onToggleSwitch = (filter: string) => {
+    if (tempSelectedFilters.includes(filter)) {
+      setTempSelectedFilters(tempSelectedFilters.filter((f) => f !== filter));
     } else if (tempSelectedFilters.length < 3) {
       setTempSelectedFilters([...tempSelectedFilters, filter]);
     }
@@ -128,15 +119,15 @@ export default function CalendarFilterDialog({
           <View style={styles.chipContainer}>
             {tempSelectedFilters.map((filter) => (
               <Chip
-                key={filter.value}
+                key={filter}
                 onClose={() =>
                   setTempSelectedFilters(
-                    tempSelectedFilters.filter((f) => f.value !== filter.value),
+                    tempSelectedFilters.filter((f) => f !== filter),
                   )
                 }
                 style={styles.chip}
               >
-                {filter.label}
+                {filter}
               </Chip>
             ))}
           </View>
@@ -145,38 +136,30 @@ export default function CalendarFilterDialog({
             <List.Section>
               <List.Item
                 style={styles.listItem}
-                key={flowOption.value}
-                title={flowOption.label}
+                key={flowOption}
+                title={flowOption}
                 right={() => (
                   <Switch
-                    value={tempSelectedFilters.some(
-                      (f) => f.value === flowOption.value,
-                    )}
+                    value={tempSelectedFilters.includes(flowOption)}
                     onValueChange={() => onToggleSwitch(flowOption)}
                     disabled={
                       isMaxFiltersSelected &&
-                      !tempSelectedFilters.some(
-                        (f) => f.value === flowOption.value,
-                      )
+                      !tempSelectedFilters.includes(flowOption)
                     }
                   />
                 )}
               />
               <List.Item
                 style={styles.listItem}
-                key={notesOption.value}
-                title={notesOption.label}
+                key={notesOption}
+                title={notesOption}
                 right={() => (
                   <Switch
-                    value={tempSelectedFilters.some(
-                      (f) => f.value === notesOption.value,
-                    )}
+                    value={tempSelectedFilters.includes(notesOption)}
                     onValueChange={() => onToggleSwitch(notesOption)}
                     disabled={
                       isMaxFiltersSelected &&
-                      !tempSelectedFilters.some(
-                        (f) => f.value === notesOption.value,
-                      )
+                      !tempSelectedFilters.includes(notesOption)
                     }
                   />
                 )}
