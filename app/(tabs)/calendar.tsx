@@ -17,6 +17,7 @@ import { useTheme, MD3Theme, Divider, Text } from "react-native-paper";
 import {
   useSelectedDate,
   useCalendarFilters,
+  useThemeColor,
 } from "@/assets/src/calendar-storage";
 import { getSetting, insertSetting } from "@/db/database";
 import CalendarHeader from "@/components/calendar/CalendarHeader";
@@ -48,7 +49,8 @@ export default function FlowCalendar() {
     Keyboard.dismiss();
   };
 
-  const themeKey = theme.dark ? "dark-theme" : "light-theme";
+  const { themeColor } = useThemeColor();
+  const themeKey = `${theme.dark ? "dark" : "light"}-${themeColor}`;
 
   // load filters from secure store
   useEffect(() => {

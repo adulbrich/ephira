@@ -1,27 +1,85 @@
 import { View } from "react-native";
-import { Button, Text } from "react-native-paper";
+import { Button, Divider, List, Text, useTheme } from "react-native-paper";
 import { useThemeColor } from "@/assets/src/calendar-storage";
-
-const themeColors = ["blue", "brown", "green", "pink", "purple", "yellow"] as const;
+import React, { useEffect } from "react";
+import { ThemedView } from "./ThemedView";
+import { insertSetting, getSetting } from "@/db/database";
+import { themeButtonColors } from "@/constants/Colors";
 
 export default function ThemeSelector() {
   const { themeColor, setThemeColor } = useThemeColor();
+  const theme = useTheme();
+
+  useEffect(() => {
+    async function fetchThemeColor() {
+      const savedTheme = await getSetting("theme");
+      if (savedTheme && savedTheme.value) {
+        setThemeColor(savedTheme.value);
+      }
+    }
+    fetchThemeColor();
+  }, [setThemeColor]);
+
+  // Update database when theme color changes
+  const handleThemeChange = (colorName: string) => {
+    setThemeColor(colorName);
+    insertSetting("theme", colorName);
+  };
 
   return (
-    <View style={{ padding: 10 }}>
-      <Text variant="titleMedium">Select Theme Color</Text>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", marginTop: 10 }}>
-        {themeColors.map((color) => (
-          <Button
-            key={color}
-            mode={themeColor === color ? "contained" : "outlined"}
-            onPress={() => setThemeColor(color)}
-            style={{ margin: 5 }}
-          >
-            {color.charAt(0).toUpperCase() + color.slice(1)}
-          </Button>
-        ))}
-      </View>
-    </View>
+    <ThemedView>
+      <List.Section>
+        <List.Accordion title="Change Theme Color">
+          <View style={{ paddingLeft: 15, paddingRight: 15, gap: 10 }}>
+            <Text>Select a theme color</Text>
+            <View
+              style={{ flexDirection: "row", flexWrap: "wrap", marginTop: 10 }}
+            >
+              {Object.entries(themeButtonColors).map(
+                ([colorName, colorHex]) => (
+                  <Button
+                    key={colorName}
+                    mode={themeColor === colorName ? "contained" : "outlined"}
+                    onPress={() => handleThemeChange(colorName)}
+                    style={{
+                      margin: 5,
+                      backgroundColor:
+                        themeColor === colorName
+                          ? theme.colors.inversePrimary
+                          : colorHex,
+                      borderColor: colorHex,
+                      borderWidth: 2,
+                    }}
+                  >
+                    {themeColor === colorName ? (
+                      <Text
+                        style={{
+                          fontSize: 18,
+                          fontWeight: "800",
+                          color: theme.colors.onPrimary,
+                        }}
+                      >
+                        ✓
+                      </Text>
+                    ) : (
+                      <Text
+                        style={{
+                          fontSize: 18,
+                          fontWeight: "800",
+                          color: "transparent",
+                        }}
+                      >
+                        ✓
+                      </Text>
+                    )}
+                  </Button>
+                ),
+              )}
+            </View>
+          </View>
+        </List.Accordion>
+      </List.Section>
+      <Divider />
+    </ThemedView>
   );
 }

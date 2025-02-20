@@ -6,11 +6,7 @@ import * as Crypto from "expo-crypto";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState, useRef, useCallback } from "react";
 import "react-native-reanimated";
-import {
-  PaperProvider,
-  MD3LightTheme as DefaultTheme,
-  MD3DarkTheme as DarkTheme,
-} from "react-native-paper";
+import { PaperProvider } from "react-native-paper";
 import { useColorScheme, View, AppState, AppStateStatus } from "react-native";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
@@ -30,12 +26,30 @@ const DB_NAME = "ephira.db";
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const systemTheme = useColorScheme(); 
+  const systemTheme = useColorScheme();
   const isDarkMode = systemTheme === "dark";
-  const { themeColor } = useThemeColor(); 
+  const { themeColor, setThemeColor } = useThemeColor();
 
-  const finalSelectedColor = themeColor as "blue" | "brown" | "green" | "pink" | "purple" | "yellow"; 
-  const theme = getTheme(finalSelectedColor, isDarkMode); 
+  useEffect(() => {
+    async function fetchThemeColor() {
+      const savedTheme = await getSetting("theme");
+      if (savedTheme && savedTheme.value) {
+        setThemeColor(savedTheme.value);
+      } else {
+        setThemeColor("purple");
+      }
+    }
+    fetchThemeColor();
+  }, [setThemeColor]);
+
+  const finalSelectedColor = themeColor as
+    | "blue"
+    | "brown"
+    | "green"
+    | "pink"
+    | "purple"
+    | "yellow";
+  const theme = getTheme(finalSelectedColor, isDarkMode);
 
   const expoDb = getDatabase();
   const db = getDrizzleDatabase();
