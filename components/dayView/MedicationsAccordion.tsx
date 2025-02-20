@@ -16,8 +16,7 @@ export default function MedicationsAccordion({
 }) {
   // Filter out birth control medications to calculate the count
   const medicationsWithoutBirthControl = selectedMedications.filter(
-    (medication) =>
-      !birthControlOptions.some((option) => option.value === medication),
+    (medication) => !birthControlOptions.includes(medication),
   );
 
   return (

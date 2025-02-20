@@ -12,6 +12,8 @@ import { insertMedication } from "@/db/operations/medications";
 import { symptomOptions } from "@/constants/Symptoms";
 import { moodOptions } from "@/constants/Moods";
 import { medicationOptions } from "@/constants/Medications";
+import { getSetting, updateSetting } from "@/db/operations/settings";
+import { SettingsKeys } from "@/constants/Settings";
 
 export async function deleteAllDataInDatabase() {
   try {
@@ -31,16 +33,41 @@ export async function deleteAllDataInDatabase() {
 }
 
 // This is used the first time the app is opened to insert the default
-// symptoms, moods, and medications into the database
+// symptoms, moods, and medications into the database and adjust calendar filters
+// to the new format if needed
 export const setupEntryTypes = async () => {
+  // delete old formats if neeed
+  await deleteAllSymptoms();
+  await deleteAllMoods();
+  await deleteAllMedications();
+
+  // insert all entry types
   for (const symptom of symptomOptions) {
-    await insertSymptom(symptom.value, true);
+    await insertSymptom(symptom, true);
   }
   for (const mood of moodOptions) {
-    await insertMood(mood.value, true);
+    await insertMood(mood, true);
   }
   for (const medication of medicationOptions) {
-    await insertMedication(medication.value, true);
+    await insertMedication(medication, true);
+  }
+
+  // update calendar filters
+  const storedFilters = await getSetting(SettingsKeys.calendarFilters);
+  let newFilters: string[] = [];
+
+  if (storedFilters?.value) {
+    const currentFilters = JSON.parse(storedFilters.value); // Parse the stored string
+
+    for (const filter of currentFilters) {
+      if (filter.label) {
+        newFilters.push(filter.label);
+      }
+    }
+    await updateSetting(
+      SettingsKeys.calendarFilters,
+      JSON.stringify(newFilters),
+    );
   }
 };
 

@@ -91,14 +91,13 @@ export default function RootLayout() {
   useEffect(() => {
     const initializeDatabase = async () => {
       const isDatabaseSetup = await getSetting(
-        SettingsKeys.databaseInitialSetup
+        SettingsKeys.databaseInitialSetup,
       );
-      console.log("isDatabaseSetup: ", isDatabaseSetup);
       if (!isDatabaseSetup || isDatabaseSetup.value !== "true") {
         await setupEntryTypes();
         await insertSetting(SettingsKeys.databaseInitialSetup, "true");
-        console.log("Database setup complete");
       }
+
       if (loaded && success) {
         checkAuthentication();
       }
@@ -111,7 +110,7 @@ export default function RootLayout() {
     const storedPassword = await getSetting(SettingsKeys.password);
     const hashedInput = await Crypto.digestStringAsync(
       Crypto.CryptoDigestAlgorithm.SHA256,
-      passwordInput
+      passwordInput,
     );
     if (hashedInput === storedPassword?.value) {
       setIsAuthenticated(true);
