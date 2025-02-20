@@ -7,7 +7,7 @@ export default function ChipSelection({
   setSelectedValues,
   label,
 }: {
-  options: { label: string; value: string }[];
+  options: string[];
   selectedValues: string[];
   setSelectedValues: (values: string[]) => void;
   label: string;
@@ -21,19 +21,19 @@ export default function ChipSelection({
         {options.map((option) => (
           <Chip
             mode="flat"
-            key={option.value}
-            selected={selectedValues.includes(option.value)}
+            key={option}
+            selected={selectedValues.includes(option)}
             showSelectedCheck={false}
             elevated={true}
             onPress={() => {
               setSelectedValues(
-                selectedValues.includes(option.value)
-                  ? selectedValues.filter((val) => val !== option.value)
-                  : [...selectedValues, option.value],
+                selectedValues.includes(option)
+                  ? selectedValues.filter((val) => val !== option)
+                  : [...selectedValues, option],
               );
             }}
             style={{
-              backgroundColor: selectedValues.includes(option.value)
+              backgroundColor: selectedValues.includes(option)
                 ? theme.colors.onSecondary
                 : theme.colors.secondary,
               margin: 4,
@@ -42,12 +42,12 @@ export default function ChipSelection({
               justifyContent: "center",
             }}
             textStyle={{
-              color: selectedValues.includes(option.value)
+              color: selectedValues.includes(option)
                 ? theme.colors.onSecondaryContainer
                 : theme.colors.secondaryContainer,
             }}
           >
-            {option.label}
+            {option}
           </Chip>
         ))}
       </View>

@@ -7,7 +7,7 @@ export default function SingleChipSelection({
   setSelectedValue,
   label,
 }: {
-  options: { label: string; value: string }[];
+  options: string[];
   selectedValue: string | null;
   setSelectedValue: (value: string | null) => void;
   label: string;
@@ -21,18 +21,16 @@ export default function SingleChipSelection({
         {options.map((option) => (
           <Chip
             mode="flat"
-            key={option.value}
-            selected={selectedValue === option.value}
+            key={option}
+            selected={selectedValue === option}
             showSelectedCheck={false}
             elevated={true}
             onPress={() =>
-              setSelectedValue(
-                selectedValue === option.value ? null : option.value,
-              )
+              setSelectedValue(selectedValue === option ? null : option)
             }
             style={{
               backgroundColor:
-                selectedValue === option.value
+                selectedValue === option
                   ? theme.colors.onSecondary
                   : theme.colors.secondary,
               margin: 4,
@@ -42,12 +40,12 @@ export default function SingleChipSelection({
             }}
             textStyle={{
               color:
-                selectedValue === option.value
+                selectedValue === option
                   ? theme.colors.onSecondaryContainer
                   : theme.colors.secondaryContainer,
             }}
           >
-            {option.label}
+            {option}
           </Chip>
         ))}
       </View>

@@ -42,9 +42,7 @@ function formatSQLData(data: any) {
   return formattedData;
 }
 
-export const useLiveFilteredData = (
-  filters: { label: string; value: string }[],
-) => {
+export const useLiveFilteredData = (filters: string[]) => {
   const db = getDrizzleDatabase();
   const [filteredData, setFilteredData] = useState<DayData[]>([]);
   const [loading, setLoading] = useState(false);

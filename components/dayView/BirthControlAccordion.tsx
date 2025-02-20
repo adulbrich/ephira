@@ -31,7 +31,7 @@ export default function BirthControlAccordion({
   const { birthControlNotes, setBirthControlNotes } = useBirthControlNotes();
 
   useEffect(() => {
-    if (selectedBirthControl !== "pill") {
+    if (selectedBirthControl !== "Pill") {
       setTimeTaken("");
       setShowTimePicker(false);
     }
@@ -175,13 +175,13 @@ export default function BirthControlAccordion({
 
   const renderBirthControlUI = () => {
     switch (selectedBirthControl) {
-      case "pill":
+      case "Pill":
         return renderPillUI;
-      case "iud":
-      case "ring":
-      case "patch":
-      case "shot":
-      case "implant":
+      case "IUD":
+      case "Ring":
+      case "Patch":
+      case "Shot":
+      case "Implant":
         return renderNotesUI;
       default:
         return (
@@ -192,9 +192,11 @@ export default function BirthControlAccordion({
     }
   };
 
-  const selectedBirthControlLabel =
-    birthControlOptions.find((option) => option.value === selectedBirthControl)
-      ?.label || "None";
+  const selectedBirthControlLabel = birthControlOptions.includes(
+    selectedBirthControl as string,
+  )
+    ? selectedBirthControl
+    : "None";
 
   return (
     <List.Accordion
