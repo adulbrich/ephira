@@ -20,7 +20,13 @@ import { Suspense } from "react";
 import { ActivityIndicator, Alert } from "react-native";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
 import { AUTH_TYPES, SettingsKeys } from "@/constants/Settings";
-import { getDatabase, getDrizzleDatabase, getSetting } from "@/db/database";
+import {
+  getDatabase,
+  getDrizzleDatabase,
+  getSetting,
+  insertSetting,
+  setupEntryTypes,
+} from "@/db/database";
 import DatabaseMigrationError from "@/components/DatabaseMigrationError";
 import PasswordAuthenticationView from "@/components/PasswordAuthenticationView";
 import { DATABASE_NAME } from "@/constants/Settings";
@@ -83,9 +89,21 @@ export default function RootLayout() {
   }, [checkAuthentication]);
 
   useEffect(() => {
-    if (loaded && success) {
-      checkAuthentication();
-    }
+    const initializeDatabase = async () => {
+      const isDatabaseSetup = await getSetting(
+        SettingsKeys.databaseInitialSetup,
+      );
+      if (!isDatabaseSetup || isDatabaseSetup.value !== "true") {
+        await setupEntryTypes();
+        await insertSetting(SettingsKeys.databaseInitialSetup, "true");
+      }
+
+      if (loaded && success) {
+        checkAuthentication();
+      }
+    };
+
+    initializeDatabase();
   }, [loaded, success, checkAuthentication]);
 
   const handlePasswordSubmit = async (passwordInput: string) => {
