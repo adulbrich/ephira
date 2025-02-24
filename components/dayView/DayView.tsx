@@ -106,7 +106,7 @@ export default function DayView() {
             year: "numeric",
           }).format(new Date(date + "T00:00:00"))}
         </Text>
-        <Button mode="elevated" onPress={() => onSave()}>
+        <Button mode="elevated" buttonColor={theme.colors.primaryContainer} textColor={theme.colors.onPrimaryContainer} onPress={() => onSave()}>
           Save
         </Button>
       </View>
