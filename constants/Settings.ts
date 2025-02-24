@@ -1,3 +1,5 @@
+export const DATABASE_NAME = "ephira.db";
+
 export const SettingsKeys = {
   authentication: "authentication",
   password: "password",
