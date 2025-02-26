@@ -14,7 +14,6 @@ import {
   TimePickerState,
   TempSelectedTime,
   FlowDataState,
-  CalendarFilter,
   CalendarFilters,
   ThemeColor,
 } from "@/constants/Interfaces";
@@ -127,7 +126,7 @@ export const useFlowData = create<FlowDataState>((set) => ({
 
 export const useCalendarFilters = create<CalendarFilters>((set) => ({
   selectedFilters: [],
-  setSelectedFilters: (values: CalendarFilter[]) =>
+  setSelectedFilters: (values: string[]) =>
     set(() => ({ selectedFilters: values })),
 }));
 

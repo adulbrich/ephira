@@ -92,14 +92,9 @@ export interface FlowDataState {
   setFlowDataForCurrentMonth: (data: DayData[]) => void;
 }
 
-export interface CalendarFilter {
-  label: string;
-  value: string;
-}
-
 export interface CalendarFilters {
-  selectedFilters: CalendarFilter[];
-  setSelectedFilters: (values: CalendarFilter[]) => void;
+  selectedFilters: string[];
+  setSelectedFilters: (values: string[]) => void;
 }
 
 export interface ThemeColor {

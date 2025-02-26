@@ -49,19 +49,17 @@ function applyFilterToMarkedDates({
   anyOption,
 }: {
   markedDates: MarkedDates;
-  filters: { label: string; value: string }[];
+  filters: string[];
   filterColors: string[];
   day: DayData;
   dayValues: string[];
   prevDayValues: string[];
   nextDayValues: string[];
-  options: { label: string; value: string }[];
-  anyOption: { label: string; value: string };
+  options: string[];
+  anyOption: string;
 }) {
   const relevantFilters = filters.filter(
-    (filter) =>
-      filter.value === anyOption.value ||
-      options.some((option) => option.value === filter.value),
+    (filter) => filter === anyOption || options.includes(filter),
   );
 
   if (relevantFilters.length > 0) {
@@ -76,18 +74,17 @@ function applyFilterToMarkedDates({
     }
 
     for (const filter of relevantFilters) {
-      const match =
-        dayValues.includes(filter.value) || filter.value === anyOption.value;
+      const match = dayValues.includes(filter) || filter === anyOption;
 
       if (match) {
-        const filterIndex = filters.findIndex((f) => f.value === filter.value);
+        const filterIndex = filters.findIndex((f) => f === filter);
         const prevMatch =
-          prevDayValues.includes(filter.value) ||
-          (filter.value === anyOption.value && prevDayValues.length > 0);
+          prevDayValues.includes(filter) ||
+          (filter === anyOption && prevDayValues.length > 0);
 
         const nextMatch =
-          nextDayValues.includes(filter.value) ||
-          (filter.value === anyOption.value && nextDayValues.length > 0);
+          nextDayValues.includes(filter) ||
+          (filter === anyOption && nextDayValues.length > 0);
 
         const { isStartingDay, isEndingDay } = getStartingAndEndingDay(
           day.date,
@@ -110,7 +107,7 @@ function applyFilterToMarkedDates({
 }
 
 function markedDatesBuilder(
-  filters: { label: string; value: string }[],
+  filters: string[],
   data: DayData[],
   filterColors: string[],
 ) {
@@ -118,7 +115,7 @@ function markedDatesBuilder(
 
   data.forEach((day, index) => {
     // flow
-    if (filters.some((filter) => filter.value === "flow")) {
+    if (filters.some((filter) => filter === "Flow")) {
       const { isStartingDay, isEndingDay } = getStartingAndEndingDay(
         day.date,
         data[index - 1]?.flow_intensity > 0 ? data[index - 1]?.date : undefined,
@@ -144,8 +141,8 @@ function markedDatesBuilder(
     }
 
     // notes
-    const notesFilter = filters.find((filter) => filter.value === "notes");
-    const notesIndex = filters.findIndex((filter) => filter.value === "notes");
+    const notesFilter = filters.includes("Notes");
+    const notesIndex = filters.findIndex((filter) => filter === "notes");
     if (notesFilter) {
       if (!markedDates[day.date])
         markedDates[day.date] = { selected: false, periods: [] };
@@ -219,9 +216,7 @@ function markedDatesBuilder(
   return markedDates;
 }
 
-export function useMarkedDates(
-  calendarFilters?: { label: string; value: string }[],
-) {
+export function useMarkedDates(calendarFilters?: string[]) {
   const theme = useTheme();
   const colors = theme.dark ? FilterColorsDark : FilterColorsLight;
   const [markedDates, setMarkedDates] = useState<MarkedDates>({});

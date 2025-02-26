@@ -60,10 +60,10 @@ export default function FlowCalendar() {
         setSelectedFilters(JSON.parse(filters.value));
       } else {
         // set Flow as first filter by default (filler color given since color isn't optional)
-        setSelectedFilters([{ label: "Flow", value: "flow" }]);
+        setSelectedFilters(["Flow"]);
         await insertSetting(
           SettingsKeys.calendarFilters,
-          JSON.stringify([{ label: "Flow", value: "flow" }]),
+          JSON.stringify(["Flow"]),
         );
       }
     };
@@ -126,14 +126,14 @@ export default function FlowCalendar() {
                 <View style={styles.legendContainer}>
                   {selectedFilters.map((filter, index) => (
                     <View
-                      key={filter.value}
+                      key={filter}
                       style={{
                         flexDirection: "row",
                         alignItems: "center",
                         padding: 4,
                       }}
                     >
-                      {filter.value === "flow" ? (
+                      {filter === "Flow" ? (
                         <Image
                           source={require("@/assets/images/flow_gradient_circle.png")}
                           style={{
@@ -154,7 +154,7 @@ export default function FlowCalendar() {
                           }}
                         />
                       )}
-                      <Text>{filter.label}</Text>
+                      <Text>{filter}</Text>
                     </View>
                   ))}
                 </View>
