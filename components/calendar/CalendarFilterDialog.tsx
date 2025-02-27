@@ -13,9 +13,9 @@ import { useState, useEffect } from "react";
 import { SettingsKeys } from "@/constants/Settings";
 import {
   updateSetting,
-  getAllSymptoms,
-  getAllMoods,
-  getAllMedications,
+  getAllVisibleSymptoms,
+  getAllVisibleMoods,
+  getAllVisibleMedications,
 } from "@/db/database";
 import { useCalendarFilters } from "@/assets/src/calendar-storage";
 import { anySymptomOption } from "@/constants/Symptoms";
@@ -81,26 +81,25 @@ export default function CalendarFilterDialog({
     if (!visible) return;
 
     const fetchSymptoms = async () => {
-      const symptoms = await getAllSymptoms();
-      setSymptomOptions(
-        symptoms
-          .filter((symptom) => symptom.visible)
-          .map((symptom) => symptom.name),
-      );
+      const symptoms = await getAllVisibleSymptoms();
+      setSymptomOptions(symptoms.map((symptom) => symptom.name));
     };
 
     const fetchMoods = async () => {
-      const moods = await getAllMoods();
-      setMoodOptions(
-        moods.filter((mood) => mood.visible).map((mood) => mood.name),
-      );
+      const moods = await getAllVisibleMoods();
+      setMoodOptions(moods.map((mood) => mood.name));
     };
 
     const fetchMedications = async () => {
-      const medications = await getAllMedications();
+      const medications = await getAllVisibleMedications();
       setMedicationOptions(
         medications
-          .filter((medication) => medication.visible)
+          .filter((medication) => medication.type !== "birth control")
+          .map((medication) => medication.name),
+      );
+      setBirthControlOptions(
+        medications
+          .filter((medication) => medication.type === "birth control")
           .map((medication) => medication.name),
       );
     };
@@ -108,9 +107,6 @@ export default function CalendarFilterDialog({
     fetchSymptoms();
     fetchMoods();
     fetchMedications();
-
-    // change later!!!
-    setBirthControlOptions(bcData);
   }, [visible]);
 
   useEffect(() => {

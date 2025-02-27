@@ -265,7 +265,6 @@ function CalendarEntriesModal({ onDismiss }: { onDismiss: () => void }) {
 }
 
 export default function Customization() {
-  const theme = useTheme();
   const [calendarEntriesModalVisible, setCalendarEntriesModalVisible] =
     useState(false);
 
