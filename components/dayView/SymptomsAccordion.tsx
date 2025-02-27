@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { List } from "react-native-paper";
 import ChipSelection from "./ChipSelection";
-import { getAllSymptoms } from "@/db/database";
+import { getAllVisibleSymptoms } from "@/db/database";
 
 export default function SymptomsAccordion({
   state,
@@ -18,19 +18,19 @@ export default function SymptomsAccordion({
 
   useEffect(() => {
     const fetchSymptoms = async () => {
-      const symptoms = await getAllSymptoms();
-      setSymptomOptions(
-        symptoms
-          .filter((symptom) => symptom.visible)
-          .map((symptom) => symptom.name),
-      );
+      const symptoms = await getAllVisibleSymptoms();
+      setSymptomOptions(symptoms.map((symptom) => symptom.name));
     };
     fetchSymptoms();
   }, [state]);
 
+  const selectedVisibleSymptoms = selectedSymptoms.filter((symptom) =>
+    symptomOptions.includes(symptom),
+  );
+
   return (
     <List.Accordion
-      title={"Symptoms   |   " + selectedSymptoms.length + " Selected"}
+      title={"Symptoms   |   " + selectedVisibleSymptoms.length + " Selected"}
       expanded={state === "symptoms"}
       onPress={() =>
         setExpandedAccordion(state === "symptoms" ? null : "symptoms")
