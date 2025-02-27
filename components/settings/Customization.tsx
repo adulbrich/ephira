@@ -25,6 +25,7 @@ import { ScrollView, StyleSheet, Dimensions } from "react-native";
 import {
   useAccordion,
   useCalendarFilters,
+  useDatabaseChangeNotifier,
 } from "@/assets/src/calendar-storage";
 
 export interface Symptom {
@@ -90,6 +91,7 @@ function CalendarEntriesModal({ onDismiss }: { onDismiss: () => void }) {
   const theme = useTheme();
   const { width, height } = Dimensions.get("window");
   const styles = makeStyles(theme, width, height);
+  const setDbChange = useDatabaseChangeNotifier().setDatabaseChange;
   const { selectedFilters, setSelectedFilters } = useCalendarFilters();
   const setAccordionState = useAccordion().setExpandedAccordion;
   const [expanded, setExpanded] = useState<string>("1");
@@ -192,6 +194,8 @@ function CalendarEntriesModal({ onDismiss }: { onDismiss: () => void }) {
     // this closes any open accordions on the calendar page,
     // which will force them to re-render with the updated data
     setAccordionState(null);
+    // force useLiveQuery to update
+    setDbChange(Math.random().toString());
     onDismiss();
   };
 

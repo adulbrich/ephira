@@ -17,14 +17,14 @@ import {
   getAllVisibleMoods,
   getAllVisibleMedications,
 } from "@/db/database";
-import { useCalendarFilters } from "@/assets/src/calendar-storage";
+import {
+  useCalendarFilters,
+  useDatabaseChangeNotifier,
+} from "@/assets/src/calendar-storage";
 import { anySymptomOption } from "@/constants/Symptoms";
 import { anyMoodOption } from "@/constants/Moods";
 import { anyMedicationOption } from "@/constants/Medications";
-import {
-  birthControlOptions as bcData,
-  anyBirthControlOption,
-} from "@/constants/BirthControlTypes";
+import { anyBirthControlOption } from "@/constants/BirthControlTypes";
 const flowOption = "Flow";
 const notesOption = "Notes";
 
@@ -69,6 +69,7 @@ export default function CalendarFilterDialog({
   visible: boolean;
   setVisible: (visible: boolean) => void;
 }) {
+  const databaseChange = useDatabaseChangeNotifier().databaseChange;
   const { selectedFilters, setSelectedFilters } = useCalendarFilters();
   const [tempSelectedFilters, setTempSelectedFilters] =
     useState<string[]>(selectedFilters);
@@ -78,8 +79,6 @@ export default function CalendarFilterDialog({
   const [birthControlOptions, setBirthControlOptions] = useState<string[]>([]);
 
   useEffect(() => {
-    if (!visible) return;
-
     const fetchSymptoms = async () => {
       const symptoms = await getAllVisibleSymptoms();
       setSymptomOptions(symptoms.map((symptom) => symptom.name));
@@ -107,7 +106,7 @@ export default function CalendarFilterDialog({
     fetchSymptoms();
     fetchMoods();
     fetchMedications();
-  }, [visible]);
+  }, [databaseChange]);
 
   useEffect(() => {
     setTempSelectedFilters(selectedFilters);

@@ -15,6 +15,7 @@ import {
   TempSelectedTime,
   FlowDataState,
   CalendarFilters,
+  DatabaseChangeNotifier,
 } from "@/constants/Interfaces";
 
 const initialDay: DayData = {
@@ -128,3 +129,11 @@ export const useCalendarFilters = create<CalendarFilters>((set) => ({
   setSelectedFilters: (values: string[]) =>
     set(() => ({ selectedFilters: values })),
 }));
+
+export const useDatabaseChangeNotifier = create<DatabaseChangeNotifier>(
+  (set) => ({
+    databaseChange: "",
+    setDatabaseChange: (databaseChange: string) =>
+      set(() => ({ databaseChange: databaseChange })),
+  }),
+);
