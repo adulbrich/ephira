@@ -11,16 +11,18 @@ import {
 import { ScrollView, View, Platform, StyleSheet } from "react-native";
 import { useState, useEffect } from "react";
 import { SettingsKeys } from "@/constants/Settings";
-import { updateSetting } from "@/db/database";
+import {
+  updateSetting,
+  getAllSymptoms,
+  getAllMoods,
+  getAllMedications,
+} from "@/db/database";
 import { useCalendarFilters } from "@/assets/src/calendar-storage";
-import { symptomOptions, anySymptomOption } from "@/constants/Symptoms";
-import { moodOptions, anyMoodOption } from "@/constants/Moods";
+import { anySymptomOption } from "@/constants/Symptoms";
+import { anyMoodOption } from "@/constants/Moods";
+import { anyMedicationOption } from "@/constants/Medications";
 import {
-  medicationOptions,
-  anyMedicationOption,
-} from "@/constants/Medications";
-import {
-  birthControlOptions,
+  birthControlOptions as bcData,
   anyBirthControlOption,
 } from "@/constants/BirthControlTypes";
 const flowOption = "Flow";
@@ -70,6 +72,46 @@ export default function CalendarFilterDialog({
   const { selectedFilters, setSelectedFilters } = useCalendarFilters();
   const [tempSelectedFilters, setTempSelectedFilters] =
     useState<string[]>(selectedFilters);
+  const [symptomOptions, setSymptomOptions] = useState<string[]>([]);
+  const [moodOptions, setMoodOptions] = useState<string[]>([]);
+  const [medicationOptions, setMedicationOptions] = useState<string[]>([]);
+  const [birthControlOptions, setBirthControlOptions] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!visible) return;
+
+    const fetchSymptoms = async () => {
+      const symptoms = await getAllSymptoms();
+      setSymptomOptions(
+        symptoms
+          .filter((symptom) => symptom.visible)
+          .map((symptom) => symptom.name),
+      );
+    };
+
+    const fetchMoods = async () => {
+      const moods = await getAllMoods();
+      setMoodOptions(
+        moods.filter((mood) => mood.visible).map((mood) => mood.name),
+      );
+    };
+
+    const fetchMedications = async () => {
+      const medications = await getAllMedications();
+      setMedicationOptions(
+        medications
+          .filter((medication) => medication.visible)
+          .map((medication) => medication.name),
+      );
+    };
+
+    fetchSymptoms();
+    fetchMoods();
+    fetchMedications();
+
+    // change later!!!
+    setBirthControlOptions(bcData);
+  }, [visible]);
 
   useEffect(() => {
     setTempSelectedFilters(selectedFilters);

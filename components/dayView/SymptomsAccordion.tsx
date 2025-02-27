@@ -1,6 +1,7 @@
+import { useEffect, useState } from "react";
 import { List } from "react-native-paper";
 import ChipSelection from "./ChipSelection";
-import { symptomOptions } from "@/constants/Symptoms";
+import { getAllSymptoms } from "@/db/database";
 
 export default function SymptomsAccordion({
   state,
@@ -13,6 +14,20 @@ export default function SymptomsAccordion({
   selectedSymptoms: string[];
   setSelectedSymptoms: (symptoms: string[]) => void;
 }) {
+  const [symptomOptions, setSymptomOptions] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchSymptoms = async () => {
+      const symptoms = await getAllSymptoms();
+      setSymptomOptions(
+        symptoms
+          .filter((symptom) => symptom.visible)
+          .map((symptom) => symptom.name),
+      );
+    };
+    fetchSymptoms();
+  }, [state]);
+
   return (
     <List.Accordion
       title={"Symptoms   |   " + selectedSymptoms.length + " Selected"}

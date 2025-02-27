@@ -93,9 +93,9 @@ export default function RootLayout() {
       const isDatabaseSetup = await getSetting(
         SettingsKeys.databaseInitialSetup,
       );
-      if (!isDatabaseSetup || isDatabaseSetup.value !== "true") {
+      if (!isDatabaseSetup || isDatabaseSetup.value !== "0000") {
         await setupEntryTypes();
-        await insertSetting(SettingsKeys.databaseInitialSetup, "true");
+        await insertSetting(SettingsKeys.databaseInitialSetup, "0000");
       }
 
       if (loaded && success) {
