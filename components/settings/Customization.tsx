@@ -206,7 +206,7 @@ function CalendarEntriesModal({ onDismiss }: { onDismiss: () => void }) {
           <ThemedView style={styles.modalTitleContainer}>
             <IconButton icon="arrow-left" onPress={onDismissModal} />
             <Text variant="titleLarge" style={styles.modalTitle}>
-              Calendar Entries
+              Calendar Entries Visibility
             </Text>
           </ThemedView>
           <List.AccordionGroup
@@ -282,7 +282,7 @@ export default function Customization() {
           }}
         >
           <List.Item
-            title="Calendar Entries"
+            title="Calendar Entries Visibility"
             description="Choose what's visible on the calendar"
             onPress={() => setCalendarEntriesModalVisible(true)}
             right={(props) => <List.Icon {...props} icon="arrow-right" />}
