@@ -20,6 +20,8 @@ import {
   IconButton,
   Switch,
   MD3Theme,
+  Dialog,
+  Button,
 } from "react-native-paper";
 import { ScrollView, StyleSheet, Dimensions } from "react-native";
 import {
@@ -49,6 +51,43 @@ export interface Medication {
   visible?: boolean;
   type?: string;
   description?: string;
+}
+
+function InfoDialog({
+  visible,
+  onDismiss,
+}: {
+  visible: boolean;
+  onDismiss: () => void;
+}) {
+  return (
+    <Portal>
+      <Dialog visible={visible} onDismiss={onDismiss}>
+        <Dialog.Title style={{ textAlign: "center" }}>
+          Entry Visibility
+        </Dialog.Title>
+        <Dialog.Content>
+          <Text>
+            This page allows you to customize the visibility of entries on the
+            calendar. You can choose to hide or show specific symptoms, moods,
+            and medications. This can be useful if you want to focus on specific
+            entries or if you want to remove things you know you won't use.
+          </Text>
+          <Text style={{ marginTop: 10 }}>
+            Hiding an entry type will remove it from the app UI, but any
+            corresponding data will still be stored in the database. You can
+            always come back to this page to change the visibility of entries
+            and view their data on the calendar again.
+          </Text>
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button mode="elevated" onPress={onDismiss}>
+            <Text>Close</Text>
+          </Button>
+        </Dialog.Actions>
+      </Dialog>
+    </Portal>
+  );
 }
 
 function AccordionContents({
@@ -99,6 +138,7 @@ function CalendarEntriesModal({ onDismiss }: { onDismiss: () => void }) {
   const [moods, setMoods] = useState<Mood[]>([]);
   const [medications, setMedications] = useState<Medication[]>([]);
   const [birthControl, setBirthControl] = useState<Medication[]>([]);
+  const [infoDialogVisible, setInfoDialogVisible] = useState(false);
 
   useEffect(() => {
     const fetchSymptoms = async () => {
@@ -208,6 +248,10 @@ function CalendarEntriesModal({ onDismiss }: { onDismiss: () => void }) {
             <Text variant="titleLarge" style={styles.modalTitle}>
               Calendar Entries Visibility
             </Text>
+            <IconButton
+              icon="information-outline"
+              onPress={() => setInfoDialogVisible(true)}
+            />
           </ThemedView>
           <List.AccordionGroup
             expandedId={expanded}
@@ -263,6 +307,10 @@ function CalendarEntriesModal({ onDismiss }: { onDismiss: () => void }) {
             <Divider />
           </List.AccordionGroup>
         </ThemedView>
+        <InfoDialog
+          visible={infoDialogVisible}
+          onDismiss={() => setInfoDialogVisible(false)}
+        />
       </Modal>
     </Portal>
   );
@@ -309,6 +357,8 @@ const makeStyles = (theme: MD3Theme, width: number, height: number) => {
       backgroundColor: theme.colors.primaryContainer,
       padding: 5,
       alignItems: "center",
+
+      justifyContent: "space-between",
       flexDirection: "row",
     },
     modalTitle: {
