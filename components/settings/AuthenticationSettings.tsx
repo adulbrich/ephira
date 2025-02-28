@@ -292,9 +292,13 @@ export default function AuthenticationSettings() {
 
   return (
     <ThemedView>
-      <Divider style={{ marginTop: 10 }} />
       <List.Section>
-        <List.Accordion title="Lock App Behind Authentication">
+        <List.Accordion
+          title="Lock App Behind Authentication"
+          titleStyle={{
+            fontSize: 20,
+          }}
+        >
           <RadioButton.Group
             value={selectedAuth}
             onValueChange={handleOptionChange}

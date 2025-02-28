@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
 import { List } from "react-native-paper";
-import { moodOptions } from "@/constants/Moods";
+import { getAllVisibleMoods } from "@/db/database";
 import ChipSelection from "./ChipSelection";
 
 export default function MoodsAccordion({
@@ -13,9 +14,23 @@ export default function MoodsAccordion({
   selectedMoods: string[];
   setSelectedMoods: (moods: string[]) => void;
 }) {
+  const [moodOptions, setMoodOptions] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchMoods = async () => {
+      const moods = await getAllVisibleMoods();
+      setMoodOptions(moods.map((mood) => mood.name));
+    };
+    fetchMoods();
+  }, [state]);
+
+  const selectedVisibleMoods = selectedMoods.filter((mood) =>
+    moodOptions.includes(mood),
+  );
+
   return (
     <List.Accordion
-      title={"Moods   |   " + selectedMoods.length + " Selected"}
+      title={"Moods   |   " + selectedVisibleMoods.length + " Selected"}
       expanded={state === "mood"}
       onPress={() => setExpandedAccordion(state === "mood" ? null : "mood")}
       left={(props) => <List.Icon {...props} icon="emoticon" />}

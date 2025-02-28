@@ -7,7 +7,12 @@ export default function PrivacyPolicy() {
   return (
     <ThemedView style={{ height: "100%" }}>
       <List.Section>
-        <List.Accordion title="Privacy Policy">
+        <List.Accordion
+          title="Privacy Policy"
+          titleStyle={{
+            fontSize: 20,
+          }}
+        >
           <List.Item
             title="About Us"
             description={

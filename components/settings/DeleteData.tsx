@@ -51,7 +51,12 @@ export default function DeleteData() {
   return (
     <ThemedView>
       <List.Section>
-        <List.Accordion title="Delete Data">
+        <List.Accordion
+          title="Delete Data"
+          titleStyle={{
+            fontSize: 20,
+          }}
+        >
           <View style={{ paddingLeft: 15, paddingRight: 15, gap: 10 }}>
             <Text>
               Data is stored only on this device and cannot be recovered once

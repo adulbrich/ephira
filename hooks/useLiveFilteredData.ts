@@ -4,6 +4,7 @@ import * as schema from "@/db/schema";
 import { eq } from "drizzle-orm";
 import type { DayData } from "@/constants/Interfaces";
 import { useEffect, useState } from "react";
+import { useDatabaseChangeNotifier } from "@/assets/src/calendar-storage";
 
 function formatSQLData(data: any) {
   const formattedData = data.reduce((acc: any, row: any) => {
@@ -44,6 +45,9 @@ function formatSQLData(data: any) {
 
 export const useLiveFilteredData = (filters: string[]) => {
   const db = getDrizzleDatabase();
+  // used to force useLiveQuery to re-run since it doesn't consistently recognize
+  // changes to the visibility of symptoms, moods, and medications
+  const dbChange = useDatabaseChangeNotifier().databaseChange;
   const [filteredData, setFilteredData] = useState<DayData[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -55,6 +59,7 @@ export const useLiveFilteredData = (filters: string[]) => {
     })
     .from(schema.moodEntries)
     .innerJoin(schema.moods, eq(schema.moodEntries.mood_id, schema.moods.id))
+    .where(eq(schema.moods.visible, true))
     .as("moodQuery");
 
   const symptomQuery = db
@@ -68,6 +73,7 @@ export const useLiveFilteredData = (filters: string[]) => {
       schema.symptoms,
       eq(schema.symptomEntries.symptom_id, schema.symptoms.id),
     )
+    .where(eq(schema.symptoms.visible, true))
     .as("symptomQuery");
 
   const medicationQuery = db
@@ -81,6 +87,7 @@ export const useLiveFilteredData = (filters: string[]) => {
       schema.medications,
       eq(schema.medicationEntries.medication_id, schema.medications.id),
     )
+    .where(eq(schema.medications.visible, true))
     .as("medicationQuery");
 
   const { data } = useLiveQuery(
@@ -91,6 +98,7 @@ export const useLiveFilteredData = (filters: string[]) => {
       .leftJoin(symptomQuery, eq(schema.days.id, symptomQuery.day_id))
       .leftJoin(medicationQuery, eq(schema.days.id, medicationQuery.day_id))
       .orderBy(schema.days.date),
+    [dbChange],
   );
 
   useEffect(() => {

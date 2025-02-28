@@ -96,3 +96,8 @@ export interface CalendarFilters {
   selectedFilters: string[];
   setSelectedFilters: (values: string[]) => void;
 }
+
+export interface DatabaseChangeNotifier {
+  databaseChange: string;
+  setDatabaseChange: (databaseChange: string) => void;
+}

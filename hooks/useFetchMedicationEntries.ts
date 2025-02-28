@@ -42,7 +42,7 @@ export function useFetchMedicationEntries(
     }[];
 
     const birthControlEntry = filteredValues.find((value) =>
-      birthControlOptions.some((option) => option.value === value.name),
+      birthControlOptions.some((option) => option === value.name),
     );
 
     if (birthControlEntry) {
@@ -57,8 +57,7 @@ export function useFetchMedicationEntries(
 
     const medicationsWithoutBirthControl = filteredValues
       .filter(
-        (value) =>
-          !birthControlOptions.some((option) => option.value === value.name),
+        (value) => !birthControlOptions.some((option) => option === value.name),
       )
       .map((value) => value.name);
 
