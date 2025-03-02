@@ -15,6 +15,7 @@ import {
   TempSelectedTime,
   FlowDataState,
   CalendarFilters,
+  ThemeColor,
 } from "@/constants/Interfaces";
 
 const initialDay: DayData = {
@@ -127,4 +128,9 @@ export const useCalendarFilters = create<CalendarFilters>((set) => ({
   selectedFilters: [],
   setSelectedFilters: (values: string[]) =>
     set(() => ({ selectedFilters: values })),
+}));
+
+export const useThemeColor = create<ThemeColor>((set) => ({
+  themeColor: "",
+  setThemeColor: (color: string) => set(() => ({ themeColor: color })),
 }));
