@@ -4,6 +4,7 @@ import FlowChart from "@/components/FlowChart";
 import { FlowColors } from "@/constants/Colors";
 import { useData } from "@/assets/src/calendar-storage";
 import { useTheme, Text } from "react-native-paper";
+import FadeInView from "@/components/FadeInView";
 
 export default function HomeScreen() {
   const theme = useTheme();
@@ -16,75 +17,77 @@ export default function HomeScreen() {
     .slice(0, 5);
 
   return (
-    <ThemedView style={styles.viewContainer}>
-      <View
-        style={{ flex: 1, justifyContent: "center", alignContent: "center" }}
-      >
-        <FlowChart />
-        <Text
-          style={{
-            color: theme.colors.secondary,
-            fontSize: 24,
-            fontWeight: "bold",
-            paddingVertical: 16,
-            textAlign: "center",
-          }}
+    <FadeInView duration={200} backgroundColor={theme.colors.background}>
+      <ThemedView style={styles.viewContainer}>
+        <View
+          style={{ flex: 1, justifyContent: "center", alignContent: "center" }}
         >
-          Your Most Recent Flow Dates
-        </Text>
-        <View style={styles.flowLogContainer}>
-          {recentFlowDays.length > 0 ? (
-            <>
-              {recentFlowDays.map((day, index) => {
-                const localDate = new Date(day.date + "T00:00:00");
-                const weekday = localDate.toLocaleDateString(undefined, {
-                  weekday: "short",
-                });
-                const month = localDate.toLocaleDateString(undefined, {
-                  month: "short",
-                });
-                const dayOfMonth = localDate.toLocaleDateString(undefined, {
-                  day: "numeric",
-                });
+          <FlowChart />
+          <Text
+            style={{
+              color: theme.colors.secondary,
+              fontSize: 24,
+              fontWeight: "bold",
+              paddingVertical: 16,
+              textAlign: "center",
+            }}
+          >
+            Your Most Recent Flow Dates
+          </Text>
+          <View style={styles.flowLogContainer}>
+            {recentFlowDays.length > 0 ? (
+              <>
+                {recentFlowDays.map((day, index) => {
+                  const localDate = new Date(day.date + "T00:00:00");
+                  const weekday = localDate.toLocaleDateString(undefined, {
+                    weekday: "short",
+                  });
+                  const month = localDate.toLocaleDateString(undefined, {
+                    month: "short",
+                  });
+                  const dayOfMonth = localDate.toLocaleDateString(undefined, {
+                    day: "numeric",
+                  });
 
-                return (
-                  <View
-                    key={index}
-                    style={[
-                      styles.flowLogItem,
-                      { backgroundColor: FlowColors[day.flow_intensity] },
-                    ]}
-                  >
-                    <Text style={styles.flowLogText}>{weekday}</Text>
-                    <Text style={styles.flowLogText}>{month}</Text>
-                    <Text style={styles.flowLogText}>{dayOfMonth}</Text>
-                  </View>
-                );
-              })}
-            </>
-          ) : (
-            <View
-              style={[
-                styles.flowLogItem,
-                { backgroundColor: theme.colors.secondary, width: "90%" },
-              ]}
-            >
-              <Text
+                  return (
+                    <View
+                      key={index}
+                      style={[
+                        styles.flowLogItem,
+                        { backgroundColor: FlowColors[day.flow_intensity] },
+                      ]}
+                    >
+                      <Text style={styles.flowLogText}>{weekday}</Text>
+                      <Text style={styles.flowLogText}>{month}</Text>
+                      <Text style={styles.flowLogText}>{dayOfMonth}</Text>
+                    </View>
+                  );
+                })}
+              </>
+            ) : (
+              <View
                 style={[
-                  styles.flowLogText,
-                  {
-                    fontSize: 16,
-                    color: theme.colors.onSecondary,
-                  },
+                  styles.flowLogItem,
+                  { backgroundColor: theme.colors.secondary, width: "90%" },
                 ]}
               >
-                No Flow Dates Logged!
-              </Text>
-            </View>
-          )}
+                <Text
+                  style={[
+                    styles.flowLogText,
+                    {
+                      fontSize: 16,
+                      color: theme.colors.onSecondary,
+                    },
+                  ]}
+                >
+                  No Flow Dates Logged!
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
-      </View>
-    </ThemedView>
+      </ThemedView>
+    </FadeInView>
   );
 }
 
