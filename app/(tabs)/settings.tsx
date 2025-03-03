@@ -4,8 +4,8 @@ import PrivacyPolicy from "@/components/settings/PrivacyPolicy";
 import DeleteData from "@/components/settings/DeleteData";
 import Customization from "@/components/settings/Customization";
 import { Text, Divider, useTheme } from "react-native-paper";
-import { ScrollView, SafeAreaView } from "react-native";
-import ThemeSelector from "@/components/ThemeSelector";
+import { ScrollView, SafeAreaView, StyleSheet } from "react-native";
+import ThemeSelector from "@/components/settings/ThemeSelector";
 
 export default function Settings() {
   const theme = useTheme();
@@ -19,15 +19,19 @@ export default function Settings() {
             fontSize: 30,
             fontWeight: "bold",
             color: theme.colors.onBackground,
+            paddingTop: 4,
           }}
         >
           Settings
         </Text>
         <Divider style={{ marginTop: 10 }} />
         <ScrollView contentContainerStyle={{ paddingBottom: 60 }}>
-          <Customization />
           <AuthenticationSettings />
+          <Divider style={styles.divider} />
+          <Customization />
+          <Divider style={styles.divider} />
           <ThemeSelector />
+          <Divider style={styles.divider} />
           <DeleteData />
           <PrivacyPolicy />
         </ScrollView>
@@ -35,3 +39,10 @@ export default function Settings() {
     </ThemedView>
   );
 }
+
+const styles = StyleSheet.create({
+  /* Divider wouldn't show up on Android with the margin added */
+  divider: {
+    marginBottom: 0.2,
+  },
+});

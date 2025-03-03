@@ -337,7 +337,6 @@ export default function Customization() {
           />
         </List.Accordion>
       </List.Section>
-      <Divider />
       {calendarEntriesModalVisible && (
         <CalendarEntriesModal
           onDismiss={() => setCalendarEntriesModalVisible(false)}

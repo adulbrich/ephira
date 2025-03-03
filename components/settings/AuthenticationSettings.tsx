@@ -341,8 +341,6 @@ export default function AuthenticationSettings() {
           handleCancel={() => setShowPasswordDialog(false)}
         />
       )}
-
-      <Divider />
     </ThemedView>
   );
 }

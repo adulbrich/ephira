@@ -141,5 +141,5 @@ export const useDatabaseChangeNotifier = create<DatabaseChangeNotifier>(
     databaseChange: "",
     setDatabaseChange: (databaseChange: string) =>
       set(() => ({ databaseChange: databaseChange })),
-  })
+  }),
 );
