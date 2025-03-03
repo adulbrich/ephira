@@ -64,7 +64,7 @@ export default function FlowCalendar() {
         setSelectedFilters(["Flow"]);
         await insertSetting(
           SettingsKeys.calendarFilters,
-          JSON.stringify(["Flow"])
+          JSON.stringify(["Flow"]),
         );
       }
     };
