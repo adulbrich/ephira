@@ -41,7 +41,7 @@ export default function FadeInView({
         easing: Easing.in(Easing.ease),
       });
     }
-  }, [isFocused, duration]);
+  }, [isFocused, duration, opacity]);
 
   const animatedStyle = useAnimatedStyle(() => {
     return {

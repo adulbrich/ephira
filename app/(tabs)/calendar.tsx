@@ -64,7 +64,7 @@ export default function FlowCalendar() {
         setSelectedFilters(["Flow"]);
         await insertSetting(
           SettingsKeys.calendarFilters,
-          JSON.stringify(["Flow"]),
+          JSON.stringify(["Flow"])
         );
       }
     };
@@ -93,7 +93,10 @@ export default function FlowCalendar() {
               >
                 <View
                   key={themeKey}
-                  style={{ backgroundColor: theme.colors.background, padding: 4 }}
+                  style={{
+                    backgroundColor: theme.colors.background,
+                    padding: 4,
+                  }}
                 >
                   <Calendar
                     allowSelectionOutOfRange={false}
