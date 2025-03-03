@@ -31,6 +31,12 @@ Privacy First: Data is encrypted and never leaves your device. It can be locked 
 
 Open and Transparent: Ephira is open source under the MIT license, and you can review the code at any time on Github.
 
+<!-- VIDEO DEMOS -->
+
+## Video Demos
+
+https://github.com/user-attachments/assets/f59e4073-7a90-4506-98ea-767b5318f374
+
 <!-- DEVELOPMENT GOALS -->
 
 ## Development Goals
