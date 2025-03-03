@@ -97,6 +97,11 @@ export interface CalendarFilters {
   setSelectedFilters: (values: string[]) => void;
 }
 
+export interface ThemeColor {
+  themeColor: string;
+  setThemeColor: (color: string) => void;
+}
+
 export interface DatabaseChangeNotifier {
   databaseChange: string;
   setDatabaseChange: (databaseChange: string) => void;

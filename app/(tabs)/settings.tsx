@@ -5,6 +5,7 @@ import DeleteData from "@/components/settings/DeleteData";
 import Customization from "@/components/settings/Customization";
 import { Text, Divider, useTheme } from "react-native-paper";
 import { ScrollView, SafeAreaView } from "react-native";
+import ThemeSelector from "@/components/ThemeSelector";
 
 export default function Settings() {
   const theme = useTheme();
@@ -26,6 +27,7 @@ export default function Settings() {
         <ScrollView contentContainerStyle={{ paddingBottom: 60 }}>
           <Customization />
           <AuthenticationSettings />
+          <ThemeSelector />
           <DeleteData />
           <PrivacyPolicy />
         </ScrollView>

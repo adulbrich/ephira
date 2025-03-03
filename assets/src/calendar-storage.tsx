@@ -15,6 +15,7 @@ import {
   TempSelectedTime,
   FlowDataState,
   CalendarFilters,
+  ThemeColor,
   DatabaseChangeNotifier,
 } from "@/constants/Interfaces";
 
@@ -130,10 +131,15 @@ export const useCalendarFilters = create<CalendarFilters>((set) => ({
     set(() => ({ selectedFilters: values })),
 }));
 
+export const useThemeColor = create<ThemeColor>((set) => ({
+  themeColor: "",
+  setThemeColor: (color: string) => set(() => ({ themeColor: color })),
+}));
+
 export const useDatabaseChangeNotifier = create<DatabaseChangeNotifier>(
   (set) => ({
     databaseChange: "",
     setDatabaseChange: (databaseChange: string) =>
       set(() => ({ databaseChange: databaseChange })),
-  }),
+  })
 );
