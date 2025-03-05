@@ -16,6 +16,7 @@ import {
   FlowDataState,
   CalendarFilters,
   ThemeColor,
+  DatabaseChangeNotifier,
 } from "@/constants/Interfaces";
 
 const initialDay: DayData = {
@@ -134,3 +135,11 @@ export const useThemeColor = create<ThemeColor>((set) => ({
   themeColor: "",
   setThemeColor: (color: string) => set(() => ({ themeColor: color })),
 }));
+
+export const useDatabaseChangeNotifier = create<DatabaseChangeNotifier>(
+  (set) => ({
+    databaseChange: "",
+    setDatabaseChange: (databaseChange: string) =>
+      set(() => ({ databaseChange: databaseChange })),
+  }),
+);

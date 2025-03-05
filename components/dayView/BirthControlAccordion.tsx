@@ -1,8 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { View, Modal, Platform } from "react-native";
 import { List, Text, Button, TextInput } from "react-native-paper";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { birthControlOptions } from "@/constants/BirthControlTypes";
+import { getAllVisibleMedications } from "@/db/database";
 import SingleChipSelection from "./SingleChipSelection";
 import { useTheme } from "react-native-paper";
 import {
@@ -24,11 +24,24 @@ export default function BirthControlAccordion({
   setSelectedBirthControl: (birthControl: string | null) => void;
 }) {
   const theme = useTheme();
+  const [birthControlOptions, setBirthControlOptions] = useState<string[]>([]);
 
   const { showTimePicker, setShowTimePicker } = useTimePickerState();
   const { tempSelectedTime, setTempSelectedTime } = useTempSelectedTime();
   const { timeTaken, setTimeTaken } = useTimeTaken();
   const { birthControlNotes, setBirthControlNotes } = useBirthControlNotes();
+
+  useEffect(() => {
+    const fetchMedications = async () => {
+      const medications = await getAllVisibleMedications();
+      setBirthControlOptions(
+        medications
+          .filter((medication) => medication.type === "birth control")
+          .map((medication) => medication.name),
+      );
+    };
+    fetchMedications();
+  }, [state]);
 
   useEffect(() => {
     if (selectedBirthControl !== "Pill") {

@@ -11,18 +11,20 @@ import {
 import { ScrollView, View, Platform, StyleSheet } from "react-native";
 import { useState, useEffect } from "react";
 import { SettingsKeys } from "@/constants/Settings";
-import { updateSetting } from "@/db/database";
-import { useCalendarFilters } from "@/assets/src/calendar-storage";
-import { symptomOptions, anySymptomOption } from "@/constants/Symptoms";
-import { moodOptions, anyMoodOption } from "@/constants/Moods";
 import {
-  medicationOptions,
-  anyMedicationOption,
-} from "@/constants/Medications";
+  updateSetting,
+  getAllVisibleSymptoms,
+  getAllVisibleMoods,
+  getAllVisibleMedications,
+} from "@/db/database";
 import {
-  birthControlOptions,
-  anyBirthControlOption,
-} from "@/constants/BirthControlTypes";
+  useCalendarFilters,
+  useDatabaseChangeNotifier,
+} from "@/assets/src/calendar-storage";
+import { anySymptomOption } from "@/constants/Symptoms";
+import { anyMoodOption } from "@/constants/Moods";
+import { anyMedicationOption } from "@/constants/Medications";
+import { anyBirthControlOption } from "@/constants/BirthControlTypes";
 const flowOption = "Flow";
 const notesOption = "Notes";
 
@@ -67,9 +69,44 @@ export default function CalendarFilterDialog({
   visible: boolean;
   setVisible: (visible: boolean) => void;
 }) {
+  const databaseChange = useDatabaseChangeNotifier().databaseChange;
   const { selectedFilters, setSelectedFilters } = useCalendarFilters();
   const [tempSelectedFilters, setTempSelectedFilters] =
     useState<string[]>(selectedFilters);
+  const [symptomOptions, setSymptomOptions] = useState<string[]>([]);
+  const [moodOptions, setMoodOptions] = useState<string[]>([]);
+  const [medicationOptions, setMedicationOptions] = useState<string[]>([]);
+  const [birthControlOptions, setBirthControlOptions] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchSymptoms = async () => {
+      const symptoms = await getAllVisibleSymptoms();
+      setSymptomOptions(symptoms.map((symptom) => symptom.name));
+    };
+
+    const fetchMoods = async () => {
+      const moods = await getAllVisibleMoods();
+      setMoodOptions(moods.map((mood) => mood.name));
+    };
+
+    const fetchMedications = async () => {
+      const medications = await getAllVisibleMedications();
+      setMedicationOptions(
+        medications
+          .filter((medication) => medication.type !== "birth control")
+          .map((medication) => medication.name),
+      );
+      setBirthControlOptions(
+        medications
+          .filter((medication) => medication.type === "birth control")
+          .map((medication) => medication.name),
+      );
+    };
+
+    fetchSymptoms();
+    fetchMoods();
+    fetchMedications();
+  }, [databaseChange]);
 
   useEffect(() => {
     setTempSelectedFilters(selectedFilters);

@@ -12,6 +12,7 @@ import { insertMedication } from "@/db/operations/medications";
 import { symptomOptions } from "@/constants/Symptoms";
 import { moodOptions } from "@/constants/Moods";
 import { medicationOptions } from "@/constants/Medications";
+import { birthControlOptions } from "@/constants/BirthControlTypes";
 import { getSetting, updateSetting } from "@/db/operations/settings";
 import { SettingsKeys } from "@/constants/Settings";
 
@@ -50,6 +51,9 @@ export const setupEntryTypes = async () => {
   }
   for (const medication of medicationOptions) {
     await insertMedication(medication, true);
+  }
+  for (const birthControl of birthControlOptions) {
+    await insertMedication(birthControl, true, "birth control");
   }
 
   // update calendar filters
