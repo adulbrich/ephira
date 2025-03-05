@@ -1,8 +1,8 @@
 import { View } from "react-native";
-import { Button, Divider, List, Text, useTheme } from "react-native-paper";
+import { Button, List, Text, useTheme } from "react-native-paper";
 import { useThemeColor } from "@/assets/src/calendar-storage";
 import React, { useEffect } from "react";
-import { ThemedView } from "./ThemedView";
+import { ThemedView } from "@/components/ThemedView";
 import { insertSetting, getSetting } from "@/db/database";
 import { themeButtonColors } from "@/constants/Colors";
 
@@ -29,7 +29,12 @@ export default function ThemeSelector() {
   return (
     <ThemedView>
       <List.Section>
-        <List.Accordion title="Change Theme Color">
+        <List.Accordion
+          title="Change Theme Color"
+          titleStyle={{
+            fontSize: 20,
+          }}
+        >
           <View style={{ paddingLeft: 15, paddingRight: 15, gap: 10 }}>
             <Text>Select a theme color</Text>
             <View
@@ -79,7 +84,6 @@ export default function ThemeSelector() {
           </View>
         </List.Accordion>
       </List.Section>
-      <Divider />
     </ThemedView>
   );
 }
