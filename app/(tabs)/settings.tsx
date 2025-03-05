@@ -6,7 +6,7 @@ import Customization from "@/components/settings/Customization";
 import { Text, Divider, useTheme } from "react-native-paper";
 import { ScrollView, SafeAreaView, StyleSheet } from "react-native";
 import ThemeSelector from "@/components/settings/ThemeSelector";
-import FadeInView from "@/components/FadeInView";
+import FadeInView from "@/components/animations/FadeInView";
 
 export default function Settings() {
   const theme = useTheme();

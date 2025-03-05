@@ -24,7 +24,7 @@ import CalendarHeader from "@/components/calendar/CalendarHeader";
 import { useMarkedDates } from "@/hooks/useMarkedDates";
 import { FilterColorsDark, FilterColorsLight } from "@/constants/Colors";
 import { Image } from "react-native";
-import FadeInView from "@/components/FadeInView";
+import FadeInView from "@/components/animations/FadeInView";
 
 export default function FlowCalendar() {
   const [key, setKey] = useState<string>("");

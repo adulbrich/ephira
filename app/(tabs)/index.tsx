@@ -4,7 +4,7 @@ import FlowChart from "@/components/FlowChart";
 import { FlowColors } from "@/constants/Colors";
 import { useData } from "@/assets/src/calendar-storage";
 import { useTheme, Text } from "react-native-paper";
-import FadeInView from "@/components/FadeInView";
+import FadeInView from "@/components/animations/FadeInView";
 
 export default function HomeScreen() {
   const theme = useTheme();
