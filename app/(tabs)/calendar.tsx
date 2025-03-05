@@ -24,6 +24,7 @@ import CalendarHeader from "@/components/calendar/CalendarHeader";
 import { useMarkedDates } from "@/hooks/useMarkedDates";
 import { FilterColorsDark, FilterColorsLight } from "@/constants/Colors";
 import { Image } from "react-native";
+import FadeInView from "@/components/animations/FadeInView";
 
 export default function FlowCalendar() {
   const [key, setKey] = useState<string>("");
@@ -78,94 +79,99 @@ export default function FlowCalendar() {
   };
 
   return (
-    <SafeAreaProvider>
-      <TouchableWithoutFeedback onPress={dismissKeyboard}>
-        <KeyboardAvoidingView style={{ flex: 1 }}>
-          <SafeAreaView style={styles.container}>
-            <ScrollView
-              contentContainerStyle={{
-                flexGrow: 1,
-                backgroundColor: theme.colors.background,
-              }}
-              automaticallyAdjustKeyboardInsets={true}
-            >
-              <View
-                key={themeKey}
-                style={{ backgroundColor: theme.colors.background, padding: 4 }}
+    <FadeInView duration={200} backgroundColor={theme.colors.background}>
+      <SafeAreaProvider>
+        <TouchableWithoutFeedback onPress={dismissKeyboard}>
+          <KeyboardAvoidingView style={{ flex: 1 }}>
+            <SafeAreaView style={styles.container}>
+              <ScrollView
+                contentContainerStyle={{
+                  flexGrow: 1,
+                  backgroundColor: theme.colors.background,
+                }}
+                automaticallyAdjustKeyboardInsets={true}
               >
-                <Calendar
-                  allowSelectionOutOfRange={false}
-                  key={key}
-                  renderHeader={(date: object) => (
-                    <CalendarHeader onJumpToToday={jumpToToday} date={date} />
-                  )}
-                  maxDate={today}
-                  markingType="multi-period"
-                  markedDates={{ ...markedDates }}
-                  enableSwipeMonths={true}
-                  onDayPress={(day: { dateString: string }) =>
-                    setDate(day.dateString)
-                  }
-                  displayLoadingIndicator={loading}
-                  theme={{
-                    calendarBackground: theme.colors.background,
-                    textSectionTitleColor: theme.colors.secondary,
-                    selectedDayBackgroundColor: theme.colors.primary,
-                    selectedDayTextColor: theme.colors.onPrimary,
-                    todayTextColor: theme.colors.primary,
-                    dayTextColor: theme.colors.onBackground,
-                    textDisabledColor: theme.colors.surfaceVariant,
-                    arrowColor: theme.colors.primary,
-                    textDayFontFamily: "monospace",
-                    textDayHeaderFontFamily: "monospace",
-                    textDayFontSize: 16,
-                    textDayHeaderFontSize: 16,
+                <View
+                  key={themeKey}
+                  style={{
+                    backgroundColor: theme.colors.background,
+                    padding: 4,
                   }}
-                />
-                <Divider />
-                <View style={styles.legendContainer}>
-                  {selectedFilters.map((filter, index) => (
-                    <View
-                      key={filter}
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        padding: 4,
-                      }}
-                    >
-                      {filter === "Flow" ? (
-                        <Image
-                          source={require("@/assets/images/flow_gradient_circle.png")}
-                          style={{
-                            width: 16,
-                            height: 16,
-                            borderRadius: 8,
-                            marginRight: 8,
-                          }}
-                        />
-                      ) : (
-                        <View
-                          style={{
-                            width: 16,
-                            height: 16,
-                            backgroundColor: filterColors[index],
-                            borderRadius: 8,
-                            marginRight: 8,
-                          }}
-                        />
-                      )}
-                      <Text>{filter}</Text>
-                    </View>
-                  ))}
+                >
+                  <Calendar
+                    allowSelectionOutOfRange={false}
+                    key={key}
+                    renderHeader={(date: object) => (
+                      <CalendarHeader onJumpToToday={jumpToToday} date={date} />
+                    )}
+                    maxDate={today}
+                    markingType="multi-period"
+                    markedDates={{ ...markedDates }}
+                    enableSwipeMonths={true}
+                    onDayPress={(day: { dateString: string }) =>
+                      setDate(day.dateString)
+                    }
+                    displayLoadingIndicator={loading}
+                    theme={{
+                      calendarBackground: theme.colors.background,
+                      textSectionTitleColor: theme.colors.secondary,
+                      selectedDayBackgroundColor: theme.colors.primary,
+                      selectedDayTextColor: theme.colors.onPrimary,
+                      todayTextColor: theme.colors.primary,
+                      dayTextColor: theme.colors.onBackground,
+                      textDisabledColor: theme.colors.surfaceVariant,
+                      arrowColor: theme.colors.primary,
+                      textDayFontFamily: "monospace",
+                      textDayHeaderFontFamily: "monospace",
+                      textDayFontSize: 16,
+                      textDayHeaderFontSize: 16,
+                    }}
+                  />
+                  <Divider />
+                  <View style={styles.legendContainer}>
+                    {selectedFilters.map((filter, index) => (
+                      <View
+                        key={filter}
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          padding: 4,
+                        }}
+                      >
+                        {filter === "Flow" ? (
+                          <Image
+                            source={require("@/assets/images/flow_gradient_circle.png")}
+                            style={{
+                              width: 16,
+                              height: 16,
+                              borderRadius: 8,
+                              marginRight: 8,
+                            }}
+                          />
+                        ) : (
+                          <View
+                            style={{
+                              width: 16,
+                              height: 16,
+                              backgroundColor: filterColors[index],
+                              borderRadius: 8,
+                              marginRight: 8,
+                            }}
+                          />
+                        )}
+                        <Text>{filter}</Text>
+                      </View>
+                    ))}
+                  </View>
+                  <Divider />
                 </View>
-                <Divider />
-              </View>
-              <View>{date && <DayView />}</View>
-            </ScrollView>
-          </SafeAreaView>
-        </KeyboardAvoidingView>
-      </TouchableWithoutFeedback>
-    </SafeAreaProvider>
+                <View>{date && <DayView />}</View>
+              </ScrollView>
+            </SafeAreaView>
+          </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
+      </SafeAreaProvider>
+    </FadeInView>
   );
 }
 
