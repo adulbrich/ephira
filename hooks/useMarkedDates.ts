@@ -1,19 +1,18 @@
 import { useState, useEffect } from "react";
-import { getDay } from "@/db/database";
+import {
+  getDay,
+  getAllVisibleSymptoms,
+  getAllVisibleMoods,
+  getAllVisibleMedications,
+} from "@/db/database";
 import type { DayData, MarkedDates } from "@/constants/Interfaces";
 import { useSelectedDate } from "@/assets/src/calendar-storage";
 import { FlowColors } from "@/constants/Colors";
 import { useLiveFilteredData } from "@/hooks/useLiveFilteredData";
-import { symptomOptions, anySymptomOption } from "@/constants/Symptoms";
-import { moodOptions, anyMoodOption } from "@/constants/Moods";
-import {
-  medicationOptions,
-  anyMedicationOption,
-} from "@/constants/Medications";
-import {
-  birthControlOptions,
-  anyBirthControlOption,
-} from "@/constants/BirthControlTypes";
+import { anySymptomOption } from "@/constants/Symptoms";
+import { anyMoodOption } from "@/constants/Moods";
+import { anyMedicationOption } from "@/constants/Medications";
+import { anyBirthControlOption } from "@/constants/BirthControlTypes";
 import { useTheme } from "react-native-paper";
 import { FilterColorsDark, FilterColorsLight } from "@/constants/Colors";
 
@@ -106,12 +105,32 @@ function applyFilterToMarkedDates({
   }
 }
 
-function markedDatesBuilder(
+async function markedDatesBuilder(
   filters: string[],
   data: DayData[],
   filterColors: string[],
 ) {
   const markedDates: MarkedDates = {};
+
+  // get all visible symptoms, moods, medications, and birth control options
+  const symptomOptions = await getAllVisibleSymptoms().then((symptoms) =>
+    symptoms.map((symptom) => symptom.name),
+  );
+  const moodOptions = await getAllVisibleMoods().then((moods) =>
+    moods.map((mood) => mood.name),
+  );
+  const medicationOptions = await getAllVisibleMedications().then(
+    (medications) =>
+      medications
+        .filter((medication) => medication.type !== "birth control")
+        .map((medication) => medication.name),
+  );
+  const birthControlOptions = await getAllVisibleMedications().then(
+    (medications) =>
+      medications
+        .filter((medication) => medication.type === "birth control")
+        .map((medication) => medication.name),
+  );
 
   data.forEach((day, index) => {
     // flow
@@ -235,7 +254,7 @@ export function useMarkedDates(calendarFilters?: string[]) {
 
   // useLiveQuery will automatically update the calendar when the db data changes
   useEffect(() => {
-    function refreshCalendar(allDays: DayData[]) {
+    async function refreshCalendar(allDays: DayData[]) {
       if (!allDays || allDays.length === 0) {
         setMarkedDates((prev) => {
           const updated = { ...prev };
@@ -248,7 +267,7 @@ export function useMarkedDates(calendarFilters?: string[]) {
         return;
       }
 
-      const newMarkedDates = markedDatesBuilder(
+      const newMarkedDates = await markedDatesBuilder(
         calendarFilters ?? [],
         allDays,
         colors,
@@ -257,6 +276,7 @@ export function useMarkedDates(calendarFilters?: string[]) {
       setMarkedDates(newMarkedDates);
       setDate(today);
     }
+
     refreshCalendar(filteredData as DayData[]);
   }, [filteredData, today, setDate, calendarFilters, colors]);
 

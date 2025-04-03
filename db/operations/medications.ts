@@ -1,4 +1,5 @@
 import { getDrizzleDatabase } from "@/db/operations/setup";
+import { deleteMedicationEntriesByMedicationId } from "./medicationEntries";
 import { medications } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
@@ -110,6 +111,13 @@ export const insertMedication = async (
 };
 
 export const deleteMedication = async (name: string) => {
+  // delete all entries associated with the medication
+  const medication_id = (await getMedication(name))?.id;
+  if (medication_id) {
+    await deleteMedicationEntriesByMedicationId(medication_id);
+  }
+
+  // delete the medication
   await db.delete(medications).where(eq(medications.name, name));
 };
 

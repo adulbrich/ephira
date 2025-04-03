@@ -1,6 +1,6 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
-import { Portal, Snackbar } from "react-native-paper";
+import { Portal, Snackbar as RnpSnackbar } from "react-native-paper";
 
 interface SavedMessageProps {
   visible: boolean;
@@ -8,13 +8,13 @@ interface SavedMessageProps {
   onDismiss: () => void;
 }
 
-const SaveMessage = ({ visible, content, onDismiss }: SavedMessageProps) => {
+const Snackbar = ({ visible, content, onDismiss }: SavedMessageProps) => {
   const message = content.join(" ");
 
   return (
     <View style={styles.snackbarContainer}>
       <Portal>
-        <Snackbar
+        <RnpSnackbar
           visible={visible}
           onDismiss={onDismiss}
           duration={5000}
@@ -24,7 +24,7 @@ const SaveMessage = ({ visible, content, onDismiss }: SavedMessageProps) => {
           }}
         >
           {message}
-        </Snackbar>
+        </RnpSnackbar>
       </Portal>
     </View>
   );
@@ -39,4 +39,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SaveMessage;
+export default Snackbar;

@@ -1,5 +1,6 @@
 import { getDrizzleDatabase } from "@/db/operations/setup";
 import { symptoms } from "@/db/schema";
+import { deleteSymptomEntriesBySymptomId } from "@/db/operations/symptomEntries";
 import { eq } from "drizzle-orm";
 
 const db = getDrizzleDatabase();
@@ -78,6 +79,14 @@ export const insertSymptom = async (
 };
 
 export const deleteSymptom = async (name: string) => {
+  const symptom_id = (await getSymptom(name))?.id;
+
+  // delete all entries associated with the symptom
+  if (symptom_id) {
+    await deleteSymptomEntriesBySymptomId(symptom_id);
+  }
+
+  // delete the symptom
   await db.delete(symptoms).where(eq(symptoms.name, name));
 };
 
