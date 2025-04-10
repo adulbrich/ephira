@@ -78,6 +78,12 @@ export const deleteMedicationEntry = async (id: number) => {
   await db.delete(medicationEntries).where(eq(medicationEntries.id, id));
 };
 
+export const deleteMedicationEntriesByMedicationId = async (id: number) => {
+  await db
+    .delete(medicationEntries)
+    .where(eq(medicationEntries.medication_id, id));
+};
+
 export const deleteAllMedicationEntries = async () => {
   await db.delete(medicationEntries);
 };

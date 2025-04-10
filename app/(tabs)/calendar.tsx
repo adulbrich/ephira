@@ -190,6 +190,7 @@ const makeStyles = ({ theme }: { theme: MD3Theme }) =>
     legendContainer: {
       padding: 8,
       flexDirection: "row",
+      flexWrap: "wrap",
       alignItems: "center",
       justifyContent: "space-around",
     },

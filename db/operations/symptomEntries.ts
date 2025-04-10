@@ -70,6 +70,10 @@ export const deleteSymptomEntry = async (id: number) => {
   await db.delete(symptomEntries).where(eq(symptomEntries.id, id));
 };
 
+export const deleteSymptomEntriesBySymptomId = async (id: number) => {
+  await db.delete(symptomEntries).where(eq(symptomEntries.symptom_id, id));
+};
+
 export const deleteAllSymptomEntries = async () => {
   await db.delete(symptomEntries).execute();
 };

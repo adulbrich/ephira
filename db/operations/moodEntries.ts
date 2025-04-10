@@ -67,6 +67,10 @@ export const deleteMoodEntry = async (id: number) => {
   await db.delete(moodEntries).where(eq(moodEntries.id, id));
 };
 
+export const deleteMoodEntriesByMoodId = async (id: number) => {
+  await db.delete(moodEntries).where(eq(moodEntries.mood_id, id));
+};
+
 export const deleteAllMoodEntries = async () => {
   await db.delete(moodEntries).execute();
 };

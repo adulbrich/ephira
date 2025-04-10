@@ -18,7 +18,7 @@ import BirthControlAccordion from "./BirthControlAccordion";
 import SymptomsAccordion from "./SymptomsAccordion";
 import MoodsAccordion from "./MoodsAccordion";
 import NotesAccordion from "./NotesAccordion";
-import SaveMessage from "./SaveMessage";
+import Snackbar from "@/components/ui/Snackbar";
 import { useSyncEntries } from "@/hooks/useSyncEntries";
 import { useFetchEntries } from "@/hooks/useFetchEntries";
 import { useFetchMedicationEntries } from "@/hooks/useFetchMedicationEntries";
@@ -205,7 +205,7 @@ export default function DayView() {
           />
         </List.Section>
       </View>
-      <SaveMessage
+      <Snackbar
         visible={saveMessageVisible}
         content={saveMessageContent}
         onDismiss={() => setSaveMessageVisible(false)}

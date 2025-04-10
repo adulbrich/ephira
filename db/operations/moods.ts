@@ -1,4 +1,5 @@
 import { getDrizzleDatabase } from "@/db/operations/setup";
+import { deleteMoodEntriesByMoodId } from "./moodEntries";
 import { moods } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
@@ -72,6 +73,13 @@ export const insertMood = async (
 };
 
 export const deleteMood = async (name: string) => {
+  // delete any entries associated with the mood
+  const mood_id = (await getMood(name))?.id;
+  if (mood_id) {
+    await deleteMoodEntriesByMoodId(mood_id);
+  }
+
+  // delete the mood
   await db.delete(moods).where(eq(moods.name, name));
 };
 
