@@ -69,9 +69,9 @@ export default function TabLayout() {
             paddingTop: 2,
             height: 60,
           },
-          default: { 
-            height: 65, 
-            paddingTop: 6 
+          default: {
+            height: 65,
+            paddingTop: 6,
           },
         }),
       }}
