@@ -54,7 +54,7 @@ export default function FlowChart() {
 
       const markColor = FlowColors[data.flow_intensity ?? 0];
 
-      return <Circle key={index} cx={x} cy={y} r="5" fill={markColor} stroke={theme.colors.onSecondary} strokeWidth="0.5" />;
+      return <Circle key={index} cx={x} cy={y} r="5" fill={markColor} stroke={theme.colors.onSecondary} strokeWidth="0.5" />; //
     });
   };
 
@@ -159,20 +159,6 @@ export default function FlowChart() {
   return (
     <View style={{ padding: 2 }}>
       <Svg height={height * 0.5} width="100%" viewBox="-5 -5 110 110">
-      {/* <Circle
-          cx="50"
-          cy="50"
-          r="55"
-          fill={theme.colors.inverseSurface}
-          strokeWidth="8"
-        /> */}
-        <Circle
-          cx="50"
-          cy="50"
-          r="35"
-          fill={theme.colors.secondaryContainer}
-          strokeWidth="8"
-        />
         <Path
           d={arcPath}
           fill="transparent"
@@ -180,7 +166,13 @@ export default function FlowChart() {
           strokeWidth="9"
           strokeLinecap="round"
         />
-        
+        <Circle
+          cx="50"
+          cy="50"
+          r="35"
+          fill={theme.colors.secondaryContainer}
+          strokeWidth="8"
+        />
         <Text
           fill={theme.colors.onSecondaryContainer}
           fontSize="10"
