@@ -54,7 +54,17 @@ export default function FlowChart() {
 
       const markColor = FlowColors[data.flow_intensity ?? 0];
 
-      return <Circle key={index} cx={x} cy={y} r="5" fill={markColor} stroke={theme.colors.onSecondary} strokeWidth="0.5" />; //
+      return (
+        <Circle
+          key={index}
+          cx={x}
+          cy={y}
+          r="5"
+          fill={markColor}
+          stroke={theme.colors.onSecondary}
+          strokeWidth="0.5"
+        />
+      ); //
     });
   };
 
