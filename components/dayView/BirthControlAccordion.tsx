@@ -6,10 +6,11 @@ import { getAllVisibleMedications } from "@/db/database";
 import SingleChipSelection from "./SingleChipSelection";
 import { useTheme } from "react-native-paper";
 import {
+  useSelectedDate,
   useBirthControlNotes,
   useTimeTaken,
   useTimePickerState,
-  useTempSelectedTime,
+  useTempSelectedTime
 } from "@/assets/src/calendar-storage";
 
 export default function BirthControlAccordion({
@@ -23,6 +24,7 @@ export default function BirthControlAccordion({
   selectedBirthControl: string | null;
   setSelectedBirthControl: (birthControl: string | null) => void;
 }) {
+  const { date, flow_intensity, notes, setFlow, setNotes} = useSelectedDate();
   const theme = useTheme();
   const [birthControlOptions, setBirthControlOptions] = useState<string[]>([]);
 

@@ -5,10 +5,32 @@ import { FlowColors } from "@/constants/Colors";
 import { useData } from "@/assets/src/calendar-storage";
 import { useTheme, Text } from "react-native-paper";
 import FadeInView from "@/components/animations/FadeInView";
+import { useCallback } from "react";
+import { getAllMedicationEntries, getMedication } from "@/db/database";
 
 export default function HomeScreen() {
   const theme = useTheme();
   const { data: flowData } = useData();
+
+  const fetchAllMedicationEntries = useCallback(async () => {
+    const allMeds = await getAllMedicationEntries();
+    const PillID = await getMedication("Pill");
+    const recentMedLogs = allMeds
+    if(PillID){
+      const recentMedLogs = {...allMeds}
+      .filter((entry) => entry.medication_id == PillID.id)
+    }
+    console.log(allMeds)
+    console.log("-----------------------------------")
+    console.log(recentMedLogs)
+    
+
+  },[])
+
+  fetchAllMedicationEntries()
+ 
+
+
 
   // Get up to 5 most recent logged days
   const recentFlowDays = [...flowData]
