@@ -19,6 +19,8 @@
 
 ![Ephira Feature Graphic](https://github.com/user-attachments/assets/7b6e3dfe-63fc-4239-9e51-af8fa0c1aeb3)
 
+![All Screens](https://github.com/user-attachments/assets/c795869d-a4fe-44a9-b520-d5d4561245b1)
+
 <!-- ABOUT THE PROJECT -->
 
 ## About The Project
