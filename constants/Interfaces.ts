@@ -42,6 +42,21 @@ export interface LoadData {
   setShow: (show: boolean) => void;
 }
 
+export interface MedEntries{
+  id: number;
+  notes: string | null;
+  day_id: number;
+  medication_id: number;
+  time_taken: string | null;
+}
+
+export interface PillBtn {
+  data: MedEntries[];
+  show: boolean;
+  setPillEntries: (data: MedEntries[]) => void;
+  setShow: (show: boolean) => void;
+}
+
 export interface Accordion {
   state: string | null;
   setExpandedAccordion: (state: string | null) => void;

@@ -11,6 +11,13 @@ export const getDay = async (date: string) => {
   return day;
 };
 
+export const getDayById = async (id: number) => {
+  const day = await db.query.days.findFirst({
+    where: eq(days.id, id),
+  });
+  return day;
+};
+
 export const getAllDays = async () => {
   const allDays = await db.select().from(days);
   return allDays;

@@ -17,6 +17,8 @@ import {
   CalendarFilters,
   ThemeColor,
   DatabaseChangeNotifier,
+  PillBtn,
+  MedEntries,
 } from "@/constants/Interfaces";
 
 const initialDay: DayData = {
@@ -59,6 +61,17 @@ export const useData = create<LoadData>((set) => ({
   data: [],
   show: false,
   setData: (data: DayData[]) => {
+    set(() => ({ data: data }));
+  },
+  setShow: (show: boolean) => {
+    set(() => ({ show: show }));
+  },
+}));
+
+export const usePillBtn = create<PillBtn>((set) => ({
+  data: [],
+  show: false,
+  setPillEntries: (data: MedEntries[]) => {
     set(() => ({ data: data }));
   },
   setShow: (show: boolean) => {
