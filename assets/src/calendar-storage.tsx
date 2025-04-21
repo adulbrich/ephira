@@ -17,6 +17,7 @@ import {
   CalendarFilters,
   ThemeColor,
   DatabaseChangeNotifier,
+  HomePillBtnState,
 } from "@/constants/Interfaces";
 
 const initialDay: DayData = {
@@ -111,6 +112,11 @@ export const useTimeTaken = create<TimeTaken>((set) => ({
 export const useTimePickerState = create<TimePickerState>((set) => ({
   showTimePicker: false,
   setShowTimePicker: (show: boolean) => set(() => ({ showTimePicker: show })),
+}));
+
+export const useHomePillBtnState = create<HomePillBtnState>((set) => ({
+  showHomeBtn: false,
+  setShowHomeBtn: (show: boolean) => set(() => ({ showHomeBtn: show })),
 }));
 
 export const useTempSelectedTime = create<TempSelectedTime>((set) => ({

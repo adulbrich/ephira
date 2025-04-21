@@ -82,6 +82,11 @@ export interface TimePickerState {
   setShowTimePicker: (show: boolean) => void;
 }
 
+export interface HomePillBtnState {
+  showHomeBtn: boolean;
+  setShowHomeBtn: (show: boolean) => void;
+}
+
 export interface TempSelectedTime {
   tempSelectedTime: Date | null;
   setTempSelectedTime: (time: Date | null) => void;

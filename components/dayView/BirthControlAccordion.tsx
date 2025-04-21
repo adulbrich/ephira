@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { View, Modal, Platform } from "react-native";
-import { List, Text, Button, TextInput } from "react-native-paper";
+import { List, Text, Button, TextInput, Checkbox } from "react-native-paper";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { getAllVisibleMedications } from "@/db/database";
 import SingleChipSelection from "./SingleChipSelection";
@@ -10,6 +10,7 @@ import {
   useTimeTaken,
   useTimePickerState,
   useTempSelectedTime,
+  useHomePillBtnState,
 } from "@/assets/src/calendar-storage";
 
 export default function BirthControlAccordion({
@@ -26,6 +27,7 @@ export default function BirthControlAccordion({
   const theme = useTheme();
   const [birthControlOptions, setBirthControlOptions] = useState<string[]>([]);
 
+  const { showHomeBtn, setShowHomeBtn } = useHomePillBtnState();
   const { showTimePicker, setShowTimePicker } = useTimePickerState();
   const { tempSelectedTime, setTempSelectedTime } = useTempSelectedTime();
   const { timeTaken, setTimeTaken } = useTimeTaken();
@@ -48,7 +50,7 @@ export default function BirthControlAccordion({
       setTimeTaken("");
       setShowTimePicker(false);
     }
-  }, [selectedBirthControl, setTimeTaken, setShowTimePicker]);
+  }, [selectedBirthControl, setTimeTaken, setShowTimePicker, setShowHomeBtn]);
 
   const handleTimeChange = (event: any, selectedTime?: Date) => {
     if (Platform.OS === "android") {
@@ -105,6 +107,16 @@ export default function BirthControlAccordion({
       >
         {timeTaken !== "" ? `Time Taken: ${timeTaken}` : "Select Time Taken"}
       </Button>
+  
+      <Checkbox.Item
+        status = {showHomeBtn ? 'checked' : 'unchecked'}
+        onPress={() => {setShowHomeBtn(!showHomeBtn)}}
+        label = "Add home page shortcut?"
+        color={theme.colors.secondary}
+        uncheckedColor={theme.colors.onSecondary}
+        style={{ flex: 1, width: "90%" }}
+      >
+      </Checkbox.Item>
       <Modal
         visible={showTimePicker}
         animationType="fade"
