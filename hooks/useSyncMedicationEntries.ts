@@ -37,8 +37,8 @@ export function useSyncMedicationEntries(date: string) {
         }
         if (item) {
           const isBirthControl = birthControlOptions.find(
-            (option: { value: string }) => option.value === value,
-          );
+            (option: string ) => option === value
+          )
           if (isBirthControl) {
             await insertEntry(day.id, item.id, time_taken, notes);
           } else {
