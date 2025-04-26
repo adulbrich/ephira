@@ -23,6 +23,7 @@ import { useSyncEntries } from "@/hooks/useSyncEntries";
 import { useFetchEntries } from "@/hooks/useFetchEntries";
 import { useFetchMedicationEntries } from "@/hooks/useFetchMedicationEntries";
 import { useSyncMedicationEntries } from "@/hooks/useSyncMedicationEntries";
+import { useFocusEffect } from "expo-router";
 
 export default function DayView() {
   const theme = useTheme();
@@ -62,69 +63,47 @@ export default function DayView() {
     }
   }, [date, setNotes]);
 
-  function onSave() {
+  const onSave = useCallback(() => {
     insertDay(date, flow_intensity, notes).then(async () => {
       setFlow(flow_intensity);
-      setExpandedAccordion(null);
-
+  
       await syncEntries(selectedSymptoms, "symptom");
       await syncEntries(selectedMoods, "mood");
-
+  
       if (selectedBirthControl != null) {
         selectedMedications.push(selectedBirthControl);
       }
-
+  
       await syncMedicationEntries(
         selectedMedications,
         timeTaken,
         birthControlNotes,
       );
-
+  
       await fetchEntries("symptom");
       await fetchEntries("mood");
       await fetchMedicationEntries();
       await fetchNotes();
-
-      const contentToSave: string[] = [];
-      if (flow_intensity !== 0) {
-        contentToSave.push("Flow");
-      }
-      if (notes && notes.trim() !== "") {
-        contentToSave.push("Notes");
-      }
-      if (selectedSymptoms.length > 0) {
-        contentToSave.push("Symptoms");
-      }
-      if (selectedMoods.length > 0) {
-        contentToSave.push("Moods");
-      }
-      if (selectedMedications.length > 0) {
-        contentToSave.push("Medications");
-      }
-      if (selectedBirthControl) {
-        contentToSave.push("Birth Control");
-      }
-
-      if (contentToSave.length > 0) {
-        let message = "";
-        if (contentToSave.length === 1) {
-          message = contentToSave[0] + " Saved!";
-        } else if (contentToSave.length === 2) {
-          message = contentToSave[0] + " and " + contentToSave[1] + " Saved!";
-        } else {
-          // If user selects three or more tracking options, join with commas and add an "and" before the last item
-          const multipleSelections = contentToSave.slice(0, -1).join(", ");
-          message =
-            multipleSelections +
-            " and " +
-            contentToSave[contentToSave.length - 1] +
-            " Saved!";
-        }
-        setSaveMessageContent([message]);
-        setSaveMessageVisible(true);
-      }
+  
     });
-  }
+  }, [
+    date,
+    flow_intensity,
+    notes,
+    selectedSymptoms,
+    selectedMoods,
+    selectedMedications,
+    selectedBirthControl,
+    timeTaken,
+    birthControlNotes,
+    syncEntries,
+    syncMedicationEntries,
+    fetchEntries,
+    fetchMedicationEntries,
+    fetchNotes,
+    setFlow,
+    setExpandedAccordion,
+  ]);
 
   useEffect(() => {
     if (flow_intensity !== null) {
@@ -132,13 +111,105 @@ export default function DayView() {
     }
   }, [flow_intensity, setFlow]);
 
+  // Set accordions to closed when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      setExpandedAccordion(null);
+    }, [])
+  );
+
+  type SavedData = {
+    date: string;
+    flow: number;
+    notes: string;
+    symptoms: string[];
+    moods: string[];
+    medications: string[];
+    birthControl: string | null;
+    birthControlNotes: string;
+    timeTaken: string;
+  };
+
+  const [lastSavedData, setLastSavedData] = useState<SavedData | null>(null);
+
   useEffect(() => {
-    fetchEntries("symptom");
-    fetchEntries("mood");
-    fetchMedicationEntries();
-    fetchNotes();
+    const fetchAll = async () => {
+      await fetchEntries("symptom");
+      await fetchEntries("mood");
+      await fetchMedicationEntries();
+      await fetchNotes();
+  
+      const existingDay = await getDay(date);
+
+      // Populate lastSavedData for auto-saving
+      setLastSavedData({
+        date: existingDay?.date ?? "",
+        flow: existingDay?.flow_intensity ?? 0,
+        notes: existingDay?.notes ?? "",
+        symptoms: [...selectedSymptoms],
+        moods: [...selectedMoods],
+        medications: [...selectedMedications],
+        birthControl: selectedBirthControl,
+        birthControlNotes,
+        timeTaken,
+      });
+    };
+  
+    fetchAll();
     setExpandedAccordion(null);
-  }, [fetchEntries, fetchNotes, fetchMedicationEntries, setExpandedAccordion]);
+  }, [date]);
+  
+  const hasChanged = (newData: SavedData, oldData: SavedData) => {
+    const normalize = (data: SavedData) => ({
+      ...data,
+      symptoms: [...data.symptoms].sort(),
+      moods: [...data.moods].sort(),
+      medications: [...data.medications].sort(),
+      notes: data.notes.trim(),
+      birthControlNotes: data.birthControlNotes.trim(),
+      timeTaken: data.timeTaken.trim(),
+    });
+  
+    const a = normalize(newData);
+    const b = normalize(oldData);
+  
+    return JSON.stringify(a) !== JSON.stringify(b);
+  };  
+  
+  // Check if should save when data changes
+  useEffect(() => {
+    if (!lastSavedData) return;
+
+    // Don't compare or save if the date selected has changed
+    if (lastSavedData.date !== date) return;
+  
+    const currentData = {
+      date: date ?? "",
+      flow: flow_intensity,
+      notes: notes ?? "",
+      symptoms: selectedSymptoms,
+      moods: selectedMoods,
+      medications: selectedMedications,
+      birthControl: selectedBirthControl,
+      birthControlNotes,
+      timeTaken,
+    };
+  
+    if (hasChanged(currentData, lastSavedData)) {
+      onSave();
+      setLastSavedData(currentData); // Update lastSavedData
+    }
+  }, [
+    flow_intensity,
+    notes,
+    selectedSymptoms,
+    selectedMoods,
+    selectedMedications,
+    selectedBirthControl,
+    birthControlNotes,
+    timeTaken,
+  ]);
+  
 
   return (
     <View style={{ backgroundColor: theme.colors.background }}>
@@ -151,14 +222,14 @@ export default function DayView() {
             year: "numeric",
           }).format(new Date(date + "T00:00:00"))}
         </Text>
-        <Button
+        {/* <Button
           mode="elevated"
           buttonColor={theme.colors.primaryContainer}
           textColor={theme.colors.onPrimaryContainer}
           onPress={() => onSave()}
         >
           Save
-        </Button>
+        </Button> */}
       </View>
       <View>
         <List.Section>
