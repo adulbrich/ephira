@@ -15,7 +15,7 @@ export default function ChipSelection({
   const theme = useTheme();
 
   return (
-    <View style={{ padding: 16 }}>
+    <View>
       <Text style={styles.sectionLabel}>{label}</Text>
       <View style={styles.chipContainer}>
         {options.map((option) => (
@@ -57,12 +57,14 @@ export default function ChipSelection({
 
 const styles = StyleSheet.create({
   chipContainer: {
+    paddingLeft: 16,
+    paddingRight: 16,
+    paddingBottom: 16,
+    paddingTop: 8,
     flexDirection: "row",
     flexWrap: "wrap",
   },
   sectionLabel: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 8,
+    display: "none",
   },
 });

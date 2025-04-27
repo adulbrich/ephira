@@ -41,7 +41,7 @@ export default function SymptomsAccordion({
         options={symptomOptions}
         selectedValues={selectedSymptoms}
         setSelectedValues={setSelectedSymptoms}
-        label="Select Symptoms:"
+        label="Select Symptoms"
       />
     </List.Accordion>
   );
