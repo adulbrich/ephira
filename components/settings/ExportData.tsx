@@ -22,12 +22,15 @@ const exportDescriptions: Record<string, string> = {
   json: "JSON (JavaScript Object Notation) files are easier to read than CSV files and still editable in a text editor. This format is ideal for developers or users who want to work with the data programmatically. The file size is larger than the CSV option.",
 };
 
-async function exportCsv(csvString: string) {
-  const fileName = "ephira_data.csv";
+async function exportCsvOrJson(data: string, fileType: string) {
+  const fileName = `ephira_data.${fileType}`;
+  const mimeType = fileType === "csv" ? "text/csv" : "application/json";
+  const UTI =
+    fileType === "csv" ? "public.comma-separated-values-text" : "public.json";
   try {
     const fileUri = FileSystem.cacheDirectory + fileName;
 
-    await FileSystem.writeAsStringAsync(fileUri, csvString, {
+    await FileSystem.writeAsStringAsync(fileUri, data, {
       encoding: FileSystem.EncodingType.UTF8,
     });
 
@@ -37,11 +40,11 @@ async function exportCsv(csvString: string) {
     }
 
     await Sharing.shareAsync(fileUri, {
-      mimeType: "text/csv",
-      UTI: "public.comma-separated-values-text",
+      mimeType: mimeType,
+      UTI: UTI,
     });
   } catch (error) {
-    console.error("Error saving/sharing CSV:", error);
+    console.error(`Error saving/sharing ${fileType}:`, error);
     alert("Something went wrong while exporting your data.");
   }
 }
@@ -135,16 +138,17 @@ function ExportDataModal({ onDismiss }: { onDismiss: () => void }) {
     switch (format) {
       case "csv":
         const csvString = formatJsonDataToCsv(data);
-        await exportCsv(csvString);
+        await exportCsvOrJson(csvString, "csv");
         break;
       case "pdf":
         console.log("Exporting data as PDF...");
         break;
       case "json":
-        console.log("Exporting data as JSON...");
+        // remove headers from the data
+        delete data?.headers;
+        await exportCsvOrJson(JSON.stringify(data, null, 2), "json");
         break;
     }
-    // onDismissModal();
   };
 
   return (
@@ -176,7 +180,6 @@ function ExportDataModal({ onDismiss }: { onDismiss: () => void }) {
                 },
               ]}
             />
-            {/* TODO: Describe how we format the data in PDF option */}
             <Text variant="bodyLarge" style={styles.exportDescriptions}>
               {exportDescriptions[value]}
             </Text>
