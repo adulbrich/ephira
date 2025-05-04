@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { StyleSheet, View } from "react-native";
 import { insertDay, getDay } from "@/db/database";
 import { List, Button, Text, useTheme, Divider } from "react-native-paper";
@@ -54,6 +54,23 @@ export default function DayView() {
   const [saveMessageVisible, setSaveMessageVisible] = useState(false);
   const [saveMessageContent, setSaveMessageContent] = useState<string[]>([]);
 
+  type SavedData = {
+    date: string;
+    flow: number;
+    notes: string;
+    symptoms: string[];
+    moods: string[];
+    medications: string[];
+    birthControl: string | null;
+    birthControlNotes: string;
+    timeTaken: string;
+  };
+
+  const [lastSavedData, setLastSavedData] = useState<SavedData | null>(null);
+  const isSavingRef = useRef(false);
+  const initialLoadComplete = useRef(false);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const fetchNotes = useCallback(async () => {
     const day = await getDay(date);
     if (day && day.notes) {
@@ -64,28 +81,75 @@ export default function DayView() {
   }, [date, setNotes]);
 
   const onSave = useCallback(() => {
-    insertDay(date, flow_intensity, notes).then(async () => {
-      setFlow(flow_intensity);
-  
-      await syncEntries(selectedSymptoms, "symptom");
-      await syncEntries(selectedMoods, "mood");
-  
-      if (selectedBirthControl != null) {
-        selectedMedications.push(selectedBirthControl);
-      }
-  
-      await syncMedicationEntries(
-        selectedMedications,
-        timeTaken,
-        birthControlNotes,
-      );
-  
-      await fetchEntries("symptom");
-      await fetchEntries("mood");
-      await fetchMedicationEntries();
-      await fetchNotes();
-  
-    });
+    if (isSavingRef.current) return; // prevent re-entry
+    isSavingRef.current = true;
+
+    try {
+      insertDay(date, flow_intensity, notes).then(async () => {
+        setFlow(flow_intensity);
+
+        await syncEntries(selectedSymptoms, "symptom");
+        await syncEntries(selectedMoods, "mood");
+
+        let combinedMedications = selectedMedications;
+
+        if (selectedBirthControl != null) {
+          combinedMedications = [...selectedMedications, selectedBirthControl];
+        }
+
+        await syncMedicationEntries(
+          combinedMedications,
+          timeTaken,
+          birthControlNotes,
+        );
+
+        await fetchEntries("symptom");
+        await fetchEntries("mood");
+        await fetchMedicationEntries();
+        await fetchNotes();
+
+        const contentToSave: string[] = [];
+        if (flow_intensity !== 0) {
+          contentToSave.push("Flow");
+        }
+        if (notes && notes.trim() !== "") {
+          contentToSave.push("Notes");
+        }
+        if (selectedSymptoms.length > 0) {
+          contentToSave.push("Symptoms");
+        }
+        if (selectedMoods.length > 0) {
+          contentToSave.push("Moods");
+        }
+        if (selectedMedications.length > 0) {
+          contentToSave.push("Medications");
+        }
+        if (selectedBirthControl) {
+          contentToSave.push("Birth Control");
+        }
+
+        if (contentToSave.length > 0) {
+          let message = "";
+          if (contentToSave.length === 1) {
+            message = contentToSave[0] + " Saved!";
+          } else if (contentToSave.length === 2) {
+            message = contentToSave[0] + " and " + contentToSave[1] + " Saved!";
+          } else {
+            // If user selects three or more tracking options, join with commas and add an "and" before the last item
+            const multipleSelections = contentToSave.slice(0, -1).join(", ");
+            message =
+              multipleSelections +
+              " and " +
+              contentToSave[contentToSave.length - 1] +
+              " Saved!";
+          }
+          setSaveMessageContent([message]);
+          setSaveMessageVisible(true);
+        }
+      });
+    } finally {
+      isSavingRef.current = false;
+    }
   }, [
     date,
     flow_intensity,
@@ -115,22 +179,8 @@ export default function DayView() {
   useFocusEffect(
     useCallback(() => {
       setExpandedAccordion(null);
-    }, [])
+    }, []),
   );
-
-  type SavedData = {
-    date: string;
-    flow: number;
-    notes: string;
-    symptoms: string[];
-    moods: string[];
-    medications: string[];
-    birthControl: string | null;
-    birthControlNotes: string;
-    timeTaken: string;
-  };
-
-  const [lastSavedData, setLastSavedData] = useState<SavedData | null>(null);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -138,27 +188,30 @@ export default function DayView() {
       await fetchEntries("mood");
       await fetchMedicationEntries();
       await fetchNotes();
-  
+
       const existingDay = await getDay(date);
+      const isNewDay = !existingDay;
 
       // Populate lastSavedData for auto-saving
       setLastSavedData({
-        date: existingDay?.date ?? "",
+        date: date,
         flow: existingDay?.flow_intensity ?? 0,
         notes: existingDay?.notes ?? "",
-        symptoms: [...selectedSymptoms],
-        moods: [...selectedMoods],
-        medications: [...selectedMedications],
-        birthControl: selectedBirthControl,
-        birthControlNotes,
-        timeTaken,
+        symptoms: isNewDay ? [] : [...selectedSymptoms],
+        moods: isNewDay ? [] : [...selectedMoods],
+        medications: isNewDay ? [] : [...selectedMedications],
+        birthControl: isNewDay ? null : selectedBirthControl,
+        birthControlNotes: isNewDay ? "" : birthControlNotes,
+        timeTaken: isNewDay ? "" : timeTaken,
       });
+
+      initialLoadComplete.current = true;
     };
-  
+
     fetchAll();
     setExpandedAccordion(null);
   }, [date]);
-  
+
   const hasChanged = (newData: SavedData, oldData: SavedData) => {
     const normalize = (data: SavedData) => ({
       ...data,
@@ -169,22 +222,19 @@ export default function DayView() {
       birthControlNotes: data.birthControlNotes.trim(),
       timeTaken: data.timeTaken.trim(),
     });
-  
+
     const a = normalize(newData);
     const b = normalize(oldData);
-  
+
     return JSON.stringify(a) !== JSON.stringify(b);
-  };  
-  
+  };
+
   // Check if should save when data changes
   useEffect(() => {
-    if (!lastSavedData) return;
+    if (!date) return;
 
-    // Don't compare or save if the date selected has changed
-    if (lastSavedData.date !== date) return;
-  
     const currentData = {
-      date: date ?? "",
+      date,
       flow: flow_intensity,
       notes: notes ?? "",
       symptoms: selectedSymptoms,
@@ -194,10 +244,27 @@ export default function DayView() {
       birthControlNotes,
       timeTaken,
     };
-  
-    if (hasChanged(currentData, lastSavedData)) {
-      onSave();
-      setLastSavedData(currentData); // Update lastSavedData
+
+    // skip auto-saving on initial component load
+    if (!initialLoadComplete.current) {
+      return;
+    }
+
+    // skip auto-saving if selected date has changed since last save
+    if (lastSavedData != null) {
+      if (lastSavedData.date !== date) return;
+    }
+
+    // compare changed data and save if different from last saved data
+    if (!lastSavedData || hasChanged(currentData, lastSavedData)) {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+
+      saveTimeoutRef.current = setTimeout(() => {
+        onSave();
+        setLastSavedData(currentData);
+      }, 500); // half a second debounce
     }
   }, [
     flow_intensity,
@@ -209,7 +276,6 @@ export default function DayView() {
     birthControlNotes,
     timeTaken,
   ]);
-  
 
   return (
     <View style={{ backgroundColor: theme.colors.background }}>
