@@ -140,6 +140,8 @@ export default function DayView() {
         await fetchMedicationEntries();
         await fetchNotes();
 
+        setSaveMessageVisible(false);
+
         const contentToSave: string[] = [];
         if (flow_intensity !== 0) {
           contentToSave.push("Flow");
