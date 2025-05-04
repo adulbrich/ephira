@@ -1,0 +1,51 @@
+name: Manual Expo EAS Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: "Which platform to build?"
+        required: true
+        default: "both"
+        type: choice
+        options:
+          - both
+          - android
+          - ios
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build app
+        run: |
+          if [[ "${{ github.event.inputs.platform }}" == "android" ]]; then
+            echo "Building Android only..."
+            eas build --platform android --non-interactive --profile production
+          elif [[ "${{ github.event.inputs.platform }}" == "ios" ]]; then
+            echo "Building iOS only..."
+            eas build --platform ios --non-interactive --profile production
+          else
+            echo "Building both Android and iOS..."
+            eas build --platform android --non-interactive --profile production
+            eas build --platform ios --non-interactive --profile production
+          fi
