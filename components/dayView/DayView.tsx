@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { StyleSheet, View } from "react-native";
 import { insertDay, getDay } from "@/db/database";
-import { List, Button, Text, useTheme, Divider } from "react-native-paper";
+import { List, Text, useTheme, Divider } from "react-native-paper";
 import {
   useAccordion,
   useMoods,
@@ -51,6 +51,15 @@ export default function DayView() {
     setTimeTaken,
   );
 
+  const fetchNotes = useCallback(async () => {
+    const day = await getDay(date);
+    if (day && day.notes) {
+      setNotes(day.notes);
+    } else {
+      setNotes("");
+    }
+  }, [date, setNotes]);
+
   const [saveMessageVisible, setSaveMessageVisible] = useState(false);
   const [saveMessageContent, setSaveMessageContent] = useState<string[]>([]);
 
@@ -71,14 +80,37 @@ export default function DayView() {
   const initialLoadComplete = useRef(false);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const fetchNotes = useCallback(async () => {
-    const day = await getDay(date);
-    if (day && day.notes) {
-      setNotes(day.notes);
-    } else {
-      setNotes("");
-    }
-  }, [date, setNotes]);
+  const fetchEntriesRef = useRef(fetchEntries);
+  const fetchMedicationEntriesRef = useRef(fetchMedicationEntries);
+  const fetchNotesRef = useRef(fetchNotes);
+  const selectedSymptomsRef = useRef(selectedSymptoms);
+  const selectedMoodsRef = useRef(selectedMoods);
+  const selectedMedicationsRef = useRef(selectedMedications);
+  const selectedBirthControlRef = useRef(selectedBirthControl);
+  const birthControlNotesRef = useRef(birthControlNotes);
+  const timeTakenRef = useRef(timeTaken);
+
+  useEffect(() => {
+    fetchEntriesRef.current = fetchEntries;
+    fetchMedicationEntriesRef.current = fetchMedicationEntries;
+    fetchNotesRef.current = fetchNotes;
+    selectedSymptomsRef.current = selectedSymptoms;
+    selectedMoodsRef.current = selectedMoods;
+    selectedMedicationsRef.current = selectedMedications;
+    selectedBirthControlRef.current = selectedBirthControl;
+    birthControlNotesRef.current = birthControlNotes;
+    timeTakenRef.current = timeTaken;
+  }, [
+    fetchEntries,
+    fetchMedicationEntries,
+    fetchNotes,
+    selectedSymptoms,
+    selectedMoods,
+    selectedMedications,
+    selectedBirthControl,
+    birthControlNotes,
+    timeTaken,
+  ]);
 
   const onSave = useCallback(() => {
     if (isSavingRef.current) return; // prevent re-entry
@@ -166,7 +198,6 @@ export default function DayView() {
     fetchMedicationEntries,
     fetchNotes,
     setFlow,
-    setExpandedAccordion,
   ]);
 
   useEffect(() => {
@@ -175,34 +206,33 @@ export default function DayView() {
     }
   }, [flow_intensity, setFlow]);
 
-  // Set accordions to closed when screen is focused
+  // set accordions to closed when screen is focused
   useFocusEffect(
     useCallback(() => {
       setExpandedAccordion(null);
-    }, []),
+    }, [setExpandedAccordion]),
   );
 
   useEffect(() => {
     const fetchAll = async () => {
-      await fetchEntries("symptom");
-      await fetchEntries("mood");
-      await fetchMedicationEntries();
-      await fetchNotes();
+      await fetchEntriesRef.current("symptom");
+      await fetchEntriesRef.current("mood");
+      await fetchMedicationEntriesRef.current();
+      await fetchNotesRef.current();
 
       const existingDay = await getDay(date);
       const isNewDay = !existingDay;
 
-      // Populate lastSavedData for auto-saving
       setLastSavedData({
         date: date,
         flow: existingDay?.flow_intensity ?? 0,
         notes: existingDay?.notes ?? "",
-        symptoms: isNewDay ? [] : [...selectedSymptoms],
-        moods: isNewDay ? [] : [...selectedMoods],
-        medications: isNewDay ? [] : [...selectedMedications],
-        birthControl: isNewDay ? null : selectedBirthControl,
-        birthControlNotes: isNewDay ? "" : birthControlNotes,
-        timeTaken: isNewDay ? "" : timeTaken,
+        symptoms: isNewDay ? [] : [...selectedSymptomsRef.current],
+        moods: isNewDay ? [] : [...selectedMoodsRef.current],
+        medications: isNewDay ? [] : [...selectedMedicationsRef.current],
+        birthControl: isNewDay ? null : selectedBirthControlRef.current,
+        birthControlNotes: isNewDay ? "" : birthControlNotesRef.current,
+        timeTaken: isNewDay ? "" : timeTakenRef.current,
       });
 
       initialLoadComplete.current = true;
@@ -210,9 +240,9 @@ export default function DayView() {
 
     fetchAll();
     setExpandedAccordion(null);
-  }, [date]);
+  }, [date, setExpandedAccordion]);
 
-  const hasChanged = (newData: SavedData, oldData: SavedData) => {
+  const hasChanged = useCallback((newData: SavedData, oldData: SavedData) => {
     const normalize = (data: SavedData) => ({
       ...data,
       symptoms: [...data.symptoms].sort(),
@@ -227,9 +257,19 @@ export default function DayView() {
     const b = normalize(oldData);
 
     return JSON.stringify(a) !== JSON.stringify(b);
-  };
+  }, []);
 
-  // Check if should save when data changes
+  const onSaveRef = useRef(onSave);
+  const hasChangedRef = useRef(hasChanged);
+  const lastSavedDataRef = useRef(lastSavedData);
+
+  useEffect(() => {
+    onSaveRef.current = onSave;
+    hasChangedRef.current = hasChanged;
+    lastSavedDataRef.current = lastSavedData;
+  }, [onSave, hasChanged, lastSavedData]);
+
+  // debounced auto-save
   useEffect(() => {
     if (!date) return;
 
@@ -246,25 +286,24 @@ export default function DayView() {
     };
 
     // skip auto-saving on initial component load
-    if (!initialLoadComplete.current) {
-      return;
-    }
+    if (!initialLoadComplete.current) return;
 
     // skip auto-saving if selected date has changed since last save
-    if (lastSavedData != null) {
-      if (lastSavedData.date !== date) return;
-    }
+    if (lastSavedDataRef.current?.date !== date) return;
 
-    // compare changed data and save if different from last saved data
-    if (!lastSavedData || hasChanged(currentData, lastSavedData)) {
+    if (
+      !lastSavedDataRef.current ||
+      hasChangedRef.current(currentData, lastSavedDataRef.current)
+    ) {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
 
       saveTimeoutRef.current = setTimeout(() => {
-        onSave();
+        onSaveRef.current();
         setLastSavedData(currentData);
-      }, 500); // half a second debounce
+        lastSavedDataRef.current = currentData;
+      }, 500);
     }
   }, [
     flow_intensity,
@@ -275,6 +314,7 @@ export default function DayView() {
     selectedBirthControl,
     birthControlNotes,
     timeTaken,
+    date,
   ]);
 
   return (
@@ -288,14 +328,6 @@ export default function DayView() {
             year: "numeric",
           }).format(new Date(date + "T00:00:00"))}
         </Text>
-        {/* <Button
-          mode="elevated"
-          buttonColor={theme.colors.primaryContainer}
-          textColor={theme.colors.onPrimaryContainer}
-          onPress={() => onSave()}
-        >
-          Save
-        </Button> */}
       </View>
       <View>
         <List.Section>
