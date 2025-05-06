@@ -16,6 +16,7 @@ import {
 } from "react-native-paper";
 import { StyleSheet, Dimensions } from "react-native";
 import { ExportData as ExportDataInterface } from "@/constants/Interfaces";
+import { exportPDF } from "@/components/settings/PdfBuilder";
 
 const exportDescriptions: Record<string, string> = {
   csv: "CSV (Comma-Separated Values) files are ideal if you'd like to work with your data in spreadsheet programs like Microsoft Excel or Google Sheets. The file contains the raw data in a simple table format and has the smallest file size of the export options.",
@@ -145,7 +146,7 @@ function ExportDataModal({ onDismiss }: { onDismiss: () => void }) {
         await exportCsvOrJson(csvString, "csv");
         break;
       case "pdf":
-        console.log("Exporting data as PDF...");
+        await exportPDF(exportData.dailyData);
         break;
       case "json":
         await exportCsvOrJson(
