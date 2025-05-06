@@ -89,7 +89,7 @@ export default function BirthControlAccordion({
         placeholder="Enter reminders, appointments, etc."
         value={birthControlNotes}
         onChangeText={setBirthControlNotes}
-        style={{ width: "90%" }}
+        style={{ width: "90%", marginBottom: 24 }}
       />
     </View>
   );
@@ -224,7 +224,7 @@ export default function BirthControlAccordion({
         options={birthControlOptions}
         selectedValue={selectedBirthControl}
         setSelectedValue={setSelectedBirthControl}
-        label="Select Birth Control:"
+        label="Select Birth Control"
       />
       {renderBirthControlUI()}
     </List.Accordion>
