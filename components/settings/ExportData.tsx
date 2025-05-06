@@ -15,6 +15,7 @@ import {
   Button,
 } from "react-native-paper";
 import { StyleSheet, Dimensions } from "react-native";
+import { ExportData as ExportDataInterface } from "@/constants/Interfaces";
 
 const exportDescriptions: Record<string, string> = {
   csv: "CSV (Comma-Separated Values) files are ideal if you'd like to work with your data in spreadsheet programs like Microsoft Excel or Google Sheets. The file contains the raw data in a simple table format and has the smallest file size of the export options.",
@@ -49,8 +50,8 @@ async function exportCsvOrJson(data: string, fileType: string) {
   }
 }
 
-function formatJsonDataToCsv(jsonData: any) {
-  const headers = jsonData["headers"];
+function formatJsonDataToCsv(exportData: ExportDataInterface) {
+  const { headers, dailyData } = exportData;
   const headerRow: string[] = [...headers.base_header];
   const csvRows: string[] = [];
 
@@ -71,14 +72,14 @@ function formatJsonDataToCsv(jsonData: any) {
   csvRows.push(headerRow.join(","));
 
   // build data rows
-  for (const [key, value] of Object.entries(jsonData)) {
-    if (key === "headers") continue;
-
-    const entry = value as any;
+  for (const dayEntry of Object.entries(dailyData)) {
+    console.log(dayEntry);
+    // dayEntry[0] is the date, dayEntry[1] is the entry object
+    const entry = dayEntry[1];
 
     const row: string[] = [
       entry.date,
-      entry.flow_intensity,
+      String(entry.flow_intensity),
       `"${entry.notes}"`,
     ];
 
@@ -133,20 +134,24 @@ function ExportDataModal({ onDismiss }: { onDismiss: () => void }) {
   };
 
   const onExportData = async (format: string) => {
-    const data = await getAllDataAsJson();
+    const exportData = await getAllDataAsJson();
+    if (!exportData) {
+      throw new Error("Failed to retrieve data for export.");
+    }
 
     switch (format) {
       case "csv":
-        const csvString = formatJsonDataToCsv(data);
+        const csvString = formatJsonDataToCsv(exportData);
         await exportCsvOrJson(csvString, "csv");
         break;
       case "pdf":
         console.log("Exporting data as PDF...");
         break;
       case "json":
-        // remove headers from the data
-        delete data?.headers;
-        await exportCsvOrJson(JSON.stringify(data, null, 2), "json");
+        await exportCsvOrJson(
+          JSON.stringify(exportData.dailyData, null, 2),
+          "json",
+        );
         break;
     }
   };
