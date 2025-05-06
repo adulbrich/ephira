@@ -25,7 +25,7 @@ export const updateMedicationEntry = async (
   let updateData = {
     day_id,
     medication_id,
-    time_taken: time_taken ?? null, 
+    time_taken: time_taken ?? null,
     notes: notes ?? null,
   };
   if (time_taken !== null && time_taken !== undefined) {
