@@ -72,7 +72,7 @@ export default function FlowCalendar() {
     loadFilters();
   }, [setSelectedFilters]);
 
-  // Set selected date to today when screen cofused
+  // Set selected date to today when screen is focused
   useFocusEffect(
     useCallback(() => {
       setDate(today);
