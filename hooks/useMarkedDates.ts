@@ -263,7 +263,7 @@ export function useMarkedDates(calendarFilters?: string[]) {
           });
           return updated;
         });
-        setDate(today);
+        setDate(date);
         return;
       }
 
@@ -274,11 +274,11 @@ export function useMarkedDates(calendarFilters?: string[]) {
       );
 
       setMarkedDates(newMarkedDates);
-      setDate(today);
+      setDate(date);
     }
 
     refreshCalendar(filteredData as DayData[]);
-  }, [filteredData, today, setDate, calendarFilters, colors]);
+  }, [filteredData, date, setDate, calendarFilters, colors]);
 
   // get data for selected date on calendar (when user presses a different day)
   useEffect(() => {
