@@ -183,7 +183,7 @@ const makeStyles = ({ theme }: { theme: MD3Theme }) =>
       paddingTop: StatusBar.currentHeight,
       // Since iOS bar uses absolute positon for blur affect, we have to adjust padding to bottom of container
       paddingBottom: Platform.select({
-        ios: 70,
+        ios: 60,
         default: 0,
       }),
     },
