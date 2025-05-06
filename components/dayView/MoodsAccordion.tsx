@@ -39,7 +39,7 @@ export default function MoodsAccordion({
         options={moodOptions}
         selectedValues={selectedMoods}
         setSelectedValues={setSelectedMoods}
-        label="Select Moods:"
+        label="Select Moods"
       />
     </List.Accordion>
   );
