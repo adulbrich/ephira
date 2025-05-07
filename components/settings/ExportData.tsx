@@ -74,7 +74,6 @@ function formatJsonDataToCsv(exportData: ExportDataInterface) {
 
   // build data rows
   for (const dayEntry of Object.entries(dailyData)) {
-    console.log(dayEntry);
     // dayEntry[0] is the date, dayEntry[1] is the entry object
     const entry = dayEntry[1];
 

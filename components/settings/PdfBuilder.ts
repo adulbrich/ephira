@@ -13,6 +13,21 @@ const tableWidth = columnWidths.reduce((a, b) => a + b, 0);
 const flowMap = ["", "Spotting", "Light", "Medium", "Heavy"];
 const lightGray = rgb(0.95, 0.95, 0.95);
 
+const MONTH_INDEX: Record<string, number> = {
+  January: 0,
+  February: 1,
+  March: 2,
+  April: 3,
+  May: 4,
+  June: 5,
+  July: 6,
+  August: 7,
+  September: 8,
+  October: 9,
+  November: 10,
+  December: 11,
+};
+
 // wrap text to fit within the specified number of characters
 function wrapText(text: string, maxChars: number): string[] {
   const wrapped: string[] = [];
@@ -153,88 +168,118 @@ export async function exportPDF(dailyData: ExportData["dailyData"]) {
       y -= 0.5;
     };
 
-    const sortedEntries = Object.values(dailyData).sort((a, b) =>
-      a.date.localeCompare(b.date),
-    );
-
-    for (let i = 0; i < sortedEntries.length; i++) {
-      const entry = sortedEntries[i];
-      const entryDate = new Date(entry.date);
-      const monthLabel = entryDate.toLocaleString("default", {
+    // group entries by month/year so we can sort them
+    const entriesGroupedByMonth: Record<string, ExportData["dailyData"]> = {};
+    for (const entry of Object.values(dailyData)) {
+      const dateObj = new Date(entry.date);
+      const monthKey = dateObj.toLocaleString("default", {
         month: "long",
         year: "numeric",
       });
-      const dayLabel = entryDate.toLocaleString("default", {
-        weekday: "short",
-        day: "2-digit",
-      });
 
-      // add a new month header if the month has changed
-      if (monthLabel !== currentMonth) {
-        currentMonth = monthLabel;
+      if (!entriesGroupedByMonth[monthKey]) {
+        entriesGroupedByMonth[monthKey] = {};
+      }
 
-        if (y < margin + 5 * lineHeight) {
-          addPage();
+      entriesGroupedByMonth[monthKey][entry.date] = entry;
+    }
+
+    const sortedMonthKeys = Object.keys(entriesGroupedByMonth).sort((a, b) => {
+      const [monthA, yearA] = a.split(" ");
+      const [monthB, yearB] = b.split(" ");
+
+      const timeA = Date.UTC(Number(yearA), MONTH_INDEX[monthA]);
+      const timeB = Date.UTC(Number(yearB), MONTH_INDEX[monthB]);
+
+      return timeB - timeA;
+    });
+
+    // months will be added to the PDF in reverse order, e.g. May 2025 -> March 2025
+    for (const monthLabel of sortedMonthKeys) {
+      const entries = Object.values(entriesGroupedByMonth[monthLabel]).sort(
+        (a, b) => a.date.localeCompare(b.date),
+      );
+
+      let rowNum = 0;
+      for (const entry of entries) {
+        const entryDate = new Date(entry.date);
+        const monthLabel = entryDate.toLocaleString("default", {
+          month: "long",
+          year: "numeric",
+        });
+        const dayLabel = entryDate.toLocaleString("default", {
+          weekday: "short",
+          day: "2-digit",
+        });
+
+        // add a new month header if the month has changed
+        if (monthLabel !== currentMonth) {
+          currentMonth = monthLabel;
+
+          if (y < margin + 5 * lineHeight) {
+            addPage();
+          }
+
+          y -= lineHeight * 2;
+
+          page.drawText(monthLabel, {
+            x: margin,
+            y,
+            size: fontSize + 2,
+            font: boldFont,
+            color: rgb(0.1, 0.1, 0.1),
+          });
+
+          y -= lineHeight;
+          drawColumnHeaders();
         }
 
-        y -= lineHeight * 2;
+        const medList = entry.medications.map((m) => m.name).join(", ");
 
-        page.drawText(monthLabel, {
-          x: margin,
-          y,
-          size: fontSize + 2,
-          font: boldFont,
-          color: rgb(0.1, 0.1, 0.1),
-        });
+        const bcList = entry.birth_control
+          .map((bc) => {
+            let str = "";
+            if (bc.time_taken) str += `Time: ${bc.time_taken}`;
+            if (bc.notes) str += `${str ? ", " : ""}Notes: ${bc.notes}`;
+            return `${bc.name}${str ? ` (${str})` : ""}`;
+          })
+          .join(", ");
 
-        y -= lineHeight;
-        drawColumnHeaders();
+        const combinedMedList = [medList, bcList].filter(Boolean).join(", ");
+
+        const row = [
+          dayLabel,
+          flowMap[entry.flow_intensity ?? 0],
+          entry.moods.join(", "),
+          entry.symptoms.join(", "),
+          combinedMedList,
+          entry.notes ?? "",
+        ];
+
+        const rowHeight = getRowHeight(row);
+
+        // check if we need to add a new page, if so, add page and headers
+        if (y - rowHeight < margin + lineHeight) {
+          addPage();
+          drawColumnHeaders();
+        }
+
+        // alternating rows will have a light gray background
+        if (rowNum % 2 === 1) {
+          page.drawRectangle({
+            x: margin - 2,
+            y: y - rowHeight + lineHeight - verticalPadding * 2,
+            width: tableWidth,
+            height: rowHeight,
+            color: lightGray,
+          });
+        }
+
+        drawRowText(page, row, y, font);
+
+        y -= rowHeight;
+        rowNum++;
       }
-
-      const medList = entry.medications.map((m) => m.name).join(", ");
-
-      const bcList = entry.birth_control
-        .map((bc) => {
-          let str = "";
-          if (bc.time_taken) str += `Time: ${bc.time_taken}`;
-          if (bc.notes) str += `${str ? ", " : ""}Notes: ${bc.notes}`;
-          return `${bc.name}${str ? ` (${str})` : ""}`;
-        })
-        .join(", ");
-
-      const combinedMedList = [medList, bcList].filter(Boolean).join(", ");
-
-      const row = [
-        dayLabel,
-        flowMap[entry.flow_intensity ?? 0],
-        entry.moods.join(", "),
-        entry.symptoms.join(", "),
-        combinedMedList,
-        entry.notes ?? "",
-      ];
-
-      const rowHeight = getRowHeight(row);
-
-      // check if we need to add a new page, if so, add page and headers
-      if (y - rowHeight < margin + lineHeight) {
-        addPage();
-        drawColumnHeaders();
-      }
-
-      // alternating rows will have a light gray background
-      if (i % 2 === 1) {
-        page.drawRectangle({
-          x: margin - 2,
-          y: y - rowHeight + lineHeight - verticalPadding * 2,
-          width: tableWidth,
-          height: rowHeight,
-          color: lightGray,
-        });
-      }
-
-      drawRowText(page, row, y, font);
-
-      y -= rowHeight;
     }
 
     drawPageNumber();
