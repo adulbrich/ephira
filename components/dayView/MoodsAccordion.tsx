@@ -31,14 +31,12 @@ export default function MoodsAccordion({
 
   return (
     <List.Accordion
-      //title={"Moods   |   " + selectedVisibleMoods.length + " Selected"}
       title={
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Text style={{ width: 120, fontSize: 16 }}>
-            Moods
-          </Text>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Text style={{ width: 120, fontSize: 16 }}>Moods</Text>
           <Text style={{ fontSize: 16 }}>
-            |      {selectedVisibleMoods.length + " Selected"}
+            |{"\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"}
+            {selectedVisibleMoods.length + " Selected"}
           </Text>
         </View>
       }

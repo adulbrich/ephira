@@ -31,14 +31,12 @@ export default function SymptomsAccordion({
 
   return (
     <List.Accordion
-      //title={"Symptoms   |   " + selectedVisibleSymptoms.length + " Selected"}
       title={
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Text style={{ width: 120, fontSize: 16 }}>
-            Symptoms
-          </Text>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Text style={{ width: 120, fontSize: 16 }}>Symptoms</Text>
           <Text style={{ fontSize: 16 }}>
-            |      {selectedVisibleSymptoms.length + " Selected"}
+            |{"\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"}
+            {selectedVisibleSymptoms.length + " Selected"}
           </Text>
         </View>
       }

@@ -14,12 +14,9 @@ export default function NotesAccordion({
 }) {
   return (
     <List.Accordion
-      //title="Notes"
       title={
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Text style={{ width: 120, fontSize: 16 }}>
-            Notes
-          </Text>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Text style={{ width: 120, fontSize: 16 }}>Notes</Text>
         </View>
       }
       expanded={state === "notes"}

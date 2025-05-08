@@ -38,18 +38,12 @@ export default function MedicationsAccordion({
 
   return (
     <List.Accordion
-      /* title={
-        "Medications   |   " +
-        medicationsWithoutBirthControl.length +
-        " Selected"
-      } */
       title={
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Text style={{ width: 120, fontSize: 16 }}>
-            Medications
-          </Text>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Text style={{ width: 120, fontSize: 16 }}>Medications</Text>
           <Text style={{ fontSize: 16 }}>
-            |      {medicationsWithoutBirthControl.length + " Selected"}
+            |{"\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"}
+            {medicationsWithoutBirthControl.length + " Selected"}
           </Text>
         </View>
       }

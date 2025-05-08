@@ -24,7 +24,6 @@ import { useFetchEntries } from "@/hooks/useFetchEntries";
 import { useFetchMedicationEntries } from "@/hooks/useFetchMedicationEntries";
 import { useSyncMedicationEntries } from "@/hooks/useSyncMedicationEntries";
 import { useFocusEffect } from "expo-router";
-import { themeButtonColors } from "@/constants/Colors";
 
 export default function DayView() {
   const theme = useTheme();

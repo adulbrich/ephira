@@ -213,14 +213,12 @@ export default function BirthControlAccordion({
 
   return (
     <List.Accordion
-      //title={"Birth Control   |   " + selectedBirthControlLabel}
       title={
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Text style={{ width: 120, fontSize: 16 }}>
-            Birth Control
-          </Text>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Text style={{ width: 120, fontSize: 16 }}>Birth Control</Text>
           <Text style={{ fontSize: 16 }}>
-            |      {selectedBirthControlLabel}
+            |{"\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"}
+            {selectedBirthControlLabel}
           </Text>
         </View>
       }
