@@ -213,7 +213,17 @@ export default function BirthControlAccordion({
 
   return (
     <List.Accordion
-      title={"Birth Control   |   " + selectedBirthControlLabel}
+      //title={"Birth Control   |   " + selectedBirthControlLabel}
+      title={
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Text style={{ width: 120, fontSize: 16 }}>
+            Birth Control
+          </Text>
+          <Text style={{ fontSize: 16 }}>
+            |      {selectedBirthControlLabel}
+          </Text>
+        </View>
+      }
       expanded={state === "birthControl"}
       onPress={() =>
         setExpandedAccordion(state === "birthControl" ? null : "birthControl")

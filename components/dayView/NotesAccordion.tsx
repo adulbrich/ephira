@@ -1,5 +1,5 @@
 import { List, TextInput } from "react-native-paper";
-import { View } from "react-native";
+import { View, Text } from "react-native";
 
 export default function NotesAccordion({
   state,
@@ -14,7 +14,14 @@ export default function NotesAccordion({
 }) {
   return (
     <List.Accordion
-      title="Notes"
+      //title="Notes"
+      title={
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Text style={{ width: 120, fontSize: 16 }}>
+            Notes
+          </Text>
+        </View>
+      }
       expanded={state === "notes"}
       onPress={() => setExpandedAccordion(state === "notes" ? null : "notes")}
       left={(props) => <List.Icon {...props} icon="note" />}

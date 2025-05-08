@@ -24,6 +24,7 @@ import { useFetchEntries } from "@/hooks/useFetchEntries";
 import { useFetchMedicationEntries } from "@/hooks/useFetchMedicationEntries";
 import { useSyncMedicationEntries } from "@/hooks/useSyncMedicationEntries";
 import { useFocusEffect } from "expo-router";
+import { themeButtonColors } from "@/constants/Colors";
 
 export default function DayView() {
   const theme = useTheme();
@@ -324,8 +325,8 @@ export default function DayView() {
       <View style={styles.titleContainer}>
         <Text variant="titleLarge">
           {new Intl.DateTimeFormat("en-US", {
-            weekday: "short",
-            month: "short",
+            weekday: "long",
+            month: "long",
             day: "numeric",
             year: "numeric",
           }).format(new Date(date + "T00:00:00"))}
@@ -389,7 +390,8 @@ const styles = StyleSheet.create({
   titleContainer: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    padding: 16,
+    justifyContent: "center",
+    padding: 10,
+    paddingBottom: 0,
   },
 });
