@@ -118,7 +118,6 @@ export async function exportPDF(dailyData: ExportData["dailyData"]) {
     let page = pdfDoc.addPage();
     let { width, height } = page.getSize();
     let y = height - margin;
-    let currentMonth = "";
     let pageNum = 1;
 
     const drawPageNumber = () => {
@@ -138,6 +137,24 @@ export async function exportPDF(dailyData: ExportData["dailyData"]) {
       page = pdfDoc.addPage();
       y = height - margin;
       pageNum++;
+    };
+
+    const drawMonthLabel = (monthLabel: string) => {
+      if (y < margin + 5 * lineHeight) {
+        addPage();
+      }
+
+      y -= lineHeight * 2;
+
+      page.drawText(monthLabel, {
+        x: margin,
+        y,
+        size: fontSize + 2,
+        font: boldFont,
+        color: rgb(0.1, 0.1, 0.1),
+      });
+
+      y -= lineHeight;
     };
 
     // draw the column headers with a line underneath
@@ -200,39 +217,18 @@ export async function exportPDF(dailyData: ExportData["dailyData"]) {
         (a, b) => a.date.localeCompare(b.date),
       );
 
+      // add month header & column headers
+      drawMonthLabel(monthLabel);
+      drawColumnHeaders();
+
       let rowNum = 0;
       for (const entry of entries) {
         const entryDate = new Date(entry.date);
-        const monthLabel = entryDate.toLocaleString("default", {
-          month: "long",
-          year: "numeric",
-        });
+
         const dayLabel = entryDate.toLocaleString("default", {
           weekday: "short",
           day: "2-digit",
         });
-
-        // add a new month header if the month has changed
-        if (monthLabel !== currentMonth) {
-          currentMonth = monthLabel;
-
-          if (y < margin + 5 * lineHeight) {
-            addPage();
-          }
-
-          y -= lineHeight * 2;
-
-          page.drawText(monthLabel, {
-            x: margin,
-            y,
-            size: fontSize + 2,
-            font: boldFont,
-            color: rgb(0.1, 0.1, 0.1),
-          });
-
-          y -= lineHeight;
-          drawColumnHeaders();
-        }
 
         const medList = entry.medications.map((m) => m.name).join(", ");
 
@@ -261,6 +257,7 @@ export async function exportPDF(dailyData: ExportData["dailyData"]) {
         // check if we need to add a new page, if so, add page and headers
         if (y - rowHeight < margin + lineHeight) {
           addPage();
+          drawMonthLabel(monthLabel + " (continued)");
           drawColumnHeaders();
         }
 
