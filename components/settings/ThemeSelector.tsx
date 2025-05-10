@@ -36,7 +36,6 @@ export default function ThemeSelector() {
           }}
         >
           <View style={{ paddingLeft: 15, paddingRight: 15, gap: 10 }}>
-            <Text>Select a theme color</Text>
             <View
               style={{ flexDirection: "row", flexWrap: "wrap", marginTop: 10 }}
             >
