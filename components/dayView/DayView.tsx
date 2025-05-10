@@ -40,7 +40,7 @@ export default function DayView() {
   const { fetchEntries } = useFetchEntries(
     date,
     setSelectedSymptoms,
-    setSelectedMoods,
+    setSelectedMoods
   );
   const { syncMedicationEntries } = useSyncMedicationEntries(date);
   const { fetchMedicationEntries } = useFetchMedicationEntries(
@@ -48,7 +48,7 @@ export default function DayView() {
     setSelectedBirthControl,
     setSelectedMedications,
     setBirthControlNotes,
-    setTimeTaken,
+    setTimeTaken
   );
 
   const fetchNotes = useCallback(async () => {
@@ -132,7 +132,7 @@ export default function DayView() {
         await syncMedicationEntries(
           combinedMedications,
           timeTaken,
-          birthControlNotes,
+          birthControlNotes
         );
 
         await fetchEntries("symptom");
@@ -143,8 +143,8 @@ export default function DayView() {
         setSaveMessageVisible(false);
 
         let savedContent = "";
-        
-        switch(state) {
+
+        switch (state) {
           case "flow":
             if (flow_intensity !== 0) savedContent = "Flow";
             break;
@@ -167,13 +167,22 @@ export default function DayView() {
             if (lastSavedData) {
               if (flow_intensity !== lastSavedData.flow) savedContent = "Flow";
               else if (notes !== lastSavedData.notes) savedContent = "Notes";
-              else if (JSON.stringify(selectedSymptoms) !== JSON.stringify(lastSavedData.symptoms)) 
+              else if (
+                JSON.stringify(selectedSymptoms) !==
+                JSON.stringify(lastSavedData.symptoms)
+              )
                 savedContent = "Symptoms";
-              else if (JSON.stringify(selectedMoods) !== JSON.stringify(lastSavedData.moods)) 
+              else if (
+                JSON.stringify(selectedMoods) !==
+                JSON.stringify(lastSavedData.moods)
+              )
                 savedContent = "Moods";
-              else if (JSON.stringify(selectedMedications) !== JSON.stringify(lastSavedData.medications)) 
+              else if (
+                JSON.stringify(selectedMedications) !==
+                JSON.stringify(lastSavedData.medications)
+              )
                 savedContent = "Medications";
-              else if (selectedBirthControl !== lastSavedData.birthControl) 
+              else if (selectedBirthControl !== lastSavedData.birthControl)
                 savedContent = "Birth Control";
             }
             break;
@@ -217,35 +226,34 @@ export default function DayView() {
   useCallback(() => {
     setExpandedAccordion(null);
   }, [setExpandedAccordion]),
+    useEffect(() => {
+      const fetchAll = async () => {
+        await fetchEntriesRef.current("symptom");
+        await fetchEntriesRef.current("mood");
+        await fetchMedicationEntriesRef.current();
+        await fetchNotesRef.current();
 
-  useEffect(() => {
-    const fetchAll = async () => {
-      await fetchEntriesRef.current("symptom");
-      await fetchEntriesRef.current("mood");
-      await fetchMedicationEntriesRef.current();
-      await fetchNotesRef.current();
+        const existingDay = await getDay(date);
+        const isNewDay = !existingDay;
 
-      const existingDay = await getDay(date);
-      const isNewDay = !existingDay;
+        setLastSavedData({
+          date: date,
+          flow: existingDay?.flow_intensity ?? 0,
+          notes: existingDay?.notes ?? "",
+          symptoms: isNewDay ? [] : [...selectedSymptomsRef.current],
+          moods: isNewDay ? [] : [...selectedMoodsRef.current],
+          medications: isNewDay ? [] : [...selectedMedicationsRef.current],
+          birthControl: isNewDay ? null : selectedBirthControlRef.current,
+          birthControlNotes: isNewDay ? "" : birthControlNotesRef.current,
+          timeTaken: isNewDay ? "" : timeTakenRef.current,
+        });
 
-      setLastSavedData({
-        date: date,
-        flow: existingDay?.flow_intensity ?? 0,
-        notes: existingDay?.notes ?? "",
-        symptoms: isNewDay ? [] : [...selectedSymptomsRef.current],
-        moods: isNewDay ? [] : [...selectedMoodsRef.current],
-        medications: isNewDay ? [] : [...selectedMedicationsRef.current],
-        birthControl: isNewDay ? null : selectedBirthControlRef.current,
-        birthControlNotes: isNewDay ? "" : birthControlNotesRef.current,
-        timeTaken: isNewDay ? "" : timeTakenRef.current,
-      });
+        initialLoadComplete.current = true;
+      };
 
-      initialLoadComplete.current = true;
-    };
-
-    fetchAll();
-    setExpandedAccordion(null);
-  }, [date, setExpandedAccordion]);
+      fetchAll();
+      setExpandedAccordion(null);
+    }, [date, setExpandedAccordion]);
 
   const hasChanged = useCallback((newData: SavedData, oldData: SavedData) => {
     const normalize = (data: SavedData) => ({
