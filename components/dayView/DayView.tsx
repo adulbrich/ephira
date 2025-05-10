@@ -113,7 +113,7 @@ export default function DayView() {
   ]);
 
   const onSave = useCallback(() => {
-    if (isSavingRef.current) return; // prevent re-entry
+    if (isSavingRef.current) return;
     isSavingRef.current = true;
 
     try {
@@ -214,12 +214,9 @@ export default function DayView() {
     }
   }, [flow_intensity, setFlow]);
 
-  // set accordions to closed when screen is focused
-  useFocusEffect(
-    useCallback(() => {
-      setExpandedAccordion(null);
-    }, [setExpandedAccordion]),
-  );
+  useCallback(() => {
+    setExpandedAccordion(null);
+  }, [setExpandedAccordion]),
 
   useEffect(() => {
     const fetchAll = async () => {
