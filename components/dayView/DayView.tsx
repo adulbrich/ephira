@@ -23,7 +23,6 @@ import { useSyncEntries } from "@/hooks/useSyncEntries";
 import { useFetchEntries } from "@/hooks/useFetchEntries";
 import { useFetchMedicationEntries } from "@/hooks/useFetchMedicationEntries";
 import { useSyncMedicationEntries } from "@/hooks/useSyncMedicationEntries";
-import { useFocusEffect } from "expo-router";
 
 export default function DayView() {
   const theme = useTheme();
@@ -40,7 +39,7 @@ export default function DayView() {
   const { fetchEntries } = useFetchEntries(
     date,
     setSelectedSymptoms,
-    setSelectedMoods
+    setSelectedMoods,
   );
   const { syncMedicationEntries } = useSyncMedicationEntries(date);
   const { fetchMedicationEntries } = useFetchMedicationEntries(
@@ -48,7 +47,7 @@ export default function DayView() {
     setSelectedBirthControl,
     setSelectedMedications,
     setBirthControlNotes,
-    setTimeTaken
+    setTimeTaken,
   );
 
   const fetchNotes = useCallback(async () => {
@@ -132,7 +131,7 @@ export default function DayView() {
         await syncMedicationEntries(
           combinedMedications,
           timeTaken,
-          birthControlNotes
+          birthControlNotes,
         );
 
         await fetchEntries("symptom");
