@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { View, Text } from "react-native";
-import { List } from "react-native-paper";
+import { View } from "react-native";
+import { List, Text  } from "react-native-paper";
 import { getAllVisibleMedications } from "@/db/database";
 import ChipSelection from "./ChipSelection";
 import { birthControlOptions } from "@/constants/BirthControlTypes";

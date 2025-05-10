@@ -1,5 +1,5 @@
-import { View, Text } from "react-native";
-import { List, RadioButton, useTheme } from "react-native-paper";
+import { View } from "react-native";
+import { List, RadioButton, useTheme, Text } from "react-native-paper";
 
 const flowOptions = ["None", "Spotting", "Light", "Medium", "Heavy"];
 

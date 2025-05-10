@@ -1,5 +1,5 @@
-import { List, TextInput } from "react-native-paper";
-import { View, Text } from "react-native";
+import { List, TextInput, Text  } from "react-native-paper";
+import { View } from "react-native";
 
 export default function NotesAccordion({
   state,
