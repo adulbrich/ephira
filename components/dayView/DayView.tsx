@@ -222,37 +222,34 @@ export default function DayView() {
     }
   }, [flow_intensity, setFlow]);
 
-  useCallback(() => {
+  useEffect(() => {
+    const fetchAll = async () => {
+      await fetchEntriesRef.current("symptom");
+      await fetchEntriesRef.current("mood");
+      await fetchMedicationEntriesRef.current();
+      await fetchNotesRef.current();
+
+      const existingDay = await getDay(date);
+      const isNewDay = !existingDay;
+
+      setLastSavedData({
+        date: date,
+        flow: existingDay?.flow_intensity ?? 0,
+        notes: existingDay?.notes ?? "",
+        symptoms: isNewDay ? [] : [...selectedSymptomsRef.current],
+        moods: isNewDay ? [] : [...selectedMoodsRef.current],
+        medications: isNewDay ? [] : [...selectedMedicationsRef.current],
+        birthControl: isNewDay ? null : selectedBirthControlRef.current,
+        birthControlNotes: isNewDay ? "" : birthControlNotesRef.current,
+        timeTaken: isNewDay ? "" : timeTakenRef.current,
+      });
+
+      initialLoadComplete.current = true;
+    };
+
+    fetchAll();
     setExpandedAccordion(null);
-  }, [setExpandedAccordion]),
-    useEffect(() => {
-      const fetchAll = async () => {
-        await fetchEntriesRef.current("symptom");
-        await fetchEntriesRef.current("mood");
-        await fetchMedicationEntriesRef.current();
-        await fetchNotesRef.current();
-
-        const existingDay = await getDay(date);
-        const isNewDay = !existingDay;
-
-        setLastSavedData({
-          date: date,
-          flow: existingDay?.flow_intensity ?? 0,
-          notes: existingDay?.notes ?? "",
-          symptoms: isNewDay ? [] : [...selectedSymptomsRef.current],
-          moods: isNewDay ? [] : [...selectedMoodsRef.current],
-          medications: isNewDay ? [] : [...selectedMedicationsRef.current],
-          birthControl: isNewDay ? null : selectedBirthControlRef.current,
-          birthControlNotes: isNewDay ? "" : birthControlNotesRef.current,
-          timeTaken: isNewDay ? "" : timeTakenRef.current,
-        });
-
-        initialLoadComplete.current = true;
-      };
-
-      fetchAll();
-      setExpandedAccordion(null);
-    }, [date, setExpandedAccordion]);
+  }, [date, setExpandedAccordion]);
 
   const hasChanged = useCallback((newData: SavedData, oldData: SavedData) => {
     const normalize = (data: SavedData) => ({
