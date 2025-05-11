@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { List } from "react-native-paper";
+import { View } from "react-native";
+import { List, Text } from "react-native-paper";
 import { getAllVisibleMedications } from "@/db/database";
 import ChipSelection from "./ChipSelection";
 import { birthControlOptions } from "@/constants/BirthControlTypes";
@@ -38,9 +39,13 @@ export default function MedicationsAccordion({
   return (
     <List.Accordion
       title={
-        "Medications   |   " +
-        medicationsWithoutBirthControl.length +
-        " Selected"
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Text style={{ width: 120, fontSize: 16 }}>Medications</Text>
+          <Text style={{ fontSize: 16 }}>
+            |{"\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"}
+            {medicationsWithoutBirthControl.length + " Selected"}
+          </Text>
+        </View>
       }
       expanded={state === "medications"}
       onPress={() =>
