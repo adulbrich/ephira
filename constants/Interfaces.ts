@@ -32,6 +32,8 @@ export interface DayDataStore extends DayData {
   setId: (num: number) => void;
   setFlow: (flow: number) => void;
   setNotes: (text: string) => void;
+  setCycleStart: (start: boolean) => void;
+  setCycleEnd: (end: boolean) => void;
   reset: () => void;
 }
 
@@ -105,4 +107,9 @@ export interface ThemeColor {
 export interface DatabaseChangeNotifier {
   databaseChange: string;
   setDatabaseChange: (databaseChange: string) => void;
+}
+
+export interface PredictionToggle {
+  predictionChoice: boolean;
+  setPredictionChoice: (predictionChoice: boolean) => void;
 }

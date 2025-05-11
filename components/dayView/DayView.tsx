@@ -28,7 +28,7 @@ export default function DayView() {
   const theme = useTheme();
   const { state, setExpandedAccordion } = useAccordion();
   const { selectedMoods, setSelectedMoods } = useMoods();
-  const { date, flow_intensity, notes, setFlow, setNotes } = useSelectedDate();
+  const { date, flow_intensity, notes, setFlow, setNotes, is_cycle_start, setCycleStart, is_cycle_end, setCycleEnd } = useSelectedDate();
   const { selectedSymptoms, setSelectedSymptoms } = useSymptoms();
   const { selectedMedications, setSelectedMedications } = useMedications();
   const { selectedBirthControl, setSelectedBirthControl } = useBirthControl();
@@ -167,6 +167,10 @@ export default function DayView() {
             setExpandedAccordion={setExpandedAccordion}
             flow_intensity={flow_intensity}
             setFlow={setFlow}
+            is_cycle_start={is_cycle_start}
+            setCycleStart={setCycleStart}
+            is_cycle_end={is_cycle_end}
+            setCycleEnd={setCycleEnd}
           />
           <Divider />
           <SymptomsAccordion

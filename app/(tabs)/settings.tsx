@@ -7,6 +7,7 @@ import { Text, Divider, useTheme } from "react-native-paper";
 import { ScrollView, SafeAreaView, StyleSheet } from "react-native";
 import ThemeSelector from "@/components/settings/ThemeSelector";
 import FadeInView from "@/components/animations/FadeInView";
+import CyclePredictions from "@/components/settings/CyclePrediction";
 
 export default function Settings() {
   const theme = useTheme();
@@ -35,6 +36,8 @@ export default function Settings() {
             <ThemeSelector />
             <Divider style={styles.divider} />
             <DeleteData />
+            <Divider style={styles.divider} />
+            <CyclePredictions />
             <PrivacyPolicy />
           </ScrollView>
         </SafeAreaView>
