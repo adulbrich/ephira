@@ -138,7 +138,7 @@ export default function FlowAccordion({
     <List.Accordion
       title={
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Text style={{ width: 120, fontSize: 16 }}>Flow Intensity</Text>
+          <Text style={{ width: 120, fontSize: 16 }}>Flow</Text>
           <Text style={{ fontSize: 16 }}>
             |{"\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"}
             {flowOptions[flow_intensity]}

@@ -113,3 +113,8 @@ export interface PredictionToggle {
   predictionChoice: boolean;
   setPredictionChoice: (predictionChoice: boolean) => void;
 }
+
+export interface PredictedCycleState {
+  predictedCycle: string[];
+  setPredictedCycle: (data: string[]) => void;
+}

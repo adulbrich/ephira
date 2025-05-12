@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { StyleSheet, View } from "react-native";
-import { insertDay, getDay } from "@/db/database";
+import { insertDay, getDay, getAllDays } from "@/db/database";
 import { List, Text, useTheme, Divider } from "react-native-paper";
 import {
   useAccordion,
@@ -11,6 +11,8 @@ import {
   useBirthControl,
   useBirthControlNotes,
   useTimeTaken,
+  useData,
+  usePredicteedCycle,
 } from "@/assets/src/calendar-storage";
 import FlowAccordion from "@/components/dayView/FlowAccordion";
 import MedicationsAccordion from "./MedicationsAccordion";
@@ -26,6 +28,7 @@ import { useSyncMedicationEntries } from "@/hooks/useSyncMedicationEntries";
 import { useFocusEffect } from "expo-router";
 
 export default function DayView() {
+
   const theme = useTheme();
   const { state, setExpandedAccordion } = useAccordion();
   const { selectedMoods, setSelectedMoods } = useMoods();
@@ -35,6 +38,8 @@ export default function DayView() {
   const { selectedBirthControl, setSelectedBirthControl } = useBirthControl();
   const { birthControlNotes, setBirthControlNotes } = useBirthControlNotes();
   const { timeTaken, setTimeTaken } = useTimeTaken();
+  const { data: flowData } = useData();
+  const { predictedCycle, setPredictedCycle } = usePredicteedCycle();
 
   const { syncEntries } = useSyncEntries(date);
   const { fetchEntries } = useFetchEntries(
@@ -137,9 +142,6 @@ export default function DayView() {
     isSavingRef.current = true;
 
     try {
-      console.log("saving here")
-      console.log(is_cycle_start)
-      console.log(flow_intensity)
       insertDay(date, flow_intensity, notes, is_cycle_start, is_cycle_end).then(async () => {
         setFlow(flow_intensity);
 
@@ -267,11 +269,11 @@ export default function DayView() {
         timeTaken: isNewDay ? "" : timeTakenRef.current,
       });
       
-      console.log("\nLAST SAVED\n")
-      console.log(lastSavedData)
+      // console.log("\nLAST SAVED\n")
+      // console.log(lastSavedData)
 
-      console.log("\nEXISTING\n")
-      console.log(existingDay)
+      // console.log("\nEXISTING\n")
+      // console.log(existingDay)
 
       initialLoadComplete.current = true;
     };
@@ -325,7 +327,7 @@ export default function DayView() {
       timeTaken,
     };
 
-    console.log(currentData)
+    // console.log(currentData)
 
     // skip auto-saving on initial component load
     if (!initialLoadComplete.current) return;

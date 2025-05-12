@@ -8,8 +8,8 @@ export default function SingleChipSelection({
   label,
 }: {
   options: string[];
-  selectedValue: any;
-  setSelectedValue: (value: any) => void;
+  selectedValue: string | null;
+  setSelectedValue: (value: string | null ) => void;
   label: string;
 }) {
   const theme = useTheme();

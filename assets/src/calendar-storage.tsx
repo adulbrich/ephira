@@ -18,6 +18,7 @@ import {
   ThemeColor,
   DatabaseChangeNotifier,
   PredictionToggle,
+  PredictedCycleState,
 } from "@/constants/Interfaces";
 import { boolean } from "drizzle-orm/gel-core";
 
@@ -156,4 +157,10 @@ export const usePredictionChoice = create<PredictionToggle>((set) => ({
   predictionChoice: false,
   setPredictionChoice: (predictionChoice: boolean) =>
     set(() => ({ predictionChoice: predictionChoice })),
+}));
+
+export const usePredicteedCycle = create<PredictedCycleState>((set) => ({
+  predictedCycle: [],
+  setPredictedCycle: (data: string[]) =>
+    set(() => ({ predictedCycle: data })),
 }));
