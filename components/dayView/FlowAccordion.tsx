@@ -1,8 +1,22 @@
-import { View } from "react-native";
-import { List, RadioButton, useTheme, Text, Button } from "react-native-paper";
+import { View, StyleSheet } from "react-native";
+import { List, RadioButton, useTheme, Text, Button, Chip } from "react-native-paper";
 import { ThemedView } from "../ThemedView";
 
 const flowOptions = ["None", "Spotting", "Light", "Medium", "Heavy"];
+
+const styles = StyleSheet.create({
+  chipContainer: {
+    paddingLeft: 16,
+    paddingRight: 16,
+    paddingBottom: 16,
+    paddingTop: 8,
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+  sectionLabel: {
+    display: "none",
+  },
+});
 
 function FlowRadioButtons({
   selectedOption,
@@ -62,31 +76,44 @@ function CycleToggleButtons({
 
   return (
     <ThemedView>
-      <View style={{ paddingLeft: 15, paddingRight: 15, gap: 10 }}>
-        <Button
-            mode="elevated"
-            buttonColor={toggleStart ? theme.colors.onSecondary : theme.colors.secondary}
-            textColor={toggleStart ? theme.colors.onSecondaryContainer : theme.colors.secondaryContainer}
+        <View style={styles.chipContainer}>
+        <Chip
+            mode="flat"
+            style={{
+              backgroundColor: toggleStart ? theme.colors.onSecondary : theme.colors.secondary,
+              margin: 4,
+              borderRadius: 20,
+              height: 36,
+              justifyContent: "center",
+          }}
+            textStyle={{
+              color: toggleStart ? theme.colors.onSecondaryContainer : theme.colors.secondaryContainer,
+            }}
           onPress={handleUserToggleStart}
-          compact={true}
         >
-          Start
-        </Button>
-        <Button
-            mode="elevated"
-            buttonColor={toggleEnd ? theme.colors.onSecondary : theme.colors.secondary}
-            textColor={toggleEnd ? theme.colors.onSecondaryContainer : theme.colors.secondaryContainer}
+          Cycle Start
+        </Chip>
+        <Chip
+            mode="flat"
+            style={{
+              backgroundColor: toggleEnd ? theme.colors.onSecondary : theme.colors.secondary,
+              margin: 4,
+              borderRadius: 20,
+              height: 36,
+              justifyContent: "center",
+          }}
+            textStyle={{
+              color: toggleEnd ? theme.colors.onSecondaryContainer : theme.colors.secondaryContainer,
+            }}
           onPress={handleUserToggleEnd}
-          compact={true}
-          >
-            End
-        </Button>
+        >
+          Cycle End
+        </Chip>
       </View>
     </ThemedView>
   )
 
 }
-
 
 export default function FlowAccordion({
   state,
