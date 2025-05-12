@@ -9,7 +9,7 @@ export default function SingleChipSelection({
 }: {
   options: string[];
   selectedValue: string | null;
-  setSelectedValue: (value: string | null ) => void;
+  setSelectedValue: (value: string | null) => void;
   label: string;
 }) {
   const theme = useTheme();

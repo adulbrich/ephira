@@ -28,11 +28,20 @@ import { useSyncMedicationEntries } from "@/hooks/useSyncMedicationEntries";
 import { useFocusEffect } from "expo-router";
 
 export default function DayView() {
-
   const theme = useTheme();
   const { state, setExpandedAccordion } = useAccordion();
   const { selectedMoods, setSelectedMoods } = useMoods();
-  const { date, flow_intensity, notes, setFlow, setNotes, is_cycle_start, setCycleStart, is_cycle_end, setCycleEnd } = useSelectedDate();
+  const {
+    date,
+    flow_intensity,
+    notes,
+    setFlow,
+    setNotes,
+    is_cycle_start,
+    setCycleStart,
+    is_cycle_end,
+    setCycleEnd,
+  } = useSelectedDate();
   const { selectedSymptoms, setSelectedSymptoms } = useSymptoms();
   const { selectedMedications, setSelectedMedications } = useMedications();
   const { selectedBirthControl, setSelectedBirthControl } = useBirthControl();
@@ -68,13 +77,13 @@ export default function DayView() {
   const fetchCycleInfo = useCallback(async () => {
     const day = await getDay(date);
     if (day && day.is_cycle_start) {
-      setCycleStart(day.is_cycle_start)
+      setCycleStart(day.is_cycle_start);
     } else {
       setCycleStart(false);
     }
 
     if (day && day.is_cycle_end) {
-      setCycleEnd(day.is_cycle_end)
+      setCycleEnd(day.is_cycle_end);
     } else {
       setCycleEnd(false);
     }
@@ -142,71 +151,77 @@ export default function DayView() {
     isSavingRef.current = true;
 
     try {
-      insertDay(date, flow_intensity, notes, is_cycle_start, is_cycle_end).then(async () => {
-        setFlow(flow_intensity);
+      insertDay(date, flow_intensity, notes, is_cycle_start, is_cycle_end).then(
+        async () => {
+          setFlow(flow_intensity);
 
-        await syncEntries(selectedSymptoms, "symptom");
-        await syncEntries(selectedMoods, "mood");
+          await syncEntries(selectedSymptoms, "symptom");
+          await syncEntries(selectedMoods, "mood");
 
-        let combinedMedications = selectedMedications;
+          let combinedMedications = selectedMedications;
 
-        if (selectedBirthControl != null) {
-          combinedMedications = [...selectedMedications, selectedBirthControl];
-        }
-
-        await syncMedicationEntries(
-          combinedMedications,
-          timeTaken,
-          birthControlNotes,
-        );
-
-        await fetchEntries("symptom");
-        await fetchEntries("mood");
-        await fetchMedicationEntries();
-        await fetchNotes();
-        await fetchCycleInfo();
-
-        setSaveMessageVisible(false);
-
-        const contentToSave: string[] = [];
-        if (flow_intensity !== 0) {
-          contentToSave.push("Flow");
-        }
-        if (notes && notes.trim() !== "") {
-          contentToSave.push("Notes");
-        }
-        if (selectedSymptoms.length > 0) {
-          contentToSave.push("Symptoms");
-        }
-        if (selectedMoods.length > 0) {
-          contentToSave.push("Moods");
-        }
-        if (selectedMedications.length > 0) {
-          contentToSave.push("Medications");
-        }
-        if (selectedBirthControl) {
-          contentToSave.push("Birth Control");
-        }
-
-        if (contentToSave.length > 0) {
-          let message = "";
-          if (contentToSave.length === 1) {
-            message = contentToSave[0] + " Saved!";
-          } else if (contentToSave.length === 2) {
-            message = contentToSave[0] + " and " + contentToSave[1] + " Saved!";
-          } else {
-            // If user selects three or more tracking options, join with commas and add an "and" before the last item
-            const multipleSelections = contentToSave.slice(0, -1).join(", ");
-            message =
-              multipleSelections +
-              " and " +
-              contentToSave[contentToSave.length - 1] +
-              " Saved!";
+          if (selectedBirthControl != null) {
+            combinedMedications = [
+              ...selectedMedications,
+              selectedBirthControl,
+            ];
           }
-          setSaveMessageContent([message]);
-          setSaveMessageVisible(true);
-        }
-      });
+
+          await syncMedicationEntries(
+            combinedMedications,
+            timeTaken,
+            birthControlNotes,
+          );
+
+          await fetchEntries("symptom");
+          await fetchEntries("mood");
+          await fetchMedicationEntries();
+          await fetchNotes();
+          await fetchCycleInfo();
+
+          setSaveMessageVisible(false);
+
+          const contentToSave: string[] = [];
+          if (flow_intensity !== 0) {
+            contentToSave.push("Flow");
+          }
+          if (notes && notes.trim() !== "") {
+            contentToSave.push("Notes");
+          }
+          if (selectedSymptoms.length > 0) {
+            contentToSave.push("Symptoms");
+          }
+          if (selectedMoods.length > 0) {
+            contentToSave.push("Moods");
+          }
+          if (selectedMedications.length > 0) {
+            contentToSave.push("Medications");
+          }
+          if (selectedBirthControl) {
+            contentToSave.push("Birth Control");
+          }
+
+          if (contentToSave.length > 0) {
+            let message = "";
+            if (contentToSave.length === 1) {
+              message = contentToSave[0] + " Saved!";
+            } else if (contentToSave.length === 2) {
+              message =
+                contentToSave[0] + " and " + contentToSave[1] + " Saved!";
+            } else {
+              // If user selects three or more tracking options, join with commas and add an "and" before the last item
+              const multipleSelections = contentToSave.slice(0, -1).join(", ");
+              message =
+                multipleSelections +
+                " and " +
+                contentToSave[contentToSave.length - 1] +
+                " Saved!";
+            }
+            setSaveMessageContent([message]);
+            setSaveMessageVisible(true);
+          }
+        },
+      );
     } finally {
       isSavingRef.current = false;
     }
@@ -268,7 +283,7 @@ export default function DayView() {
         birthControlNotes: isNewDay ? "" : birthControlNotesRef.current,
         timeTaken: isNewDay ? "" : timeTakenRef.current,
       });
-      
+
       // console.log("\nLAST SAVED\n")
       // console.log(lastSavedData)
 
