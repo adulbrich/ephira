@@ -1,13 +1,126 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import { Picture } from "astro:assets";
+import googlePlayBadge from "../assets/google-play-badge.png";
 ---
 
 <Layout
   title="Private Period Tracking"
-  description="A private period tracking app"
+  description="A secure, encrypted menstrual tracking app for iOS and Android."
 >
-  <div class="text-white">
-    <h1 class="text-3xl font-serif font-bold">ephira</h1>
-    <p>The encrypted, local-first, menstrual cycle tracking app.</p>
-  </div>
+  <section class="text-white max-w-4xl mx-auto py-16 px-6">
+    <h1 class="text-5xl font-serif font-bold text-center mb-6 tracking-tight">Ephira</h1>
+    <p class="text-center text-lg mb-10 text-[#f2e4bf]">
+      A secure, encrypted, local-first app for tracking menstrual cycles. No ads, no cloud, and no compromises.
+    </p>
+
+    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3 text-sm text-left">
+      <div class="bg-[#9892a0] bg-opacity-10 p-6 rounded shadow">
+        <div class="flex items-center justify-center gap-2 mb-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#f2e4bf]" viewBox="0 0 24 24" fill="none" width="24" height="24" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke="currentColor">
+            <path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6z"></path>
+            <path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0"></path>
+            <path d="M8 11v-4a4 4 0 1 1 8 0v4"></path>
+          </svg>
+          <h2 class="text-lg font-semibold text-[#f2e4bf]">Privacy First</h2>
+        </div>
+        <p>All data stays on your device and is encrypted. Optional Face ID or passcode adds extra security. No accounts required.</p>
+      </div>
+
+      <div class="bg-[#9892a0] bg-opacity-10 p-6 rounded shadow">
+        <div class="flex items-center justify-center gap-2 mb-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#f2e4bf]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" width="24" height="24" stroke-width="2">
+            <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
+            <path d="M16 3v4"></path>
+            <path d="M8 3v4"></path>
+            <path d="M4 11h16"></path>
+            <path d="M7 14h.013"></path>
+            <path d="M10.01 14h.005"></path>
+            <path d="M13.01 14h.005"></path>
+            <path d="M16.015 14h.005"></path>
+            <path d="M13.015 17h.005"></path>
+            <path d="M7.01 17h.005"></path>
+            <path d="M10.01 17h.005"></path>
+          </svg>
+          <h2 class="text-lg font-semibold text-[#f2e4bf]">Customizable Calendar</h2>
+        </div>
+        <p>Log flow, symptoms, moods, birth control, and medications. Add your own entries so you can easily track what you want, however you want.</p>
+      </div>
+
+      <div class="bg-[#9892a0] bg-opacity-10 p-6 rounded shadow">
+        <div class="flex items-center justify-center gap-2 mb-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#f2e4bf]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" width="24" height="24" stroke-width="2">
+            <path d="M7 8l-4 4l4 4"></path>
+            <path d="M17 8l4 4l-4 4"></path>
+            <path d="M14 4l-4 16"></path>
+          </svg>
+          <h2 class="text-lg font-semibold text-[#f2e4bf]">Open Source</h2>
+        </div>
+        <p>Ephira is licensed under MIT and our code is hosted publicly on <a href="https://github.com/adulbrich/ephira" class="underline">GitHub</a>, so you don't have to just take our word on it that your data is secure.</p>
+      </div>
+    </div>
+
+
+    <div class="my-12 text-center flex flex-col sm:flex-row justify-center items-center gap-6">
+      <a href="https://apps.apple.com/us/app/ephira/id6741593838?platform=iphone">
+        <img src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us"
+            alt="Download on the App Store" class="h-14 w-auto" />
+      </a>
+      <a href="https://play.google.com/store/apps/details?id=com.capucity.ephira">
+        <Picture src={googlePlayBadge} class="h-14 w-auto" formats={["avif", "webp"]} alt="Get it on Google Play Badge" />
+      </a>
+    </div>
+
+
+    <hr class="border-[#9892a0] my-12" />
+
+    <section class="space-y-8">
+      <h2 class="text-3xl font-bold font-serif text-[#f2e4bf]">Project Overview</h2>
+      <p>
+        Ephira is a local-only, open-source menstrual tracking app designed to prioritize user privacy and data security. It allows users to track their reproductive health without exposing sensitive data to cloud-based platforms or third parties. While there are many privacy-focused menstrual tracking apps out there, many back data up in the cloud or aren't open source. 
+      </p>
+
+      <h3 class="text-xl font-semibold mt-8">Tech Stack & Implementation</h3>
+      <ul class="list-disc ml-6">
+        <li>Built with React Native and Expo for cross-platform iOS/Android support</li>
+        <li>Local data stored via SQLite and encrypted with SQLCipher (AES-256 Encryption)</li>
+        <li>Drizzle ORM for schema typing and ease of query development</li>
+        <li>React Native Paper for a cohesive and accessible user interface</li>
+      </ul>
+
+      <h3 class="text-3xl font-bold font-serif text-[#f2e4bf]">Key Features</h3>
+
+      <div class="flex flex-col md:flex-row-reverse md:items-center gap-6">
+        <div class="md:w-1/2">
+          <h4 class="text-lg font-semibold text-[#f2e4bf] mb-2">App Locking with Passcode & Biometrics</h4>
+          <p>Protect your data with Face ID or a custom password unique to Ephira.</p>
+        </div>
+        <video src="assets/feature-password.mp4" autoplay loop muted playsinline class="rounded aspect-video w-full md:w-1/2 min-h-[600px] object-contain"></video>
+      </div>
+
+      <div class="flex flex-col md:flex-row md:items-center gap-6">
+        <div class="md:w-1/2">
+          <h4 class="text-lg font-semibold text-[#f2e4bf] mb-2">Customizable Calendar & Symptom Tracking</h4>
+          <p>Add and track custom symptoms, moods, medications, and more with a smooth, visual calendar interface.</p>
+        </div>
+        <video src="assets/feature-custom-entries.mp4" autoplay loop muted playsinline class="rounded aspect-video w-full md:w-1/2 min-h-[600px] object-contain"></video>
+      </div>
+
+      <div class="flex flex-col md:flex-row-reverse md:items-center gap-6">
+        <div class="md:w-1/2">
+          <h4 class="text-lg font-semibold text-[#f2e4bf] mb-2">Filter Calendar Legend</h4>
+          <p>Filter your calendar legend to only show the symptoms, moods, and medications you want to see. This makes it easy to focus on the data that matters most to you.</p>
+        </div>
+        <video src="assets/feature-filter-calendar.mp4" autoplay loop muted playsinline class="rounded aspect-video w-full md:w-1/2 min-h-[600px] object-contain"></video>
+      </div>
+
+      <div class="flex flex-col md:flex-row md:items-center gap-6">
+        <div class="md:w-1/2">
+          <h4 class="text-lg font-semibold text-[#f2e4bf] mb-2">Custom Themes & Color Schemes</h4>
+          <p>Personalize your app with six different themes and light/dark mode support based on your device settings.</p>
+        </div>
+        <img src="assets/feature-color-schemes.gif" alt="Color Scheme Demo" class="rounded w-full md:w-1/2 max-h-[600px] object-contain" />
+      </div>
+    </div>
+  </section>
 </Layout>
