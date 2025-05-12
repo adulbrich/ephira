@@ -163,14 +163,14 @@ export default function FlowAccordion({
       onPress={() => setExpandedAccordion(state === "flow" ? null : "flow")}
       left={(props) => <List.Icon {...props} icon="water" />}
     >
-      {flow_intensity !== 0 &&
+      {flow_intensity !== 0 && (
         <CycleToggleButtons
           toggleStart={is_cycle_start}
           toggleEnd={is_cycle_end}
           setStart={setCycleStart}
           setEnd={setCycleEnd}
         />
-      }
+      )}
       <FlowRadioButtons
         selectedOption={flow_intensity}
         setSelectedOption={setFlow}
