@@ -12,7 +12,7 @@ import {
   useBirthControlNotes,
   useTimeTaken,
   useData,
-  usePredicteedCycle,
+  usePredictedCycle,
 } from "@/assets/src/calendar-storage";
 import FlowAccordion from "@/components/dayView/FlowAccordion";
 import MedicationsAccordion from "./MedicationsAccordion";
@@ -48,7 +48,7 @@ export default function DayView() {
   const { birthControlNotes, setBirthControlNotes } = useBirthControlNotes();
   const { timeTaken, setTimeTaken } = useTimeTaken();
   const { data: flowData } = useData();
-  const { predictedCycle, setPredictedCycle } = usePredicteedCycle();
+  const { predictedCycle, setPredictedCycle } = usePredictedCycle();
 
   const { syncEntries } = useSyncEntries(date);
   const { fetchEntries } = useFetchEntries(
