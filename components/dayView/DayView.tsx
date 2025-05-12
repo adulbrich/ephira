@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { StyleSheet, View } from "react-native";
 import { insertDay, getDay } from "@/db/database";
-import { List, Button, Text, useTheme, Divider } from "react-native-paper";
+import { List, Text, useTheme, Divider } from "react-native-paper";
 import {
   useAccordion,
   useMoods,
@@ -23,6 +23,7 @@ import { useSyncEntries } from "@/hooks/useSyncEntries";
 import { useFetchEntries } from "@/hooks/useFetchEntries";
 import { useFetchMedicationEntries } from "@/hooks/useFetchMedicationEntries";
 import { useSyncMedicationEntries } from "@/hooks/useSyncMedicationEntries";
+import { useFocusEffect } from "expo-router";
 
 export default function DayView() {
   const theme = useTheme();
@@ -50,9 +51,6 @@ export default function DayView() {
     setTimeTaken,
   );
 
-  const [saveMessageVisible, setSaveMessageVisible] = useState(false);
-  const [saveMessageContent, setSaveMessageContent] = useState<string[]>([]);
-
   const fetchNotes = useCallback(async () => {
     const day = await getDay(date);
     if (day && day.notes) {
@@ -62,69 +60,147 @@ export default function DayView() {
     }
   }, [date, setNotes]);
 
-  function onSave() {
-    insertDay(date, flow_intensity, notes).then(async () => {
-      setFlow(flow_intensity);
-      setExpandedAccordion(null);
+  const [saveMessageVisible, setSaveMessageVisible] = useState(false);
+  const [saveMessageContent, setSaveMessageContent] = useState<string[]>([]);
 
-      await syncEntries(selectedSymptoms, "symptom");
-      await syncEntries(selectedMoods, "mood");
+  type SavedData = {
+    date: string;
+    flow: number;
+    notes: string;
+    symptoms: string[];
+    moods: string[];
+    medications: string[];
+    birthControl: string | null;
+    birthControlNotes: string;
+    timeTaken: string;
+  };
 
-      if (selectedBirthControl != null) {
-        selectedMedications.push(selectedBirthControl);
-      }
+  const [lastSavedData, setLastSavedData] = useState<SavedData | null>(null);
+  const isSavingRef = useRef(false);
+  const initialLoadComplete = useRef(false);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-      await syncMedicationEntries(
-        selectedMedications,
-        timeTaken,
-        birthControlNotes,
-      );
+  const fetchEntriesRef = useRef(fetchEntries);
+  const fetchMedicationEntriesRef = useRef(fetchMedicationEntries);
+  const fetchNotesRef = useRef(fetchNotes);
+  const selectedSymptomsRef = useRef(selectedSymptoms);
+  const selectedMoodsRef = useRef(selectedMoods);
+  const selectedMedicationsRef = useRef(selectedMedications);
+  const selectedBirthControlRef = useRef(selectedBirthControl);
+  const birthControlNotesRef = useRef(birthControlNotes);
+  const timeTakenRef = useRef(timeTaken);
 
-      await fetchEntries("symptom");
-      await fetchEntries("mood");
-      await fetchMedicationEntries();
-      await fetchNotes();
+  useEffect(() => {
+    fetchEntriesRef.current = fetchEntries;
+    fetchMedicationEntriesRef.current = fetchMedicationEntries;
+    fetchNotesRef.current = fetchNotes;
+    selectedSymptomsRef.current = selectedSymptoms;
+    selectedMoodsRef.current = selectedMoods;
+    selectedMedicationsRef.current = selectedMedications;
+    selectedBirthControlRef.current = selectedBirthControl;
+    birthControlNotesRef.current = birthControlNotes;
+    timeTakenRef.current = timeTaken;
+  }, [
+    fetchEntries,
+    fetchMedicationEntries,
+    fetchNotes,
+    selectedSymptoms,
+    selectedMoods,
+    selectedMedications,
+    selectedBirthControl,
+    birthControlNotes,
+    timeTaken,
+  ]);
 
-      const contentToSave: string[] = [];
-      if (flow_intensity !== 0) {
-        contentToSave.push("Flow");
-      }
-      if (notes && notes.trim() !== "") {
-        contentToSave.push("Notes");
-      }
-      if (selectedSymptoms.length > 0) {
-        contentToSave.push("Symptoms");
-      }
-      if (selectedMoods.length > 0) {
-        contentToSave.push("Moods");
-      }
-      if (selectedMedications.length > 0) {
-        contentToSave.push("Medications");
-      }
-      if (selectedBirthControl) {
-        contentToSave.push("Birth Control");
-      }
+  const onSave = useCallback(() => {
+    if (isSavingRef.current) return; // prevent re-entry
+    isSavingRef.current = true;
 
-      if (contentToSave.length > 0) {
-        let message = "";
-        if (contentToSave.length === 1) {
-          message = contentToSave[0] + " Saved!";
-        } else if (contentToSave.length === 2) {
-          message = contentToSave[0] + " and " + contentToSave[1] + " Saved!";
-        } else {
-          // If user selects three or more tracking options, join with commas and add an "and" before the last item
-          const multipleSelections = contentToSave.slice(0, -1).join(", ");
-          message =
-            multipleSelections +
-            " and " +
-            contentToSave[contentToSave.length - 1] +
-            " Saved!";
+    try {
+      insertDay(date, flow_intensity, notes).then(async () => {
+        setFlow(flow_intensity);
+
+        await syncEntries(selectedSymptoms, "symptom");
+        await syncEntries(selectedMoods, "mood");
+
+        let combinedMedications = selectedMedications;
+
+        if (selectedBirthControl != null) {
+          combinedMedications = [...selectedMedications, selectedBirthControl];
         }
-        setSaveMessageContent([message]);
-        setSaveMessageVisible(true);
-      }
-    });
-  }
+
+        await syncMedicationEntries(
+          combinedMedications,
+          timeTaken,
+          birthControlNotes,
+        );
+
+        await fetchEntries("symptom");
+        await fetchEntries("mood");
+        await fetchMedicationEntries();
+        await fetchNotes();
+
+        setSaveMessageVisible(false);
+
+        const contentToSave: string[] = [];
+        if (flow_intensity !== 0) {
+          contentToSave.push("Flow");
+        }
+        if (notes && notes.trim() !== "") {
+          contentToSave.push("Notes");
+        }
+        if (selectedSymptoms.length > 0) {
+          contentToSave.push("Symptoms");
+        }
+        if (selectedMoods.length > 0) {
+          contentToSave.push("Moods");
+        }
+        if (selectedMedications.length > 0) {
+          contentToSave.push("Medications");
+        }
+        if (selectedBirthControl) {
+          contentToSave.push("Birth Control");
+        }
+
+        if (contentToSave.length > 0) {
+          let message = "";
+          if (contentToSave.length === 1) {
+            message = contentToSave[0] + " Saved!";
+          } else if (contentToSave.length === 2) {
+            message = contentToSave[0] + " and " + contentToSave[1] + " Saved!";
+          } else {
+            // If user selects three or more tracking options, join with commas and add an "and" before the last item
+            const multipleSelections = contentToSave.slice(0, -1).join(", ");
+            message =
+              multipleSelections +
+              " and " +
+              contentToSave[contentToSave.length - 1] +
+              " Saved!";
+          }
+          setSaveMessageContent([message]);
+          setSaveMessageVisible(true);
+        }
+      });
+    } finally {
+      isSavingRef.current = false;
+    }
+  }, [
+    date,
+    flow_intensity,
+    notes,
+    selectedSymptoms,
+    selectedMoods,
+    selectedMedications,
+    selectedBirthControl,
+    timeTaken,
+    birthControlNotes,
+    syncEntries,
+    syncMedicationEntries,
+    fetchEntries,
+    fetchMedicationEntries,
+    fetchNotes,
+    setFlow,
+  ]);
 
   useEffect(() => {
     if (flow_intensity !== null) {
@@ -132,33 +208,128 @@ export default function DayView() {
     }
   }, [flow_intensity, setFlow]);
 
+  // set accordions to closed when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      setExpandedAccordion(null);
+    }, [setExpandedAccordion]),
+  );
+
   useEffect(() => {
-    fetchEntries("symptom");
-    fetchEntries("mood");
-    fetchMedicationEntries();
-    fetchNotes();
+    const fetchAll = async () => {
+      await fetchEntriesRef.current("symptom");
+      await fetchEntriesRef.current("mood");
+      await fetchMedicationEntriesRef.current();
+      await fetchNotesRef.current();
+
+      const existingDay = await getDay(date);
+      const isNewDay = !existingDay;
+
+      setLastSavedData({
+        date: date,
+        flow: existingDay?.flow_intensity ?? 0,
+        notes: existingDay?.notes ?? "",
+        symptoms: isNewDay ? [] : [...selectedSymptomsRef.current],
+        moods: isNewDay ? [] : [...selectedMoodsRef.current],
+        medications: isNewDay ? [] : [...selectedMedicationsRef.current],
+        birthControl: isNewDay ? null : selectedBirthControlRef.current,
+        birthControlNotes: isNewDay ? "" : birthControlNotesRef.current,
+        timeTaken: isNewDay ? "" : timeTakenRef.current,
+      });
+
+      initialLoadComplete.current = true;
+    };
+
+    fetchAll();
     setExpandedAccordion(null);
-  }, [fetchEntries, fetchNotes, fetchMedicationEntries, setExpandedAccordion]);
+  }, [date, setExpandedAccordion]);
+
+  const hasChanged = useCallback((newData: SavedData, oldData: SavedData) => {
+    const normalize = (data: SavedData) => ({
+      ...data,
+      symptoms: [...data.symptoms].sort(),
+      moods: [...data.moods].sort(),
+      medications: [...data.medications].sort(),
+      notes: data.notes.trim(),
+      birthControlNotes: data.birthControlNotes.trim(),
+      timeTaken: data.timeTaken.trim(),
+    });
+
+    const a = normalize(newData);
+    const b = normalize(oldData);
+
+    return JSON.stringify(a) !== JSON.stringify(b);
+  }, []);
+
+  const onSaveRef = useRef(onSave);
+  const hasChangedRef = useRef(hasChanged);
+  const lastSavedDataRef = useRef(lastSavedData);
+
+  useEffect(() => {
+    onSaveRef.current = onSave;
+    hasChangedRef.current = hasChanged;
+    lastSavedDataRef.current = lastSavedData;
+  }, [onSave, hasChanged, lastSavedData]);
+
+  // debounced auto-save
+  useEffect(() => {
+    if (!date) return;
+
+    const currentData = {
+      date,
+      flow: flow_intensity,
+      notes: notes ?? "",
+      symptoms: selectedSymptoms,
+      moods: selectedMoods,
+      medications: selectedMedications,
+      birthControl: selectedBirthControl,
+      birthControlNotes,
+      timeTaken,
+    };
+
+    // skip auto-saving on initial component load
+    if (!initialLoadComplete.current) return;
+
+    // skip auto-saving if selected date has changed since last save
+    if (lastSavedDataRef.current?.date !== date) return;
+
+    if (
+      !lastSavedDataRef.current ||
+      hasChangedRef.current(currentData, lastSavedDataRef.current)
+    ) {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+
+      saveTimeoutRef.current = setTimeout(() => {
+        onSaveRef.current();
+        setLastSavedData(currentData);
+        lastSavedDataRef.current = currentData;
+      }, 500);
+    }
+  }, [
+    flow_intensity,
+    notes,
+    selectedSymptoms,
+    selectedMoods,
+    selectedMedications,
+    selectedBirthControl,
+    birthControlNotes,
+    timeTaken,
+    date,
+  ]);
 
   return (
     <View style={{ backgroundColor: theme.colors.background }}>
       <View style={styles.titleContainer}>
         <Text variant="titleLarge">
           {new Intl.DateTimeFormat("en-US", {
-            weekday: "short",
-            month: "short",
+            weekday: "long",
+            month: "long",
             day: "numeric",
             year: "numeric",
           }).format(new Date(date + "T00:00:00"))}
         </Text>
-        <Button
-          mode="elevated"
-          buttonColor={theme.colors.primaryContainer}
-          textColor={theme.colors.onPrimaryContainer}
-          onPress={() => onSave()}
-        >
-          Save
-        </Button>
       </View>
       <View>
         <List.Section>
@@ -222,7 +393,8 @@ const styles = StyleSheet.create({
   titleContainer: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    padding: 16,
+    justifyContent: "center",
+    padding: 10,
+    paddingBottom: 0,
   },
 });

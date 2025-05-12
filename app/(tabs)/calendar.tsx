@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   StyleSheet,
   View,
@@ -25,6 +25,7 @@ import { useMarkedDates } from "@/hooks/useMarkedDates";
 import { FilterColorsDark, FilterColorsLight } from "@/constants/Colors";
 import { Image } from "react-native";
 import FadeInView from "@/components/animations/FadeInView";
+import { useFocusEffect } from "expo-router";
 
 export default function FlowCalendar() {
   const [key, setKey] = useState<string>("");
@@ -71,6 +72,13 @@ export default function FlowCalendar() {
     loadFilters();
   }, [setSelectedFilters]);
 
+  // Set selected date to today when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      setDate(today);
+    }, [setDate, today]),
+  );
+
   // the calendar doesn't expose a method to jump to today, so we have to
   // change the key after setting the date to force a re-render
   const jumpToToday = () => {
@@ -106,7 +114,15 @@ export default function FlowCalendar() {
                     )}
                     maxDate={today}
                     markingType="multi-period"
-                    markedDates={{ ...markedDates }}
+                    markedDates={{
+                      ...markedDates,
+                      [date]: {
+                        ...(markedDates?.[date] ?? {}),
+                        selected: true,
+                        selectedColor: theme.colors.primary,
+                        selectedTextColor: theme.colors.onPrimary,
+                      },
+                    }}
                     enableSwipeMonths={true}
                     onDayPress={(day: { dateString: string }) =>
                       setDate(day.dateString)

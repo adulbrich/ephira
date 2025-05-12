@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { List } from "react-native-paper";
+import { View } from "react-native";
+import { List, Text } from "react-native-paper";
 import { getAllVisibleMoods } from "@/db/database";
 import ChipSelection from "./ChipSelection";
 
@@ -30,7 +31,15 @@ export default function MoodsAccordion({
 
   return (
     <List.Accordion
-      title={"Moods   |   " + selectedVisibleMoods.length + " Selected"}
+      title={
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Text style={{ width: 120, fontSize: 16 }}>Moods</Text>
+          <Text style={{ fontSize: 16 }}>
+            |{"\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"}
+            {selectedVisibleMoods.length + " Selected"}
+          </Text>
+        </View>
+      }
       expanded={state === "mood"}
       onPress={() => setExpandedAccordion(state === "mood" ? null : "mood")}
       left={(props) => <List.Icon {...props} icon="emoticon" />}

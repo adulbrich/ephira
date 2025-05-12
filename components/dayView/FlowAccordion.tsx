@@ -1,6 +1,5 @@
 import { View } from "react-native";
-import { Button, List, RadioButton, ToggleButton, useTheme } from "react-native-paper";
-import { ThemedView } from "../ThemedView";
+import { List, RadioButton, useTheme, Text } from "react-native-paper";
 
 const flowOptions = ["None", "Spotting", "Light", "Medium", "Heavy"];
 
@@ -109,7 +108,15 @@ export default function FlowAccordion({
 }) {
   return (
     <List.Accordion
-      title={"Flow Intensity   |   " + flowOptions[flow_intensity]}
+      title={
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Text style={{ width: 120, fontSize: 16 }}>Flow Intensity</Text>
+          <Text style={{ fontSize: 16 }}>
+            |{"\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"}
+            {flowOptions[flow_intensity]}
+          </Text>
+        </View>
+      }
       expanded={state === "flow"}
       onPress={() => setExpandedAccordion(state === "flow" ? null : "flow")}
       left={(props) => <List.Icon {...props} icon="water" />}

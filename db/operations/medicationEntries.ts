@@ -22,7 +22,12 @@ export const updateMedicationEntry = async (
   time_taken?: string | null,
   notes?: string | null,
 ) => {
-  let updateData: object = { day_id, medication_id };
+  let updateData = {
+    day_id,
+    medication_id,
+    time_taken: time_taken ?? null,
+    notes: notes ?? null,
+  };
   if (time_taken !== null && time_taken !== undefined) {
     updateData = { ...updateData, time_taken };
   }
