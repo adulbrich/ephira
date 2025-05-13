@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { StyleSheet, View } from "react-native";
-import { insertDay, getDay } from "@/db/database";
+import { insertDay, getDay, getAllDays } from "@/db/database";
 import { List, Text, useTheme, Divider } from "react-native-paper";
 import {
   useAccordion,
@@ -11,6 +11,8 @@ import {
   useBirthControl,
   useBirthControlNotes,
   useTimeTaken,
+  useData,
+  usePredictedCycle,
 } from "@/assets/src/calendar-storage";
 import FlowAccordion from "@/components/dayView/FlowAccordion";
 import MedicationsAccordion from "./MedicationsAccordion";
@@ -29,12 +31,24 @@ export default function DayView() {
   const theme = useTheme();
   const { state, setExpandedAccordion } = useAccordion();
   const { selectedMoods, setSelectedMoods } = useMoods();
-  const { date, flow_intensity, notes, setFlow, setNotes } = useSelectedDate();
+  const {
+    date,
+    flow_intensity,
+    notes,
+    setFlow,
+    setNotes,
+    is_cycle_start,
+    setCycleStart,
+    is_cycle_end,
+    setCycleEnd,
+  } = useSelectedDate();
   const { selectedSymptoms, setSelectedSymptoms } = useSymptoms();
   const { selectedMedications, setSelectedMedications } = useMedications();
   const { selectedBirthControl, setSelectedBirthControl } = useBirthControl();
   const { birthControlNotes, setBirthControlNotes } = useBirthControlNotes();
   const { timeTaken, setTimeTaken } = useTimeTaken();
+  const { data: flowData } = useData();
+  const { predictedCycle, setPredictedCycle } = usePredictedCycle();
 
   const { syncEntries } = useSyncEntries(date);
   const { fetchEntries } = useFetchEntries(
@@ -60,6 +74,21 @@ export default function DayView() {
     }
   }, [date, setNotes]);
 
+  const fetchCycleInfo = useCallback(async () => {
+    const day = await getDay(date);
+    if (day && day.is_cycle_start) {
+      setCycleStart(day.is_cycle_start);
+    } else {
+      setCycleStart(false);
+    }
+
+    if (day && day.is_cycle_end) {
+      setCycleEnd(day.is_cycle_end);
+    } else {
+      setCycleEnd(false);
+    }
+  }, [date, setCycleStart, setCycleEnd]);
+
   const [saveMessageVisible, setSaveMessageVisible] = useState(false);
   const [saveMessageContent, setSaveMessageContent] = useState<string[]>([]);
 
@@ -67,6 +96,8 @@ export default function DayView() {
     date: string;
     flow: number;
     notes: string;
+    is_cycle_start: boolean;
+    is_cycle_end: boolean;
     symptoms: string[];
     moods: string[];
     medications: string[];
@@ -83,6 +114,7 @@ export default function DayView() {
   const fetchEntriesRef = useRef(fetchEntries);
   const fetchMedicationEntriesRef = useRef(fetchMedicationEntries);
   const fetchNotesRef = useRef(fetchNotes);
+  const fetchCycleInfoRef = useRef(fetchCycleInfo);
   const selectedSymptomsRef = useRef(selectedSymptoms);
   const selectedMoodsRef = useRef(selectedMoods);
   const selectedMedicationsRef = useRef(selectedMedications);
@@ -94,6 +126,7 @@ export default function DayView() {
     fetchEntriesRef.current = fetchEntries;
     fetchMedicationEntriesRef.current = fetchMedicationEntries;
     fetchNotesRef.current = fetchNotes;
+    fetchCycleInfoRef.current = fetchCycleInfo;
     selectedSymptomsRef.current = selectedSymptoms;
     selectedMoodsRef.current = selectedMoods;
     selectedMedicationsRef.current = selectedMedications;
@@ -104,6 +137,7 @@ export default function DayView() {
     fetchEntries,
     fetchMedicationEntries,
     fetchNotes,
+    fetchCycleInfo,
     selectedSymptoms,
     selectedMoods,
     selectedMedications,
@@ -117,70 +151,77 @@ export default function DayView() {
     isSavingRef.current = true;
 
     try {
-      insertDay(date, flow_intensity, notes).then(async () => {
-        setFlow(flow_intensity);
+      insertDay(date, flow_intensity, notes, is_cycle_start, is_cycle_end).then(
+        async () => {
+          setFlow(flow_intensity);
 
-        await syncEntries(selectedSymptoms, "symptom");
-        await syncEntries(selectedMoods, "mood");
+          await syncEntries(selectedSymptoms, "symptom");
+          await syncEntries(selectedMoods, "mood");
 
-        let combinedMedications = selectedMedications;
+          let combinedMedications = selectedMedications;
 
-        if (selectedBirthControl != null) {
-          combinedMedications = [...selectedMedications, selectedBirthControl];
-        }
-
-        await syncMedicationEntries(
-          combinedMedications,
-          timeTaken,
-          birthControlNotes,
-        );
-
-        await fetchEntries("symptom");
-        await fetchEntries("mood");
-        await fetchMedicationEntries();
-        await fetchNotes();
-
-        setSaveMessageVisible(false);
-
-        const contentToSave: string[] = [];
-        if (flow_intensity !== 0) {
-          contentToSave.push("Flow");
-        }
-        if (notes && notes.trim() !== "") {
-          contentToSave.push("Notes");
-        }
-        if (selectedSymptoms.length > 0) {
-          contentToSave.push("Symptoms");
-        }
-        if (selectedMoods.length > 0) {
-          contentToSave.push("Moods");
-        }
-        if (selectedMedications.length > 0) {
-          contentToSave.push("Medications");
-        }
-        if (selectedBirthControl) {
-          contentToSave.push("Birth Control");
-        }
-
-        if (contentToSave.length > 0) {
-          let message = "";
-          if (contentToSave.length === 1) {
-            message = contentToSave[0] + " Saved!";
-          } else if (contentToSave.length === 2) {
-            message = contentToSave[0] + " and " + contentToSave[1] + " Saved!";
-          } else {
-            // If user selects three or more tracking options, join with commas and add an "and" before the last item
-            const multipleSelections = contentToSave.slice(0, -1).join(", ");
-            message =
-              multipleSelections +
-              " and " +
-              contentToSave[contentToSave.length - 1] +
-              " Saved!";
+          if (selectedBirthControl != null) {
+            combinedMedications = [
+              ...selectedMedications,
+              selectedBirthControl,
+            ];
           }
-          setSaveMessageContent([message]);
-          setSaveMessageVisible(true);
-        }
-      });
+
+          await syncMedicationEntries(
+            combinedMedications,
+            timeTaken,
+            birthControlNotes,
+          );
+
+          await fetchEntries("symptom");
+          await fetchEntries("mood");
+          await fetchMedicationEntries();
+          await fetchNotes();
+          await fetchCycleInfo();
+
+          setSaveMessageVisible(false);
+
+          const contentToSave: string[] = [];
+          if (flow_intensity !== 0) {
+            contentToSave.push("Flow");
+          }
+          if (notes && notes.trim() !== "") {
+            contentToSave.push("Notes");
+          }
+          if (selectedSymptoms.length > 0) {
+            contentToSave.push("Symptoms");
+          }
+          if (selectedMoods.length > 0) {
+            contentToSave.push("Moods");
+          }
+          if (selectedMedications.length > 0) {
+            contentToSave.push("Medications");
+          }
+          if (selectedBirthControl) {
+            contentToSave.push("Birth Control");
+          }
+
+          if (contentToSave.length > 0) {
+            let message = "";
+            if (contentToSave.length === 1) {
+              message = contentToSave[0] + " Saved!";
+            } else if (contentToSave.length === 2) {
+              message =
+                contentToSave[0] + " and " + contentToSave[1] + " Saved!";
+            } else {
+              // If user selects three or more tracking options, join with commas and add an "and" before the last item
+              const multipleSelections = contentToSave.slice(0, -1).join(", ");
+              message =
+                multipleSelections +
+                " and " +
+                contentToSave[contentToSave.length - 1] +
+                " Saved!";
+            }
+            setSaveMessageContent([message]);
+            setSaveMessageVisible(true);
+          }
+        },
+      );
     } finally {
       isSavingRef.current = false;
     }
@@ -188,6 +229,8 @@ export default function DayView() {
     date,
     flow_intensity,
     notes,
+    is_cycle_start,
+    is_cycle_end,
     selectedSymptoms,
     selectedMoods,
     selectedMedications,
@@ -199,6 +242,7 @@ export default function DayView() {
     fetchEntries,
     fetchMedicationEntries,
     fetchNotes,
+    fetchCycleInfo,
     setFlow,
   ]);
 
@@ -221,6 +265,7 @@ export default function DayView() {
       await fetchEntriesRef.current("mood");
       await fetchMedicationEntriesRef.current();
       await fetchNotesRef.current();
+      await fetchCycleInfoRef.current();
 
       const existingDay = await getDay(date);
       const isNewDay = !existingDay;
@@ -229,6 +274,8 @@ export default function DayView() {
         date: date,
         flow: existingDay?.flow_intensity ?? 0,
         notes: existingDay?.notes ?? "",
+        is_cycle_start: existingDay?.is_cycle_start ?? false,
+        is_cycle_end: existingDay?.is_cycle_end ?? false,
         symptoms: isNewDay ? [] : [...selectedSymptomsRef.current],
         moods: isNewDay ? [] : [...selectedMoodsRef.current],
         medications: isNewDay ? [] : [...selectedMedicationsRef.current],
@@ -236,6 +283,12 @@ export default function DayView() {
         birthControlNotes: isNewDay ? "" : birthControlNotesRef.current,
         timeTaken: isNewDay ? "" : timeTakenRef.current,
       });
+
+      // console.log("\nLAST SAVED\n")
+      // console.log(lastSavedData)
+
+      // console.log("\nEXISTING\n")
+      // console.log(existingDay)
 
       initialLoadComplete.current = true;
     };
@@ -279,6 +332,8 @@ export default function DayView() {
       date,
       flow: flow_intensity,
       notes: notes ?? "",
+      is_cycle_start: is_cycle_start ?? false,
+      is_cycle_end: is_cycle_end ?? false,
       symptoms: selectedSymptoms,
       moods: selectedMoods,
       medications: selectedMedications,
@@ -286,6 +341,8 @@ export default function DayView() {
       birthControlNotes,
       timeTaken,
     };
+
+    // console.log(currentData)
 
     // skip auto-saving on initial component load
     if (!initialLoadComplete.current) return;
@@ -310,6 +367,8 @@ export default function DayView() {
   }, [
     flow_intensity,
     notes,
+    is_cycle_start,
+    is_cycle_end,
     selectedSymptoms,
     selectedMoods,
     selectedMedications,
@@ -338,6 +397,10 @@ export default function DayView() {
             setExpandedAccordion={setExpandedAccordion}
             flow_intensity={flow_intensity}
             setFlow={setFlow}
+            is_cycle_start={is_cycle_start}
+            setCycleStart={setCycleStart}
+            is_cycle_end={is_cycle_end}
+            setCycleEnd={setCycleEnd}
           />
           <Divider />
           <SymptomsAccordion

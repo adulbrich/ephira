@@ -17,7 +17,10 @@ import {
   CalendarFilters,
   ThemeColor,
   DatabaseChangeNotifier,
+  PredictionToggle,
+  PredictedCycleState,
 } from "@/constants/Interfaces";
+import { boolean } from "drizzle-orm/gel-core";
 
 const initialDay: DayData = {
   id: 0,
@@ -49,6 +52,12 @@ export const useSelectedDate = create<DayDataStore>((set) => ({
   },
   setNotes: (text: string) => {
     set(() => ({ notes: text }));
+  },
+  setCycleStart: (start: boolean) => {
+    set(() => ({ is_cycle_start: start }));
+  },
+  setCycleEnd: (end: boolean) => {
+    set(() => ({ is_cycle_end: end }));
   },
   reset: () => set(initialDay),
 }));
@@ -143,3 +152,14 @@ export const useDatabaseChangeNotifier = create<DatabaseChangeNotifier>(
       set(() => ({ databaseChange: databaseChange })),
   }),
 );
+
+export const usePredictionChoice = create<PredictionToggle>((set) => ({
+  predictionChoice: false,
+  setPredictionChoice: (predictionChoice: boolean) =>
+    set(() => ({ predictionChoice: predictionChoice })),
+}));
+
+export const usePredictedCycle = create<PredictedCycleState>((set) => ({
+  predictedCycle: [],
+  setPredictedCycle: (data: string[]) => set(() => ({ predictedCycle: data })),
+}));
