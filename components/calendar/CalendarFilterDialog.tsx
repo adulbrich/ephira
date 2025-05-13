@@ -34,30 +34,60 @@ function FilterSection({
   isMaxFiltersSelected,
   subheader,
   listItems,
+  anyOption,
+  expanded,
+  setExpanded,
 }: {
   selectedFilters: string[];
   onToggleSwitch: (filter: string) => void;
   isMaxFiltersSelected: boolean;
   subheader: string;
   listItems: string[];
+  anyOption: string;
+  expanded: boolean;
+  setExpanded: (value: boolean) => void;
 }) {
   return (
     <List.Section>
       <List.Subheader>{subheader}</List.Subheader>
-      {listItems.map((item) => (
-        <List.Item
-          style={styles.listItem}
-          key={item}
-          title={item}
-          right={() => (
-            <Switch
-              value={selectedFilters.includes(item)}
-              onValueChange={() => onToggleSwitch(item)}
-              disabled={isMaxFiltersSelected && !selectedFilters.includes(item)}
+      <List.Item
+        style={styles.listItem}
+        key={anyOption}
+        title={anyOption}
+        right={() => (
+          <Switch
+            value={selectedFilters.includes(anyOption)}
+            onValueChange={() => onToggleSwitch(anyOption)}
+            disabled={
+              isMaxFiltersSelected && !selectedFilters.includes(anyOption)
+            }
+          />
+        )}
+      />
+      <List.Item
+        title={expanded ? "Hide options" : "Show options"}
+        onPress={() => setExpanded(!expanded)}
+        left={(props) => <List.Icon {...props} icon={expanded ? "chevron-up" : "chevron-down"} />}
+      />
+      {expanded &&
+        listItems
+          .filter((item) => item !== anyOption)
+          .map((item) => (
+            <List.Item
+              style={styles.listItem}
+              key={item}
+              title={item}
+              right={() => (
+                <Switch
+                  value={selectedFilters.includes(item)}
+                  onValueChange={() => onToggleSwitch(item)}
+                  disabled={
+                    isMaxFiltersSelected && !selectedFilters.includes(item)
+                  }
+                />
+              )}
             />
-          )}
-        />
-      ))}
+          ))}
     </List.Section>
   );
 }
@@ -77,6 +107,11 @@ export default function CalendarFilterDialog({
   const [moodOptions, setMoodOptions] = useState<string[]>([]);
   const [medicationOptions, setMedicationOptions] = useState<string[]>([]);
   const [birthControlOptions, setBirthControlOptions] = useState<string[]>([]);
+
+  const [symptomsExpanded, setSymptomsExpanded] = useState(false);
+  const [moodsExpanded, setMoodsExpanded] = useState(false);
+  const [medicationsExpanded, setMedicationsExpanded] = useState(false);
+  const [birthControlExpanded, setBirthControlExpanded] = useState(false);
 
   useEffect(() => {
     const fetchSymptoms = async () => {
@@ -159,7 +194,7 @@ export default function CalendarFilterDialog({
                 key={filter}
                 onClose={() =>
                   setTempSelectedFilters(
-                    tempSelectedFilters.filter((f) => f !== filter),
+                    tempSelectedFilters.filter((f) => f !== filter)
                   )
                 }
                 style={styles.chip}
@@ -209,6 +244,9 @@ export default function CalendarFilterDialog({
               isMaxFiltersSelected={isMaxFiltersSelected}
               subheader="Symptoms"
               listItems={[anySymptomOption, ...symptomOptions]}
+              anyOption={anySymptomOption}
+              expanded={symptomsExpanded}
+              setExpanded={setSymptomsExpanded}
             />
             <Divider />
             <FilterSection
@@ -217,6 +255,9 @@ export default function CalendarFilterDialog({
               isMaxFiltersSelected={isMaxFiltersSelected}
               subheader="Moods"
               listItems={[anyMoodOption, ...moodOptions]}
+              anyOption={anyMoodOption}
+              expanded={moodsExpanded}
+              setExpanded={setMoodsExpanded}
             />
             <Divider />
             <FilterSection
@@ -225,6 +266,9 @@ export default function CalendarFilterDialog({
               isMaxFiltersSelected={isMaxFiltersSelected}
               subheader="Medications"
               listItems={[anyMedicationOption, ...medicationOptions]}
+              anyOption={anyMedicationOption}
+              expanded={medicationsExpanded}
+              setExpanded={setMedicationsExpanded}
             />
             <Divider />
             <FilterSection
@@ -233,6 +277,9 @@ export default function CalendarFilterDialog({
               isMaxFiltersSelected={isMaxFiltersSelected}
               subheader="Birth Control"
               listItems={[anyBirthControlOption, ...birthControlOptions]}
+              anyOption={anyBirthControlOption}
+              expanded={birthControlExpanded}
+              setExpanded={setBirthControlExpanded}
             />
           </ScrollView>
         </Dialog.Content>
