@@ -25,20 +25,28 @@
 
 ## About The Project
 
-Stay aware of your cycle without sacrificing your privacy. Ephira is a secure period-tracker that keeps your data encrypted locally on your device.
+Ephira is a local-only, open-source menstrual tracking app designed to prioritize user privacy and data security. It allows users to track their reproductive health without exposing sensitive data to cloud-based platforms or third parties. While there are many privacy-focused menstrual tracking apps out there, many back data up in the cloud or aren't open source.
 
-Track Your Health: Log menstrual flow, symptoms, moods, medications, birth control, and notes.
+## Key Features
 
-Privacy First: Data is encrypted and never leaves your device. It can be locked behind biometrics (Face ID/Fingerprint) or a custom password, and can be deleted at any time.
+### Custom Themes & Color Schemes
+Personalize your app with six different themes and light/dark mode support based on your device settings.
 
-Open and Transparent: Ephira is open source under the MIT license, and you can review the code at any time on Github.
+<img src="./docs/public/assets/feature-color-schemes.gif" width="250px" height="429"/>
 
-<!-- VIDEO DEMOS -->
+### Customizable Calendar & Symptom Tracking
+Add and track custom symptoms, moods, medications, and more with a smooth, visual calendar interface.
 
-## Video Demos
+<img src="./docs/public/assets/feature-custom-entries.gif" width="200px" height="429"/>
 
-<img src="./docs/public/assets/feature-color-schemes.gif" width="250px" height="429"/><img src="./docs/public/assets/feature-custom-entries.gif" width="200px" height="429"/>
+### App Locking with Passcode & Biometrics
+Protect your data with Face ID or a custom password unique to Ephira.
+
 <img src="./docs/public/assets/feature-password.gif" width="200px" height="429"/>
+
+### Filter Calendar Legend
+Filter your calendar legend to only show the symptoms, moods, and medications you want to see. This makes it easy to focus on the data that matters most to you.
+
 <img src="./docs/public/assets/feature-filter-calendar.gif" width="200px" height="429"/>
 
 <!-- DEVELOPMENT GOALS -->
