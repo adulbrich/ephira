@@ -37,10 +37,9 @@ Open and Transparent: Ephira is open source under the MIT license, and you can r
 
 ## Video Demos
 
-
-![feature-custom-entries-ezgif com-video-to-gif-converter (1)](https://github.com/user-attachments/assets/60c93acf-1dca-4c5f-a963-8a3c68fbe901)
-![feature-filter-calendar](https://github.com/user-attachments/assets/142cfebc-dffe-426c-8a57-2d5c4d5f44c5)
-![feature-password](https://github.com/user-attachments/assets/08b4ac67-ea4c-4dac-962a-2644e3deeaf0)
+<img src="./docs/public/assets/feature-color-schemes.gif" width="250px" height="429"/><img src="./docs/public/assets/feature-custom-entries.gif" width="200px" height="429"/>
+<img src="./docs/public/assets/feature-password.gif" width="200px" height="429"/>
+<img src="./docs/public/assets/feature-filter-calendar.gif" width="200px" height="429"/>
 
 <!-- DEVELOPMENT GOALS -->
 
