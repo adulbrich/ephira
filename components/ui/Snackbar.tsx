@@ -17,7 +17,7 @@ const Snackbar = ({ visible, content, onDismiss }: SavedMessageProps) => {
         <RnpSnackbar
           visible={visible}
           onDismiss={onDismiss}
-          duration={5000}
+          duration={2000}
           action={{
             label: "Dismiss",
             onPress: onDismiss,

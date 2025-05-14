@@ -22,7 +22,7 @@
     "@react-navigation/native": "^7.1.7",
     "babel-plugin-inline-import": "^3.0.0",
     "drizzle-orm": "^0.43.1",
-    "expo": "^53.0.7",
+    "expo": "^53.0.8",
     "expo-blur": "~14.1.4",
     "expo-constants": "~17.1.5",
     "expo-crypto": "~14.1.4",
