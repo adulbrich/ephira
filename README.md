@@ -21,6 +21,9 @@
 
 ![All Screens](https://github.com/user-attachments/assets/c795869d-a4fe-44a9-b520-d5d4561245b1)
 
+
+![Color Themes Screens - 1920x1080](https://github.com/user-attachments/assets/30b38159-a8aa-47a8-92e1-7dbbeacd79b8)
+
 <p align="center" style="display: flex; justify-content: center; gap: 24px;">
   <a href="https://apps.apple.com/us/app/ephira/id6741593838?platform=iphone" target="_blank" rel="noopener noreferrer">
     <img src="https://toolbox.marketingtools.apple.com/api/badges/download-on-the-app-store/black/en-us" height="50" alt="Download on the App Store">
@@ -44,9 +47,20 @@ Open and Transparent: Ephira is open source under the MIT license, and you can r
 
 <!-- VIDEO DEMOS -->
 
-## Video Demos
+## Key Features
 
-https://github.com/user-attachments/assets/f59e4073-7a90-4506-98ea-767b5318f374
+### Customizable Calendar & Symptom Tracking
+
+Add and track custom symptoms, moods, medications, and more with a smooth, visual calendar interface. Filter your calendar legend to only show the symptoms, moods, and medications you want to see. This makes it easy to focus on the data that matters most to you.
+
+‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎<img src="https://github.com/user-attachments/assets/c0aaa86b-1fcb-4cac-874e-49b39a04bfb1" width="650"/>
+
+### App Locking with Passcode & Biometrics
+
+Protect your data with Face ID or a custom password unique to Ephira.
+
+![Password Demo (Final-All)](https://github.com/user-attachments/assets/296864e6-ae4e-48ac-8ee8-b9ca0cd0f9e9)
+
 
 <!-- DEVELOPMENT GOALS -->
 
