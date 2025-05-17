@@ -93,10 +93,20 @@ This document provides an overview of the project structure and key components o
 - [react-native-calendars](https://wix.github.io/react-native-calendars/docs/Intro) - Calendar
 - [Zustand](https://zustand.docs.pmnd.rs/getting-started/introduction) - State Management
 
-### Setup
+## Setup
 
-- Install dependencies
-- Download Expo Go app on your phone
-- Run `npx expo start` in the terminal
-- Scan the QR code with the Expo Go app (for Android), camera (for iOS), or enter the URL in the app (for emulator/iOS/Android)
+Due to using Expo SQLite for the database, this project will only run on mobile devices or emulators.
+
+- Download the repo
+- `npm install`
+- `npx expo start`
+
+In the output, you'll find options to open the app in a:
+
+- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
+- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
+- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
+- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
   - If you get an error about the app not being able to connect or taking longer than it should, try running `npx expo start --tunnel` in the terminal and scanning the QR code again.
+
+This project uses [file-based routing](https://docs.expo.dev/router/introduction).
