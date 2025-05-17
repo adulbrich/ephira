@@ -15,6 +15,138 @@ import { medicationOptions } from "@/constants/Medications";
 import { birthControlOptions } from "@/constants/BirthControlTypes";
 import { getSetting, updateSetting } from "@/db/operations/settings";
 import { SettingsKeys } from "@/constants/Settings";
+import { getDrizzleDatabase } from "@/db/operations/setup";
+import * as schema from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { ExportData } from "@/constants/Interfaces";
+
+const db = getDrizzleDatabase();
+
+export async function getAllDataAsJson() {
+  try {
+    const joinedEntries = await db
+      .select({
+        date: schema.days.date,
+        flow_intensity: schema.days.flow_intensity,
+        notes: schema.days.notes,
+        mood_name: schema.moods.name,
+        symptom_name: schema.symptoms.name,
+        medication_name: schema.medications.name,
+        medication_type: schema.medications.type,
+        medication_time: schema.medicationEntries.time_taken,
+        medication_notes: schema.medicationEntries.notes,
+      })
+      .from(schema.days)
+      .leftJoin(
+        schema.moodEntries,
+        eq(schema.moodEntries.day_id, schema.days.id),
+      )
+      .leftJoin(schema.moods, eq(schema.moods.id, schema.moodEntries.mood_id))
+      .leftJoin(
+        schema.symptomEntries,
+        eq(schema.symptomEntries.day_id, schema.days.id),
+      )
+      .leftJoin(
+        schema.symptoms,
+        eq(schema.symptoms.id, schema.symptomEntries.symptom_id),
+      )
+      .leftJoin(
+        schema.medicationEntries,
+        eq(schema.medicationEntries.day_id, schema.days.id),
+      )
+      .leftJoin(
+        schema.medications,
+        eq(schema.medications.id, schema.medicationEntries.medication_id),
+      )
+      .orderBy(schema.days.date);
+
+    // organize and group all entries by date
+    const exportData: ExportData = {
+      headers: {
+        base_header: ["Date", "Flow Intensity", "Notes"],
+        moods: [],
+        symptoms: [],
+        medications: [],
+        birth_control: [],
+      },
+      dailyData: {},
+    };
+
+    for (const entry of joinedEntries) {
+      if (!exportData.dailyData[entry.date]) {
+        exportData.dailyData[entry.date] = {
+          date: entry.date,
+          flow_intensity: entry.flow_intensity || 0,
+          notes: entry.notes || "",
+          moods: [],
+          symptoms: [],
+          medications: [],
+          birth_control: [],
+        };
+      }
+
+      if (
+        entry.mood_name &&
+        !exportData.dailyData[entry.date].moods.includes(entry.mood_name)
+      ) {
+        exportData.dailyData[entry.date].moods.push(entry.mood_name);
+
+        if (!exportData.headers.moods.includes(entry.mood_name)) {
+          exportData.headers.moods.push(entry.mood_name);
+        }
+      }
+      if (
+        entry.symptom_name &&
+        !exportData.dailyData[entry.date].symptoms.includes(entry.symptom_name)
+      ) {
+        exportData.dailyData[entry.date].symptoms.push(entry.symptom_name);
+
+        if (!exportData.headers.symptoms.includes(entry.symptom_name)) {
+          exportData.headers.symptoms.push(entry.symptom_name);
+        }
+      }
+      if (
+        entry.medication_name &&
+        entry.medication_type !== "birth control" &&
+        !exportData.dailyData[entry.date].medications.some(
+          (med: any) => med.name === entry.medication_name,
+        )
+      ) {
+        exportData.dailyData[entry.date].medications.push({
+          name: entry.medication_name,
+          time_taken: entry.medication_time || undefined,
+          notes: entry.medication_notes || undefined,
+        });
+
+        if (!exportData.headers.medications.includes(entry.medication_name)) {
+          exportData.headers.medications.push(entry.medication_name);
+        }
+      }
+
+      if (
+        entry.medication_name &&
+        entry.medication_type === "birth control" &&
+        !exportData.dailyData[entry.date].birth_control.some(
+          (bc: any) => bc.name === entry.medication_name,
+        )
+      ) {
+        exportData.dailyData[entry.date].birth_control.push({
+          name: entry.medication_name,
+          time_taken: entry.medication_time || undefined,
+          notes: entry.medication_notes || undefined,
+        });
+
+        if (!exportData.headers.birth_control.includes(entry.medication_name)) {
+          exportData.headers.birth_control.push(entry.medication_name);
+        }
+      }
+    }
+
+    return exportData;
+  } catch (error) {
+    console.error("Error fetching data from database:", error);
+  }
+}
 
 export async function deleteAllDataInDatabase() {
   try {

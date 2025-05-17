@@ -106,3 +106,34 @@ export interface DatabaseChangeNotifier {
   databaseChange: string;
   setDatabaseChange: (databaseChange: string) => void;
 }
+
+export interface ExportDataHeaders {
+  base_header: string[];
+  moods: string[];
+  symptoms: string[];
+  medications: string[];
+  birth_control: string[];
+}
+
+export interface ExportDayEntry {
+  date: string;
+  flow_intensity: number;
+  notes?: string;
+  moods: string[];
+  symptoms: string[];
+  medications: {
+    name: string;
+    time_taken?: string;
+    notes?: string;
+  }[];
+  birth_control: {
+    name: string;
+    time_taken?: string;
+    notes?: string;
+  }[];
+}
+
+export interface ExportData {
+  headers: ExportDataHeaders;
+  dailyData: Record<string, ExportDayEntry>;
+}
