@@ -66,42 +66,9 @@ Protect your data with Face ID or a custom password unique to Ephira.
 
 ## Capstone Development Goals
 
-### Fall 2024
-
-- [X] GitHub/Codebase
-- [X] Project Prototype
-- [X] Calendar Input
-
-### Winter 2025
-
-- [X] Android Play Store Deployment
-  - [X] Review
-  - [X] User Testing
-
-- [X] Apple App Store Deployment
-  - [X] Review
-  - [X] User Testing
-
-- [X] State Management
-- [X] Drizzle Integration
-- [X] License
-- [X] Privacy Policy
-- [X] Splash Screen
-- [X] Custom Color Themes
-- [X] Calendar Filters
-- [X] Home Page
-- [X] User Authentication 
-
-### Spring 2025 (Current)
-
-- [X] Project Landing Page
-- [ ] Project Archive
-- [X] Autosave
-- [X] Custom Entries
-- [ ] Data Export
-- [ ] Cycle Prediction
-- [ ] Symptoms/Moods List & "Add Your Own symptoms/mood" Button
-- [ ] Quick BC Input
+| Fall 2024  | Winter 2025 | Spring 2025 |
+|------------|-------------|-------------|
+| <ul><li>- [x]  GitHub/Codebase</li><li>- [x] Project Prototype</li><li>- [x] Calendar Input</li></ul> | <ul><li>- [x]  Android Play Store Deployment</li><li>- [x] Apple App Store Deployment</li><li>- [x] State Management</li><li>- [x] Drizzle Integration</li><li>- [x] License</li><li>- [x] Privacy Policy</li><li>- [x] Splash Screen</li><li>- [x] Custom Color Themes</li><li>- [x] Calendar Filters</li><li>- [x] Home Page</li><li>- [x] User Authentication </li></ul> | <ul><li>- [x]  Project Landing Page</li><li>- [ ] Project Archive</li><li>- [x] Autosave</li><li>- [x] Custom Entries</li><li>- [x] Data Export</li><li>- [ ] Cycle Prediction</li><li>- [ ] Symptoms/Moods List </li><li>- [ ] "Add Your Own symptoms/mood" Button</li><li>- [ ] Quick BC Input</li></ul> |
 
 See the [open issues](https://github.com/adulbrich/ephira/issues) for a full list of proposed features (and known issues).
 
