@@ -79,9 +79,9 @@ This document provides an overview of the project structure and key components o
   - Makes the [markedDates](https://wix.github.io/react-native-calendars/docs/Components/Calendar#markeddates) object for the calendar based on the user's calendar filters.
   - Utilizes `useLiveFilteredData.ts` to get the filtered data as it changes and updates the markedDates.
 - `useSyncEntries.ts`
-- Syncs entries for the selected date with the database.
+  - Syncs entries for the selected date with the database.
 - `useSyncMedicationEntries.ts`
-- Syncs medication entries for the selected date with the database.
+  - Syncs medication entries for the selected date with the database.
 
 ## Tools & Libraries
 
