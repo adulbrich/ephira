@@ -110,3 +110,7 @@ In the output, you'll find options to open the app in a:
   - If you get an error about the app not being able to connect or taking longer than it should, try running `npx expo start --tunnel` in the terminal and scanning the QR code again.
 
 This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+
+## CI/CD
+
+Ephira is currently published on both Google Play and the Apple App Store. The app is built using [EAS Build](https://docs.expo.dev/build/introduction/), which can be manually triggered via [this Github Action](https://github.com/adulbrich/ephira/actions/workflows/manual-eas-build.yml). After building, the app must be submitted to the app stores manually through their respective developer consoles.
