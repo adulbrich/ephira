@@ -67,7 +67,12 @@ function FilterSection({
       <List.Item
         title={expanded ? "Hide options" : "Show options"}
         onPress={() => setExpanded(!expanded)}
-        left={(props) => <List.Icon {...props} icon={expanded ? "chevron-up" : "chevron-down"} />}
+        left={(props) => (
+          <List.Icon
+            {...props}
+            icon={expanded ? "chevron-up" : "chevron-down"}
+          />
+        )}
       />
       {expanded &&
         listItems
@@ -194,7 +199,7 @@ export default function CalendarFilterDialog({
                 key={filter}
                 onClose={() =>
                   setTempSelectedFilters(
-                    tempSelectedFilters.filter((f) => f !== filter)
+                    tempSelectedFilters.filter((f) => f !== filter),
                   )
                 }
                 style={styles.chip}
