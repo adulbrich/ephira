@@ -64,20 +64,11 @@ Protect your data with Face ID or a custom password unique to Ephira.
 
 <!-- DEVELOPMENT GOALS -->
 
-## Development Goals
+## Capstone Development Goals
 
-- [ ] Android Play Store Deployment
-  - [ ] Review
-  - [ ] User Testing
-- [ ] Apple App Store Deployment
-  - [ ] Review
-  - [ ] User Testing
-- [ ] App Features
-  - [ ] Cycle Prediction
-  - [ ] Data Export
-  - [ ] Animations
-  - [ ] Splash Screen
-  - [ ] Menstrual Cycle Insight
+| Fall 2024  | Winter 2025 | Spring 2025 |
+|------------|-------------|-------------|
+| <ul><li>- [x]  GitHub/Codebase</li><li>- [x] Project Prototype</li><li>- [x] Calendar Input</li></ul> | <ul><li>- [x]  Android Play Store Deployment</li><li>- [x] Apple App Store Deployment</li><li>- [x] State Management</li><li>- [x] Drizzle Integration</li><li>- [x] License</li><li>- [x] Privacy Policy</li><li>- [x] Splash Screen</li><li>- [x] Custom Color Themes</li><li>- [x] Calendar Filters</li><li>- [x] Home Page</li><li>- [x] User Authentication </li></ul> | <ul><li>- [x]  Project Landing Page</li><li>- [ ] Project Archive</li><li>- [x] Autosave</li><li>- [x] Custom Entries</li><li>- [x] Data Export</li><li>- [ ] Cycle Prediction</li><li>- [ ] Symptoms/Moods List </li><li>- [ ] "Add Your Own symptoms/mood" Button</li><li>- [ ] Quick BC Input</li></ul> |
 
 See the [open issues](https://github.com/adulbrich/ephira/issues) for a full list of proposed features (and known issues).
 
@@ -93,7 +84,7 @@ See `LICENSE.txt` for more information.
 
 ## Acknowledgments
 
-### Top contributors:
+### OSU Capstone Team 2024-2025
 
 <a href="https://github.com/adulbrich/ephira/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=adulbrich/ephira" alt="contrib.rocks image" />
