@@ -422,19 +422,24 @@ function CustomEntriesModal({ onDismiss }: { onDismiss: () => void }) {
   );
 }
 
-export default function CustomEntries() {
-  const [modalVisible, setModalVisible] = useState(false);
+export default function CustomEntries({
+  modalVisibleInitially = false,
+  onModalClose,
+}: {
+  modalVisibleInitially?: boolean;
+  onModalClose?: () => void;
+} = {}) {
+  const [modalVisible, setModalVisible] = useState(modalVisibleInitially);
+
+  const handleModalClose = () => {
+    setModalVisible(false);
+    if (onModalClose) onModalClose();
+  };
 
   return (
     <ThemedView>
-      <List.Item
-        title="Custom Entries"
-        description="Add your own custom entries to track"
-        onPress={() => setModalVisible(true)}
-        right={(props) => <List.Icon {...props} icon="arrow-right" />}
-      />
       {modalVisible && (
-        <CustomEntriesModal onDismiss={() => setModalVisible(false)} />
+        <CustomEntriesModal onDismiss={handleModalClose} />
       )}
     </ThemedView>
   );
