@@ -25,7 +25,6 @@ import { useSyncEntries } from "@/hooks/useSyncEntries";
 import { useFetchEntries } from "@/hooks/useFetchEntries";
 import { useFetchMedicationEntries } from "@/hooks/useFetchMedicationEntries";
 import { useSyncMedicationEntries } from "@/hooks/useSyncMedicationEntries";
-import { useFocusEffect } from "expo-router";
 
 export default function DayView() {
   const theme = useTheme();
@@ -147,7 +146,7 @@ export default function DayView() {
   ]);
 
   const onSave = useCallback(() => {
-    if (isSavingRef.current) return; // prevent re-entry
+    if (isSavingRef.current) return;
     isSavingRef.current = true;
 
     try {
@@ -181,47 +180,58 @@ export default function DayView() {
 
           setSaveMessageVisible(false);
 
-          const contentToSave: string[] = [];
-          if (flow_intensity !== 0) {
-            contentToSave.push("Flow");
-          }
-          if (notes && notes.trim() !== "") {
-            contentToSave.push("Notes");
-          }
-          if (selectedSymptoms.length > 0) {
-            contentToSave.push("Symptoms");
-          }
-          if (selectedMoods.length > 0) {
-            contentToSave.push("Moods");
-          }
-          if (selectedMedications.length > 0) {
-            contentToSave.push("Medications");
-          }
-          if (selectedBirthControl) {
-            contentToSave.push("Birth Control");
-          }
+        let savedContent = "";
 
-          if (contentToSave.length > 0) {
-            let message = "";
-            if (contentToSave.length === 1) {
-              message = contentToSave[0] + " Saved!";
-            } else if (contentToSave.length === 2) {
-              message =
-                contentToSave[0] + " and " + contentToSave[1] + " Saved!";
-            } else {
-              // If user selects three or more tracking options, join with commas and add an "and" before the last item
-              const multipleSelections = contentToSave.slice(0, -1).join(", ");
-              message =
-                multipleSelections +
-                " and " +
-                contentToSave[contentToSave.length - 1] +
-                " Saved!";
+        switch (state) {
+          case "flow":
+            if (flow_intensity !== 0) savedContent = "Flow";
+            break;
+          case "symptom":
+            if (selectedSymptoms.length > 0) savedContent = "Symptoms";
+            break;
+          case "mood":
+            if (selectedMoods.length > 0) savedContent = "Moods";
+            break;
+          case "medication":
+            if (selectedMedications.length > 0) savedContent = "Medications";
+            break;
+          case "birthControl":
+            if (selectedBirthControl) savedContent = "Birth Control";
+            break;
+          case "note":
+            if (notes && notes.trim() !== "") savedContent = "Notes";
+            break;
+          default:
+            if (lastSavedData) {
+              if (flow_intensity !== lastSavedData.flow) savedContent = "Flow";
+              else if (notes !== lastSavedData.notes) savedContent = "Notes";
+              else if (
+                JSON.stringify(selectedSymptoms) !==
+                JSON.stringify(lastSavedData.symptoms)
+              )
+                savedContent = "Symptoms";
+              else if (
+                JSON.stringify(selectedMoods) !==
+                JSON.stringify(lastSavedData.moods)
+              )
+                savedContent = "Moods";
+              else if (
+                JSON.stringify(selectedMedications) !==
+                JSON.stringify(lastSavedData.medications)
+              )
+                savedContent = "Medications";
+              else if (selectedBirthControl !== lastSavedData.birthControl)
+                savedContent = "Birth Control";
             }
-            setSaveMessageContent([message]);
-            setSaveMessageVisible(true);
-          }
-        },
-      );
+            break;
+        }
+
+        if (savedContent) {
+          const message = `${savedContent} Saved!`;
+          setSaveMessageContent([message]);
+          setSaveMessageVisible(true);
+        }
+      });
     } finally {
       isSavingRef.current = false;
     }
@@ -244,6 +254,8 @@ export default function DayView() {
     fetchNotes,
     fetchCycleInfo,
     setFlow,
+    state,
+    lastSavedData,
   ]);
 
   useEffect(() => {
@@ -251,13 +263,6 @@ export default function DayView() {
       setFlow(flow_intensity);
     }
   }, [flow_intensity, setFlow]);
-
-  // set accordions to closed when screen is focused
-  useFocusEffect(
-    useCallback(() => {
-      setExpandedAccordion(null);
-    }, [setExpandedAccordion]),
-  );
 
   useEffect(() => {
     const fetchAll = async () => {

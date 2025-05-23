@@ -21,6 +21,17 @@
 
 ![All Screens](https://github.com/user-attachments/assets/c795869d-a4fe-44a9-b520-d5d4561245b1)
 
+![Color Themes Screens - 1920x1080](https://github.com/user-attachments/assets/30b38159-a8aa-47a8-92e1-7dbbeacd79b8)
+
+<p align="center" style="display: flex; justify-content: center; gap: 24px;">
+  <a href="https://apps.apple.com/us/app/ephira/id6741593838?platform=iphone" target="_blank" rel="noopener noreferrer">
+    <img src="https://toolbox.marketingtools.apple.com/api/badges/download-on-the-app-store/black/en-us" height="50" alt="Download on the App Store">
+  </a>
+  <a href="https://play.google.com/store/apps/details?id=com.capucity.ephira" target="_blank" rel="noopener noreferrer">
+    <img src="assets/images/google-play-badge.png" height="50" alt="Get it on Google Play">
+  </a>
+</p>
+
 <!-- ABOUT THE PROJECT -->
 
 ## About The Project
@@ -35,26 +46,27 @@ Open and Transparent: Ephira is open source under the MIT license, and you can r
 
 <!-- VIDEO DEMOS -->
 
-## Video Demos
+## Key Features
 
-https://github.com/user-attachments/assets/f59e4073-7a90-4506-98ea-767b5318f374
+### Customizable Calendar & Symptom Tracking
+
+Add and track custom symptoms, moods, medications, and more with a smooth, visual calendar interface. Filter your calendar legend to only show the symptoms, moods, and medications you want to see. This makes it easy to focus on the data that matters most to you.
+
+‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎<img src="https://github.com/user-attachments/assets/c0aaa86b-1fcb-4cac-874e-49b39a04bfb1" width="650"/>
+
+### App Locking with Passcode & Biometrics
+
+Protect your data with Face ID or a custom password unique to Ephira.
+
+![Password Demo (Final-All)](https://github.com/user-attachments/assets/296864e6-ae4e-48ac-8ee8-b9ca0cd0f9e9)
 
 <!-- DEVELOPMENT GOALS -->
 
-## Development Goals
+## Capstone Development Goals
 
-- [ ] Android Play Store Deployment
-  - [ ] Review
-  - [ ] User Testing
-- [ ] Apple App Store Deployment
-  - [ ] Review
-  - [ ] User Testing
-- [ ] App Features
-  - [ ] Cycle Prediction
-  - [ ] Data Export
-  - [ ] Animations
-  - [ ] Splash Screen
-  - [ ] Menstrual Cycle Insight
+| Fall 2024  | Winter 2025 | Spring 2025 |
+|------------|-------------|-------------|
+| <ul><li>- [x]  GitHub/Codebase</li><li>- [x] Project Prototype</li><li>- [x] Calendar Input</li></ul> | <ul><li>- [x]  Android Play Store Deployment</li><li>- [x] Apple App Store Deployment</li><li>- [x] State Management</li><li>- [x] Drizzle Integration</li><li>- [x] License</li><li>- [x] Privacy Policy</li><li>- [x] Splash Screen</li><li>- [x] Custom Color Themes</li><li>- [x] Calendar Filters</li><li>- [x] Home Page</li><li>- [x] User Authentication </li></ul> | <ul><li>- [x]  Project Landing Page</li><li>- [ ] Project Archive</li><li>- [x] Autosave</li><li>- [x] Custom Entries</li><li>- [x] Data Export</li><li>- [ ] Cycle Prediction</li><li>- [ ] Symptoms/Moods List </li><li>- [ ] "Add Your Own symptoms/mood" Button</li><li>- [ ] Quick BC Input</li></ul> |
 
 See the [open issues](https://github.com/adulbrich/ephira/issues) for a full list of proposed features (and known issues).
 
@@ -70,7 +82,7 @@ See `LICENSE.txt` for more information.
 
 ## Acknowledgments
 
-### Top contributors:
+### OSU Capstone Team 2024-2025
 
 <a href="https://github.com/adulbrich/ephira/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=adulbrich/ephira" alt="contrib.rocks image" />
@@ -95,34 +107,7 @@ See `LICENSE.txt` for more information.
 
 ## Getting Started
 
-### Running the Project
-
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
-
-Due to using Expo SQLite for the database, this project will only run on mobile devices.
-
-- Download the repo
-- `npm install`
-- `npx expo start`
-- On your mobile phone (iOS or Android), download the Expo Go app and then scan the QR code in the terminal.
-
-In the output, you'll find options to open the app in a:
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-### Learn more
-
-To learn more about the libraries we use, look at the following resources:
-
-- [Expo](https://docs.expo.dev/)
-- [React Native](https://reactnative.dev/)
-- [React Native Paper](https://reactnativepaper.com/)
-- [Drizzle (Expo SQLite)](https://orm.drizzle.team/docs/connect-expo-sqlite)
+Check out the [Project Structure](https://github.com/adulbrich/ephira/blob/main/PROJECTSTRUCTURE.md) document for an overview of the key components of the app, main libraries used, and how to set up the app locally.
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->

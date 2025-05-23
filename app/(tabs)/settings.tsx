@@ -1,8 +1,8 @@
 import { ThemedView } from "@/components/ThemedView";
 import AuthenticationSettings from "@/components/settings/AuthenticationSettings";
 import PrivacyPolicy from "@/components/settings/PrivacyPolicy";
-import DeleteData from "@/components/settings/DeleteData";
 import Customization from "@/components/settings/Customization";
+import DataSettings from "@/components/settings/DataSettings";
 import { Text, Divider, useTheme } from "react-native-paper";
 import { ScrollView, SafeAreaView, StyleSheet } from "react-native";
 import ThemeSelector from "@/components/settings/ThemeSelector";
@@ -35,7 +35,7 @@ export default function Settings() {
             <Divider style={styles.divider} />
             <ThemeSelector />
             <Divider style={styles.divider} />
-            <DeleteData />
+            <DataSettings />
             <Divider style={styles.divider} />
             <CyclePredictions />
             <PrivacyPolicy />
