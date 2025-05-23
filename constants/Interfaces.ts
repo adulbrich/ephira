@@ -147,5 +147,8 @@ export interface PredictionToggle {
 
 export interface PredictedCycleState {
   predictedCycle: string[];
+  predictedMarkedDates: MarkedDates;
   setPredictedCycle: (data: string[]) => void;
+  setPredictedMarkedDates: (data: MarkedDates) => void;
 }
+

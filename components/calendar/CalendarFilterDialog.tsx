@@ -27,6 +27,7 @@ import { anyMedicationOption } from "@/constants/Medications";
 import { anyBirthControlOption } from "@/constants/BirthControlTypes";
 const flowOption = "Flow";
 const notesOption = "Notes";
+const predictionOption = "Cycle Prediction";
 
 function FilterSection({
   selectedFilters,
@@ -237,6 +238,21 @@ export default function CalendarFilterDialog({
                     disabled={
                       isMaxFiltersSelected &&
                       !tempSelectedFilters.includes(notesOption)
+                    }
+                  />
+                )}
+              />
+              <List.Item
+                style={styles.listItem}
+                key={predictionOption}
+                title={predictionOption}
+                right={() => (
+                  <Switch
+                    value={tempSelectedFilters.includes(predictionOption)}
+                    onValueChange={() => onToggleSwitch(predictionOption)}
+                    disabled={
+                      isMaxFiltersSelected &&
+                      !tempSelectedFilters.includes(predictionOption)
                     }
                   />
                 )}

@@ -161,5 +161,8 @@ export const usePredictionChoice = create<PredictionToggle>((set) => ({
 
 export const usePredictedCycle = create<PredictedCycleState>((set) => ({
   predictedCycle: [],
+  predictedMarkedDates: {},
   setPredictedCycle: (data: string[]) => set(() => ({ predictedCycle: data })),
+  setPredictedMarkedDates: (data: MarkedDates) =>
+    set(() => ({ predictedMarkedDates: data })),
 }));

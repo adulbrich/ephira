@@ -18,6 +18,7 @@ import {
   useSelectedDate,
   useCalendarFilters,
   useThemeColor,
+  usePredictedCycle
 } from "@/assets/src/calendar-storage";
 import { getSetting, insertSetting } from "@/db/database";
 import CalendarHeader from "@/components/calendar/CalendarHeader";
@@ -37,6 +38,7 @@ export default function FlowCalendar() {
   // const selectedDate = useSelectedDate().date
 
   const { loading, markedDates } = useMarkedDates(selectedFilters);
+  const { predictedMarkedDates } = usePredictedCycle()
   const theme = useTheme();
   const filterColors = theme.dark ? FilterColorsDark : FilterColorsLight;
   const styles = makeStyles({ theme });

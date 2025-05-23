@@ -1,14 +1,18 @@
 import { getAllDays } from "@/db/database";
 import { usePredictedCycle } from "@/assets/src/calendar-storage";
-import { DayData } from "@/constants/Interfaces";
+import { DayData, MarkedDates } from "@/constants/Interfaces";
 
-export function useFetchCycleData() {
-  const { predictedCycle, setPredictedCycle } = usePredictedCycle();
+export function useFetchCycleData(
+  setPredictedCycle: (values: string[]) => void,
+  setPredictedMarkedDates: (values: MarkedDates) => void,
+) {
   const predictedDates: string[] = [];
 
   const fetchCycleData = async () => {
     const allDays = await getAllDays();
     const flowDays = allDays.filter((day) => day.flow_intensity);
+
+    const markedDates: MarkedDates = {};
 
     const sortedFlowDays: DayData[] = flowDays
       .map((day) => ({
@@ -44,20 +48,31 @@ export function useFetchCycleData() {
 
       if (viable === true) {
         const predictedStart = new Date(startDate);
-        predictedStart.setDate(startDate.getDate() + 21);
+        predictedStart.setDate(startDate.getDate() + 28);
         const predictedEnd = new Date(endDate);
-        predictedEnd.setDate(endDate.getDate() + 21);
+        predictedEnd.setDate(endDate.getDate() + 28);
         const nextPredictedDate = new Date(predictedStart);
         while (nextPredictedDate.valueOf() <= predictedEnd.valueOf()) {
-          predictedDates.push(nextPredictedDate.toDateString());
           nextPredictedDate.setDate(nextPredictedDate.getDate() + 1);
+          predictedDates.push(nextPredictedDate.toISOString().split("T")[0]);
+          // markedDates[nextPredictedDate.toISOString().split("T")[0]] = {
+          //   selected: false,
+          //   periods: [
+          //     { startingDay: true, endingDay: true, color: "blue" },
+          //   ]
+          //   }
+          };
         }
       }
-    }
 
     setPredictedCycle(predictedDates);
+    setPredictedMarkedDates(markedDates)
+    // console.log("predictedDates1")
     // console.log(predictedDates)
-    // console.log(predictedCycle)
+    // console.log("markedDates1")
+    // console.log(markedDates)
+
+    return predictedDates
   };
 
   return { fetchCycleData };

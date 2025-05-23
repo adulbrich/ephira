@@ -4,36 +4,40 @@ import { ThemedView } from "@/components/ThemedView";
 import {
   usePredictionChoice,
   usePredictedCycle,
+  useCalendarFilters,
 } from "@/assets/src/calendar-storage";
 import { useFetchCycleData } from "@/hooks/useFetchCycleData";
 import { useRef } from "react";
+import { MarkedDates } from "@/constants/Interfaces";
+import { useMarkedDates } from "@/hooks/useMarkedDates";
 
 export default function CyclePredictions() {
-  const { fetchCycleData } = useFetchCycleData();
-
+  const theme = useTheme();
+  const { selectedFilters, setSelectedFilters } = useCalendarFilters();
+  const { loading, markedDates } = useMarkedDates(selectedFilters);
+  const { predictionChoice, setPredictionChoice } = usePredictionChoice();
+  const { predictedCycle, setPredictedCycle, setPredictedMarkedDates, predictedMarkedDates } = usePredictedCycle();
+  const { fetchCycleData } = useFetchCycleData(setPredictedCycle, setPredictedMarkedDates);
   const fetchCycleDataRef = useRef(fetchCycleData);
   fetchCycleDataRef.current = fetchCycleData;
 
-  const theme = useTheme();
-  const { predictionChoice, setPredictionChoice } = usePredictionChoice();
-  const { predictedCycle, setPredictedCycle } = usePredictedCycle();
 
-  const handleUserChoice = () => {
-    setPredictionChoice(!predictionChoice);
-  };
+  // const handleUserChoice = () => {
+  //   setPredictionChoice(!predictionChoice);
+  // };
 
-  const printCyclePrediction = () => {
-    fetchCycleData();
-  };
+  // const printCyclePrediction = async () => {
+  //   await fetchCycleData();
+  //   console.log("markedDates", markedDates);
+  //   console.log("predictedMarkedDates", predictedMarkedDates);
+  // };
 
   return (
     <ThemedView>
       <List.Section>
         <List.Accordion
           title={
-            predictionChoice
-              ? "Cycle Predictions (ON)"
-              : "Cycle Predictions (OFF)"
+            "Cycle Predictions"
           }
           titleStyle={{
             fontSize: 20,
@@ -41,48 +45,8 @@ export default function CyclePredictions() {
         >
           <View style={{ paddingLeft: 15, paddingRight: 15, gap: 10 }}>
             <Text>
-              Here you can choose whether or not to enable cycle predictions.
+              Here you can learn more about the Cycle Prediction feature.
             </Text>
-            <Button
-              mode="elevated"
-              textColor={theme.colors.onPrimaryContainer}
-              buttonColor={theme.colors.primaryContainer}
-              onPress={handleUserChoice}
-            >
-              {predictionChoice
-                ? "Cycle Prediction is ON"
-                : "Cycle Prediction is OFF"}
-            </Button>
-            {predictionChoice && (
-              <View style={{ gap: 10 }}>
-                <Button
-                  mode="elevated"
-                  textColor={theme.colors.onPrimaryContainer}
-                  buttonColor={theme.colors.primaryContainer}
-                  onPress={printCyclePrediction}
-                >
-                  Click me for next Cycle Prediction
-                </Button>
-                <Text
-                  style={{
-                    color:
-                      predictedCycle.length > 0
-                        ? theme.colors.onPrimaryContainer
-                        : theme.colors.error,
-                  }}
-                >
-                  {predictedCycle.length > 0
-                    ? "Predicted Cycle Dates: \n"
-                    : "Can't Predict Cycle"}
-                  {predictedCycle.map((date, index) => (
-                    <Text key={index}>
-                      {date}
-                      {index < predictedCycle.length - 1 ? "\n" : ""}
-                    </Text>
-                  ))}
-                </Text>
-              </View>
-            )}
 
             <Text>
               This feature is fully developmental and only works when you mark
