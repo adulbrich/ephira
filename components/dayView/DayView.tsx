@@ -180,58 +180,60 @@ export default function DayView() {
 
           setSaveMessageVisible(false);
 
-        let savedContent = "";
+          let savedContent = "";
 
-        switch (state) {
-          case "flow":
-            if (flow_intensity !== 0) savedContent = "Flow";
-            break;
-          case "symptom":
-            if (selectedSymptoms.length > 0) savedContent = "Symptoms";
-            break;
-          case "mood":
-            if (selectedMoods.length > 0) savedContent = "Moods";
-            break;
-          case "medication":
-            if (selectedMedications.length > 0) savedContent = "Medications";
-            break;
-          case "birthControl":
-            if (selectedBirthControl) savedContent = "Birth Control";
-            break;
-          case "note":
-            if (notes && notes.trim() !== "") savedContent = "Notes";
-            break;
-          default:
-            if (lastSavedData) {
-              if (flow_intensity !== lastSavedData.flow) savedContent = "Flow";
-              else if (notes !== lastSavedData.notes) savedContent = "Notes";
-              else if (
-                JSON.stringify(selectedSymptoms) !==
-                JSON.stringify(lastSavedData.symptoms)
-              )
-                savedContent = "Symptoms";
-              else if (
-                JSON.stringify(selectedMoods) !==
-                JSON.stringify(lastSavedData.moods)
-              )
-                savedContent = "Moods";
-              else if (
-                JSON.stringify(selectedMedications) !==
-                JSON.stringify(lastSavedData.medications)
-              )
-                savedContent = "Medications";
-              else if (selectedBirthControl !== lastSavedData.birthControl)
-                savedContent = "Birth Control";
-            }
-            break;
-        }
+          switch (state) {
+            case "flow":
+              if (flow_intensity !== 0) savedContent = "Flow";
+              break;
+            case "symptom":
+              if (selectedSymptoms.length > 0) savedContent = "Symptoms";
+              break;
+            case "mood":
+              if (selectedMoods.length > 0) savedContent = "Moods";
+              break;
+            case "medication":
+              if (selectedMedications.length > 0) savedContent = "Medications";
+              break;
+            case "birthControl":
+              if (selectedBirthControl) savedContent = "Birth Control";
+              break;
+            case "note":
+              if (notes && notes.trim() !== "") savedContent = "Notes";
+              break;
+            default:
+              if (lastSavedData) {
+                if (flow_intensity !== lastSavedData.flow)
+                  savedContent = "Flow";
+                else if (notes !== lastSavedData.notes) savedContent = "Notes";
+                else if (
+                  JSON.stringify(selectedSymptoms) !==
+                  JSON.stringify(lastSavedData.symptoms)
+                )
+                  savedContent = "Symptoms";
+                else if (
+                  JSON.stringify(selectedMoods) !==
+                  JSON.stringify(lastSavedData.moods)
+                )
+                  savedContent = "Moods";
+                else if (
+                  JSON.stringify(selectedMedications) !==
+                  JSON.stringify(lastSavedData.medications)
+                )
+                  savedContent = "Medications";
+                else if (selectedBirthControl !== lastSavedData.birthControl)
+                  savedContent = "Birth Control";
+              }
+              break;
+          }
 
-        if (savedContent) {
-          const message = `${savedContent} Saved!`;
-          setSaveMessageContent([message]);
-          setSaveMessageVisible(true);
-        }
-      });
+          if (savedContent) {
+            const message = `${savedContent} Saved!`;
+            setSaveMessageContent([message]);
+            setSaveMessageVisible(true);
+          }
+        },
+      );
     } finally {
       isSavingRef.current = false;
     }

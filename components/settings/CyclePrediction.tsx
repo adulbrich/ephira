@@ -1,26 +1,18 @@
 import { View } from "react-native";
-import { Button, Divider, List, Text, useTheme } from "react-native-paper";
+import { Divider, List, Text, useTheme } from "react-native-paper";
 import { ThemedView } from "@/components/ThemedView";
-import {
-  usePredictionChoice,
-  usePredictedCycle,
-  useCalendarFilters,
-} from "@/assets/src/calendar-storage";
+import { usePredictedCycle } from "@/assets/src/calendar-storage";
 import { useFetchCycleData } from "@/hooks/useFetchCycleData";
 import { useRef } from "react";
-import { MarkedDates } from "@/constants/Interfaces";
-import { useMarkedDates } from "@/hooks/useMarkedDates";
 
 export default function CyclePredictions() {
-  const theme = useTheme();
-  const { selectedFilters, setSelectedFilters } = useCalendarFilters();
-  const { loading, markedDates } = useMarkedDates(selectedFilters);
-  const { predictionChoice, setPredictionChoice } = usePredictionChoice();
-  const { predictedCycle, setPredictedCycle, setPredictedMarkedDates, predictedMarkedDates } = usePredictedCycle();
-  const { fetchCycleData } = useFetchCycleData(setPredictedCycle, setPredictedMarkedDates);
+  const { setPredictedCycle, setPredictedMarkedDates } = usePredictedCycle();
+  const { fetchCycleData } = useFetchCycleData(
+    setPredictedCycle,
+    setPredictedMarkedDates,
+  );
   const fetchCycleDataRef = useRef(fetchCycleData);
   fetchCycleDataRef.current = fetchCycleData;
-
 
   // const handleUserChoice = () => {
   //   setPredictionChoice(!predictionChoice);
@@ -36,9 +28,7 @@ export default function CyclePredictions() {
     <ThemedView>
       <List.Section>
         <List.Accordion
-          title={
-            "Cycle Predictions"
-          }
+          title={"Cycle Predictions"}
           titleStyle={{
             fontSize: 20,
           }}

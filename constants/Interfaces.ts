@@ -151,4 +151,3 @@ export interface PredictedCycleState {
   setPredictedCycle: (data: string[]) => void;
   setPredictedMarkedDates: (data: MarkedDates) => void;
 }
-

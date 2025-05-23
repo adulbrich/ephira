@@ -61,18 +61,18 @@ export function useFetchCycleData(
           //     { startingDay: true, endingDay: true, color: "blue" },
           //   ]
           //   }
-          };
         }
       }
+    }
 
     setPredictedCycle(predictedDates);
-    setPredictedMarkedDates(markedDates)
+    setPredictedMarkedDates(markedDates);
     // console.log("predictedDates1")
     // console.log(predictedDates)
     // console.log("markedDates1")
     // console.log(markedDates)
 
-    return predictedDates
+    return predictedDates;
   };
 
   return { fetchCycleData };

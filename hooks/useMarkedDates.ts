@@ -6,7 +6,10 @@ import {
   getAllVisibleMedications,
 } from "@/db/database";
 import type { DayData, MarkedDates } from "@/constants/Interfaces";
-import { usePredictedCycle, useSelectedDate } from "@/assets/src/calendar-storage";
+import {
+  usePredictedCycle,
+  useSelectedDate,
+} from "@/assets/src/calendar-storage";
 import { FlowColors } from "@/constants/Colors";
 import { useLiveFilteredData } from "@/hooks/useLiveFilteredData";
 import { anySymptomOption } from "@/constants/Symptoms";
@@ -231,7 +234,6 @@ async function markedDatesBuilder(
       options: birthControlOptions,
       anyOption: anyBirthControlOption,
     });
-
   });
 
   return markedDates;
@@ -248,8 +250,11 @@ export function useMarkedDates(calendarFilters?: string[]) {
   // access state management
   const { date, setDate, setFlow, setId } = useSelectedDate();
 
-  const { predictedCycle, setPredictedCycle, setPredictedMarkedDates, predictedMarkedDates } = usePredictedCycle();
-  const { fetchCycleData } = useFetchCycleData(setPredictedCycle, setPredictedMarkedDates);
+  const { setPredictedCycle, setPredictedMarkedDates } = usePredictedCycle();
+  const { fetchCycleData } = useFetchCycleData(
+    setPredictedCycle,
+    setPredictedMarkedDates,
+  );
   const fetchCycleDataRef = useRef(fetchCycleData);
   fetchCycleDataRef.current = fetchCycleData;
 
@@ -281,27 +286,31 @@ export function useMarkedDates(calendarFilters?: string[]) {
       );
 
       if (calendarFilters?.includes("Cycle Prediction")) {
-        const predictionsIndex = calendarFilters.findIndex((filter) => filter === "Cycle Prediction");
+        const predictionsIndex = calendarFilters.findIndex(
+          (filter) => filter === "Cycle Prediction",
+        );
         const newPredictedDates = await fetchCycleDataRef.current();
-        const newPredictedMarkedDates : MarkedDates = {}
-        newPredictedDates.forEach(date => {
+        const newPredictedMarkedDates: MarkedDates = {};
+        newPredictedDates.forEach((date) => {
           newPredictedMarkedDates[date] = {
             selected: false,
             periods: [
-              { startingDay: true, endingDay: true, color: colors[predictionsIndex] },
-            ]
-          }
+              {
+                startingDay: true,
+                endingDay: true,
+                color: colors[predictionsIndex],
+              },
+            ],
+          };
         });
         setMarkedDates({ ...newPredictedMarkedDates, ...newMarkedDates });
-      }
-      else {
-        setMarkedDates({...newMarkedDates});
+      } else {
+        setMarkedDates({ ...newMarkedDates });
       }
 
       setDate(date);
     }
 
-    
     // console.log("markedDates", markedDates);
     // console.log("calendarFilters", calendarFilters);
 
