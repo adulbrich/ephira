@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { StyleSheet, View } from "react-native";
-import { insertDay, getDay, getAllDays } from "@/db/database";
+import { insertDay, getDay } from "@/db/database";
 import { List, Text, useTheme, Divider } from "react-native-paper";
 import {
   useAccordion,
@@ -11,8 +11,6 @@ import {
   useBirthControl,
   useBirthControlNotes,
   useTimeTaken,
-  useData,
-  usePredictedCycle,
 } from "@/assets/src/calendar-storage";
 import FlowAccordion from "@/components/dayView/FlowAccordion";
 import MedicationsAccordion from "./MedicationsAccordion";
@@ -46,8 +44,6 @@ export default function DayView() {
   const { selectedBirthControl, setSelectedBirthControl } = useBirthControl();
   const { birthControlNotes, setBirthControlNotes } = useBirthControlNotes();
   const { timeTaken, setTimeTaken } = useTimeTaken();
-  const { data: flowData } = useData();
-  const { predictedCycle, setPredictedCycle } = usePredictedCycle();
 
   const { syncEntries } = useSyncEntries(date);
   const { fetchEntries } = useFetchEntries(

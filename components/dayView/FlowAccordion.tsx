@@ -1,12 +1,5 @@
 import { View, StyleSheet } from "react-native";
-import {
-  List,
-  RadioButton,
-  useTheme,
-  Text,
-  Button,
-  Chip,
-} from "react-native-paper";
+import { List, RadioButton, useTheme, Text, Chip } from "react-native-paper";
 import { ThemedView } from "../ThemedView";
 
 const flowOptions = ["None", "Spotting", "Light", "Medium", "Heavy"];

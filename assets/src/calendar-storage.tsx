@@ -20,7 +20,6 @@ import {
   PredictionToggle,
   PredictedCycleState,
 } from "@/constants/Interfaces";
-import { boolean } from "drizzle-orm/gel-core";
 
 const initialDay: DayData = {
   id: 0,

@@ -18,7 +18,6 @@ import {
   useSelectedDate,
   useCalendarFilters,
   useThemeColor,
-  usePredictedCycle,
 } from "@/assets/src/calendar-storage";
 import { getSetting, insertSetting } from "@/db/database";
 import CalendarHeader from "@/components/calendar/CalendarHeader";

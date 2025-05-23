@@ -1,5 +1,5 @@
 import { View } from "react-native";
-import { Divider, List, Text, useTheme } from "react-native-paper";
+import { Divider, List, Text } from "react-native-paper";
 import { ThemedView } from "@/components/ThemedView";
 import { usePredictedCycle } from "@/assets/src/calendar-storage";
 import { useFetchCycleData } from "@/hooks/useFetchCycleData";

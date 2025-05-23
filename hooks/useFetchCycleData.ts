@@ -1,5 +1,4 @@
 import { getAllDays } from "@/db/database";
-import { usePredictedCycle } from "@/assets/src/calendar-storage";
 import { DayData, MarkedDates } from "@/constants/Interfaces";
 
 export function useFetchCycleData(
