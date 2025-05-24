@@ -5,7 +5,7 @@ import { deleteAllMoods } from "@/db/operations/moods";
 import { deleteAllSymptomEntries } from "@/db/operations/symptomEntries";
 import { deleteAllSymptoms } from "@/db/operations/symptoms";
 import { deleteAllDays } from "@/db/operations/days";
-import { deleteAllSettings, getAllSettings } from "@/db/operations/settings";
+import { deleteAllSettings } from "@/db/operations/settings";
 import { insertSymptom } from "@/db/operations/symptoms";
 import { insertMood } from "@/db/operations/moods";
 import { insertMedication } from "@/db/operations/medications";
@@ -19,7 +19,6 @@ import { getDrizzleDatabase } from "@/db/operations/setup";
 import * as schema from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { ExportData } from "@/constants/Interfaces";
-import { settings } from "@/db/schema";
 
 const db = getDrizzleDatabase();
 

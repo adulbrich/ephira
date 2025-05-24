@@ -6,27 +6,29 @@ import {
   usePredictedCycle,
 } from "@/assets/src/calendar-storage";
 import { useFetchCycleData } from "@/hooks/useFetchCycleData";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { SettingsKeys } from "@/constants/Settings";
-import { getAllSettings, getSetting, insertSetting, updateSetting } from "@/db/database";
-import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
-import { settings } from "@/db/schema";
+import { insertSetting } from "@/db/database";
 
 export default function CyclePredictions() {
   const theme = useTheme();
   const { predictionChoice, setPredictionChoice } = usePredictionChoice();
   const { setPredictedCycle, setPredictedMarkedDates } = usePredictedCycle();
-  const { fetchCycleData } = useFetchCycleData(setPredictedCycle, setPredictedMarkedDates);
+  const { fetchCycleData } = useFetchCycleData(
+    setPredictedCycle,
+    setPredictedMarkedDates,
+  );
   const fetchCycleDataRef = useRef(fetchCycleData);
   fetchCycleDataRef.current = fetchCycleData;
 
   const handleOptionChange = async () => {
-    const newPredictionChoice = !predictionChoice
+    const newPredictionChoice = !predictionChoice;
     setPredictionChoice(newPredictionChoice);
-    await insertSetting(SettingsKeys.cyclePredictions, JSON.stringify(newPredictionChoice));
-  }
-
-
+    await insertSetting(
+      SettingsKeys.cyclePredictions,
+      JSON.stringify(newPredictionChoice),
+    );
+  };
 
   return (
     <ThemedView>
@@ -53,11 +55,8 @@ export default function CyclePredictions() {
                 await handleOptionChange();
               }}
             >
-              {predictionChoice
-                ? "Enabled"
-                : "Disabled"}
+              {predictionChoice ? "Enabled" : "Disabled"}
             </Button>
-
 
             <Text>
               This feature is fully developmental and only works when you mark

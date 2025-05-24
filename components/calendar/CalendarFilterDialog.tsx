@@ -27,7 +27,6 @@ import { anyMedicationOption } from "@/constants/Medications";
 import { anyBirthControlOption } from "@/constants/BirthControlTypes";
 const flowOption = "Flow";
 const notesOption = "Notes";
-const predictionOption = "Cycle Prediction";
 
 function FilterSection({
   selectedFilters,

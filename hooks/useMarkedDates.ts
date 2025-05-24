@@ -4,7 +4,6 @@ import {
   getAllVisibleSymptoms,
   getAllVisibleMoods,
   getAllVisibleMedications,
-  getSetting,
 } from "@/db/database";
 import type { DayData, MarkedDates } from "@/constants/Interfaces";
 import {
@@ -21,7 +20,6 @@ import { anyBirthControlOption } from "@/constants/BirthControlTypes";
 import { useTheme } from "react-native-paper";
 import { FilterColorsDark, FilterColorsLight } from "@/constants/Colors";
 import { useFetchCycleData } from "./useFetchCycleData";
-import { SettingsKeys } from "@/constants/Settings";
 
 function getStartingAndEndingDay(
   day: string,
@@ -254,7 +252,7 @@ export function useMarkedDates(calendarFilters?: string[]) {
   const { date, setDate, setFlow, setId } = useSelectedDate();
 
   const { setPredictedCycle, setPredictedMarkedDates } = usePredictedCycle();
-  const { predictionChoice, setPredictionChoice } = usePredictionChoice();
+  const { predictionChoice } = usePredictionChoice();
   const { fetchCycleData } = useFetchCycleData(
     setPredictedCycle,
     setPredictedMarkedDates,
@@ -288,7 +286,7 @@ export function useMarkedDates(calendarFilters?: string[]) {
         allDays,
         colors,
       );
-      
+
       if (calendarFilters?.includes("Flow") && predictionChoice === true) {
         const newPredictedDates = await fetchCycleDataRef.current();
         const newPredictedMarkedDates: MarkedDates = {};

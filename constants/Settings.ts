@@ -1,4 +1,3 @@
-
 export const DATABASE_NAME = "ephira.db";
 
 export const SettingsKeys = {
