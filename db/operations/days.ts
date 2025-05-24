@@ -20,10 +20,17 @@ export const updateDay = async (
   date: string,
   flowIntensity: number,
   notes?: string | null,
+  is_cycle_start?: boolean,
+  is_cycle_end?: boolean,
 ) => {
   await db
     .update(days)
-    .set({ flow_intensity: flowIntensity, notes: notes ?? null })
+    .set({
+      flow_intensity: flowIntensity,
+      notes: notes ?? null,
+      is_cycle_start: is_cycle_start,
+      is_cycle_end: is_cycle_end,
+    })
     .where(eq(days.date, date));
 };
 
@@ -62,15 +69,25 @@ export const insertDay = async (
   date: string,
   flowIntensity: number,
   notes?: string,
+  is_cycle_start?: boolean,
+  is_cycle_end?: boolean,
 ) => {
   const day = await getDay(date);
   if (day) {
-    await updateDay(date, flowIntensity, notes ?? null);
+    await updateDay(
+      date,
+      flowIntensity,
+      notes ?? null,
+      is_cycle_start,
+      is_cycle_end,
+    );
   } else {
     await db.insert(days).values({
       date: date,
       flow_intensity: flowIntensity,
       notes: notes ?? null,
+      is_cycle_start: is_cycle_start,
+      is_cycle_end: is_cycle_end,
     });
   }
 };

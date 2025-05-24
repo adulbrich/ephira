@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   getDay,
   getAllVisibleSymptoms,
@@ -6,7 +6,11 @@ import {
   getAllVisibleMedications,
 } from "@/db/database";
 import type { DayData, MarkedDates } from "@/constants/Interfaces";
-import { useSelectedDate } from "@/assets/src/calendar-storage";
+import {
+  usePredictedCycle,
+  useSelectedDate,
+  usePredictionChoice,
+} from "@/assets/src/calendar-storage";
 import { FlowColors } from "@/constants/Colors";
 import { useLiveFilteredData } from "@/hooks/useLiveFilteredData";
 import { anySymptomOption } from "@/constants/Symptoms";
@@ -15,6 +19,7 @@ import { anyMedicationOption } from "@/constants/Medications";
 import { anyBirthControlOption } from "@/constants/BirthControlTypes";
 import { useTheme } from "react-native-paper";
 import { FilterColorsDark, FilterColorsLight } from "@/constants/Colors";
+import { useFetchCycleData } from "./useFetchCycleData";
 
 function getStartingAndEndingDay(
   day: string,
@@ -246,6 +251,15 @@ export function useMarkedDates(calendarFilters?: string[]) {
   // access state management
   const { date, setDate, setFlow, setId } = useSelectedDate();
 
+  const { setPredictedCycle, setPredictedMarkedDates } = usePredictedCycle();
+  const { predictionChoice } = usePredictionChoice();
+  const { fetchCycleData } = useFetchCycleData(
+    setPredictedCycle,
+    setPredictedMarkedDates,
+  );
+  const fetchCycleDataRef = useRef(fetchCycleData);
+  fetchCycleDataRef.current = fetchCycleData;
+
   // get date in local time
   const day = new Date();
   const offset = day.getTimezoneOffset();
@@ -273,12 +287,35 @@ export function useMarkedDates(calendarFilters?: string[]) {
         colors,
       );
 
-      setMarkedDates(newMarkedDates);
+      if (calendarFilters?.includes("Flow") && predictionChoice === true) {
+        const newPredictedDates = await fetchCycleDataRef.current();
+        const newPredictedMarkedDates: MarkedDates = {};
+        newPredictedDates.forEach((date) => {
+          newPredictedMarkedDates[date] = {
+            selected: false,
+            periods: [
+              {
+                startingDay: true,
+                endingDay: true,
+                color: "grey",
+              },
+            ],
+          };
+        });
+        setMarkedDates({ ...newPredictedMarkedDates, ...newMarkedDates });
+      } else {
+        setMarkedDates({ ...newMarkedDates });
+      }
+
       setDate(date);
     }
 
+    // console.log("predictionChoice", predictionChoice);
+    // console.log("markedDates", markedDates);
+    // console.log("calendarFilters", calendarFilters);
+
     refreshCalendar(filteredData as DayData[]);
-  }, [filteredData, date, setDate, calendarFilters, colors]);
+  }, [filteredData, date, setDate, calendarFilters, colors, predictionChoice]);
 
   // get data for selected date on calendar (when user presses a different day)
   useEffect(() => {
