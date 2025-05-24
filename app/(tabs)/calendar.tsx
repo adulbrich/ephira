@@ -18,6 +18,7 @@ import {
   useSelectedDate,
   useCalendarFilters,
   useThemeColor,
+  usePredictionChoice,
 } from "@/assets/src/calendar-storage";
 import { getSetting, insertSetting } from "@/db/database";
 import CalendarHeader from "@/components/calendar/CalendarHeader";
@@ -33,6 +34,7 @@ export default function FlowCalendar() {
   // access state management
   const { date, setDate } = useSelectedDate();
   const { selectedFilters, setSelectedFilters } = useCalendarFilters();
+  const { predictionChoice, setPredictionChoice } = usePredictionChoice();
   // can also be used like this
   // const selectedDate = useSelectedDate().date
 
@@ -71,6 +73,24 @@ export default function FlowCalendar() {
     };
     loadFilters();
   }, [setSelectedFilters]);
+
+    // load filters from secure store
+    useEffect(() => {
+      const loadPredictionChoice = async () => {
+        const filters = await getSetting(SettingsKeys.cyclePredictions);
+        if (filters?.value) {
+          setPredictionChoice(JSON.parse(filters.value));
+        } else {
+          // set Flow as first filter by default (filler color given since color isn't optional)
+          setPredictionChoice(true);
+          await insertSetting(
+            SettingsKeys.cyclePredictions,
+            JSON.stringify(true),
+          );
+        }
+      };
+      loadPredictionChoice();
+    }, [setPredictionChoice]);
 
   // Set selected date to today when screen is focused
   useFocusEffect(

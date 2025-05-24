@@ -1,3 +1,4 @@
+
 export const DATABASE_NAME = "ephira.db";
 
 export const SettingsKeys = {
@@ -5,6 +6,7 @@ export const SettingsKeys = {
   password: "password",
   calendarFilters: "calendarFilters",
   databaseInitialSetup: "databaseInitialSetup",
+  cyclePredictions: "cyclePredictions",
 };
 
 export const AUTH_TYPES = {

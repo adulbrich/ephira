@@ -242,21 +242,6 @@ export default function CalendarFilterDialog({
                   />
                 )}
               />
-              <List.Item
-                style={styles.listItem}
-                key={predictionOption}
-                title={predictionOption}
-                right={() => (
-                  <Switch
-                    value={tempSelectedFilters.includes(predictionOption)}
-                    onValueChange={() => onToggleSwitch(predictionOption)}
-                    disabled={
-                      isMaxFiltersSelected &&
-                      !tempSelectedFilters.includes(predictionOption)
-                    }
-                  />
-                )}
-              />
             </List.Section>
             <Divider />
             <FilterSection

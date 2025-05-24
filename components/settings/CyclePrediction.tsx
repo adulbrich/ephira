@@ -1,42 +1,63 @@
 import { View } from "react-native";
-import { Divider, List, Text } from "react-native-paper";
+import { Button, Divider, List, Text, useTheme } from "react-native-paper";
 import { ThemedView } from "@/components/ThemedView";
-import { usePredictedCycle } from "@/assets/src/calendar-storage";
+import {
+  usePredictionChoice,
+  usePredictedCycle,
+} from "@/assets/src/calendar-storage";
 import { useFetchCycleData } from "@/hooks/useFetchCycleData";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
+import { SettingsKeys } from "@/constants/Settings";
+import { getAllSettings, getSetting, insertSetting, updateSetting } from "@/db/database";
+import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
+import { settings } from "@/db/schema";
 
 export default function CyclePredictions() {
+  const theme = useTheme();
+  const { predictionChoice, setPredictionChoice } = usePredictionChoice();
   const { setPredictedCycle, setPredictedMarkedDates } = usePredictedCycle();
-  const { fetchCycleData } = useFetchCycleData(
-    setPredictedCycle,
-    setPredictedMarkedDates,
-  );
+  const { fetchCycleData } = useFetchCycleData(setPredictedCycle, setPredictedMarkedDates);
   const fetchCycleDataRef = useRef(fetchCycleData);
   fetchCycleDataRef.current = fetchCycleData;
 
-  // const handleUserChoice = () => {
-  //   setPredictionChoice(!predictionChoice);
-  // };
+  const handleOptionChange = async () => {
+    const newPredictionChoice = !predictionChoice
+    setPredictionChoice(newPredictionChoice);
+    await insertSetting(SettingsKeys.cyclePredictions, JSON.stringify(newPredictionChoice));
+  }
 
-  // const printCyclePrediction = async () => {
-  //   await fetchCycleData();
-  //   console.log("markedDates", markedDates);
-  //   console.log("predictedMarkedDates", predictedMarkedDates);
-  // };
+
 
   return (
     <ThemedView>
       <List.Section>
         <List.Accordion
-          title={"Cycle Predictions"}
+          title={
+            predictionChoice
+              ? "Cycle Predictions (Enabled)"
+              : "Cycle Predictions (Disabled)"
+          }
           titleStyle={{
             fontSize: 20,
           }}
         >
           <View style={{ paddingLeft: 15, paddingRight: 15, gap: 10 }}>
             <Text>
-              Here you can learn more about the Cycle Prediction feature.
+              Here you can choose whether or not to enable cycle predictions.
             </Text>
+            <Button
+              mode="elevated"
+              textColor={theme.colors.onPrimaryContainer}
+              buttonColor={theme.colors.primaryContainer}
+              onPress={async () => {
+                await handleOptionChange();
+              }}
+            >
+              {predictionChoice
+                ? "Enabled"
+                : "Disabled"}
+            </Button>
+
 
             <Text>
               This feature is fully developmental and only works when you mark
