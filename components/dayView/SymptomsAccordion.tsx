@@ -28,7 +28,7 @@ export default function SymptomsAccordion({
   }, [state, customEntriesVisible]);
 
   const selectedVisibleSymptoms = selectedSymptoms.filter((symptom) =>
-    symptomOptions.includes(symptom)
+    symptomOptions.includes(symptom),
   );
 
   const showCustomEntries = () => {

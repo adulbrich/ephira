@@ -200,7 +200,13 @@ function AccordionContents({
   );
 }
 
-function CustomEntriesModal({ onDismiss, initialExpandedAccordion = "1" }: { onDismiss: () => void; initialExpandedAccordion?: string }) {
+function CustomEntriesModal({
+  onDismiss,
+  initialExpandedAccordion = "1",
+}: {
+  onDismiss: () => void;
+  initialExpandedAccordion?: string;
+}) {
   const theme = useTheme();
   const { width, height } = Dimensions.get("window");
   const styles = makeStyles(theme, width, height);
@@ -222,14 +228,14 @@ function CustomEntriesModal({ onDismiss, initialExpandedAccordion = "1" }: { onD
     const fetchSymptoms = async () => {
       const symptoms = await getAllSymptoms();
       const customSymptoms = symptoms.filter(
-        (symptom) => !symptomOptions.includes(symptom.name),
+        (symptom) => !symptomOptions.includes(symptom.name)
       );
       setSymptoms(customSymptoms.map((symptom) => symptom.name));
     };
     const fetchMoods = async () => {
       const moods = await getAllMoods();
       const customMoods = moods.filter(
-        (mood) => !moodOptions.includes(mood.name),
+        (mood) => !moodOptions.includes(mood.name)
       );
       setMoods(customMoods.map((mood) => mood.name));
     };
@@ -239,13 +245,13 @@ function CustomEntriesModal({ onDismiss, initialExpandedAccordion = "1" }: { onD
         (medication) =>
           !medicationOptions.includes(medication.name) &&
           !birthControlOptions.includes(medication.name) &&
-          medication.type !== "birth control",
+          medication.type !== "birth control"
       );
       const customBirthControl = medications.filter(
         (medication) =>
           !medicationOptions.includes(medication.name) &&
           !birthControlOptions.includes(medication.name) &&
-          medication.type === "birth control",
+          medication.type === "birth control"
       );
       setMedications(customMedications.map((medication) => medication.name));
       setBirthControl(customBirthControl.map((bc) => bc.name));
@@ -270,7 +276,7 @@ function CustomEntriesModal({ onDismiss, initialExpandedAccordion = "1" }: { onD
       ...birthControlOptions,
     ];
     const squashedAllEntries = allEntries.map((entry) =>
-      entry.replace(/[_\s]/g, "").toLowerCase(),
+      entry.replace(/[_\s]/g, "").toLowerCase()
     );
     if (squashedAllEntries.includes(squashedEntryName)) {
       setSnackbarText(`${entryName} already exists.`);
@@ -321,12 +327,12 @@ function CustomEntriesModal({ onDismiss, initialExpandedAccordion = "1" }: { onD
     // check if entry is in calendar filters and remove if needed
     if (selectedFilters.includes(entryName)) {
       const updatedFilters = selectedFilters.filter(
-        (filter: string) => filter !== entryName,
+        (filter: string) => filter !== entryName
       );
       setSelectedFilters(updatedFilters);
       updateSetting(
         SettingsKeys.calendarFilters,
-        JSON.stringify(selectedFilters),
+        JSON.stringify(selectedFilters)
       );
     }
   };
@@ -449,8 +455,8 @@ export default function CustomEntries({
         />
       )}
       {modalVisible && (
-        <CustomEntriesModal 
-          onDismiss={handleModalClose} 
+        <CustomEntriesModal
+          onDismiss={handleModalClose}
           initialExpandedAccordion={initialExpandedAccordion}
         />
       )}
