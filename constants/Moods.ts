@@ -9,14 +9,14 @@ export const moodOptions = [
   "Calm",
   "Motivated",
   "Frustrated",
-  "Content",
-  "Focused",
+  // "Content",
+  // "Focused",
   "Overwhelmed",
   "Sensitive",
-  "Confident",
+  // "Confident",
   "Excited",
   "Insecure",
-  "Grateful",
+  // "Grateful",
 ];
 
 export const anyMoodOption = "Any Mood";

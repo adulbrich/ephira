@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { View } from "react-native";
-import { List, Text, Button, useTheme } from "react-native-paper";
+import { List, Text, Button } from "react-native-paper";
 import ChipSelection from "./ChipSelection";
 import { getAllVisibleSymptoms } from "@/db/database";
 import CustomEntries from "@/components/settings/CustomEntries";
@@ -16,7 +16,6 @@ export default function SymptomsAccordion({
   selectedSymptoms: string[];
   setSelectedSymptoms: (symptoms: string[]) => void;
 }) {
-
   const [symptomOptions, setSymptomOptions] = useState<string[]>([]);
   const [customEntriesVisible, setCustomEntriesVisible] = useState(false);
 
@@ -29,7 +28,7 @@ export default function SymptomsAccordion({
   }, [state, customEntriesVisible]);
 
   const selectedVisibleSymptoms = selectedSymptoms.filter((symptom) =>
-    symptomOptions.includes(symptom),
+    symptomOptions.includes(symptom)
   );
 
   const showCustomEntries = () => {
@@ -60,22 +59,31 @@ export default function SymptomsAccordion({
           setSelectedValues={setSelectedSymptoms}
           label="Select Symptoms"
         />
-        
-        <View style={{ width: "100%", padding: 6, paddingLeft: 20, paddingRight: 20, marginBottom: 14}}>
-          <Button 
+
+        <View
+          style={{
+            width: "100%",
+            padding: 6,
+            paddingLeft: 20,
+            paddingRight: 20,
+            marginBottom: 14,
+          }}
+        >
+          <Button
             mode="contained-tonal"
             icon="plus"
             onPress={showCustomEntries}
           >
-            Add Symptom
+            Add Your Symptom
           </Button>
         </View>
       </List.Accordion>
 
       {/* navigate to custom entries */}
       {customEntriesVisible && (
-        <CustomEntries 
-          modalVisibleInitially={true} 
+        <CustomEntries
+          modalVisibleInitially={true}
+          initialExpandedAccordion="1"
           onModalClose={() => setCustomEntriesVisible(false)}
         />
       )}
