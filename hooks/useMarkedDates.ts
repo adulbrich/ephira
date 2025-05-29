@@ -166,7 +166,7 @@ async function markedDatesBuilder(
 
     // notes
     const notesFilter = filters.includes("Notes");
-    const notesIndex = filters.findIndex((filter) => filter === "notes");
+    const notesIndex = filters.findIndex((filter) => filter === "Notes");
     if (notesFilter) {
       if (!markedDates[day.date])
         markedDates[day.date] = { selected: false, periods: [] };
@@ -183,6 +183,26 @@ async function markedDatesBuilder(
         });
       }
     }
+
+      // Cycle Start/End
+      const startEndFilter = filters.includes("Cycle Start/End");
+      const startEndIndex = filters.findIndex((filter) => filter === "Cycle Start/End");
+      if (startEndFilter) {
+        if (!markedDates[day.date])
+          markedDates[day.date] = { selected: false, periods: [] };
+  
+        if (day.is_cycle_start === false && day.is_cycle_end === false) {
+          markedDates[day.date].periods.push({
+            color: "transparent",
+          });
+        } else {
+          markedDates[day.date].periods.push({
+            startingDay: true,
+            endingDay: true,
+            color: filterColors[startEndIndex],
+          });
+        }
+      }
 
     // symptoms
     applyFilterToMarkedDates({
@@ -310,7 +330,7 @@ export function useMarkedDates(calendarFilters?: string[]) {
 
       setDate(date);
     }
-    
+
     refreshCalendar(filteredData as DayData[]);
   }, [filteredData, date, setDate, calendarFilters, colors, predictionChoice]);
 

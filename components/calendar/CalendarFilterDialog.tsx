@@ -29,6 +29,7 @@ import { anyBirthControlOption } from "@/constants/BirthControlTypes";
 const flowOption = "Flow";
 const PredictionOption = "Cycle Prediction";
 const notesOption = "Notes";
+const StartEndOption = "Cycle Start/End";
 
 function FilterSection({
   selectedFilters,
@@ -224,6 +225,21 @@ export default function CalendarFilterDialog({
                     disabled={
                       isMaxFiltersSelected &&
                       !tempSelectedFilters.includes(flowOption)
+                    }
+                  />
+                )}
+              />
+              <List.Item
+                style={styles.listItem}
+                key={StartEndOption}
+                title={StartEndOption}
+                right={() => (
+                  <Switch
+                    value={tempSelectedFilters.includes(StartEndOption)}
+                    onValueChange={() => onToggleSwitch(StartEndOption)}
+                    disabled={
+                      isMaxFiltersSelected &&
+                      !tempSelectedFilters.includes(StartEndOption)
                     }
                   />
                 )}
