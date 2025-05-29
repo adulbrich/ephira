@@ -17,7 +17,6 @@ export default function CyclePredictions() {
   const { setPredictedCycle, setPredictedMarkedDates } = usePredictedCycle();
   const { fetchCycleData } = useFetchCycleData(
     setPredictedCycle,
-    setPredictedMarkedDates,
   );
   const { setSelectedFilters, selectedFilters } = useCalendarFilters();
   const fetchCycleDataRef = useRef(fetchCycleData);

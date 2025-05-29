@@ -255,7 +255,6 @@ export function useMarkedDates(calendarFilters?: string[]) {
   const { predictionChoice } = usePredictionChoice();
   const { fetchCycleData } = useFetchCycleData(
     setPredictedCycle,
-    setPredictedMarkedDates,
   );
   const fetchCycleDataRef = useRef(fetchCycleData);
   fetchCycleDataRef.current = fetchCycleData;
