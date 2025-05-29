@@ -4,6 +4,7 @@ import { ThemedView } from "@/components/ThemedView";
 import {
   usePredictionChoice,
   usePredictedCycle,
+  useCalendarFilters,
 } from "@/assets/src/calendar-storage";
 import { useFetchCycleData } from "@/hooks/useFetchCycleData";
 import { useRef } from "react";
@@ -18,12 +19,26 @@ export default function CyclePredictions() {
     setPredictedCycle,
     setPredictedMarkedDates,
   );
+  const { setSelectedFilters, selectedFilters } = useCalendarFilters();
   const fetchCycleDataRef = useRef(fetchCycleData);
   fetchCycleDataRef.current = fetchCycleData;
 
   const handleOptionChange = async () => {
     const newPredictionChoice = !predictionChoice;
     setPredictionChoice(newPredictionChoice);
+    if (selectedFilters.includes("Cycle Prediction")) {
+      if (newPredictionChoice) {
+        // If enabling cycle predictions, fetch the cycle data
+        await fetchCycleDataRef.current();
+      } else {
+        // If disabling cycle predictions, remove the filter
+        const updatedFilters = selectedFilters.filter(
+          (filter) => filter !== "Cycle Prediction",
+        );
+        setSelectedFilters(updatedFilters);
+      }
+    }
+
     await insertSetting(
       SettingsKeys.cyclePredictions,
       JSON.stringify(newPredictionChoice),

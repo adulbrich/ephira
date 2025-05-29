@@ -20,12 +20,14 @@ import {
 import {
   useCalendarFilters,
   useDatabaseChangeNotifier,
+  usePredictionChoice,
 } from "@/assets/src/calendar-storage";
 import { anySymptomOption } from "@/constants/Symptoms";
 import { anyMoodOption } from "@/constants/Moods";
 import { anyMedicationOption } from "@/constants/Medications";
 import { anyBirthControlOption } from "@/constants/BirthControlTypes";
 const flowOption = "Flow";
+const PredictionOption = "Cycle Prediction";
 const notesOption = "Notes";
 
 function FilterSection({
@@ -226,6 +228,24 @@ export default function CalendarFilterDialog({
                   />
                 )}
               />
+              {/* Add PredictionOption switch if predictionChoice is true */}
+              {usePredictionChoice().predictionChoice === true && (
+                <List.Item
+                  style={styles.listItem}
+                  key={PredictionOption}
+                  title={PredictionOption}
+                  right={() => (
+                    <Switch
+                      value={tempSelectedFilters.includes(PredictionOption)}
+                      onValueChange={() => onToggleSwitch(PredictionOption)}
+                      disabled={
+                        isMaxFiltersSelected &&
+                        !tempSelectedFilters.includes(PredictionOption)
+                      }
+                    />
+                  )}
+                />
+              )}
               <List.Item
                 style={styles.listItem}
                 key={notesOption}

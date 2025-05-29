@@ -287,9 +287,13 @@ export function useMarkedDates(calendarFilters?: string[]) {
         colors,
       );
 
-      if (calendarFilters?.includes("Flow") && predictionChoice === true) {
+      if (
+        calendarFilters?.includes("Cycle Prediction") &&
+        predictionChoice === true
+      ) {
         const newPredictedDates = await fetchCycleDataRef.current();
         const newPredictedMarkedDates: MarkedDates = {};
+        const index = calendarFilters?.indexOf("Cycle Prediction");
         newPredictedDates.forEach((date) => {
           newPredictedMarkedDates[date] = {
             selected: false,
@@ -297,7 +301,7 @@ export function useMarkedDates(calendarFilters?: string[]) {
               {
                 startingDay: true,
                 endingDay: true,
-                color: "grey",
+                color: colors[index],
               },
             ],
           };
