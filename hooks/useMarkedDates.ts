@@ -251,11 +251,9 @@ export function useMarkedDates(calendarFilters?: string[]) {
   // access state management
   const { date, setDate, setFlow, setId } = useSelectedDate();
 
-  const { setPredictedCycle, setPredictedMarkedDates } = usePredictedCycle();
+  const { setPredictedCycle } = usePredictedCycle();
   const { predictionChoice } = usePredictionChoice();
-  const { fetchCycleData } = useFetchCycleData(
-    setPredictedCycle,
-  );
+  const { fetchCycleData } = useFetchCycleData(setPredictedCycle);
   const fetchCycleDataRef = useRef(fetchCycleData);
   fetchCycleDataRef.current = fetchCycleData;
 
@@ -312,11 +310,7 @@ export function useMarkedDates(calendarFilters?: string[]) {
 
       setDate(date);
     }
-
-    // console.log("predictionChoice", predictionChoice);
-    // console.log("markedDates", markedDates);
-    // console.log("calendarFilters", calendarFilters);
-
+    
     refreshCalendar(filteredData as DayData[]);
   }, [filteredData, date, setDate, calendarFilters, colors, predictionChoice]);
 

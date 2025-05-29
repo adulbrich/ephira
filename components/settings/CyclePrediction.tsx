@@ -14,10 +14,8 @@ import { insertSetting } from "@/db/database";
 export default function CyclePredictions() {
   const theme = useTheme();
   const { predictionChoice, setPredictionChoice } = usePredictionChoice();
-  const { setPredictedCycle, setPredictedMarkedDates } = usePredictedCycle();
-  const { fetchCycleData } = useFetchCycleData(
-    setPredictedCycle,
-  );
+  const { setPredictedCycle } = usePredictedCycle();
+  const { fetchCycleData } = useFetchCycleData(setPredictedCycle);
   const { setSelectedFilters, selectedFilters } = useCalendarFilters();
   const fetchCycleDataRef = useRef(fetchCycleData);
   fetchCycleDataRef.current = fetchCycleData;
@@ -73,21 +71,12 @@ export default function CyclePredictions() {
             </Button>
 
             <Text>
-              This feature is fully developmental and only works when you mark
-              your cycles with the "Cycle Start" and "Cycle End" options under
-              the "Flow" section of the Calendar page. You need to input at
-              least one menstrual cycle for your next cycle prediction to
-              appear.
-            </Text>
-            <Text>
-              Currently, this will take the average length of your logged
-              menstrual cycles to determine your predicted cycle. If only one
-              cycle is logged, it will calculate based off of a "normal" 28-day
-              cycle. Once you have multiple cycles logged, the average time
-              between cycles will also be factored in. This is currently
-              experimental and is will not factor in anything else besides these
-              two averages. Please keep in mind that predicted cycles may be
-              inaccurate.
+              This feature is fully developmental determines your latest cycle
+              by consecutive flow days logged. Logging up to 3 consecutive flow
+              days will allow the app to predict your next cycle start date. You
+              can enable or disable this feature at any time in this menu. When
+              cycle predictionns are enabled, they will appear within the filter
+              menu to toggle them as visible on the calendar.
             </Text>
           </View>
         </List.Accordion>

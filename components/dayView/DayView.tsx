@@ -287,12 +287,6 @@ export default function DayView() {
         timeTaken: isNewDay ? "" : timeTakenRef.current,
       });
 
-      // console.log("\nLAST SAVED\n")
-      // console.log(lastSavedData)
-
-      // console.log("\nEXISTING\n")
-      // console.log(existingDay)
-
       initialLoadComplete.current = true;
     };
 
@@ -344,8 +338,6 @@ export default function DayView() {
       birthControlNotes,
       timeTaken,
     };
-
-    // console.log(currentData)
 
     // skip auto-saving on initial component load
     if (!initialLoadComplete.current) return;

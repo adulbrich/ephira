@@ -1,17 +1,15 @@
 import { getAllDays } from "@/db/database";
-import { DayData, MarkedDates } from "@/constants/Interfaces";
-import { last } from "pdf-lib";
+import { DayData } from "@/constants/Interfaces";
 
 export function useFetchCycleData(
   setPredictedCycle: (values: string[]) => void,
 ) {
   const predictedDates: string[] = [];
 
-    // get date in local time
-    const day = new Date();
-    const offset = day.getTimezoneOffset();
-    const localDate = new Date(day.getTime() - offset * 60 * 1000);
-    const today = localDate.toISOString().split("T")[0];
+  // get date in local time
+  const day = new Date();
+  const offset = day.getTimezoneOffset();
+  const localDate = new Date(day.getTime() - offset * 60 * 1000);
 
   const areConsecutive = (date1: string, date2: string): boolean => {
     const d1 = new Date(date1);
@@ -27,7 +25,6 @@ export function useFetchCycleData(
     const groupedDates: { dates: string[]; flowIntensities: number[] }[] = [];
 
     flowData.forEach((data) => {
-
       const flowIntensity = data.flow_intensity;
 
       if (lastDate && areConsecutive(lastDate, data.date)) {
@@ -46,11 +43,8 @@ export function useFetchCycleData(
       lastDate = data.date;
     });
 
-    return groupedDates
-
-  }
-
-
+    return groupedDates;
+  };
 
   const fetchCycleData = async () => {
     const allDays = await getAllDays();
@@ -69,7 +63,7 @@ export function useFetchCycleData(
         const dateB = new Date(`${b.date}`).valueOf();
         return dateA > dateB ? 1 : -1;
       });
-    
+
     const cycles = renderCycles(sortedFlowDays);
 
     while (cycles.length > 0) {
@@ -80,17 +74,22 @@ export function useFetchCycleData(
       if (lastCycleDates.length > 2) {
         const predictedStart = new Date(lastCycleDates[0]);
         predictedStart.setDate(predictedStart.getDate() + 28);
-        const predictedEnd = new Date(lastCycleDates[lastCycleDates.length - 1]);
+        const predictedEnd = new Date(
+          lastCycleDates[lastCycleDates.length - 1],
+        );
         predictedEnd.setDate(predictedEnd.getDate() + 28);
         const predictedDate = new Date(predictedEnd);
-        while ((predictedDate.valueOf() >= predictedStart.valueOf()) && (predictedDate.valueOf() >= localDate.valueOf())) {
+        while (
+          predictedDate.valueOf() >= predictedStart.valueOf() &&
+          predictedDate.valueOf() >= localDate.valueOf()
+        ) {
           predictedDate.setDate(predictedDate.getDate() - 1);
           predictedDates.push(predictedDate.toISOString().split("T")[0]);
         }
-        break; 
+        break;
       }
     }
-    
+
     setPredictedCycle(predictedDates);
 
     return predictedDates;
