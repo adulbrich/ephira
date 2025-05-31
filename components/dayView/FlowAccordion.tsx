@@ -1,9 +1,10 @@
 import { View } from "react-native";
 import { List, RadioButton, useTheme, Text } from "react-native-paper";
+import SingleChipSelection from "./SingleChipSelection";
 
 const flowOptions = ["None", "Spotting", "Light", "Medium", "Heavy"];
 
-function FlowRadioButtons({
+function FlowChips({
   selectedOption,
   setSelectedOption,
 }: {
@@ -14,24 +15,16 @@ function FlowRadioButtons({
 
   return (
     <View style={{ width: "100%" }}>
-      <RadioButton.Group
-        value={flowOptions[selectedOption]}
-        onValueChange={(value) => setSelectedOption(flowOptions.indexOf(value))}
-      >
-        {flowOptions.map((button, index) => (
-          <RadioButton.Item
-            key={button}
-            label={button}
-            value={button}
-            labelStyle={{
-              color:
-                selectedOption === index
-                  ? theme.colors.onSecondaryContainer
-                  : theme.colors.onSurfaceVariant,
-            }}
-          ></RadioButton.Item>
-        ))}
-      </RadioButton.Group>
+      <SingleChipSelection
+        options={flowOptions}
+        selectedValue={flowOptions[selectedOption]}
+        setSelectedValue={(value) => {
+          if (value !== null) {
+            setSelectedOption(flowOptions.indexOf(value));
+          }
+        }}
+        label="Select Flow Intensity"
+      />
     </View>
   );
 }
@@ -62,7 +55,7 @@ export default function FlowAccordion({
       onPress={() => setExpandedAccordion(state === "flow" ? null : "flow")}
       left={(props) => <List.Icon {...props} icon="water" />}
     >
-      <FlowRadioButtons
+      <FlowChips
         selectedOption={flow_intensity}
         setSelectedOption={setFlow}
       />
