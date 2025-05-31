@@ -1,5 +1,5 @@
 import { View } from "react-native";
-import { List, RadioButton, useTheme, Text } from "react-native-paper";
+import { List, Text } from "react-native-paper";
 import SingleChipSelection from "./SingleChipSelection";
 
 const flowOptions = ["None", "Spotting", "Light", "Medium", "Heavy"];
@@ -11,8 +11,6 @@ function FlowChips({
   selectedOption: number;
   setSelectedOption: (option: number) => void;
 }) {
-  const theme = useTheme();
-
   return (
     <View style={{ width: "100%" }}>
       <SingleChipSelection
@@ -55,10 +53,7 @@ export default function FlowAccordion({
       onPress={() => setExpandedAccordion(state === "flow" ? null : "flow")}
       left={(props) => <List.Icon {...props} icon="water" />}
     >
-      <FlowChips
-        selectedOption={flow_intensity}
-        setSelectedOption={setFlow}
-      />
+      <FlowChips selectedOption={flow_intensity} setSelectedOption={setFlow} />
     </List.Accordion>
   );
 }
