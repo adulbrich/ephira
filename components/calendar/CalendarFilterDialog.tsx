@@ -245,16 +245,20 @@ export default function CalendarFilterDialog({
                 style={styles.listItem}
                 key={StartEndOption}
                 title={StartEndOption}
-                right={() => (
-                  <Switch
-                    value={tempSelectedFilters.includes(StartEndOption)}
-                    onValueChange={() => onToggleSwitch(StartEndOption)}
-                    disabled={
-                      isMaxFiltersSelected &&
-                      !tempSelectedFilters.includes(StartEndOption)
-                    }
-                  />
-                )}
+                right={() => {
+                  const isSelected = tempSelectedFilters.includes(StartEndOption);
+                  return (
+                    <Switch
+                      key={`${StartEndOption}-${isSelected}`}
+                      value={isSelected}
+                      onValueChange={() => onToggleSwitch(StartEndOption)}
+                      disabled={
+                        isMaxFiltersSelected &&
+                        !tempSelectedFilters.includes(StartEndOption)
+                      }
+                    />
+                  );
+                }}
               />
               {/* Add PredictionOption switch if predictionChoice is true */}
               {usePredictionChoice().predictionChoice === true && (
@@ -262,16 +266,20 @@ export default function CalendarFilterDialog({
                   style={styles.listItem}
                   key={PredictionOption}
                   title={PredictionOption}
-                  right={() => (
-                    <Switch
-                      value={tempSelectedFilters.includes(PredictionOption)}
-                      onValueChange={() => onToggleSwitch(PredictionOption)}
-                      disabled={
-                        isMaxFiltersSelected &&
-                        !tempSelectedFilters.includes(PredictionOption)
-                      }
-                    />
-                  )}
+                  right={() => {
+                    const isSelected = tempSelectedFilters.includes(PredictionOption);
+                    return (
+                      <Switch
+                        key={`${PredictionOption}-${isSelected}`}
+                        value={isSelected}
+                        onValueChange={() => onToggleSwitch(PredictionOption)}
+                        disabled={
+                          isMaxFiltersSelected &&
+                          !tempSelectedFilters.includes(PredictionOption)
+                        }
+                      />
+                    );
+                  }}
                 />
               )}
               <List.Item
