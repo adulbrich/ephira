@@ -77,14 +77,15 @@ export default function CyclePredictions() {
               cycle start date. You can enable or disable this feature at any
               time in this menu. When cycle predictions are enabled, they will
               appear within the filter menu to toggle them as visible on the
-              calendar. 
+              calendar.
             </Text>
             <Text>
-              Another part to note about this feature is that once your predicted cycle
-              dates pass, they will return to "normal" on the calendar, and will not 
-              show up under the cycle prediction filter. To see your next predicted cycle, 
-              you will need to log 3 consecutive flow days again. This means that predicted
-              cycles will only show if their date is past todays date. 
+              Another part to note about this feature is that once your
+              predicted cycle dates pass, they will return to "normal" on the
+              calendar, and will not show up under the cycle prediction filter.
+              To see your next predicted cycle, you will need to log 3
+              consecutive flow days again. This means that predicted cycles will
+              only show if their date is past todays date.
             </Text>
           </View>
         </List.Accordion>
