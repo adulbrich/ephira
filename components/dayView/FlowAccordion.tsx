@@ -1,5 +1,6 @@
 import { View } from "react-native";
-import { List, Text } from "react-native-paper";
+import { List, Text, Chip } from "react-native-paper";
+import { ThemedView } from "../ThemedView";
 import SingleChipSelection from "./SingleChipSelection";
 
 const flowOptions = ["None", "Spotting", "Light", "Medium", "Heavy"];
