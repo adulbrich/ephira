@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   getDay,
   getAllVisibleSymptoms,
@@ -6,7 +6,11 @@ import {
   getAllVisibleMedications,
 } from "@/db/database";
 import type { DayData, MarkedDates } from "@/constants/Interfaces";
-import { useSelectedDate } from "@/assets/src/calendar-storage";
+import {
+  usePredictedCycle,
+  useSelectedDate,
+  usePredictionChoice,
+} from "@/assets/src/calendar-storage";
 import { FlowColors } from "@/constants/Colors";
 import { useLiveFilteredData } from "@/hooks/useLiveFilteredData";
 import { anySymptomOption } from "@/constants/Symptoms";
@@ -15,6 +19,7 @@ import { anyMedicationOption } from "@/constants/Medications";
 import { anyBirthControlOption } from "@/constants/BirthControlTypes";
 import { useTheme } from "react-native-paper";
 import { FilterColorsDark, FilterColorsLight } from "@/constants/Colors";
+import { useFetchCycleData } from "./useFetchCycleData";
 
 function getStartingAndEndingDay(
   day: string,
@@ -161,7 +166,7 @@ async function markedDatesBuilder(
 
     // notes
     const notesFilter = filters.includes("Notes");
-    const notesIndex = filters.findIndex((filter) => filter === "notes");
+    const notesIndex = filters.findIndex((filter) => filter === "Notes");
     if (notesFilter) {
       if (!markedDates[day.date])
         markedDates[day.date] = { selected: false, periods: [] };
@@ -175,6 +180,28 @@ async function markedDatesBuilder(
           startingDay: true,
           endingDay: true,
           color: filterColors[notesIndex],
+        });
+      }
+    }
+
+    // Cycle Start/End
+    const startEndFilter = filters.includes("Cycle Start/End");
+    const startEndIndex = filters.findIndex(
+      (filter) => filter === "Cycle Start/End",
+    );
+    if (startEndFilter) {
+      if (!markedDates[day.date])
+        markedDates[day.date] = { selected: false, periods: [] };
+
+      if (day.is_cycle_start === false && day.is_cycle_end === false) {
+        markedDates[day.date].periods.push({
+          color: "transparent",
+        });
+      } else {
+        markedDates[day.date].periods.push({
+          startingDay: true,
+          endingDay: true,
+          color: filterColors[startEndIndex],
         });
       }
     }
@@ -246,6 +273,12 @@ export function useMarkedDates(calendarFilters?: string[]) {
   // access state management
   const { date, setDate, setFlow, setId } = useSelectedDate();
 
+  const { setPredictedCycle } = usePredictedCycle();
+  const { predictionChoice } = usePredictionChoice();
+  const { fetchCycleData } = useFetchCycleData(setPredictedCycle);
+  const fetchCycleDataRef = useRef(fetchCycleData);
+  fetchCycleDataRef.current = fetchCycleData;
+
   // get date in local time
   const day = new Date();
   const offset = day.getTimezoneOffset();
@@ -273,12 +306,35 @@ export function useMarkedDates(calendarFilters?: string[]) {
         colors,
       );
 
-      setMarkedDates(newMarkedDates);
+      if (
+        calendarFilters?.includes("Cycle Prediction") &&
+        predictionChoice === true
+      ) {
+        const newPredictedDates = await fetchCycleDataRef.current();
+        const newPredictedMarkedDates: MarkedDates = {};
+        const index = calendarFilters?.indexOf("Cycle Prediction");
+        newPredictedDates.forEach((date) => {
+          newPredictedMarkedDates[date] = {
+            selected: false,
+            periods: [
+              {
+                startingDay: true,
+                endingDay: true,
+                color: colors[index],
+              },
+            ],
+          };
+        });
+        setMarkedDates({ ...newPredictedMarkedDates, ...newMarkedDates });
+      } else {
+        setMarkedDates({ ...newMarkedDates });
+      }
+
       setDate(date);
     }
 
     refreshCalendar(filteredData as DayData[]);
-  }, [filteredData, date, setDate, calendarFilters, colors]);
+  }, [filteredData, date, setDate, calendarFilters, colors, predictionChoice]);
 
   // get data for selected date on calendar (when user presses a different day)
   useEffect(() => {
