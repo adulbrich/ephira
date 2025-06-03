@@ -71,12 +71,13 @@ export default function CyclePredictions() {
             </Button>
 
             <Text>
-              This feature is fully developmental determines your latest cycle
-              by consecutive flow days logged. Logging up to 3 consecutive flow
-              days will allow the app to predict your next cycle start date. You
-              can enable or disable this feature at any time in this menu. When
-              cycle predictionns are enabled, they will appear within the filter
-              menu to toggle them as visible on the calendar.
+              This feature is fully developmental and determines your latest
+              cycle based on consecutive flow days logged. Logging up to 3
+              consecutive flow days will allow the app to predict your next
+              cycle start date. You can enable or disable this feature at any
+              time in this menu. When cycle predictions are enabled, they will
+              appear within the filter menu to toggle them as visible on the
+              calendar.
             </Text>
           </View>
         </List.Accordion>
