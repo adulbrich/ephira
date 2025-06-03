@@ -1,52 +1,29 @@
-import { View, StyleSheet } from "react-native";
-import { List, RadioButton, useTheme, Text, Chip } from "react-native-paper";
+import { View } from "react-native";
+import { List, Text, Chip } from "react-native-paper";
 import { ThemedView } from "../ThemedView";
+import SingleChipSelection from "./SingleChipSelection";
 
 const flowOptions = ["None", "Spotting", "Light", "Medium", "Heavy"];
 
-const styles = StyleSheet.create({
-  chipContainer: {
-    paddingLeft: 16,
-    paddingRight: 16,
-    paddingBottom: 16,
-    paddingTop: 8,
-    flexDirection: "row",
-    flexWrap: "wrap",
-  },
-  sectionLabel: {
-    display: "none",
-  },
-});
-
-function FlowRadioButtons({
+function FlowChips({
   selectedOption,
   setSelectedOption,
 }: {
   selectedOption: number;
   setSelectedOption: (option: number) => void;
 }) {
-  const theme = useTheme();
-
   return (
     <View style={{ width: "100%" }}>
-      <RadioButton.Group
-        value={flowOptions[selectedOption]}
-        onValueChange={(value) => setSelectedOption(flowOptions.indexOf(value))}
-      >
-        {flowOptions.map((button, index) => (
-          <RadioButton.Item
-            key={button}
-            label={button}
-            value={button}
-            labelStyle={{
-              color:
-                selectedOption === index
-                  ? theme.colors.onSecondaryContainer
-                  : theme.colors.onSurfaceVariant,
-            }}
-          ></RadioButton.Item>
-        ))}
-      </RadioButton.Group>
+      <SingleChipSelection
+        options={flowOptions}
+        selectedValue={flowOptions[selectedOption]}
+        setSelectedValue={(value) => {
+          if (value !== null) {
+            setSelectedOption(flowOptions.indexOf(value));
+          }
+        }}
+        label="Select Flow Intensity"
+      />
     </View>
   );
 }
@@ -164,10 +141,7 @@ export default function FlowAccordion({
           setEnd={setCycleEnd}
         />
       )}
-      <FlowRadioButtons
-        selectedOption={flow_intensity}
-        setSelectedOption={setFlow}
-      />
+      <FlowChips selectedOption={flow_intensity} setSelectedOption={setFlow} />
     </List.Accordion>
   );
 }
