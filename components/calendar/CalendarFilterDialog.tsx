@@ -20,13 +20,16 @@ import {
 import {
   useCalendarFilters,
   useDatabaseChangeNotifier,
+  usePredictionChoice,
 } from "@/assets/src/calendar-storage";
 import { anySymptomOption } from "@/constants/Symptoms";
 import { anyMoodOption } from "@/constants/Moods";
 import { anyMedicationOption } from "@/constants/Medications";
 import { anyBirthControlOption } from "@/constants/BirthControlTypes";
 const flowOption = "Flow";
+const PredictionOption = "Cycle Prediction";
 const notesOption = "Notes";
+const StartEndOption = "Cycle Start/End";
 
 function FilterSection({
   selectedFilters,
@@ -226,6 +229,39 @@ export default function CalendarFilterDialog({
                   />
                 )}
               />
+              <List.Item
+                style={styles.listItem}
+                key={StartEndOption}
+                title={StartEndOption}
+                right={() => (
+                  <Switch
+                    value={tempSelectedFilters.includes(StartEndOption)}
+                    onValueChange={() => onToggleSwitch(StartEndOption)}
+                    disabled={
+                      isMaxFiltersSelected &&
+                      !tempSelectedFilters.includes(StartEndOption)
+                    }
+                  />
+                )}
+              />
+              {/* Add PredictionOption switch if predictionChoice is true */}
+              {usePredictionChoice().predictionChoice === true && (
+                <List.Item
+                  style={styles.listItem}
+                  key={PredictionOption}
+                  title={PredictionOption}
+                  right={() => (
+                    <Switch
+                      value={tempSelectedFilters.includes(PredictionOption)}
+                      onValueChange={() => onToggleSwitch(PredictionOption)}
+                      disabled={
+                        isMaxFiltersSelected &&
+                        !tempSelectedFilters.includes(PredictionOption)
+                      }
+                    />
+                  )}
+                />
+              )}
               <List.Item
                 style={styles.listItem}
                 key={notesOption}

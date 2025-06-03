@@ -5,6 +5,7 @@ export const SettingsKeys = {
   password: "password",
   calendarFilters: "calendarFilters",
   databaseInitialSetup: "databaseInitialSetup",
+  cyclePredictions: "cyclePredictions",
 };
 
 export const AUTH_TYPES = {
