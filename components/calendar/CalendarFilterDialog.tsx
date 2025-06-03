@@ -246,7 +246,8 @@ export default function CalendarFilterDialog({
                 key={StartEndOption}
                 title={StartEndOption}
                 right={() => {
-                  const isSelected = tempSelectedFilters.includes(StartEndOption);
+                  const isSelected =
+                    tempSelectedFilters.includes(StartEndOption);
                   return (
                     <Switch
                       key={`${StartEndOption}-${isSelected}`}
@@ -267,7 +268,8 @@ export default function CalendarFilterDialog({
                   key={PredictionOption}
                   title={PredictionOption}
                   right={() => {
-                    const isSelected = tempSelectedFilters.includes(PredictionOption);
+                    const isSelected =
+                      tempSelectedFilters.includes(PredictionOption);
                     return (
                       <Switch
                         key={`${PredictionOption}-${isSelected}`}
