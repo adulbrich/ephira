@@ -82,7 +82,7 @@ export default function MedicationsAccordion({
             icon="plus"
             onPress={showCustomEntries}
           >
-            Add Your Own
+            Add Your Medication
           </Button>
         </View>
       </List.Accordion>
