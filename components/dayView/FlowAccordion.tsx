@@ -1,9 +1,23 @@
-import { View } from "react-native";
-import { List, Text, Chip } from "react-native-paper";
-import { ThemedView } from "../ThemedView";
+import { View, StyleSheet } from "react-native";
+import { List, useTheme, Text, Chip } from "react-native-paper";
 import SingleChipSelection from "./SingleChipSelection";
+import { ThemedView } from "../ThemedView";
 
 const flowOptions = ["None", "Spotting", "Light", "Medium", "Heavy"];
+
+const styles = StyleSheet.create({
+  chipContainer: {
+    paddingLeft: 16,
+    paddingRight: 16,
+    paddingBottom: 16,
+    paddingTop: 8,
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+  sectionLabel: {
+    display: "none",
+  },
+});
 
 function FlowChips({
   selectedOption,
