@@ -200,14 +200,20 @@ function AccordionContents({
   );
 }
 
-function CustomEntriesModal({ onDismiss }: { onDismiss: () => void }) {
+function CustomEntriesModal({
+  onDismiss,
+  initialExpandedAccordion = "1",
+}: {
+  onDismiss: () => void;
+  initialExpandedAccordion?: string;
+}) {
   const theme = useTheme();
   const { width, height } = Dimensions.get("window");
   const styles = makeStyles(theme, width, height);
   const setDbChange = useDatabaseChangeNotifier().setDatabaseChange;
   const { selectedFilters, setSelectedFilters } = useCalendarFilters();
   const setAccordionState = useAccordion().setExpandedAccordion;
-  const [expanded, setExpanded] = useState<string>("1");
+  const [expanded, setExpanded] = useState<string>(initialExpandedAccordion);
   const [symptoms, setSymptoms] = useState<string[]>([]);
   const [moods, setMoods] = useState<string[]>([]);
   const [medications, setMedications] = useState<string[]>([]);
@@ -422,19 +428,37 @@ function CustomEntriesModal({ onDismiss }: { onDismiss: () => void }) {
   );
 }
 
-export default function CustomEntries() {
-  const [modalVisible, setModalVisible] = useState(false);
+export default function CustomEntries({
+  modalVisibleInitially = false,
+  onModalClose,
+  initialExpandedAccordion = "1",
+}: {
+  modalVisibleInitially?: boolean;
+  onModalClose?: () => void;
+  initialExpandedAccordion?: string;
+} = {}) {
+  const [modalVisible, setModalVisible] = useState(modalVisibleInitially);
+
+  const handleModalClose = () => {
+    setModalVisible(false);
+    if (onModalClose) onModalClose();
+  };
 
   return (
     <ThemedView>
-      <List.Item
-        title="Custom Entries"
-        description="Add your own custom entries to track"
-        onPress={() => setModalVisible(true)}
-        right={(props) => <List.Icon {...props} icon="arrow-right" />}
-      />
+      {!modalVisible && (
+        <List.Item
+          title="Custom Entries"
+          description="Add your own custom entries to track"
+          onPress={() => setModalVisible(true)}
+          right={(props) => <List.Icon {...props} icon="arrow-right" />}
+        />
+      )}
       {modalVisible && (
-        <CustomEntriesModal onDismiss={() => setModalVisible(false)} />
+        <CustomEntriesModal
+          onDismiss={handleModalClose}
+          initialExpandedAccordion={initialExpandedAccordion}
+        />
       )}
     </ThemedView>
   );

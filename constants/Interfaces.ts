@@ -32,6 +32,8 @@ export interface DayDataStore extends DayData {
   setId: (num: number) => void;
   setFlow: (flow: number) => void;
   setNotes: (text: string) => void;
+  setCycleStart: (start: boolean) => void;
+  setCycleEnd: (end: boolean) => void;
   reset: () => void;
 }
 
@@ -136,4 +138,16 @@ export interface ExportDayEntry {
 export interface ExportData {
   headers: ExportDataHeaders;
   dailyData: Record<string, ExportDayEntry>;
+}
+
+export interface PredictionToggle {
+  predictionChoice: boolean;
+  setPredictionChoice: (predictionChoice: boolean) => void;
+}
+
+export interface PredictedCycleState {
+  predictedCycle: string[];
+  predictedMarkedDates: MarkedDates;
+  setPredictedCycle: (data: string[]) => void;
+  setPredictedMarkedDates: (data: MarkedDates) => void;
 }

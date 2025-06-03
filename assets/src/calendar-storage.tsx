@@ -17,6 +17,8 @@ import {
   CalendarFilters,
   ThemeColor,
   DatabaseChangeNotifier,
+  PredictionToggle,
+  PredictedCycleState,
 } from "@/constants/Interfaces";
 
 const initialDay: DayData = {
@@ -49,6 +51,12 @@ export const useSelectedDate = create<DayDataStore>((set) => ({
   },
   setNotes: (text: string) => {
     set(() => ({ notes: text }));
+  },
+  setCycleStart: (start: boolean) => {
+    set(() => ({ is_cycle_start: start }));
+  },
+  setCycleEnd: (end: boolean) => {
+    set(() => ({ is_cycle_end: end }));
   },
   reset: () => set(initialDay),
 }));
@@ -143,3 +151,17 @@ export const useDatabaseChangeNotifier = create<DatabaseChangeNotifier>(
       set(() => ({ databaseChange: databaseChange })),
   }),
 );
+
+export const usePredictionChoice = create<PredictionToggle>((set) => ({
+  predictionChoice: false,
+  setPredictionChoice: (predictionChoice: boolean) =>
+    set(() => ({ predictionChoice: predictionChoice })),
+}));
+
+export const usePredictedCycle = create<PredictedCycleState>((set) => ({
+  predictedCycle: [],
+  predictedMarkedDates: {},
+  setPredictedCycle: (data: string[]) => set(() => ({ predictedCycle: data })),
+  setPredictedMarkedDates: (data: MarkedDates) =>
+    set(() => ({ predictedMarkedDates: data })),
+}));
