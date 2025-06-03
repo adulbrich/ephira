@@ -106,22 +106,28 @@ function AccordionContents({
   const { width, height } = Dimensions.get("window");
   const styles = makeStyles(theme, width, height);
 
+  const visibleItems = items
+    .filter((item) => item.visible)
+    .map((item) => item.name);
+
   return (
     <ScrollView style={styles.scrollview}>
-      {items.map((item) => (
-        <List.Item
-          key={item.id}
-          title={item.name}
-          right={() => (
-            <Switch
-              value={item.visible === true}
-              onValueChange={() => {
-                onToggleSwitch(itemType, item);
-              }}
-            />
-          )}
-        />
-      ))}
+      {items.map((item) => {
+        const isVisible = visibleItems.includes(item.name);
+        return (
+          <List.Item
+            key={item.id}
+            title={item.name}
+            right={() => (
+              <Switch
+                key={`${item}-${isVisible}`}
+                value={isVisible}
+                onValueChange={() => onToggleSwitch(itemType, item)}
+              />
+            )}
+          />
+        );
+      })}
     </ScrollView>
   );
 }

@@ -57,15 +57,19 @@ function FilterSection({
         style={styles.listItem}
         key={anyOption}
         title={anyOption}
-        right={() => (
-          <Switch
-            value={selectedFilters.includes(anyOption)}
-            onValueChange={() => onToggleSwitch(anyOption)}
-            disabled={
-              isMaxFiltersSelected && !selectedFilters.includes(anyOption)
-            }
-          />
-        )}
+        right={() => {
+          const isSelected = selectedFilters.includes(anyOption);
+          return (
+            <Switch
+              key={`${anyOption}-${isSelected}`}
+              value={isSelected}
+              onValueChange={() => onToggleSwitch(anyOption)}
+              disabled={
+                isMaxFiltersSelected && !selectedFilters.includes(anyOption)
+              }
+            />
+          );
+        }}
       />
       <List.Item
         title={expanded ? "Hide options" : "Show options"}
@@ -85,15 +89,19 @@ function FilterSection({
               style={styles.listItem}
               key={item}
               title={item}
-              right={() => (
-                <Switch
-                  value={selectedFilters.includes(item)}
-                  onValueChange={() => onToggleSwitch(item)}
-                  disabled={
-                    isMaxFiltersSelected && !selectedFilters.includes(item)
-                  }
-                />
-              )}
+              right={() => {
+                const isSelected = selectedFilters.includes(item);
+                return (
+                  <Switch
+                    key={`${item}-${isSelected}`}
+                    value={isSelected}
+                    onValueChange={() => onToggleSwitch(item)}
+                    disabled={
+                      isMaxFiltersSelected && !selectedFilters.includes(item)
+                    }
+                  />
+                );
+              }}
             />
           ))}
     </List.Section>
@@ -218,31 +226,40 @@ export default function CalendarFilterDialog({
                 style={styles.listItem}
                 key={flowOption}
                 title={flowOption}
-                right={() => (
-                  <Switch
-                    value={tempSelectedFilters.includes(flowOption)}
-                    onValueChange={() => onToggleSwitch(flowOption)}
-                    disabled={
-                      isMaxFiltersSelected &&
-                      !tempSelectedFilters.includes(flowOption)
-                    }
-                  />
-                )}
+                right={() => {
+                  const isSelected = tempSelectedFilters.includes(flowOption);
+                  return (
+                    <Switch
+                      key={`${flowOption}-${isSelected}`}
+                      value={isSelected}
+                      onValueChange={() => onToggleSwitch(flowOption)}
+                      disabled={
+                        isMaxFiltersSelected &&
+                        !tempSelectedFilters.includes(flowOption)
+                      }
+                    />
+                  );
+                }}
               />
               <List.Item
                 style={styles.listItem}
                 key={StartEndOption}
                 title={StartEndOption}
-                right={() => (
-                  <Switch
-                    value={tempSelectedFilters.includes(StartEndOption)}
-                    onValueChange={() => onToggleSwitch(StartEndOption)}
-                    disabled={
-                      isMaxFiltersSelected &&
-                      !tempSelectedFilters.includes(StartEndOption)
-                    }
-                  />
-                )}
+                right={() => {
+                  const isSelected =
+                    tempSelectedFilters.includes(StartEndOption);
+                  return (
+                    <Switch
+                      key={`${StartEndOption}-${isSelected}`}
+                      value={isSelected}
+                      onValueChange={() => onToggleSwitch(StartEndOption)}
+                      disabled={
+                        isMaxFiltersSelected &&
+                        !tempSelectedFilters.includes(StartEndOption)
+                      }
+                    />
+                  );
+                }}
               />
               {/* Add PredictionOption switch if predictionChoice is true */}
               {usePredictionChoice().predictionChoice === true && (
@@ -250,32 +267,41 @@ export default function CalendarFilterDialog({
                   style={styles.listItem}
                   key={PredictionOption}
                   title={PredictionOption}
-                  right={() => (
-                    <Switch
-                      value={tempSelectedFilters.includes(PredictionOption)}
-                      onValueChange={() => onToggleSwitch(PredictionOption)}
-                      disabled={
-                        isMaxFiltersSelected &&
-                        !tempSelectedFilters.includes(PredictionOption)
-                      }
-                    />
-                  )}
+                  right={() => {
+                    const isSelected =
+                      tempSelectedFilters.includes(PredictionOption);
+                    return (
+                      <Switch
+                        key={`${PredictionOption}-${isSelected}`}
+                        value={isSelected}
+                        onValueChange={() => onToggleSwitch(PredictionOption)}
+                        disabled={
+                          isMaxFiltersSelected &&
+                          !tempSelectedFilters.includes(PredictionOption)
+                        }
+                      />
+                    );
+                  }}
                 />
               )}
               <List.Item
                 style={styles.listItem}
                 key={notesOption}
                 title={notesOption}
-                right={() => (
-                  <Switch
-                    value={tempSelectedFilters.includes(notesOption)}
-                    onValueChange={() => onToggleSwitch(notesOption)}
-                    disabled={
-                      isMaxFiltersSelected &&
-                      !tempSelectedFilters.includes(notesOption)
-                    }
-                  />
-                )}
+                right={() => {
+                  const isSelected = tempSelectedFilters.includes(notesOption);
+                  return (
+                    <Switch
+                      key={`${notesOption}-${isSelected}`}
+                      value={isSelected}
+                      onValueChange={() => onToggleSwitch(notesOption)}
+                      disabled={
+                        isMaxFiltersSelected &&
+                        !tempSelectedFilters.includes(notesOption)
+                      }
+                    />
+                  );
+                }}
               />
             </List.Section>
             <Divider />
