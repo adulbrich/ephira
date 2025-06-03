@@ -1,5 +1,5 @@
 import { View, StyleSheet } from "react-native";
-import { List, RadioButton, useTheme, Text, Chip } from "react-native-paper";
+import { List, useTheme, Text, Chip } from "react-native-paper";
 import SingleChipSelection from "./SingleChipSelection";
 import { ThemedView } from "../ThemedView";
 
@@ -147,7 +147,6 @@ export default function FlowAccordion({
       onPress={() => setExpandedAccordion(state === "flow" ? null : "flow")}
       left={(props) => <List.Icon {...props} icon="water" />}
     >
-      <FlowChips selectedOption={flow_intensity} setSelectedOption={setFlow} />
       {flow_intensity !== 0 && (
         <CycleToggleButtons
           toggleStart={is_cycle_start}
