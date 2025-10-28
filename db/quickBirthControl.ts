@@ -1,10 +1,17 @@
 import { DeviceEventEmitter } from "react-native";
 import { getAllDataAsJson } from "@/db/database";
 import { getDay, insertDay } from "@/db/operations/days";
-import { getMedicationEntriesForDay, insertMedicationEntry } from "@/db/operations/medicationEntries";
+import {
+  getMedicationEntriesForDay,
+  insertMedicationEntry,
+} from "@/db/operations/medicationEntries";
 import { getMedication } from "@/db/operations/medications";
 
-type BirthControlEntry = { name: string; time_taken?: string | null; notes?: string | null };
+type BirthControlEntry = {
+  name: string;
+  time_taken?: string | null;
+  notes?: string | null;
+};
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
@@ -15,7 +22,8 @@ export async function getLastUsedBirthControlName(): Promise<string | null> {
 
   const dates = Object.keys(exportData.dailyData).sort().reverse(); // get newest
   for (const d of dates) {
-    const list: BirthControlEntry[] = exportData.dailyData[d]?.birth_control ?? [];
+    const list: BirthControlEntry[] =
+      exportData.dailyData[d]?.birth_control ?? [];
     if (list.length && list[0]?.name) return list[0].name;
   }
   return null;
@@ -46,7 +54,10 @@ export async function quickLogBirthControlForToday(name: string) {
   }
 
   // insert entry with time stamp
-  const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const time = new Date().toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
   await insertMedicationEntry(day.id, med.id, time, undefined);
 
   // refresh UI

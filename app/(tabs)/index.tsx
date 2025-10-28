@@ -6,8 +6,10 @@ import { useData } from "@/assets/src/calendar-storage";
 import { useTheme, Text, Button } from "react-native-paper";
 import FadeInView from "@/components/animations/FadeInView";
 import { useState, useCallback } from "react";
-import { getLastUsedBirthControlName, quickLogBirthControlForToday } from "@/db/quickBirthControl";
-
+import {
+  getLastUsedBirthControlName,
+  quickLogBirthControlForToday,
+} from "@/db/quickBirthControl";
 
 export default function HomeScreen() {
   const theme = useTheme();
@@ -15,24 +17,24 @@ export default function HomeScreen() {
   const [busy, setBusy] = useState(false);
 
   const onQuickBC = useCallback(async () => {
-     if (busy) return;
-     setBusy(true);
-     try {
-       const last = await getLastUsedBirthControlName();
-       if (!last) {
-         alert("No previous birth control found to quick-log.");
-         return;
-       }
-       await quickLogBirthControlForToday(last);
-       // Optional: toast/snackbar
-       // alert(`${last} logged for today`);
-     } catch (e) {
-       console.error(e);
-       alert("Couldn't quick-log birth control.");
-     } finally {
-       setBusy(false);
-     }
-   }, [busy]);
+    if (busy) return;
+    setBusy(true);
+    try {
+      const last = await getLastUsedBirthControlName();
+      if (!last) {
+        alert("No previous birth control found to quick-log.");
+        return;
+      }
+      await quickLogBirthControlForToday(last);
+      // Optional: toast/snackbar
+      // alert(`${last} logged for today`);
+    } catch (e) {
+      console.error(e);
+      alert("Couldn't quick-log birth control.");
+    } finally {
+      setBusy(false);
+    }
+  }, [busy]);
 
   // Get up to 5 most recent logged days
   const recentFlowDays = [...flowData]
@@ -48,16 +50,16 @@ export default function HomeScreen() {
         >
           <FlowChart />
           <View style={{ alignItems: "center", marginTop: 8 }}>
-             <Button
-               mode="contained"
-               icon="pill"
-               loading={busy}
-               onPress={onQuickBC}
-               style={{ width: 220 }}
-             >
-               Quick Birth Control
-             </Button>
-           </View>
+            <Button
+              mode="contained"
+              icon="pill"
+              loading={busy}
+              onPress={onQuickBC}
+              style={{ width: 220 }}
+            >
+              Quick Birth Control
+            </Button>
+          </View>
           <Text
             style={{
               color: theme.colors.secondary,
