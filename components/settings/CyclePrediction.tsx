@@ -71,21 +71,40 @@ export default function CyclePredictions() {
             </Button>
 
             <Text>
-              This feature is fully developmental and determines your latest
-              cycle based on consecutive flow days logged. Logging up to 3
-              consecutive flow days will allow the app to predict your next
-              cycle start date. You can enable or disable this feature at any
-              time in this menu. When cycle predictions are enabled, they will
-              appear within the filter menu to toggle them as visible on the
-              calendar.
+              This feature predicts your next menstrual cycles based on your
+              logged flow data. The app analyzes your cycle history to calculate
+              your average cycle length and predicts the next 3 upcoming cycles.
+            </Text>
+            <Text variant="titleMedium" style={{ marginTop: 10 }}>
+              How it works:
             </Text>
             <Text>
-              Another part to note about this feature is that once your
-              predicted cycle dates pass, they will return to "normal" on the
-              calendar, and will not show up under the cycle prediction filter.
-              To see your next predicted cycle, you will need to log 3
-              consecutive flow days again. This means that predicted cycles will
-              only show if their date is past todays date.
+              • Log at least 3 consecutive flow days to create a cycle
+            </Text>
+            <Text>
+              • The app calculates your average cycle length from past cycles
+            </Text>
+            <Text>
+              • Predictions appear on the calendar for your next 3 cycles
+            </Text>
+            <Text>
+              • More historical data = more accurate predictions
+            </Text>
+            <Text variant="titleMedium" style={{ marginTop: 10 }}>
+              Tips for accuracy:
+            </Text>
+            <Text>
+              • Log consistently for at least 2-3 complete cycles
+            </Text>
+            <Text>
+              • Use the "Cycle Start" toggle to manually mark cycle beginnings
+            </Text>
+            <Text>
+              • Predictions only show for future dates
+            </Text>
+            <Text style={{ marginTop: 10, fontStyle: "italic" }}>
+              Note: Predictions are estimates based on your unique patterns. If
+              you have irregular cycles, predictions may be less accurate.
             </Text>
           </View>
         </List.Accordion>

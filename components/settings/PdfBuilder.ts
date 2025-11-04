@@ -97,9 +97,9 @@ function drawRowText(
 
 async function exportFinishedPdf(pdfDoc: PDFDocument) {
   const pdfBase64 = await pdfDoc.saveAsBase64();
-  const pdfPath = `${FileSystem.documentDirectory}ephira.pdf`;
+  const pdfPath = `${FileSystem.documentDirectory}ephira.pdf`; //"import/namespace": "off"
   await FileSystem.writeAsStringAsync(pdfPath, pdfBase64, {
-    encoding: FileSystem.EncodingType.Base64,
+    encoding: FileSystem.EncodingType.Base64, //"import/namespace": "off"
   });
 
   await Sharing.shareAsync(pdfPath, {
