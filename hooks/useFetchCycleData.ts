@@ -96,7 +96,8 @@ export function useFetchCycleData(
   ): number => {
     // Filter to only valid cycles (3+ consecutive days)
     const validCycles = cycles.filter(
-      (cycle) => cycle.dates.length >= CYCLE_PREDICTION_CONSTANTS.MIN_CONSECUTIVE_DAYS,
+      (cycle) =>
+        cycle.dates.length >= CYCLE_PREDICTION_CONSTANTS.MIN_CONSECUTIVE_DAYS,
     );
 
     // Need at least 2 cycles to calculate an average
@@ -107,7 +108,9 @@ export function useFetchCycleData(
     // Calculate the number of days between cycle starts
     const cycleLengths: number[] = [];
     for (let i = 1; i < validCycles.length; i++) {
-      const prevCycleStart = new Date(validCycles[i - 1].startDate + "T00:00:00");
+      const prevCycleStart = new Date(
+        validCycles[i - 1].startDate + "T00:00:00",
+      );
       const currCycleStart = new Date(validCycles[i].startDate + "T00:00:00");
 
       const diffTime = currCycleStart.getTime() - prevCycleStart.getTime();
@@ -161,7 +164,8 @@ export function useFetchCycleData(
 
       // Filter to only valid cycles (3+ consecutive days)
       const validCycles = cycles.filter(
-        (cycle) => cycle.dates.length >= CYCLE_PREDICTION_CONSTANTS.MIN_CONSECUTIVE_DAYS,
+        (cycle) =>
+          cycle.dates.length >= CYCLE_PREDICTION_CONSTANTS.MIN_CONSECUTIVE_DAYS,
       );
 
       // Need at least one valid cycle to make predictions

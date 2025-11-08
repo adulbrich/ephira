@@ -1,5 +1,12 @@
 import { View } from "react-native";
-import { Button, Divider, List, Text, useTheme, Card } from "react-native-paper";
+import {
+  Button,
+  Divider,
+  List,
+  Text,
+  useTheme,
+  Card,
+} from "react-native-paper";
 import { ThemedView } from "@/components/ThemedView";
 import {
   usePredictionChoice,
@@ -37,7 +44,8 @@ export default function CyclePredictions() {
           setDataStatus({
             cycleCount: 0,
             hasEnoughData: false,
-            message: "No flow data logged yet. Start logging to enable predictions!",
+            message:
+              "No flow data logged yet. Start logging to enable predictions!",
           });
           return;
         }
@@ -45,21 +53,28 @@ export default function CyclePredictions() {
         // Count cycles
         let cycleCount = 0;
         let consecutiveDays = 0;
-        const sortedDays = flowDays.sort((a, b) =>
-          new Date(a.date).valueOf() - new Date(b.date).valueOf()
+        const sortedDays = flowDays.sort(
+          (a, b) => new Date(a.date).valueOf() - new Date(b.date).valueOf(),
         );
 
         for (let i = 0; i < sortedDays.length; i++) {
           const currentDate = new Date(sortedDays[i].date);
-          const nextDate = i < sortedDays.length - 1 ? new Date(sortedDays[i + 1].date) : null;
+          const nextDate =
+            i < sortedDays.length - 1 ? new Date(sortedDays[i + 1].date) : null;
 
           consecutiveDays++;
 
           const isLastDay = i === sortedDays.length - 1;
-          const isGap = nextDate ?
-            (nextDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24) > 1 : false;
+          const isGap = nextDate
+            ? (nextDate.getTime() - currentDate.getTime()) /
+                (1000 * 60 * 60 * 24) >
+              1
+            : false;
 
-          if ((isLastDay || isGap) && consecutiveDays >= CYCLE_PREDICTION_CONSTANTS.MIN_CONSECUTIVE_DAYS) {
+          if (
+            (isLastDay || isGap) &&
+            consecutiveDays >= CYCLE_PREDICTION_CONSTANTS.MIN_CONSECUTIVE_DAYS
+          ) {
             cycleCount++;
             consecutiveDays = 0;
           } else if (isGap) {
@@ -67,14 +82,16 @@ export default function CyclePredictions() {
           }
         }
 
-        const hasEnough = cycleCount >= CYCLE_PREDICTION_CONSTANTS.MIN_CYCLES_FOR_PREDICTION;
+        const hasEnough =
+          cycleCount >= CYCLE_PREDICTION_CONSTANTS.MIN_CYCLES_FOR_PREDICTION;
         let message = "";
 
         if (hasEnough) {
           message = `Great! You have ${cycleCount} complete cycles logged.`;
         } else {
-          const needed = CYCLE_PREDICTION_CONSTANTS.MIN_CYCLES_FOR_PREDICTION - cycleCount;
-          message = `You have ${cycleCount} cycle${cycleCount === 1 ? '' : 's'}. Log ${needed} more complete cycle${needed === 1 ? '' : 's'} for predictions.`;
+          const needed =
+            CYCLE_PREDICTION_CONSTANTS.MIN_CYCLES_FOR_PREDICTION - cycleCount;
+          message = `You have ${cycleCount} cycle${cycleCount === 1 ? "" : "s"}. Log ${needed} more complete cycle${needed === 1 ? "" : "s"} for predictions.`;
         }
 
         setDataStatus({ cycleCount, hasEnoughData: hasEnough, message });
@@ -106,7 +123,13 @@ export default function CyclePredictions() {
     };
 
     checkDataQuality();
-  }, [predictionChoice, selectedFilters, setPredictionChoice, setPredictedCycle, setSelectedFilters]);
+  }, [
+    predictionChoice,
+    selectedFilters,
+    setPredictionChoice,
+    setPredictedCycle,
+    setSelectedFilters,
+  ]);
 
   // Sync prediction state with calendar data
   useEffect(() => {
@@ -176,8 +199,12 @@ export default function CyclePredictions() {
                 </Text>
                 <Text>{dataStatus.message}</Text>
                 {!dataStatus.hasEnoughData && dataStatus.cycleCount > 0 && (
-                  <Text style={{ marginTop: 5, fontSize: 12, fontStyle: "italic" }}>
-                    Tip: Each cycle needs at least {CYCLE_PREDICTION_CONSTANTS.MIN_CONSECUTIVE_DAYS} consecutive flow days.
+                  <Text
+                    style={{ marginTop: 5, fontSize: 12, fontStyle: "italic" }}
+                  >
+                    Tip: Each cycle needs at least{" "}
+                    {CYCLE_PREDICTION_CONSTANTS.MIN_CONSECUTIVE_DAYS}{" "}
+                    consecutive flow days.
                   </Text>
                 )}
               </Card.Content>
@@ -198,8 +225,16 @@ export default function CyclePredictions() {
               {predictionChoice ? "Enabled" : "Disabled"}
             </Button>
             {!dataStatus.hasEnoughData && (
-              <Text style={{ fontSize: 12, fontStyle: "italic", color: theme.colors.error }}>
-                You need at least {CYCLE_PREDICTION_CONSTANTS.MIN_CYCLES_FOR_PREDICTION} complete cycles to enable predictions.
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontStyle: "italic",
+                  color: theme.colors.error,
+                }}
+              >
+                You need at least{" "}
+                {CYCLE_PREDICTION_CONSTANTS.MIN_CYCLES_FOR_PREDICTION} complete
+                cycles to enable predictions.
               </Text>
             )}
 
@@ -218,23 +253,18 @@ export default function CyclePredictions() {
               • The app calculates your average cycle length from past cycles
             </Text>
             <Text>
-              • Predictions appear on the calendar for your next {CYCLE_PREDICTION_CONSTANTS.MAX_FUTURE_CYCLES} cycles
+              • Predictions appear on the calendar for your next{" "}
+              {CYCLE_PREDICTION_CONSTANTS.MAX_FUTURE_CYCLES} cycles
             </Text>
-            <Text>
-              • More historical data = more accurate predictions
-            </Text>
+            <Text>• More historical data = more accurate predictions</Text>
             <Text variant="titleMedium" style={{ marginTop: 10 }}>
               Tips for accuracy:
             </Text>
-            <Text>
-              • Log consistently for at least 2-3 complete cycles
-            </Text>
+            <Text>• Log consistently for at least 2-3 complete cycles</Text>
             <Text>
               • Use the "Cycle Start" toggle to manually mark cycle beginnings
             </Text>
-            <Text>
-              • Predictions only show for future dates
-            </Text>
+            <Text>• Predictions only show for future dates</Text>
             <Text style={{ marginTop: 10, fontStyle: "italic" }}>
               Note: Predictions are estimates based on your unique patterns. If
               you have irregular cycles, predictions may be less accurate.

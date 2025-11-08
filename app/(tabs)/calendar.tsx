@@ -199,27 +199,29 @@ export default function FlowCalendar() {
                       </View>
                     ))}
                   </View>
-                  {selectedFilters.includes("Cycle Prediction") && predictionChoice && (
-                    <View
-                      style={{
-                        padding: 8,
-                        backgroundColor: theme.colors.surfaceVariant,
-                        borderRadius: 4,
-                        margin: 4,
-                      }}
-                    >
-                      <Text
+                  {selectedFilters.includes("Cycle Prediction") &&
+                    predictionChoice && (
+                      <View
                         style={{
-                          fontSize: 12,
-                          fontStyle: "italic",
-                          textAlign: "center",
-                          color: theme.colors.onSurfaceVariant,
+                          padding: 8,
+                          backgroundColor: theme.colors.surfaceVariant,
+                          borderRadius: 4,
+                          margin: 4,
                         }}
                       >
-                        📅 Showing predicted cycles (estimates based on your data)
-                      </Text>
-                    </View>
-                  )}
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            fontStyle: "italic",
+                            textAlign: "center",
+                            color: theme.colors.onSurfaceVariant,
+                          }}
+                        >
+                          📅 Showing predicted cycles (estimates based on your
+                          data)
+                        </Text>
+                      </View>
+                    )}
                   <Divider />
                 </View>
                 <View>{date && <DayView />}</View>

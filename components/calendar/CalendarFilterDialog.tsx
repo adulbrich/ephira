@@ -181,21 +181,28 @@ export default function CalendarFilterDialog({
         // Count cycles
         let cycleCount = 0;
         let consecutiveDays = 0;
-        const sortedDays = flowDays.sort((a, b) =>
-          new Date(a.date).valueOf() - new Date(b.date).valueOf()
+        const sortedDays = flowDays.sort(
+          (a, b) => new Date(a.date).valueOf() - new Date(b.date).valueOf(),
         );
 
         for (let i = 0; i < sortedDays.length; i++) {
           const currentDate = new Date(sortedDays[i].date);
-          const nextDate = i < sortedDays.length - 1 ? new Date(sortedDays[i + 1].date) : null;
+          const nextDate =
+            i < sortedDays.length - 1 ? new Date(sortedDays[i + 1].date) : null;
 
           consecutiveDays++;
 
           const isLastDay = i === sortedDays.length - 1;
-          const isGap = nextDate ?
-            (nextDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24) > 1 : false;
+          const isGap = nextDate
+            ? (nextDate.getTime() - currentDate.getTime()) /
+                (1000 * 60 * 60 * 24) >
+              1
+            : false;
 
-          if ((isLastDay || isGap) && consecutiveDays >= CYCLE_PREDICTION_CONSTANTS.MIN_CONSECUTIVE_DAYS) {
+          if (
+            (isLastDay || isGap) &&
+            consecutiveDays >= CYCLE_PREDICTION_CONSTANTS.MIN_CONSECUTIVE_DAYS
+          ) {
             cycleCount++;
             consecutiveDays = 0;
           } else if (isGap) {
@@ -203,7 +210,9 @@ export default function CalendarFilterDialog({
           }
         }
 
-        setHasEnoughCycleData(cycleCount >= CYCLE_PREDICTION_CONSTANTS.MIN_CYCLES_FOR_PREDICTION);
+        setHasEnoughCycleData(
+          cycleCount >= CYCLE_PREDICTION_CONSTANTS.MIN_CYCLES_FOR_PREDICTION,
+        );
       } catch (error) {
         console.error("Error checking cycle data:", error);
         setHasEnoughCycleData(false);
@@ -312,28 +321,29 @@ export default function CalendarFilterDialog({
                 }}
               />
               {/* Add PredictionOption switch if predictionChoice is true AND user has enough cycle data */}
-              {usePredictionChoice().predictionChoice === true && hasEnoughCycleData && (
-                <List.Item
-                  style={styles.listItem}
-                  key={PredictionOption}
-                  title={PredictionOption}
-                  right={() => {
-                    const isSelected =
-                      tempSelectedFilters.includes(PredictionOption);
-                    return (
-                      <Switch
-                        key={`${PredictionOption}-${isSelected}`}
-                        value={isSelected}
-                        onValueChange={() => onToggleSwitch(PredictionOption)}
-                        disabled={
-                          isMaxFiltersSelected &&
-                          !tempSelectedFilters.includes(PredictionOption)
-                        }
-                      />
-                    );
-                  }}
-                />
-              )}
+              {usePredictionChoice().predictionChoice === true &&
+                hasEnoughCycleData && (
+                  <List.Item
+                    style={styles.listItem}
+                    key={PredictionOption}
+                    title={PredictionOption}
+                    right={() => {
+                      const isSelected =
+                        tempSelectedFilters.includes(PredictionOption);
+                      return (
+                        <Switch
+                          key={`${PredictionOption}-${isSelected}`}
+                          value={isSelected}
+                          onValueChange={() => onToggleSwitch(PredictionOption)}
+                          disabled={
+                            isMaxFiltersSelected &&
+                            !tempSelectedFilters.includes(PredictionOption)
+                          }
+                        />
+                      );
+                    }}
+                  />
+                )}
               <List.Item
                 style={styles.listItem}
                 key={notesOption}
