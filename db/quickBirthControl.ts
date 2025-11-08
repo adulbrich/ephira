@@ -13,7 +13,13 @@ type BirthControlEntry = {
   notes?: string | null;
 };
 
-const todayISO = () => new Date().toISOString().slice(0, 10);
+const todayISO = () => {
+  // Get date in local time (same logic as calendar.tsx)
+  const day = new Date();
+  const offset = day.getTimezoneOffset();
+  const localDate = new Date(day.getTime() - offset * 60 * 1000);
+  return localDate.toISOString().slice(0, 10);
+};
 
 // find the most recently used birth-control name
 export async function getLastUsedBirthControlName(): Promise<string | null> {
@@ -49,7 +55,6 @@ export async function quickLogBirthControlForToday(name: string) {
   const todaysEntries = await getMedicationEntriesForDay(day.id);
   const already = todaysEntries?.some((e) => e.medication_id === med.id);
   if (already) {
-    DeviceEventEmitter.emit("entries:changed");
     return;
   }
 
@@ -59,7 +64,4 @@ export async function quickLogBirthControlForToday(name: string) {
     minute: "2-digit",
   });
   await insertMedicationEntry(day.id, med.id, time, undefined);
-
-  // refresh UI
-  DeviceEventEmitter.emit("entries:changed");
 }

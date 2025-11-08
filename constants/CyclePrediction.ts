@@ -21,7 +21,11 @@ export const CYCLE_PREDICTION_CONSTANTS = {
   /** Number of months to predict ahead */
   PREDICTION_MONTHS_AHEAD: 3,
 
-  /** Maximum number of future cycles to predict */
+  /**
+   * Maximum number of future cycles to predict
+   * Adjust this value to show more or fewer predicted cycles on the calendar
+   * Recommended range: 1-5 cycles
+   */
   MAX_FUTURE_CYCLES: 3,
 } as const;
 
