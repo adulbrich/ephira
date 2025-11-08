@@ -1,4 +1,3 @@
-import { DeviceEventEmitter } from "react-native";
 import { getAllDataAsJson } from "@/db/database";
 import { getDay, insertDay } from "@/db/operations/days";
 import {
