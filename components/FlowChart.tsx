@@ -1,6 +1,6 @@
 import { View } from "react-native";
 import { Dimensions } from "react-native";
-import Svg, { Circle, Text, TSpan, Path } from "react-native-svg";
+import Svg, { Circle, Text, TSpan, Path, Defs, LinearGradient, Stop } from "react-native-svg";
 import { useEffect, useRef } from "react";
 import { FlowColors } from "@/constants/Colors";
 import { useTheme } from "react-native-paper";
@@ -17,6 +17,7 @@ import Animated, {
 } from "react-native-reanimated";
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+const AnimatedPath = Animated.createAnimatedComponent(Path);
 const { height } = Dimensions.get("window");
 
 export default function FlowChart() {
@@ -90,25 +91,20 @@ export default function FlowChart() {
   };
 
   // Animated props for today circle
-  const animatedProps = useAnimatedProps(() => {
+  const animatedCircleProps = useAnimatedProps(() => {
     const todayX =
       centerX + circleRadius * Math.cos((position.value * Math.PI) / 180);
     const todayY =
       centerY + circleRadius * Math.sin((position.value * Math.PI) / 180);
-    return {
-      cx: todayX,
-      cy: todayY,
-    };
+    return { cx: todayX, cy: todayY };
   });
 
-  // Create a circular path for chart
   const arcstartX = 55.7;
   const arcstartY = 5.5;
   const arcendX = 44.3;
   const arcendY = 5.5;
-  const arcPath = `M ${arcstartX},${arcstartY} A 45,45 0 0,1 95,50 A 45,45 0 0,1 50,95 A 45,45 0 0,1 5,50 A 45,45 0 0,1  ${arcendX},${arcendY}`;
+  const arcPath = `M ${arcstartX},${arcstartY} A 45,45 0 0,1 95,50 A 45,45 0 0,1 50,95 A 45,45 0 0,1 5,50 A 45,45 0 0,1 ${arcendX},${arcendY}`;
 
-  // Format the current month and today's date
   const todayFormatted = {
     year: today.toLocaleString("default", { year: "numeric" }),
     month: today.toLocaleString("default", { month: "long" }),
@@ -119,7 +115,6 @@ export default function FlowChart() {
   const todayMonthDayFormatted = `${todayFormatted.month} ${todayFormatted.day},`;
   const todayWeekdayFormattedWithComma = `${todayFormatted.weekday},`;
 
-  // Use refs to satisfy lint
   const fetchFlowDataRef = useRef(fetchFlowData);
   const positionRef = useRef(position);
   const triggerAnimationRef = useRef(triggerAnimation);
@@ -127,21 +122,19 @@ export default function FlowChart() {
   positionRef.current = position;
   triggerAnimationRef.current = triggerAnimation;
 
-  // useFocusEffect to fetch flow data and run animation when the screen is focused
   useFocusEffect(
     React.useCallback(() => {
       fetchFlowDataRef.current();
       runOnJS(() => {
-        positionRef.current.value = initialPosition.current; // Reset position to initial value
+        positionRef.current.value = initialPosition.current;
       })();
 
       setTimeout(() => {
-        triggerAnimationRef.current(); // Run animation after the position is set
+        triggerAnimationRef.current();
       }, 10);
     }, []),
   );
 
-  // Filter flow data for dates within the current month
   const filterFlowDataForCurrentMonth = (flowData: any[]) => {
     if (flowData.length === 0) {
       setFlowDataForCurrentMonth([]);
@@ -161,21 +154,84 @@ export default function FlowChart() {
     }
   };
 
-  // Updates the current month's data when there are changes in flowData
   useEffect(() => {
     filterFlowDataForCurrentMonth(flowData);
   }, [flowData]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ===== Gradient + Progress Logic =====
+  const flowDays = flowDataForCurrentMonth.length || 0;
+  const maxFlowLength = 6;
+  const progress = Math.min(flowDays / maxFlowLength, 1);
+  const C = 2 * Math.PI * circleRadius;
+
+  const visible = C * progress;
+  const dashOffset = 0; // makes arc grow right -> left
+
+  const tailLen = Math.min(C * 0.08, visible);
+  const tailOffset = C - visible;
+
+  const animatedDashProps = useAnimatedProps(() => ({
+    strokeDasharray: [visible, C] as unknown as string | number[],
+    strokeDashoffset: dashOffset,
+  }));
+
+  // =====================================
+
   return (
     <View style={{ padding: 2 }}>
       <Svg height={height * 0.5} width="100%" viewBox="-5 -5 110 110">
+        <Defs>
+          {/* Main flow gradient */}
+          <LinearGradient id="flowGradient" x1="100%" y1="0%" x2="0%" y2="100%">
+            <Stop offset="0%" stopColor={FlowColors[0] ?? "#FFC0CB"} />
+            <Stop offset="25%" stopColor={FlowColors[1] ?? "#FA8072"} />
+            <Stop offset="50%" stopColor={FlowColors[2] ?? "#FF0000"} />
+            <Stop offset="75%" stopColor={FlowColors[3] ?? "#800020"} />
+            <Stop offset="95%" stopColor="#c6a4dbff" />
+          </LinearGradient>
+
+          {/* Fade-out tail mask */}
+          <LinearGradient id="fadeTail" x1="100%" y1="0%" x2="0%" y2="100%">
+            <Stop offset="0%" stopColor="#c6a4dbff" stopOpacity="0.7" />
+            <Stop offset="100%" stopColor="#c6a4dbff" stopOpacity="0" />
+          </LinearGradient>
+        </Defs>
+
+        {/* Base purple ring (always visible) */}
         <Path
           d={arcPath}
           fill="transparent"
-          stroke={theme.colors.secondary}
+          stroke="#c6a4dbff"
           strokeWidth="9"
           strokeLinecap="round"
         />
+
+        {/* Gradient progress ring overlay */}
+        {flowDays > 0 && (
+          <>
+            {/* Main gradient arc */}
+            <AnimatedPath
+              d={arcPath}
+              fill="transparent"
+              stroke="url(#flowGradient)"
+              strokeWidth="9"
+              strokeLinecap="round"
+              animatedProps={animatedDashProps}
+            />
+            {/* Soft fade overlay */}
+            <Path
+              d={arcPath}
+              fill="transparent"
+              stroke="url(#fadeTail)"
+              strokeWidth="9"
+              strokeLinecap="round"
+              strokeDasharray={`${tailLen} ${C}`}
+              strokeDashoffset={tailOffset}
+            />
+          </>
+        )}
+
+        {/* Inner circle and date text */}
         <Circle
           cx="50"
           cy="50"
@@ -199,13 +255,14 @@ export default function FlowChart() {
             {todayFormatted.year}
           </TSpan>
         </Text>
-        {renderMarks()}
+
+        {/* Animated circle marker */}
         <AnimatedCircle
           r="5"
           fill="transparent"
           stroke={theme.colors.onSecondaryContainer}
           strokeWidth="1.5"
-          animatedProps={animatedProps}
+          animatedProps={animatedCircleProps}
         />
       </Svg>
     </View>
