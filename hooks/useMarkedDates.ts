@@ -11,7 +11,11 @@ import {
   useSelectedDate,
   usePredictionChoice,
 } from "@/assets/src/calendar-storage";
-import { FlowColors, FilterColorsDark, FilterColorsLight } from "@/constants/Colors";
+import {
+  FlowColors,
+  FilterColorsDark,
+  FilterColorsLight,
+} from "@/constants/Colors";
 import { useLiveFilteredData } from "@/hooks/useLiveFilteredData";
 import { anySymptomOption } from "@/constants/Symptoms";
 import { anyMoodOption } from "@/constants/Moods";
@@ -154,7 +158,8 @@ async function markedDatesBuilder(
     // NOTES
     const notesIndex = filters.findIndex((f) => f === "Notes");
     if (notesIndex !== -1) {
-      if (!markedDates[day.date]) markedDates[day.date] = { selected: false, periods: [] };
+      if (!markedDates[day.date])
+        markedDates[day.date] = { selected: false, periods: [] };
 
       if (!day.notes) {
         markedDates[day.date].periods.push({ color: "transparent" });
@@ -170,7 +175,8 @@ async function markedDatesBuilder(
     // CYCLE START/END
     const startEndIndex = filters.findIndex((f) => f === "Cycle Start/End");
     if (startEndIndex !== -1) {
-      if (!markedDates[day.date]) markedDates[day.date] = { selected: false, periods: [] };
+      if (!markedDates[day.date])
+        markedDates[day.date] = { selected: false, periods: [] };
 
       const isStartEnd = day.is_cycle_start || day.is_cycle_end;
       markedDates[day.date].periods.push({
@@ -345,4 +351,3 @@ export function useMarkedDates(calendarFilters?: string[]) {
 
   return { loading, markedDates };
 }
-

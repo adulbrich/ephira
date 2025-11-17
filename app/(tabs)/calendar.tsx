@@ -23,10 +23,7 @@ import {
 import { getSetting, insertSetting } from "@/db/database";
 import CalendarHeader from "@/components/calendar/CalendarHeader";
 import { useMarkedDates } from "@/hooks/useMarkedDates";
-import {
-  FilterColorsDark,
-  FilterColorsLight,
-} from "@/constants/Colors";
+import { FilterColorsDark, FilterColorsLight } from "@/constants/Colors";
 import { Image } from "react-native";
 import FadeInView from "@/components/animations/FadeInView";
 import { useFocusEffect } from "expo-router";
@@ -109,7 +106,13 @@ export default function FlowCalendar() {
                 }}
                 automaticallyAdjustKeyboardInsets={true}
               >
-                <View key={themeKey} style={{ backgroundColor: theme.colors.background, padding: 4 }}>
+                <View
+                  key={themeKey}
+                  style={{
+                    backgroundColor: theme.colors.background,
+                    padding: 4,
+                  }}
+                >
                   <Calendar
                     allowSelectionOutOfRange={false}
                     key={key}
