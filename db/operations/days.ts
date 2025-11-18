@@ -1,6 +1,7 @@
 import { getDrizzleDatabase } from "@/db/operations/setup";
 import { days } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { checkPredictionAccuracy } from "@/db/operations/predictionSnapshots";
 
 const db = getDrizzleDatabase();
 
@@ -32,6 +33,14 @@ export const updateDay = async (
       is_cycle_end: is_cycle_end,
     })
     .where(eq(days.date, date));
+
+  // Check prediction accuracy when flow is logged
+  try {
+    await checkPredictionAccuracy(date, flowIntensity > 0);
+  } catch (error) {
+    console.error("Error checking prediction accuracy:", error);
+    // Don't fail the whole operation if accuracy checking fails
+  }
 };
 
 export const updateDayFlow = async (date: string, flowIntensity: number) => {
@@ -39,6 +48,14 @@ export const updateDayFlow = async (date: string, flowIntensity: number) => {
     .update(days)
     .set({ flow_intensity: flowIntensity })
     .where(eq(days.date, date));
+
+  // Check prediction accuracy when flow is logged
+  try {
+    await checkPredictionAccuracy(date, flowIntensity > 0);
+  } catch (error) {
+    console.error("Error checking prediction accuracy:", error);
+    // Don't fail the whole operation if accuracy checking fails
+  }
 };
 
 export const updateDayCycleStart = async (

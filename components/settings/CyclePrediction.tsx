@@ -16,7 +16,13 @@ import {
 import { useFetchCycleData } from "@/hooks/useFetchCycleData";
 import { useRef, useState, useEffect } from "react";
 import { SettingsKeys } from "@/constants/Settings";
-import { insertSetting, getAllDays } from "@/db/database";
+import {
+  insertSetting,
+  getAllDays,
+  getPredictionAccuracy,
+  generateTestPredictionData,
+  deleteAllPredictionSnapshots,
+} from "@/db/database";
 import { CYCLE_PREDICTION_CONSTANTS } from "@/constants/CyclePrediction";
 
 export default function CyclePredictions() {
@@ -33,6 +39,31 @@ export default function CyclePredictions() {
     hasEnoughData: boolean;
     message: string;
   }>({ cycleCount: 0, hasEnoughData: false, message: "Checking..." });
+
+  const [accuracyStats, setAccuracyStats] = useState<{
+    totalChecked: number;
+    totalCorrect: number;
+    accuracyPercentage: number;
+  } | null>(null);
+
+  // Fetch prediction accuracy stats
+  useEffect(() => {
+    const fetchAccuracy = async () => {
+      try {
+        const stats = await getPredictionAccuracy();
+        setAccuracyStats(stats);
+      } catch (error) {
+        console.error("Error fetching prediction accuracy:", error);
+      }
+    };
+
+    if (predictionChoice) {
+      fetchAccuracy();
+      // Refresh accuracy stats every 10 seconds when predictions are enabled
+      const interval = setInterval(fetchAccuracy, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [predictionChoice]);
 
   useEffect(() => {
     const checkDataQuality = async () => {
@@ -210,6 +241,43 @@ export default function CyclePredictions() {
               </Card.Content>
             </Card>
 
+            {accuracyStats && accuracyStats.totalChecked > 0 && (
+              <Card
+                mode="outlined"
+                style={{
+                  backgroundColor:
+                    accuracyStats.accuracyPercentage >= 80
+                      ? theme.colors.primaryContainer
+                      : accuracyStats.accuracyPercentage >= 50
+                        ? theme.colors.secondaryContainer
+                        : theme.colors.errorContainer,
+                  marginBottom: 10,
+                }}
+              >
+                <Card.Content>
+                  <Text variant="titleMedium" style={{ marginBottom: 5 }}>
+                    Prediction Accuracy
+                  </Text>
+                  <Text variant="headlineSmall" style={{ fontWeight: "bold" }}>
+                    {accuracyStats.accuracyPercentage}%
+                  </Text>
+                  <Text style={{ marginTop: 5 }}>
+                    {accuracyStats.totalCorrect} out of{" "}
+                    {accuracyStats.totalChecked} predictions were accurate
+                  </Text>
+                  <Text
+                    style={{ marginTop: 5, fontSize: 12, fontStyle: "italic" }}
+                  >
+                    {accuracyStats.accuracyPercentage >= 80
+                      ? "Excellent! Your cycles are very predictable."
+                      : accuracyStats.accuracyPercentage >= 50
+                        ? "Good accuracy. Continue logging for better predictions."
+                        : "Your cycles may be irregular. Consider consulting a healthcare provider."}
+                  </Text>
+                </Card.Content>
+              </Card>
+            )}
+
             <Text>
               Here you can choose whether or not to enable cycle predictions.
             </Text>
@@ -257,6 +325,13 @@ export default function CyclePredictions() {
               {CYCLE_PREDICTION_CONSTANTS.MAX_FUTURE_CYCLES} cycles
             </Text>
             <Text>• More historical data = more accurate predictions</Text>
+            <Text>
+              • Confidence levels shown by size & brightness (taller & brighter =
+              more confident)
+            </Text>
+            <Text>
+              • Accuracy is tracked automatically as you log new flow data
+            </Text>
             <Text variant="titleMedium" style={{ marginTop: 10 }}>
               Tips for accuracy:
             </Text>
@@ -269,6 +344,58 @@ export default function CyclePredictions() {
               Note: Predictions are estimates based on your unique patterns. If
               you have irregular cycles, predictions may be less accurate.
             </Text>
+
+            {/* Test utilities - only show in development */}
+            {__DEV__ && (
+              <>
+                <Text variant="titleMedium" style={{ marginTop: 20, color: theme.colors.error }}>
+                  🧪 Test Utilities (Dev Only)
+                </Text>
+                <View style={{ gap: 10, marginTop: 10 }}>
+                  <Button
+                    mode="outlined"
+                    onPress={async () => {
+                      await generateTestPredictionData("high");
+                      // Trigger refresh
+                      const stats = await getPredictionAccuracy();
+                      setAccuracyStats(stats);
+                    }}
+                  >
+                    Generate High Accuracy (85%)
+                  </Button>
+                  <Button
+                    mode="outlined"
+                    onPress={async () => {
+                      await generateTestPredictionData("medium");
+                      const stats = await getPredictionAccuracy();
+                      setAccuracyStats(stats);
+                    }}
+                  >
+                    Generate Medium Accuracy (65%)
+                  </Button>
+                  <Button
+                    mode="outlined"
+                    onPress={async () => {
+                      await generateTestPredictionData("low");
+                      const stats = await getPredictionAccuracy();
+                      setAccuracyStats(stats);
+                    }}
+                  >
+                    Generate Low Accuracy (35%)
+                  </Button>
+                  <Button
+                    mode="outlined"
+                    buttonColor={theme.colors.errorContainer}
+                    onPress={async () => {
+                      await deleteAllPredictionSnapshots();
+                      setAccuracyStats(null);
+                    }}
+                  >
+                    Clear All Test Data
+                  </Button>
+                </View>
+              </>
+            )}
           </View>
         </List.Accordion>
       </List.Section>

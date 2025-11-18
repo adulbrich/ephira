@@ -15,6 +15,7 @@ export interface periodData {
   startingDay?: boolean;
   endingDay?: boolean;
   color: string;
+  height?: number;
 }
 
 export interface MarkedDate {
@@ -145,9 +146,14 @@ export interface PredictionToggle {
   setPredictionChoice: (predictionChoice: boolean) => void;
 }
 
+export interface PredictedDate {
+  date: string;
+  confidence: number; // 0-100
+}
+
 export interface PredictedCycleState {
-  predictedCycle: string[];
+  predictedCycle: PredictedDate[];
   predictedMarkedDates: MarkedDates;
-  setPredictedCycle: (data: string[]) => void;
+  setPredictedCycle: (data: PredictedDate[]) => void;
   setPredictedMarkedDates: (data: MarkedDates) => void;
 }

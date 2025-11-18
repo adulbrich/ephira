@@ -74,6 +74,16 @@ export const medicationEntries = sqliteTable("medication_entries", {
   notes: text(),
 });
 
+// to track when prediction were made
+export const predictionSnapshots = sqliteTable("prediction_snapshots", {
+  id: integer().primaryKey({ autoIncrement: true }),
+  prediction_made_date: text().notNull(),
+  predicted_date: text().notNull(),
+  confidence: integer().notNull(),
+  actual_had_flow: integer({ mode: "boolean" }),
+  checked_date: text(),
+});
+
 export type Settings = typeof settings.$inferSelect;
 export type Day = typeof days.$inferSelect;
 export type Mood = typeof moods.$inferSelect;
@@ -82,3 +92,4 @@ export type Symptom = typeof symptoms.$inferSelect;
 export type SymptomEntry = typeof symptomEntries.$inferSelect;
 export type Medication = typeof medications.$inferSelect;
 export type MedicationEntry = typeof medicationEntries.$inferSelect;
+export type PredictionSnapshot = typeof predictionSnapshots.$inferSelect;

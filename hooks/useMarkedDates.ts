@@ -41,6 +41,37 @@ function getStartingAndEndingDay(
   };
 }
 
+/**
+ * Apply opacity to a hex color string
+ * @param hexColor - Color in #RRGGBB or #RRGGBBAA format
+ * @param opacity - Opacity value from 0 to 1
+ * @returns Color in rgba() format
+ */
+function applyOpacityToColor(hexColor: string, opacity: number): string {
+  // Remove # if present
+  const hex = hexColor.replace("#", "");
+
+  // Parse RGB values
+  let r: number, g: number, b: number;
+
+  if (hex.length === 6) {
+    r = parseInt(hex.substring(0, 2), 16);
+    g = parseInt(hex.substring(2, 4), 16);
+    b = parseInt(hex.substring(4, 6), 16);
+  } else if (hex.length === 8) {
+    // Already has alpha channel
+    r = parseInt(hex.substring(0, 2), 16);
+    g = parseInt(hex.substring(2, 4), 16);
+    b = parseInt(hex.substring(4, 6), 16);
+  } else {
+    // Invalid format, return original
+    return hexColor;
+  }
+
+  // Return rgba format
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+}
+
 function applyFilterToMarkedDates({
   markedDates,
   filters,
@@ -313,14 +344,36 @@ export function useMarkedDates(calendarFilters?: string[]) {
         const newPredictedDates = await fetchCycleDataRef.current();
         const newPredictedMarkedDates: MarkedDates = {};
         const index = calendarFilters?.indexOf("Cycle Prediction");
-        newPredictedDates.forEach((date) => {
-          newPredictedMarkedDates[date] = {
+
+        newPredictedDates.forEach((prediction) => {
+          // Calculate opacity AND height based on confidence level
+          // High confidence (80-100): full opacity, tall marker (16px)
+          // Medium confidence (50-79): 70% opacity, medium marker (12px)
+          // Low confidence (0-49): 40% opacity, short marker (8px)
+          let opacity = 1.0;
+          let height = 16; // Default height
+
+          if (prediction.confidence < 50) {
+            opacity = 0.4;
+            height = 8; // Small marker for low confidence
+          } else if (prediction.confidence < 80) {
+            opacity = 0.7;
+            height = 12; // Medium marker for medium confidence
+          }
+          // High confidence keeps defaults (1.0 opacity, 16px height)
+
+          // Get the base color and apply opacity
+          const baseColor = colors[index];
+          const colorWithOpacity = applyOpacityToColor(baseColor, opacity);
+
+          newPredictedMarkedDates[prediction.date] = {
             selected: false,
             periods: [
               {
                 startingDay: true,
                 endingDay: true,
-                color: colors[index],
+                color: colorWithOpacity,
+                height: height, // Apply custom height
               },
             ],
           };
