@@ -18,7 +18,9 @@ class NotificationServiceClass {
    */
   async getNotificationSettings(): Promise<NotificationSettings> {
     try {
-      const settingsRecord = await getSetting(SettingsKeys.notificationSettings);
+      const settingsRecord = await getSetting(
+        SettingsKeys.notificationSettings,
+      );
 
       if (!settingsRecord || !settingsRecord.value) {
         return DEFAULT_NOTIFICATION_SETTINGS;

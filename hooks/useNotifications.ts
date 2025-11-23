@@ -107,7 +107,10 @@ export const useNotifications = () => {
       }
 
       const trigger = config.trigger
-        ? ({ type: Notifications.SchedulableTriggerInputTypes.DATE, date: config.trigger } as const)
+        ? ({
+            type: Notifications.SchedulableTriggerInputTypes.DATE,
+            date: config.trigger,
+          } as const)
         : null; // null = immediate
 
       const notificationId = await Notifications.scheduleNotificationAsync({
