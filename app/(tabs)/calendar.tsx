@@ -33,7 +33,9 @@ export default function FlowCalendar() {
 
   const { date, setDate } = useSelectedDate();
   const { selectedFilters, setSelectedFilters } = useCalendarFilters();
-  const { setPredictionChoice } = usePredictionChoice();
+  const { predictionChoice, setPredictionChoice } = usePredictionChoice();
+  // can also be used like this
+  // const selectedDate = useSelectedDate().date
 
   const { loading, markedDates } = useMarkedDates(selectedFilters);
   const theme = useTheme();
@@ -188,7 +190,29 @@ export default function FlowCalendar() {
                       </View>
                     ))}
                   </View>
-
+                  {selectedFilters.includes("Cycle Prediction") &&
+                    predictionChoice && (
+                      <View
+                        style={{
+                          padding: 8,
+                          backgroundColor: theme.colors.surfaceVariant,
+                          borderRadius: 4,
+                          margin: 4,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            fontStyle: "italic",
+                            textAlign: "center",
+                            color: theme.colors.onSurfaceVariant,
+                          }}
+                        >
+                          📅 Showing predicted cycles (estimates based on your
+                          data)
+                        </Text>
+                      </View>
+                    )}
                   <Divider />
                 </View>
 

@@ -2,7 +2,10 @@ import { StyleSheet, View } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import FlowChart from "@/components/FlowChart";
 import { FlowColors } from "@/constants/Colors";
-import { useData } from "@/assets/src/calendar-storage";
+import {
+  useData,
+  useDatabaseChangeNotifier,
+} from "@/assets/src/calendar-storage";
 import { useTheme, Text, Button } from "react-native-paper";
 import FadeInView from "@/components/animations/FadeInView";
 import { useState, useCallback } from "react";
@@ -15,6 +18,7 @@ export default function HomeScreen() {
   const theme = useTheme();
   const { data: flowData } = useData();
   const [busy, setBusy] = useState(false);
+  const { setDatabaseChange } = useDatabaseChangeNotifier();
 
   const onQuickBC = useCallback(async () => {
     if (busy) return;
@@ -23,18 +27,21 @@ export default function HomeScreen() {
       const last = await getLastUsedBirthControlName();
       if (!last) {
         alert("No previous birth control found to quick-log.");
+        setBusy(false);
         return;
       }
       await quickLogBirthControlForToday(last);
-      // Optional: toast/snackbar
-      // alert(`${last} logged for today`);
+      // Trigger database change notification to refresh the calendar
+      setDatabaseChange(Date.now().toString());
     } catch (e) {
-      console.error(e);
-      alert("Couldn't quick-log birth control.");
+      console.error("Quick BC Error:", e);
+      alert(
+        `Couldn't quick-log birth control: ${e instanceof Error ? e.message : String(e)}`,
+      );
     } finally {
       setBusy(false);
     }
-  }, [busy]);
+  }, [busy, setDatabaseChange]);
 
   // Get up to 5 most recent logged days
   const recentFlowDays = [...flowData]

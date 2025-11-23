@@ -21,6 +21,7 @@
     "@react-navigation/bottom-tabs": "^7.3.10",
     "@react-navigation/native": "^7.1.6",
     "babel-plugin-inline-import": "^3.0.0",
+    "devalue": "^5.4.2",
     "drizzle-orm": "^0.43.1",
     "expo": "^54.0.18",
     "expo-blur": "~15.0.7",
