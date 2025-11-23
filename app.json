@@ -15,6 +15,7 @@
       },
       "infoPlist": {
         "NSFaceIDUsageDescription": "This app uses Face ID to authenticate you.",
+        "NSUserNotificationsUsageDescription": "This app uses notifications to remind you about your cycle predictions and period tracking.",
         "ITSAppUsesNonExemptEncryption": false
       },
       "icon": {
@@ -33,7 +34,8 @@
       "package": "com.capucity.ephira",
       "permissions": [
         "android.permission.USE_BIOMETRIC",
-        "android.permission.USE_FINGERPRINT"
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.POST_NOTIFICATIONS"
       ]
     },
     "web": {
@@ -67,6 +69,13 @@
         "expo-local-authentication",
         {
           "faceIDPermission": "Allow ephira to use Face ID."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#9892a0"
         }
       ],
       "expo-web-browser"

@@ -306,6 +306,26 @@ export default function CyclePredictions() {
               </Text>
             )}
 
+            {predictionChoice && dataStatus.hasEnoughData && (
+              <Card
+                mode="outlined"
+                style={{
+                  backgroundColor: theme.colors.secondaryContainer,
+                  marginTop: 10,
+                }}
+              >
+                <Card.Content>
+                  <Text variant="titleMedium" style={{ marginBottom: 5 }}>
+                    💡 Want reminders?
+                  </Text>
+                  <Text>
+                    Enable notifications in the settings below to get reminded
+                    before your predicted periods.
+                  </Text>
+                </Card.Content>
+              </Card>
+            )}
+
             <Text>
               This feature predicts your next menstrual cycles based on your
               logged flow data. The app analyzes your cycle history to calculate
@@ -326,8 +346,8 @@ export default function CyclePredictions() {
             </Text>
             <Text>• More historical data = more accurate predictions</Text>
             <Text>
-              • Confidence levels shown by size & brightness (taller & brighter =
-              more confident)
+              • Confidence levels shown by size & brightness (taller & brighter
+              = more confident)
             </Text>
             <Text>
               • Accuracy is tracked automatically as you log new flow data
@@ -348,7 +368,10 @@ export default function CyclePredictions() {
             {/* Test utilities - only show in development */}
             {__DEV__ && (
               <>
-                <Text variant="titleMedium" style={{ marginTop: 20, color: theme.colors.error }}>
+                <Text
+                  variant="titleMedium"
+                  style={{ marginTop: 20, color: theme.colors.error }}
+                >
                   🧪 Test Utilities (Dev Only)
                 </Text>
                 <View style={{ gap: 10, marginTop: 10 }}>

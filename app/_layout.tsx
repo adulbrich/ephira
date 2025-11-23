@@ -1,5 +1,5 @@
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import * as LocalAuthentication from "expo-local-authentication";
 import * as Crypto from "expo-crypto";
@@ -28,6 +28,8 @@ import PasswordAuthenticationView from "@/components/PasswordAuthenticationView"
 import { DATABASE_NAME } from "@/constants/Settings";
 import { getTheme } from "@/components/ThemeHandler";
 import { useThemeColor } from "@/assets/src/calendar-storage";
+import * as Notifications from "expo-notifications";
+import { NotificationTypes } from "@/constants/Notifications";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -67,6 +69,7 @@ export default function RootLayout() {
   const appState = useRef<AppStateStatus>(AppState.currentState);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isPasswordModalVisible, setIsPasswordModalVisible] = useState(false);
+  const router = useRouter();
 
   const checkAuthentication = useCallback(async () => {
     try {
@@ -93,6 +96,27 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, []);
+
+  // Handle notification taps
+  useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        const data = response.notification.request.content.data;
+        console.log("[Notification] Tapped:", data.type);
+
+        if (
+          data.type === NotificationTypes.PERIOD_UPCOMING ||
+          data.type === NotificationTypes.PERIOD_TODAY ||
+          data.type === NotificationTypes.PERIOD_LATE
+        ) {
+          // Navigate to calendar tab when notification is tapped
+          router.push("/(tabs)/calendar");
+        }
+      },
+    );
+
+    return () => subscription.remove();
+  }, [router]);
 
   // re-authenticate user if needed when app is brought back to the foreground
   useEffect(() => {

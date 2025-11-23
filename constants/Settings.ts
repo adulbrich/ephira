@@ -6,6 +6,8 @@ export const SettingsKeys = {
   calendarFilters: "calendarFilters",
   databaseInitialSetup: "databaseInitialSetup",
   cyclePredictions: "cyclePredictions",
+  notificationsEnabled: "notificationsEnabled",
+  notificationSettings: "notificationSettings",
 };
 
 export const AUTH_TYPES = {

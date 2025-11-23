@@ -26,7 +26,10 @@ export const savePredictions = async (
 /**
  * Check predictions against actual data and update accuracy
  */
-export const checkPredictionAccuracy = async (date: string, hadFlow: boolean) => {
+export const checkPredictionAccuracy = async (
+  date: string,
+  hadFlow: boolean,
+) => {
   // Find all unchecked predictions for this date
   const predictions = await db
     .select()

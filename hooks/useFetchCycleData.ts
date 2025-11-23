@@ -1,6 +1,7 @@
 import { getAllDays, savePredictions } from "@/db/database";
 import { DayData, PredictedDate } from "@/constants/Interfaces";
 import { CYCLE_PREDICTION_CONSTANTS } from "@/constants/CyclePrediction";
+import { NotificationService } from "@/services/notificationService";
 
 export function useFetchCycleData(
   setPredictedCycle: (values: PredictedDate[]) => void,
@@ -307,7 +308,9 @@ export function useFetchCycleData(
         // Decrease confidence for predictions further in the future
         // First cycle: 100% of base, Second: 90%, Third: 80%
         const confidenceMultiplier = 1 - (cycleNum - 1) * 0.1;
-        const cycleConfidence = Math.round(baseConfidence * confidenceMultiplier);
+        const cycleConfidence = Math.round(
+          baseConfidence * confidenceMultiplier,
+        );
 
         // Add each day of the predicted cycle
         for (let day = 0; day < cycleDuration; day++) {
@@ -330,6 +333,11 @@ export function useFetchCycleData(
       if (predictedDates.length > 0) {
         try {
           await savePredictions(predictedDates);
+
+          // Schedule notifications for predictions
+          await NotificationService.scheduleAllPredictionNotifications(
+            predictedDates,
+          );
         } catch (saveError) {
           console.error("Error saving predictions:", saveError);
           // Don't fail the whole operation if saving fails
