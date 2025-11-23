@@ -245,4 +245,3 @@ const makeStyles = ({ theme }: { theme: MD3Theme }) =>
       justifyContent: "space-around",
     },
   });
-

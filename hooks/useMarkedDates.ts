@@ -310,14 +310,7 @@ export function useMarkedDates(calendarFilters?: string[]) {
     }
 
     refreshCalendar(filteredData as DayData[]);
-  }, [
-    filteredData,
-    date,
-    calendarFilters,
-    colors,
-    predictionChoice,
-    setDate,
-  ]);
+  }, [filteredData, date, calendarFilters, colors, predictionChoice, setDate]);
 
   useEffect(() => {
     if (!date) return;
