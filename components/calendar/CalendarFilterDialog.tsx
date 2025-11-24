@@ -16,6 +16,7 @@ import {
   getAllVisibleSymptoms,
   getAllVisibleMoods,
   getAllVisibleMedications,
+  getAllDays,
 } from "@/db/database";
 import {
   useCalendarFilters,
@@ -26,6 +27,7 @@ import { anySymptomOption } from "@/constants/Symptoms";
 import { anyMoodOption } from "@/constants/Moods";
 import { anyMedicationOption } from "@/constants/Medications";
 import { anyBirthControlOption } from "@/constants/BirthControlTypes";
+import { CYCLE_PREDICTION_CONSTANTS } from "@/constants/CyclePrediction";
 const flowOption = "Flow";
 const PredictionOption = "Cycle Prediction";
 const notesOption = "Notes";
@@ -128,6 +130,7 @@ export default function CalendarFilterDialog({
   const [moodsExpanded, setMoodsExpanded] = useState(false);
   const [medicationsExpanded, setMedicationsExpanded] = useState(false);
   const [birthControlExpanded, setBirthControlExpanded] = useState(false);
+  const [hasEnoughCycleData, setHasEnoughCycleData] = useState(false);
 
   useEffect(() => {
     const fetchSymptoms = async () => {
@@ -162,6 +165,62 @@ export default function CalendarFilterDialog({
   useEffect(() => {
     setTempSelectedFilters(selectedFilters);
   }, [selectedFilters]);
+
+  // Check if user has enough cycle data for predictions
+  useEffect(() => {
+    const checkCycleData = async () => {
+      try {
+        const allDays = await getAllDays();
+        const flowDays = allDays.filter((day) => day.flow_intensity);
+
+        if (flowDays.length === 0) {
+          setHasEnoughCycleData(false);
+          return;
+        }
+
+        // Count cycles
+        let cycleCount = 0;
+        let consecutiveDays = 0;
+        const sortedDays = flowDays.sort(
+          (a, b) => new Date(a.date).valueOf() - new Date(b.date).valueOf(),
+        );
+
+        for (let i = 0; i < sortedDays.length; i++) {
+          const currentDate = new Date(sortedDays[i].date);
+          const nextDate =
+            i < sortedDays.length - 1 ? new Date(sortedDays[i + 1].date) : null;
+
+          consecutiveDays++;
+
+          const isLastDay = i === sortedDays.length - 1;
+          const isGap = nextDate
+            ? (nextDate.getTime() - currentDate.getTime()) /
+                (1000 * 60 * 60 * 24) >
+              1
+            : false;
+
+          if (
+            (isLastDay || isGap) &&
+            consecutiveDays >= CYCLE_PREDICTION_CONSTANTS.MIN_CONSECUTIVE_DAYS
+          ) {
+            cycleCount++;
+            consecutiveDays = 0;
+          } else if (isGap) {
+            consecutiveDays = 0;
+          }
+        }
+
+        setHasEnoughCycleData(
+          cycleCount >= CYCLE_PREDICTION_CONSTANTS.MIN_CYCLES_FOR_PREDICTION,
+        );
+      } catch (error) {
+        console.error("Error checking cycle data:", error);
+        setHasEnoughCycleData(false);
+      }
+    };
+
+    checkCycleData();
+  }, [databaseChange]);
 
   const applyFilter = async () => {
     let updatedFilters = tempSelectedFilters;
@@ -261,29 +320,30 @@ export default function CalendarFilterDialog({
                   );
                 }}
               />
-              {/* Add PredictionOption switch if predictionChoice is true */}
-              {usePredictionChoice().predictionChoice === true && (
-                <List.Item
-                  style={styles.listItem}
-                  key={PredictionOption}
-                  title={PredictionOption}
-                  right={() => {
-                    const isSelected =
-                      tempSelectedFilters.includes(PredictionOption);
-                    return (
-                      <Switch
-                        key={`${PredictionOption}-${isSelected}`}
-                        value={isSelected}
-                        onValueChange={() => onToggleSwitch(PredictionOption)}
-                        disabled={
-                          isMaxFiltersSelected &&
-                          !tempSelectedFilters.includes(PredictionOption)
-                        }
-                      />
-                    );
-                  }}
-                />
-              )}
+              {/* Add PredictionOption switch if predictionChoice is true AND user has enough cycle data */}
+              {usePredictionChoice().predictionChoice === true &&
+                hasEnoughCycleData && (
+                  <List.Item
+                    style={styles.listItem}
+                    key={PredictionOption}
+                    title={PredictionOption}
+                    right={() => {
+                      const isSelected =
+                        tempSelectedFilters.includes(PredictionOption);
+                      return (
+                        <Switch
+                          key={`${PredictionOption}-${isSelected}`}
+                          value={isSelected}
+                          onValueChange={() => onToggleSwitch(PredictionOption)}
+                          disabled={
+                            isMaxFiltersSelected &&
+                            !tempSelectedFilters.includes(PredictionOption)
+                          }
+                        />
+                      );
+                    }}
+                  />
+                )}
               <List.Item
                 style={styles.listItem}
                 key={notesOption}
