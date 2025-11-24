@@ -11,6 +11,7 @@ import {
   useBirthControl,
   useBirthControlNotes,
   useTimeTaken,
+  useDatabaseChangeNotifier,
 } from "@/assets/src/calendar-storage";
 import FlowAccordion from "@/components/dayView/FlowAccordion";
 import MedicationsAccordion from "./MedicationsAccordion";
@@ -44,6 +45,7 @@ export default function DayView() {
   const { selectedBirthControl, setSelectedBirthControl } = useBirthControl();
   const { birthControlNotes, setBirthControlNotes } = useBirthControlNotes();
   const { timeTaken, setTimeTaken } = useTimeTaken();
+  const { databaseChange } = useDatabaseChangeNotifier();
 
   const { syncEntries } = useSyncEntries(date);
   const { fetchEntries } = useFetchEntries(
@@ -292,7 +294,7 @@ export default function DayView() {
 
     fetchAll();
     setExpandedAccordion(null);
-  }, [date, setExpandedAccordion]);
+  }, [date, setExpandedAccordion, databaseChange]);
 
   const hasChanged = useCallback((newData: SavedData, oldData: SavedData) => {
     const normalize = (data: SavedData) => ({

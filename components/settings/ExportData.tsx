@@ -30,10 +30,10 @@ async function exportCsvOrJson(data: string, fileType: string) {
   const UTI =
     fileType === "csv" ? "public.comma-separated-values-text" : "public.json";
   try {
-    const fileUri = FileSystem.cacheDirectory + fileName;
+    const fileUri = FileSystem.cacheDirectory + fileName; //"import/namespace": "off"
 
     await FileSystem.writeAsStringAsync(fileUri, data, {
-      encoding: FileSystem.EncodingType.UTF8,
+      encoding: FileSystem.EncodingType.UTF8, //"import/namespace": "off"
     });
 
     if (!(await Sharing.isAvailableAsync())) {
