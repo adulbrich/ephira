@@ -3,6 +3,7 @@ import { ThemedView } from "@/components/ThemedView";
 import FlowChart from "@/components/FlowChart";
 import { FlowColors } from "@/constants/Colors";
 import { useData } from "@/assets/src/calendar-storage";
+import { getFlowTypeString } from "@/constants/Flow";
 import { useTheme, Text, Button } from "react-native-paper";
 import FadeInView from "@/components/animations/FadeInView";
 import { useState, useCallback } from "react";
@@ -86,12 +87,15 @@ export default function HomeScreen() {
                     day: "numeric",
                   });
 
+                  const flowType = getFlowTypeString(day.flow_intensity ?? 0);
+                  const backgroundColor = flowType ? FlowColors[flowType] : FlowColors.white;
+
                   return (
                     <View
                       key={index}
                       style={[
                         styles.flowLogItem,
-                        { backgroundColor: FlowColors[day.flow_intensity] },
+                        { backgroundColor },
                       ]}
                     >
                       <Text style={styles.flowLogText}>{weekday}</Text>
