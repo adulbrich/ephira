@@ -134,7 +134,8 @@ export default function FlowChart() {
         return (
           dayDateString >= firstDayString &&
           dayDateString <= lastDayString &&
-          day.flow_intensity
+          day.flow_intensity &&
+          day.flow_intensity > 0 // Explicitly exclude "None" (0)
         );
       });
       setFlowDataForCurrentMonth(filteredData);
@@ -178,10 +179,15 @@ export default function FlowChart() {
     });
 
     // Extract unique flow types in order of first appearance
+    // Explicitly exclude "None" (flow_intensity 0) from gradient
     const seen = new Set<FlowType>();
     const uniqueFlowTypes: FlowType[] = [];
     
     for (const data of sortedData) {
+      // Skip "None" (flow_intensity 0) - it should not affect the gradient
+      if (!data.flow_intensity || data.flow_intensity === 0) {
+        continue;
+      }
       const flowType = getFlowTypeString(data.flow_intensity);
       if (flowType && !seen.has(flowType)) {
         seen.add(flowType);
