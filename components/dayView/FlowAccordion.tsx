@@ -1,9 +1,27 @@
 import { View, StyleSheet } from "react-native";
 import { List, useTheme, Text, Chip } from "react-native-paper";
-import SingleChipSelection from "./SingleChipSelection";
 import { ThemedView } from "../ThemedView";
+import { FlowColors } from "@/constants/Colors";
 
 const flowOptions = ["None", "Spotting", "Light", "Medium", "Heavy"];
+
+// Map flow options to their corresponding colors
+const getFlowColor = (option: string): string => {
+  switch (option.toLowerCase()) {
+    case "none":
+      return FlowColors.white;
+    case "spotting":
+      return FlowColors.spotting;
+    case "light":
+      return FlowColors.light;
+    case "medium":
+      return FlowColors.medium;
+    case "heavy":
+      return FlowColors.heavy;
+    default:
+      return FlowColors.white;
+  }
+};
 
 const styles = StyleSheet.create({
   chipContainer: {
@@ -26,18 +44,48 @@ function FlowChips({
   selectedOption: number;
   setSelectedOption: (option: number) => void;
 }) {
+  const theme = useTheme();
+  const selectedValue = flowOptions[selectedOption];
+
   return (
     <View style={{ width: "100%" }}>
-      <SingleChipSelection
-        options={flowOptions}
-        selectedValue={flowOptions[selectedOption]}
-        setSelectedValue={(value) => {
-          if (value !== null) {
-            setSelectedOption(flowOptions.indexOf(value));
-          }
-        }}
-        label="Select Flow Intensity"
-      />
+      <View style={styles.chipContainer}>
+        {flowOptions.map((option) => {
+          const isSelected = selectedValue === option;
+          const flowColor = getFlowColor(option);
+          // Use darker text color for better contrast on light backgrounds
+          const textColor = option === "None" ? "#000000" : "#ffffff";
+
+          return (
+            <Chip
+              mode="flat"
+              key={option}
+              selected={isSelected}
+              showSelectedCheck={false}
+              elevated={true}
+              onPress={() => {
+                const newIndex = flowOptions.indexOf(option);
+                setSelectedOption(isSelected ? 0 : newIndex);
+              }}
+              style={{
+                backgroundColor: flowColor,
+                margin: 4,
+                borderRadius: 20,
+                height: 36,
+                justifyContent: "center",
+                borderWidth: isSelected ? 2 : 0,
+                borderColor: theme.colors.onSecondaryContainer,
+              }}
+              textStyle={{
+                color: textColor,
+                fontWeight: isSelected ? "bold" : "normal",
+              }}
+            >
+              {option}
+            </Chip>
+          );
+        })}
+      </View>
     </View>
   );
 }

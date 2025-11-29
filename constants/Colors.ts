@@ -1,11 +1,12 @@
 // cool gradient tool: https://cssgradient.io/
-export const FlowColors = [
-  "#ffffff",
-  "#ffafaf",
-  "#ff7272",
-  "#e62929",
-  "#990000",
-];
+export type FlowType = "spotting" | "light" | "medium" | "heavy" ;
+export const FlowColors: Record<FlowType | "white", string> = {
+  white: "#ffffff",
+  spotting: "#ffafaf",
+  light: "#ff7272",
+  medium: "#e62929",
+  heavy: "#990000",
+};
 
 const warmGold = "#E6B657";
 const peachOrange = "#FFA770";
