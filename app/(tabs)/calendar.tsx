@@ -31,7 +31,6 @@ import { useFocusEffect } from "expo-router";
 export default function FlowCalendar() {
   const [key, setKey] = useState<string>("");
 
-  // access state management
   const { date, setDate } = useSelectedDate();
   const { selectedFilters, setSelectedFilters } = useCalendarFilters();
   const { predictionChoice, setPredictionChoice } = usePredictionChoice();
@@ -43,27 +42,22 @@ export default function FlowCalendar() {
   const filterColors = theme.dark ? FilterColorsDark : FilterColorsLight;
   const styles = makeStyles({ theme });
 
-  // get date in local time
   const day = new Date();
   const offset = day.getTimezoneOffset();
-  const localDate = new Date(day.getTime() - offset * 60 * 1000);
+  const localDate = new Date(day.getTime() - offset * 60000);
   const today = localDate.toISOString().split("T")[0];
 
-  const dismissKeyboard = () => {
-    Keyboard.dismiss();
-  };
+  const dismissKeyboard = () => Keyboard.dismiss();
 
   const { themeColor } = useThemeColor();
   const themeKey = `${theme.dark ? "dark" : "light"}-${themeColor}`;
 
-  // load filters from secure store
   useEffect(() => {
     const loadFilters = async () => {
       const filters = await getSetting(SettingsKeys.calendarFilters);
       if (filters?.value) {
         setSelectedFilters(JSON.parse(filters.value));
       } else {
-        // set Flow as first filter by default (filler color given since color isn't optional)
         setSelectedFilters(["Flow"]);
         await insertSetting(
           SettingsKeys.calendarFilters,
@@ -74,14 +68,12 @@ export default function FlowCalendar() {
     loadFilters();
   }, [setSelectedFilters]);
 
-  // load filters from secure store
   useEffect(() => {
     const loadPredictionChoice = async () => {
       const filters = await getSetting(SettingsKeys.cyclePredictions);
       if (filters?.value) {
         setPredictionChoice(JSON.parse(filters.value));
       } else {
-        // set Flow as first filter by default (filler color given since color isn't optional)
         setPredictionChoice(true);
         await insertSetting(
           SettingsKeys.cyclePredictions,
@@ -92,15 +84,12 @@ export default function FlowCalendar() {
     loadPredictionChoice();
   }, [setPredictionChoice]);
 
-  // Set selected date to today when screen is focused
   useFocusEffect(
     useCallback(() => {
       setDate(today);
     }, [setDate, today]),
   );
 
-  // the calendar doesn't expose a method to jump to today, so we have to
-  // change the key after setting the date to force a re-render
   const jumpToToday = () => {
     setDate(today);
     setKey(date + String(Math.random()));
@@ -163,7 +152,9 @@ export default function FlowCalendar() {
                       textDayHeaderFontSize: 16,
                     }}
                   />
+
                   <Divider />
+
                   <View style={styles.legendContainer}>
                     {selectedFilters.map((filter, index) => (
                       <View
@@ -224,6 +215,7 @@ export default function FlowCalendar() {
                     )}
                   <Divider />
                 </View>
+
                 <View>{date && <DayView />}</View>
               </ScrollView>
             </SafeAreaView>
@@ -240,7 +232,6 @@ const makeStyles = ({ theme }: { theme: MD3Theme }) =>
       backgroundColor: theme.colors.background,
       flex: 1,
       paddingTop: StatusBar.currentHeight,
-      // Since iOS bar uses absolute positon for blur affect, we have to adjust padding to bottom of container
       paddingBottom: Platform.select({
         ios: 60,
         default: 0,
