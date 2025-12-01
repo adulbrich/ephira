@@ -19,6 +19,7 @@ import {
   DatabaseChangeNotifier,
   PredictionToggle,
   PredictedCycleState,
+  PredictedDate,
 } from "@/constants/Interfaces";
 
 const initialDay: DayData = {
@@ -161,7 +162,8 @@ export const usePredictionChoice = create<PredictionToggle>((set) => ({
 export const usePredictedCycle = create<PredictedCycleState>((set) => ({
   predictedCycle: [],
   predictedMarkedDates: {},
-  setPredictedCycle: (data: string[]) => set(() => ({ predictedCycle: data })),
+  setPredictedCycle: (data: PredictedDate[]) =>
+    set(() => ({ predictedCycle: data })),
   setPredictedMarkedDates: (data: MarkedDates) =>
     set(() => ({ predictedMarkedDates: data })),
 }));

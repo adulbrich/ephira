@@ -1,11 +1,12 @@
-import { getAllDays } from "@/db/database";
-import { DayData } from "@/constants/Interfaces";
+import { getAllDays, savePredictions } from "@/db/database";
+import { DayData, PredictedDate } from "@/constants/Interfaces";
 import { CYCLE_PREDICTION_CONSTANTS } from "@/constants/CyclePrediction";
+import { NotificationService } from "@/services/notificationService";
 
 export function useFetchCycleData(
-  setPredictedCycle: (values: string[]) => void,
+  setPredictedCycle: (values: PredictedDate[]) => void,
 ) {
-  const predictedDates: string[] = [];
+  const predictedDates: PredictedDate[] = [];
 
   // get date in local time
   const day = new Date();
@@ -135,6 +136,92 @@ export function useFetchCycleData(
     return Math.round(sum / cycleLengths.length);
   };
 
+  /**
+   * Calculate confidence score for predictions (0-100)
+   * Based on:
+   * - Cycle regularity (70% weight): How consistent are cycle lengths?
+   * - Amount of data (20% weight): More cycles = higher confidence
+   * - Recency (10% weight): Recent data = higher confidence
+   */
+  const calculateConfidence = (
+    cycles: {
+      dates: string[];
+      startDate: string;
+      endDate: string;
+      isManuallyMarked: boolean;
+    }[],
+    cycleLengths: number[],
+  ): number => {
+    // Need at least 2 cycles to calculate confidence
+    if (cycleLengths.length < 2) {
+      return 30; // Low confidence with minimal data
+    }
+
+    // 1. Calculate cycle regularity score (70% weight)
+    const average =
+      cycleLengths.reduce((acc, len) => acc + len, 0) / cycleLengths.length;
+    const variance =
+      cycleLengths.reduce((acc, len) => acc + Math.pow(len - average, 2), 0) /
+      cycleLengths.length;
+    const standardDeviation = Math.sqrt(variance);
+
+    // Lower std dev = more regular = higher score
+    // If std dev is 0-2 days: 100%, 3-4 days: 75%, 5-7 days: 50%, 8+ days: 25%
+    let regularityScore: number;
+    if (standardDeviation <= 2) {
+      regularityScore = 100;
+    } else if (standardDeviation <= 4) {
+      regularityScore = 75;
+    } else if (standardDeviation <= 7) {
+      regularityScore = 50;
+    } else {
+      regularityScore = 25;
+    }
+
+    // 2. Calculate data amount score (20% weight)
+    // 2-3 cycles: 50%, 4-5 cycles: 75%, 6+ cycles: 100%
+    let dataAmountScore: number;
+    if (cycleLengths.length >= 6) {
+      dataAmountScore = 100;
+    } else if (cycleLengths.length >= 4) {
+      dataAmountScore = 75;
+    } else {
+      dataAmountScore = 50;
+    }
+
+    // 3. Calculate recency score (10% weight)
+    // Check how recent the last cycle is
+    const validCycles = cycles.filter(
+      (cycle) =>
+        cycle.dates.length >= CYCLE_PREDICTION_CONSTANTS.MIN_CONSECUTIVE_DAYS,
+    );
+    const lastCycle = validCycles[validCycles.length - 1];
+    const lastCycleDate = new Date(lastCycle.endDate + "T00:00:00");
+    const today = new Date();
+    const daysSinceLastCycle = Math.floor(
+      (today.getTime() - lastCycleDate.getTime()) / (1000 * 60 * 60 * 24),
+    );
+
+    // Within 60 days: 100%, 60-90 days: 75%, 90-120 days: 50%, 120+ days: 25%
+    let recencyScore: number;
+    if (daysSinceLastCycle <= 60) {
+      recencyScore = 100;
+    } else if (daysSinceLastCycle <= 90) {
+      recencyScore = 75;
+    } else if (daysSinceLastCycle <= 120) {
+      recencyScore = 50;
+    } else {
+      recencyScore = 25;
+    }
+
+    // Weighted average
+    const confidence = Math.round(
+      regularityScore * 0.7 + dataAmountScore * 0.2 + recencyScore * 0.1,
+    );
+
+    return Math.max(0, Math.min(100, confidence));
+  };
+
   const fetchCycleData = async () => {
     try {
       const allDays = await getAllDays();
@@ -180,6 +267,27 @@ export function useFetchCycleData(
       // Calculate adaptive cycle length
       const averageCycleLength = calculateAverageCycleLength(cycles);
 
+      // Calculate cycle lengths for confidence scoring
+      const cycleLengths: number[] = [];
+      for (let i = 1; i < validCycles.length; i++) {
+        const prevCycleStart = new Date(
+          validCycles[i - 1].startDate + "T00:00:00",
+        );
+        const currCycleStart = new Date(validCycles[i].startDate + "T00:00:00");
+        const diffTime = currCycleStart.getTime() - prevCycleStart.getTime();
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+        if (
+          diffDays >= CYCLE_PREDICTION_CONSTANTS.MIN_CYCLE_LENGTH &&
+          diffDays <= CYCLE_PREDICTION_CONSTANTS.MAX_CYCLE_LENGTH
+        ) {
+          cycleLengths.push(diffDays);
+        }
+      }
+
+      // Calculate base confidence score
+      const baseConfidence = calculateConfidence(cycles, cycleLengths);
+
       // Generate predictions for multiple future cycles
       const maxCycles = CYCLE_PREDICTION_CONSTANTS.MAX_FUTURE_CYCLES;
       const lastCycleStartDate = new Date(lastCycle.startDate + "T00:00:00");
@@ -197,6 +305,13 @@ export function useFetchCycleData(
           continue;
         }
 
+        // Decrease confidence for predictions further in the future
+        // First cycle: 100% of base, Second: 90%, Third: 80%
+        const confidenceMultiplier = 1 - (cycleNum - 1) * 0.1;
+        const cycleConfidence = Math.round(
+          baseConfidence * confidenceMultiplier,
+        );
+
         // Add each day of the predicted cycle
         for (let day = 0; day < cycleDuration; day++) {
           const predictedDate = new Date(predictedCycleStart);
@@ -204,12 +319,31 @@ export function useFetchCycleData(
 
           // Only add if it's in the future
           if (predictedDate > localDate) {
-            predictedDates.push(predictedDate.toISOString().split("T")[0]);
+            predictedDates.push({
+              date: predictedDate.toISOString().split("T")[0],
+              confidence: cycleConfidence,
+            });
           }
         }
       }
 
       setPredictedCycle(predictedDates);
+
+      // Save predictions to database for accuracy tracking
+      if (predictedDates.length > 0) {
+        try {
+          await savePredictions(predictedDates);
+
+          // Schedule notifications for predictions
+          await NotificationService.scheduleAllPredictionNotifications(
+            predictedDates,
+          );
+        } catch (saveError) {
+          console.error("Error saving predictions:", saveError);
+          // Don't fail the whole operation if saving fails
+        }
+      }
+
       return predictedDates;
     } catch (error) {
       console.error("Error fetching cycle data:", error);

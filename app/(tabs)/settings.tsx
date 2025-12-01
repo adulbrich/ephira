@@ -8,6 +8,7 @@ import { ScrollView, SafeAreaView, StyleSheet } from "react-native";
 import ThemeSelector from "@/components/settings/ThemeSelector";
 import FadeInView from "@/components/animations/FadeInView";
 import CyclePredictions from "@/components/settings/CyclePrediction";
+import NotificationSettings from "@/components/settings/NotificationSettings";
 
 export default function Settings() {
   const theme = useTheme();
@@ -38,6 +39,8 @@ export default function Settings() {
             <DataSettings />
             <Divider style={styles.divider} />
             <CyclePredictions />
+            <Divider style={styles.divider} />
+            <NotificationSettings />
             <PrivacyPolicy />
           </ScrollView>
         </SafeAreaView>
