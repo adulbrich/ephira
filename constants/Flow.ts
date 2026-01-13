@@ -15,6 +15,6 @@ export function getFlowTypeString(intensity: number): FlowType | undefined {
       return "heavy";
     default:
       // If 0 or any other number, treat as no flow/undefined
-      return undefined; 
+      return undefined;
   }
 }

@@ -95,15 +95,14 @@ export default function HomeScreen() {
                   });
 
                   const flowType = getFlowTypeString(day.flow_intensity ?? 0);
-                  const backgroundColor = flowType ? FlowColors[flowType] : FlowColors.white;
+                  const backgroundColor = flowType
+                    ? FlowColors[flowType]
+                    : FlowColors.white;
 
                   return (
                     <View
                       key={index}
-                      style={[
-                        styles.flowLogItem,
-                        { backgroundColor },
-                      ]}
+                      style={[styles.flowLogItem, { backgroundColor }]}
                     >
                       <Text style={styles.flowLogText}>{weekday}</Text>
                       <Text style={styles.flowLogText}>{month}</Text>

@@ -170,7 +170,7 @@ export default function FlowChart() {
   // Get unique flow states in chronological order
   const flowStatesInOrder = useMemo(() => {
     if (flowDataForCurrentMonth.length === 0) return [];
-    
+
     // Sort by date to get chronological order
     const sortedData = [...flowDataForCurrentMonth].sort((a, b) => {
       const dateA = new Date(a.date + "T00:00:00Z").getTime();
@@ -182,7 +182,7 @@ export default function FlowChart() {
     // Explicitly exclude "None" (flow_intensity 0) from gradient
     const seen = new Set<FlowType>();
     const uniqueFlowTypes: FlowType[] = [];
-    
+
     for (const data of sortedData) {
       // Skip "None" (flow_intensity 0) - it should not affect the gradient
       if (!data.flow_intensity || data.flow_intensity === 0) {
@@ -202,9 +202,9 @@ export default function FlowChart() {
   // Scale to 0-90% to leave room for tail fade at 95%
   const gradientStops = useMemo((): React.ReactElement[] => {
     const maxOffset = 90; // Leave room for tail fade
-    
+
     let stops: React.ReactElement[] = [];
-    
+
     if (flowStatesInOrder.length === 0) {
       // Default gradient if no flow data
       stops = [
@@ -226,10 +226,10 @@ export default function FlowChart() {
         return <Stop key={index} offset={`${offset}%`} stopColor={color} />;
       });
     }
-    
+
     // Add tail fade stop at 95% to create smooth transition to purple
     stops.push(<Stop key="tail" offset="95%" stopColor={FLOW_TAIL_COLOR} />);
-    
+
     return stops;
   }, [flowStatesInOrder]);
 

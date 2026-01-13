@@ -1,5 +1,5 @@
 // cool gradient tool: https://cssgradient.io/
-export type FlowType = "spotting" | "light" | "medium" | "heavy" ;
+export type FlowType = "spotting" | "light" | "medium" | "heavy";
 export const FlowColors: Record<FlowType | "white", string> = {
   white: "#ffffff",
   spotting: "#ffafaf",
