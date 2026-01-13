@@ -118,10 +118,6 @@ class NotificationServiceClass {
       // Get first day of each predicted cycle
       const firstDays = this.getFirstDaysOfCycles(predictions);
 
-      console.log(
-        `[NotificationService] Scheduling notifications for ${firstDays.length} cycles`,
-      );
-
       // Schedule notifications for each cycle
       for (const prediction of firstDays) {
         await this.scheduleNotificationForPrediction(prediction, settings);
@@ -150,9 +146,6 @@ class NotificationServiceClass {
 
       // Check if confidence meets minimum threshold
       if (prediction.confidence < settings.minConfidence) {
-        console.log(
-          `[NotificationService] Skipping notification - confidence ${prediction.confidence} below threshold ${settings.minConfidence}`,
-        );
         return;
       }
 
@@ -202,10 +195,6 @@ class NotificationServiceClass {
             date: trigger,
           } as const,
         });
-
-        console.log(
-          `[NotificationService] Scheduled: "${template.title}" for ${trigger.toISOString()}`,
-        );
       }
     } catch (error) {
       console.error("Error scheduling notification for prediction:", error);
@@ -219,8 +208,6 @@ class NotificationServiceClass {
     try {
       const scheduled = await Notifications.getAllScheduledNotificationsAsync();
 
-      let cancelledCount = 0;
-
       for (const notification of scheduled) {
         const notifType = notification.content.data?.type;
         if (
@@ -231,13 +218,8 @@ class NotificationServiceClass {
           await Notifications.cancelScheduledNotificationAsync(
             notification.identifier,
           );
-          cancelledCount++;
         }
       }
-
-      console.log(
-        `[NotificationService] Cleared ${cancelledCount} prediction notifications`,
-      );
     } catch (error) {
       console.error("Error clearing prediction notifications:", error);
     }
@@ -248,7 +230,6 @@ class NotificationServiceClass {
    * Call this when predictions change or settings change
    */
   async refreshNotifications(predictions: PredictedDate[]): Promise<void> {
-    console.log("[NotificationService] Refreshing notifications");
     await this.scheduleAllPredictionNotifications(predictions);
   }
 
@@ -303,10 +284,6 @@ class NotificationServiceClass {
               },
               trigger: null, // Send immediately
             });
-
-            console.log(
-              `[NotificationService] Sent late period notification (${daysSincePrediction} days)`,
-            );
           }
         }
       }
