@@ -95,6 +95,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="cycle"
+        options={{
+          title: "Cycle",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="arrow.circlepath" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: "Settings",
