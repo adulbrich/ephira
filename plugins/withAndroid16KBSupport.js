@@ -1,4 +1,4 @@
-const { withGradleProperties } = require('@expo/config-plugins');
+const { withGradleProperties } = require("@expo/config-plugins");
 
 /**
  * Expo Config Plugin to add 16KB page size support for Android 15+
@@ -9,27 +9,27 @@ const withAndroid16KBSupport = (config) => {
     // Add gradle properties for 16KB page size support
     config.modResults = config.modResults.filter(
       (item) =>
-        item.key !== 'android.bundle.enableUncompressedNativeLibs' &&
-        item.key !== 'android.useAndroidX' &&
-        item.key !== 'android.enableJetifier'
+        item.key !== "android.bundle.enableUncompressedNativeLibs" &&
+        item.key !== "android.useAndroidX" &&
+        item.key !== "android.enableJetifier",
     );
 
     config.modResults.push(
       {
-        type: 'property',
-        key: 'android.useAndroidX',
-        value: 'true',
+        type: "property",
+        key: "android.useAndroidX",
+        value: "true",
       },
       {
-        type: 'property',
-        key: 'android.enableJetifier',
-        value: 'true',
+        type: "property",
+        key: "android.enableJetifier",
+        value: "true",
       },
       {
-        type: 'property',
-        key: 'android.bundle.enableUncompressedNativeLibs',
-        value: 'false',
-      }
+        type: "property",
+        key: "android.bundle.enableUncompressedNativeLibs",
+        value: "false",
+      },
     );
 
     return config;
