@@ -36,7 +36,10 @@
         "android.permission.USE_BIOMETRIC",
         "android.permission.USE_FINGERPRINT",
         "android.permission.POST_NOTIFICATIONS"
-      ]
+      ],
+      "compileSdkVersion": 35,
+      "targetSdkVersion": 35,
+      "buildToolsVersion": "35.0.0"
     },
     "web": {
       "bundler": "metro",
@@ -78,7 +81,8 @@
           "color": "#9892a0"
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "./plugins/withAndroid16KBSupport.js"
     ],
     "experiments": {
       "typedRoutes": true
