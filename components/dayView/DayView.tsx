@@ -106,7 +106,7 @@ export default function DayView() {
   const [lastSavedData, setLastSavedData] = useState<SavedData | null>(null);
   const isSavingRef = useRef(false);
   const initialLoadComplete = useRef(false);
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchEntriesRef = useRef(fetchEntries);
   const fetchMedicationEntriesRef = useRef(fetchMedicationEntries);

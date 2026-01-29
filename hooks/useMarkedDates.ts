@@ -12,6 +12,7 @@ import {
   usePredictionChoice,
 } from "@/assets/src/calendar-storage";
 import { FlowColors } from "@/constants/Colors";
+import { getFlowTypeString } from "@/constants/Flow";
 import { useLiveFilteredData } from "@/hooks/useLiveFilteredData";
 import { anySymptomOption } from "@/constants/Symptoms";
 import { anyMoodOption } from "@/constants/Moods";
@@ -187,10 +188,11 @@ async function markedDatesBuilder(
           color: "transparent",
         });
       } else {
+        const flowType = getFlowTypeString(day.flow_intensity);
         markedDates[day.date].periods.push({
           startingDay: isStartingDay,
           endingDay: isEndingDay,
-          color: FlowColors[day.flow_intensity],
+          color: flowType ? FlowColors[flowType] : "transparent",
         });
       }
     }

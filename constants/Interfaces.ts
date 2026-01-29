@@ -157,3 +157,22 @@ export interface PredictedCycleState {
   setPredictedCycle: (data: PredictedDate[]) => void;
   setPredictedMarkedDates: (data: MarkedDates) => void;
 }
+
+export interface CurrentCycleState {
+  currentPhase: "menstrual" | "follicular" | "ovulation" | "luteal";
+  cycleDay: number;
+  cycleLength: number;
+  daysUntilNextPeriod: number;
+  lastPeriodStart: string | null;
+  nextPredictedStart: string | null;
+  confidence: number;
+  hasEnoughData: boolean;
+}
+
+export interface CycleStats {
+  averageCycleLength: number;
+  cycleVariation: number;
+  totalCyclesTracked: number;
+  predictionAccuracy: number;
+  isRegular: boolean;
+}
