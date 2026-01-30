@@ -4,7 +4,7 @@ import * as SplashScreen from "expo-splash-screen";
 import * as LocalAuthentication from "expo-local-authentication";
 import * as Crypto from "expo-crypto";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, Suspense } from "react";
 import "react-native-reanimated";
 import { PaperProvider } from "react-native-paper";
 import { useColorScheme, View, AppState, AppStateStatus } from "react-native";
@@ -12,7 +12,6 @@ import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import migrations from "@/drizzle/migrations";
 import { SQLiteProvider } from "expo-sqlite";
-import { Suspense } from "react";
 import { ActivityIndicator, Alert } from "react-native";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
 import { AUTH_TYPES, SettingsKeys } from "@/constants/Settings";
@@ -27,7 +26,7 @@ import DatabaseMigrationError from "@/components/DatabaseMigrationError";
 import PasswordAuthenticationView from "@/components/PasswordAuthenticationView";
 import { DATABASE_NAME } from "@/constants/Settings";
 import { getTheme } from "@/components/ThemeHandler";
-import { useThemeColor } from "@/assets/src/calendar-storage";
+import { useThemeColor, useOnboarding } from "@/assets/src/calendar-storage";
 import * as Notifications from "expo-notifications";
 import { NotificationTypes } from "@/constants/Notifications";
 
@@ -38,17 +37,8 @@ export default function RootLayout() {
   const isDarkMode = systemTheme === "dark";
   const { themeColor, setThemeColor } = useThemeColor();
 
-  useEffect(() => {
-    async function fetchThemeColor() {
-      const savedTheme = await getSetting("theme");
-      if (savedTheme && savedTheme.value) {
-        setThemeColor(savedTheme.value);
-      } else {
-        setThemeColor("purple");
-      }
-    }
-    fetchThemeColor();
-  }, [setThemeColor]);
+  const hasOnboarded = useOnboarding((s) => s.hasOnboarded);
+  const hasNavigatedRef = useRef(false);
 
   const finalSelectedColor = themeColor as
     | "blue"
@@ -63,13 +53,27 @@ export default function RootLayout() {
   const db = getDrizzleDatabase();
   useDrizzleStudio(expoDb);
   const { success, error } = useMigrations(db, migrations);
+
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
+
   const appState = useRef<AppStateStatus>(AppState.currentState);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isPasswordModalVisible, setIsPasswordModalVisible] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    async function fetchThemeColor() {
+      const savedTheme = await getSetting("theme");
+      if (savedTheme && savedTheme.value) {
+        setThemeColor(savedTheme.value);
+      } else {
+        setThemeColor("purple");
+      }
+    }
+    fetchThemeColor();
+  }, [setThemeColor]);
 
   const checkAuthentication = useCallback(async () => {
     try {
@@ -79,11 +83,7 @@ export default function RootLayout() {
         const result = await LocalAuthentication.authenticateAsync({
           promptMessage: "Authenticate to access the app",
         });
-        if (result.success) {
-          setIsAuthenticated(true);
-        } else {
-          setIsAuthenticated(false);
-        }
+        setIsAuthenticated(!!result.success);
       } else if (authType?.value === AUTH_TYPES.PASSWORD) {
         setIsPasswordModalVisible(true);
       } else {
@@ -93,9 +93,22 @@ export default function RootLayout() {
       console.error("Authentication error:", err);
       setIsAuthenticated(false);
     } finally {
-      SplashScreen.hideAsync();
+      await SplashScreen.hideAsync();
     }
   }, []);
+
+  // ✅ NAVIGATION EFFECT MUST BE UP HERE (before any returns)
+  useEffect(() => {
+    // only navigate once the app is truly ready AND authenticated
+    if (!loaded || !success) return;
+    if (!isAuthenticated) return;
+    if (hasNavigatedRef.current) return;
+
+    hasNavigatedRef.current = true;
+
+    const target = hasOnboarded ? "/(tabs)" : "/onboarding/name";
+    router.replace(target as any);
+  }, [loaded, success, isAuthenticated, hasOnboarded, router]);
 
   // Handle notification taps
   useEffect(() => {
@@ -109,7 +122,6 @@ export default function RootLayout() {
           data.type === NotificationTypes.PERIOD_TODAY ||
           data.type === NotificationTypes.PERIOD_LATE
         ) {
-          // Navigate to calendar tab when notification is tapped
           router.push("/(tabs)/calendar");
         }
       },
@@ -122,6 +134,7 @@ export default function RootLayout() {
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (nextAppState) => {
       if (appState.current === "background" && nextAppState === "active") {
+        hasNavigatedRef.current = false; // allow routing again after returning
         checkAuthentication();
       } else if (nextAppState === "background") {
         setIsAuthenticated(false);
@@ -129,9 +142,7 @@ export default function RootLayout() {
       appState.current = nextAppState;
     });
 
-    return () => {
-      subscription.remove();
-    };
+    return () => subscription.remove();
   }, [checkAuthentication]);
 
   useEffect(() => {
@@ -161,14 +172,13 @@ export default function RootLayout() {
     if (hashedInput === storedPassword?.value) {
       setIsAuthenticated(true);
       setIsPasswordModalVisible(false);
+      hasNavigatedRef.current = false; // allow routing after password auth
     } else {
       Alert.alert("Error", "Incorrect password. Please try again.");
     }
   };
 
-  if (!loaded) {
-    return null;
-  }
+  if (!loaded) return null;
 
   if (error) {
     console.error(error);
@@ -212,8 +222,10 @@ export default function RootLayout() {
             <SafeAreaView
               style={{ flex: 1, backgroundColor: theme.colors.background }}
             >
-              <Stack>
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="(tabs)" />
+                {/* folder is app/onboarding */}
+                <Stack.Screen name="onboarding" />
                 <Stack.Screen name="+not-found" />
               </Stack>
               <StatusBar style="auto" />
@@ -224,3 +236,4 @@ export default function RootLayout() {
     </Suspense>
   );
 }
+

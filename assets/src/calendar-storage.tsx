@@ -167,3 +167,22 @@ export const usePredictedCycle = create<PredictedCycleState>((set) => ({
   setPredictedMarkedDates: (data: MarkedDates) =>
     set(() => ({ predictedMarkedDates: data })),
 }));
+// ---------------- ONBOARDING STORE ----------------
+
+interface OnboardingState {
+  userName: string;
+  trackingMode: 'period' | 'pregnancy' | null;
+  hasOnboarded: boolean;
+  setUserName: (name: string) => void;
+  setTrackingMode: (mode: 'period' | 'pregnancy') => void;
+  setHasOnboarded: (value: boolean) => void;
+}
+
+export const useOnboarding = create<OnboardingState>((set) => ({
+  userName: '',
+  trackingMode: null,
+  hasOnboarded: false,
+  setUserName: (name) => set({ userName: name }),
+  setTrackingMode: (mode) => set({ trackingMode: mode }),
+  setHasOnboarded: (value) => set({ hasOnboarded: value }),
+}));
