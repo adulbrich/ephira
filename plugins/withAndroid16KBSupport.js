@@ -25,11 +25,6 @@ const withAndroid16KBSupport = (config) => {
         key: "android.enableJetifier",
         value: "true",
       },
-      {
-        type: "property",
-        key: "android.bundle.enableUncompressedNativeLibs",
-        value: "false",
-      },
     );
 
     return config;
