@@ -1,0 +1,1 @@
+ALTER TABLE `days` ADD `intercourse` integer DEFAULT false;

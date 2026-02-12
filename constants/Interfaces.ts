@@ -4,6 +4,7 @@ export interface DayData {
   flow_intensity: number;
   is_cycle_start?: boolean;
   is_cycle_end?: boolean;
+  intercourse?: boolean | null;
   notes?: string;
   moods?: string[];
   symptoms?: string[];
@@ -22,6 +23,7 @@ export interface MarkedDate {
   selected: boolean;
   periods: periodData[];
   hasBirthControl?: boolean;
+  hasIntercourse?: boolean;
 }
 
 export interface MarkedDates {
@@ -74,6 +76,11 @@ export interface BirthControl {
 export interface BirthControlNotes {
   birthControlNotes: string;
   setBirthControlNotes: (notes: string) => void;
+}
+
+export interface Intercourse {
+  intercourse: boolean;
+  setIntercourse: (value: boolean) => void;
 }
 
 export interface TimeTaken {

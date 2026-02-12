@@ -12,6 +12,7 @@ import {
   useBirthControlNotes,
   useTimeTaken,
   useDatabaseChangeNotifier,
+  useIntercourse,
 } from "@/assets/src/calendar-storage";
 import FlowAccordion from "@/components/dayView/FlowAccordion";
 import MedicationsAccordion from "./MedicationsAccordion";
@@ -19,6 +20,7 @@ import BirthControlAccordion from "./BirthControlAccordion";
 import SymptomsAccordion from "./SymptomsAccordion";
 import MoodsAccordion from "./MoodsAccordion";
 import NotesAccordion from "./NotesAccordion";
+import IntercourseAccordion from "./IntercourseAccordion";
 import Snackbar from "@/components/ui/Snackbar";
 import { useSyncEntries } from "@/hooks/useSyncEntries";
 import { useFetchEntries } from "@/hooks/useFetchEntries";
@@ -46,6 +48,7 @@ export default function DayView() {
   const { birthControlNotes, setBirthControlNotes } = useBirthControlNotes();
   const { timeTaken, setTimeTaken } = useTimeTaken();
   const { databaseChange } = useDatabaseChangeNotifier();
+  const { intercourse, setIntercourse } = useIntercourse();
 
   const { syncEntries } = useSyncEntries(date);
   const { fetchEntries } = useFetchEntries(
@@ -86,6 +89,15 @@ export default function DayView() {
     }
   }, [date, setCycleStart, setCycleEnd]);
 
+  const fetchIntercourse = useCallback(async () => {
+    const day = await getDay(date);
+    if (day && day.intercourse) {
+      setIntercourse(day.intercourse);
+    } else {
+      setIntercourse(false);
+    }
+  }, [date, setIntercourse]);
+
   const [saveMessageVisible, setSaveMessageVisible] = useState(false);
   const [saveMessageContent, setSaveMessageContent] = useState<string[]>([]);
 
@@ -95,6 +107,7 @@ export default function DayView() {
     notes: string;
     is_cycle_start: boolean;
     is_cycle_end: boolean;
+    intercourse: boolean;
     symptoms: string[];
     moods: string[];
     medications: string[];
@@ -112,35 +125,41 @@ export default function DayView() {
   const fetchMedicationEntriesRef = useRef(fetchMedicationEntries);
   const fetchNotesRef = useRef(fetchNotes);
   const fetchCycleInfoRef = useRef(fetchCycleInfo);
+  const fetchIntercourseRef = useRef(fetchIntercourse);
   const selectedSymptomsRef = useRef(selectedSymptoms);
   const selectedMoodsRef = useRef(selectedMoods);
   const selectedMedicationsRef = useRef(selectedMedications);
   const selectedBirthControlRef = useRef(selectedBirthControl);
   const birthControlNotesRef = useRef(birthControlNotes);
   const timeTakenRef = useRef(timeTaken);
+  const intercourseRef = useRef(intercourse);
 
   useEffect(() => {
     fetchEntriesRef.current = fetchEntries;
     fetchMedicationEntriesRef.current = fetchMedicationEntries;
     fetchNotesRef.current = fetchNotes;
     fetchCycleInfoRef.current = fetchCycleInfo;
+    fetchIntercourseRef.current = fetchIntercourse;
     selectedSymptomsRef.current = selectedSymptoms;
     selectedMoodsRef.current = selectedMoods;
     selectedMedicationsRef.current = selectedMedications;
     selectedBirthControlRef.current = selectedBirthControl;
     birthControlNotesRef.current = birthControlNotes;
     timeTakenRef.current = timeTaken;
+    intercourseRef.current = intercourse;
   }, [
     fetchEntries,
     fetchMedicationEntries,
     fetchNotes,
     fetchCycleInfo,
+    fetchIntercourse,
     selectedSymptoms,
     selectedMoods,
     selectedMedications,
     selectedBirthControl,
     birthControlNotes,
     timeTaken,
+    intercourse,
   ]);
 
   const onSave = useCallback(() => {
@@ -148,7 +167,7 @@ export default function DayView() {
     isSavingRef.current = true;
 
     try {
-      insertDay(date, flow_intensity, notes, is_cycle_start, is_cycle_end).then(
+      insertDay(date, flow_intensity, notes, is_cycle_start, is_cycle_end, intercourse).then(
         async () => {
           setFlow(flow_intensity);
 
@@ -175,6 +194,7 @@ export default function DayView() {
           await fetchMedicationEntries();
           await fetchNotes();
           await fetchCycleInfo();
+          await fetchIntercourse();
 
           setSaveMessageVisible(false);
 
@@ -199,6 +219,9 @@ export default function DayView() {
             case "note":
               if (notes && notes.trim() !== "") savedContent = "Notes";
               break;
+            case "intercourse":
+              savedContent = "Intercourse";
+              break;
             default:
               if (lastSavedData) {
                 if (flow_intensity !== lastSavedData.flow)
@@ -221,6 +244,8 @@ export default function DayView() {
                   savedContent = "Medications";
                 else if (selectedBirthControl !== lastSavedData.birthControl)
                   savedContent = "Birth Control";
+                else if (intercourse !== lastSavedData.intercourse)
+                  savedContent = "Intercourse";
               }
               break;
           }
@@ -241,6 +266,7 @@ export default function DayView() {
     notes,
     is_cycle_start,
     is_cycle_end,
+    intercourse,
     selectedSymptoms,
     selectedMoods,
     selectedMedications,
@@ -253,6 +279,7 @@ export default function DayView() {
     fetchMedicationEntries,
     fetchNotes,
     fetchCycleInfo,
+    fetchIntercourse,
     setFlow,
     state,
     lastSavedData,
@@ -271,6 +298,7 @@ export default function DayView() {
       await fetchMedicationEntriesRef.current();
       await fetchNotesRef.current();
       await fetchCycleInfoRef.current();
+      await fetchIntercourseRef.current();
 
       const existingDay = await getDay(date);
       const isNewDay = !existingDay;
@@ -281,6 +309,7 @@ export default function DayView() {
         notes: existingDay?.notes ?? "",
         is_cycle_start: existingDay?.is_cycle_start ?? false,
         is_cycle_end: existingDay?.is_cycle_end ?? false,
+        intercourse: existingDay?.intercourse ?? false,
         symptoms: isNewDay ? [] : [...selectedSymptomsRef.current],
         moods: isNewDay ? [] : [...selectedMoodsRef.current],
         medications: isNewDay ? [] : [...selectedMedicationsRef.current],
@@ -333,6 +362,7 @@ export default function DayView() {
       notes: notes ?? "",
       is_cycle_start: is_cycle_start ?? false,
       is_cycle_end: is_cycle_end ?? false,
+      intercourse: intercourse ?? false,
       symptoms: selectedSymptoms,
       moods: selectedMoods,
       medications: selectedMedications,
@@ -366,6 +396,7 @@ export default function DayView() {
     notes,
     is_cycle_start,
     is_cycle_end,
+    intercourse,
     selectedSymptoms,
     selectedMoods,
     selectedMedications,
@@ -400,6 +431,20 @@ export default function DayView() {
             setCycleEnd={setCycleEnd}
           />
           <Divider />
+          <BirthControlAccordion
+            state={state}
+            setExpandedAccordion={setExpandedAccordion}
+            selectedBirthControl={selectedBirthControl}
+            setSelectedBirthControl={setSelectedBirthControl}
+          />
+          <Divider />
+          <IntercourseAccordion
+            state={state}
+            setExpandedAccordion={setExpandedAccordion}
+            intercourse={intercourse}
+            setIntercourse={setIntercourse}
+          />
+          <Divider />
           <SymptomsAccordion
             state={state}
             setExpandedAccordion={setExpandedAccordion}
@@ -419,13 +464,6 @@ export default function DayView() {
             setExpandedAccordion={setExpandedAccordion}
             selectedMedications={selectedMedications}
             setSelectedMedications={setSelectedMedications}
-          />
-          <Divider />
-          <BirthControlAccordion
-            state={state}
-            setExpandedAccordion={setExpandedAccordion}
-            selectedBirthControl={selectedBirthControl}
-            setSelectedBirthControl={setSelectedBirthControl}
           />
           <Divider />
           <NotesAccordion

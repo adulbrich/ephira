@@ -34,6 +34,7 @@ export default function CustomDay({
   const isToday = state === "today";
   const isSelected = marking?.selected || state === "selected";
   const hasBirthControl = marking?.hasBirthControl;
+  const hasIntercourse = marking?.hasIntercourse;
   const periods = marking?.periods ?? [];
 
   const handlePress = () => {
@@ -62,10 +63,13 @@ export default function CustomDay({
       style={styles.container}
       activeOpacity={0.6}
     >
-      {/* Star indicator for birth control */}
-      <View style={styles.starContainer}>
+      {/* Icons for birth control (star) and intercourse (heart) */}
+      <View style={styles.iconContainer}>
         {hasBirthControl && (
-          <Text style={[styles.star, { color: theme.colors.primary }]}>★</Text>
+          <Text style={[styles.icon, { color: theme.colors.primary }]}>★</Text>
+        )}
+        {hasIntercourse && (
+          <Text style={[styles.icon, { color: theme.colors.error }]}>♥</Text>
         )}
       </View>
 
@@ -118,13 +122,15 @@ const styles = StyleSheet.create({
     width: 44,
     minHeight: 50,
   },
-  starContainer: {
+  iconContainer: {
     height: 14,
+    flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
+    gap: 2,
   },
-  star: {
-    fontSize: 12,
+  icon: {
+    fontSize: 10,
   },
   dateContainer: {
     width: 32,

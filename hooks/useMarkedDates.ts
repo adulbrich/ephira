@@ -169,16 +169,41 @@ async function markedDatesBuilder(
         .map((medication) => medication.name),
   );
 
+  // Check if any birth control filter is enabled
+  const birthControlFiltersEnabled = filters.some(
+    (filter) =>
+      filter === anyBirthControlOption || birthControlOptions.includes(filter),
+  );
+
+  // Check if intercourse filter is enabled
+  const intercourseFilterEnabled = filters.includes("Intercourse");
+
   data.forEach((day, index) => {
-    // Check if day has birth control logged
-    const hasBirthControl =
-      day.medications?.some((med) => birthControlOptions.includes(med)) ?? false;
+    // Check if day has birth control logged (only show star if filter is enabled)
+    let hasBirthControl = false;
+    if (birthControlFiltersEnabled) {
+      const dayBirthControl = day.medications?.filter((med) =>
+        birthControlOptions.includes(med),
+      ) ?? [];
+
+      // Check if "Any Birth Control" is selected or if a specific type matches
+      if (filters.includes(anyBirthControlOption)) {
+        hasBirthControl = dayBirthControl.length > 0;
+      } else {
+        // Check for specific birth control types
+        hasBirthControl = dayBirthControl.some((med) => filters.includes(med));
+      }
+    }
+
+    // Check if day has intercourse logged (only show heart if filter is enabled)
+    const hasIntercourse = intercourseFilterEnabled && day.intercourse === true;
 
     // Initialize marked date entry if needed
     if (!markedDates[day.date]) {
-      markedDates[day.date] = { selected: false, periods: [], hasBirthControl };
+      markedDates[day.date] = { selected: false, periods: [], hasBirthControl, hasIntercourse };
     } else {
       markedDates[day.date].hasBirthControl = hasBirthControl;
+      markedDates[day.date].hasIntercourse = hasIntercourse;
     }
 
     // flow
@@ -289,18 +314,7 @@ async function markedDatesBuilder(
       anyOption: anyMedicationOption,
     });
 
-    // birth control (it's stored in day's medication array)
-    applyFilterToMarkedDates({
-      markedDates,
-      filters,
-      filterColors,
-      day,
-      dayValues: day.medications ?? [],
-      prevDayValues: data[index - 1]?.medications ?? [],
-      nextDayValues: data[index + 1]?.medications ?? [],
-      options: birthControlOptions,
-      anyOption: anyBirthControlOption,
-    });
+    // birth control is handled via stars (hasBirthControl flag) instead of period lines
   });
 
   return markedDates;

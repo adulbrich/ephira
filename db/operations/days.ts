@@ -23,6 +23,7 @@ export const updateDay = async (
   notes?: string | null,
   is_cycle_start?: boolean,
   is_cycle_end?: boolean,
+  intercourse?: boolean,
 ) => {
   await db
     .update(days)
@@ -31,6 +32,7 @@ export const updateDay = async (
       notes: notes ?? null,
       is_cycle_start: is_cycle_start,
       is_cycle_end: is_cycle_end,
+      intercourse: intercourse,
     })
     .where(eq(days.date, date));
 
@@ -82,12 +84,23 @@ export const updateDayNotes = async (date: string, notes: string | null) => {
     .where(eq(days.date, date));
 };
 
+export const updateDayIntercourse = async (
+  date: string,
+  intercourse: boolean,
+) => {
+  await db
+    .update(days)
+    .set({ intercourse: intercourse })
+    .where(eq(days.date, date));
+};
+
 export const insertDay = async (
   date: string,
   flowIntensity: number,
   notes?: string,
   is_cycle_start?: boolean,
   is_cycle_end?: boolean,
+  intercourse?: boolean,
 ) => {
   const day = await getDay(date);
   if (day) {
@@ -97,6 +110,7 @@ export const insertDay = async (
       notes ?? null,
       is_cycle_start,
       is_cycle_end,
+      intercourse,
     );
   } else {
     await db.insert(days).values({
@@ -105,6 +119,7 @@ export const insertDay = async (
       notes: notes ?? null,
       is_cycle_start: is_cycle_start,
       is_cycle_end: is_cycle_end,
+      intercourse: intercourse,
     });
   }
 };
