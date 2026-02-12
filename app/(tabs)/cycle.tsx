@@ -7,13 +7,7 @@ import {
   ScrollView,
 } from "react-native";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
-import {
-  useTheme,
-  Text,
-  Card,
-  Button,
-  ActivityIndicator,
-} from "react-native-paper";
+import { useTheme, Text, Card, ActivityIndicator } from "react-native-paper";
 import FadeInView from "@/components/animations/FadeInView";
 import StatusCard from "@/components/cycle/StatusCard";
 import PredictionCard from "@/components/cycle/PredictionCard";
@@ -131,12 +125,12 @@ export default function Cycle() {
   useEffect(() => {
     fetchCycleData();
     refresh();
-  }, [databaseChange]);
+  }, [databaseChange, fetchCycleData, refresh]);
 
   // Initial load
   useEffect(() => {
     fetchCycleData();
-  }, []);
+  }, [fetchCycleData]);
 
   if (loading) {
     return (
