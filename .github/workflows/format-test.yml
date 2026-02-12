@@ -18,6 +18,6 @@ jobs:
       - name: Install Dependencies
         run: |
           npm install
-      - name: Run ESlint
+      - name: Run ESLint
         run: |
-          npx eslint . --max-warnings=0
+          ./node_modules/.bin/eslint . --max-warnings=0
