@@ -22,6 +22,7 @@ import {
 } from "@/assets/src/calendar-storage";
 import { getSetting, insertSetting } from "@/db/database";
 import CalendarHeader from "@/components/calendar/CalendarHeader";
+import CustomDay from "@/components/calendar/CustomDay";
 import { useMarkedDates } from "@/hooks/useMarkedDates";
 import { FilterColorsDark, FilterColorsLight } from "@/constants/Colors";
 import { Image } from "react-native";
@@ -133,7 +134,7 @@ export default function FlowCalendar() {
                       <CalendarHeader onJumpToToday={jumpToToday} date={date} />
                     )}
                     maxDate={today}
-                    markingType="multi-period"
+                    dayComponent={CustomDay as React.ComponentType<unknown>}
                     markedDates={{
                       ...markedDates,
                       [date]: {

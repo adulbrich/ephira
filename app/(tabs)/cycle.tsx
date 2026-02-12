@@ -13,6 +13,7 @@ import {
   useData,
   usePredictedCycle,
   useDatabaseChangeNotifier,
+  usePredictionChoice,
 } from "@/assets/src/calendar-storage";
 import { useFetchCycleData } from "@/hooks/useFetchCycleData";
 import { CYCLE_PHASES, getNextPhase } from "@/constants/CyclePhases";
@@ -76,11 +77,35 @@ function InsufficientDataCard({ cyclesTracked }: { cyclesTracked: number }) {
   );
 }
 
+function PredictionsDisabledCard() {
+  const theme = useTheme();
+
+  return (
+    <Card style={styles.disabledCard} mode="outlined">
+      <Card.Content style={styles.disabledContent}>
+        <Text
+          variant="headlineSmall"
+          style={[styles.disabledTitle, { color: theme.colors.onSurface }]}
+        >
+          Cycle Predictions Disabled
+        </Text>
+        <Text
+          variant="bodyMedium"
+          style={[styles.disabledText, { color: theme.colors.onSurfaceVariant }]}
+        >
+          Enable cycle predictions in Settings to get info about your cycle.
+        </Text>
+      </Card.Content>
+    </Card>
+  );
+}
+
 export default function Cycle() {
   const theme = useTheme();
   const { data: flowData } = useData();
   const { predictedCycle, setPredictedCycle } = usePredictedCycle();
   const { databaseChange } = useDatabaseChangeNotifier();
+  const { predictionChoice } = usePredictionChoice();
   const { fetchCycleData } = useFetchCycleData(setPredictedCycle);
   const { cycleState, stats, loading, refresh } = useCyclePhase(
     flowData,
@@ -111,6 +136,21 @@ export default function Cycle() {
               >
                 Loading cycle data...
               </Text>
+            </View>
+          </SafeAreaView>
+        </SafeAreaProvider>
+      </FadeInView>
+    );
+  }
+
+  // Predictions disabled
+  if (!predictionChoice) {
+    return (
+      <FadeInView duration={200} backgroundColor={theme.colors.background}>
+        <SafeAreaProvider>
+          <SafeAreaView style={styles.container}>
+            <View style={styles.centeredContainer}>
+              <PredictionsDisabledCard />
             </View>
           </SafeAreaView>
         </SafeAreaProvider>
@@ -216,6 +256,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  centeredContainer: {
+    flex: 1,
+    justifyContent: "center",
+    padding: 16,
+  },
   welcomeCard: {
     borderRadius: 16,
   },
@@ -246,5 +291,21 @@ const styles = StyleSheet.create({
   insufficientText: {
     marginTop: 8,
     lineHeight: 20,
+  },
+  disabledCard: {
+    borderRadius: 16,
+  },
+  disabledContent: {
+    padding: 24,
+    alignItems: "center",
+  },
+  disabledTitle: {
+    fontWeight: "600",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  disabledText: {
+    textAlign: "center",
+    lineHeight: 22,
   },
 });

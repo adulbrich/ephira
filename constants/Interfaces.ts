@@ -21,6 +21,7 @@ export interface periodData {
 export interface MarkedDate {
   selected: boolean;
   periods: periodData[];
+  hasBirthControl?: boolean;
 }
 
 export interface MarkedDates {

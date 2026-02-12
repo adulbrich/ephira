@@ -170,6 +170,17 @@ async function markedDatesBuilder(
   );
 
   data.forEach((day, index) => {
+    // Check if day has birth control logged
+    const hasBirthControl =
+      day.medications?.some((med) => birthControlOptions.includes(med)) ?? false;
+
+    // Initialize marked date entry if needed
+    if (!markedDates[day.date]) {
+      markedDates[day.date] = { selected: false, periods: [], hasBirthControl };
+    } else {
+      markedDates[day.date].hasBirthControl = hasBirthControl;
+    }
+
     // flow
     if (filters.some((filter) => filter === "Flow")) {
       const { isStartingDay, isEndingDay } = getStartingAndEndingDay(
