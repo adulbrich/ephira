@@ -78,8 +78,7 @@ export default function CustomDay({
         style={[
           styles.dateContainer,
           isSelected && {
-            backgroundColor:
-              marking?.selectedColor ?? theme.colors.primary,
+            backgroundColor: marking?.selectedColor ?? theme.colors.primary,
             borderRadius: 16,
           },
         ]}

@@ -167,96 +167,97 @@ export default function DayView() {
     isSavingRef.current = true;
 
     try {
-      insertDay(date, flow_intensity, notes, is_cycle_start, is_cycle_end, intercourse).then(
-        async () => {
-          setFlow(flow_intensity);
+      insertDay(
+        date,
+        flow_intensity,
+        notes,
+        is_cycle_start,
+        is_cycle_end,
+        intercourse,
+      ).then(async () => {
+        setFlow(flow_intensity);
 
-          await syncEntries(selectedSymptoms, "symptom");
-          await syncEntries(selectedMoods, "mood");
+        await syncEntries(selectedSymptoms, "symptom");
+        await syncEntries(selectedMoods, "mood");
 
-          let combinedMedications = selectedMedications;
+        let combinedMedications = selectedMedications;
 
-          if (selectedBirthControl != null) {
-            combinedMedications = [
-              ...selectedMedications,
-              selectedBirthControl,
-            ];
-          }
+        if (selectedBirthControl != null) {
+          combinedMedications = [...selectedMedications, selectedBirthControl];
+        }
 
-          await syncMedicationEntries(
-            combinedMedications,
-            timeTaken,
-            birthControlNotes,
-          );
+        await syncMedicationEntries(
+          combinedMedications,
+          timeTaken,
+          birthControlNotes,
+        );
 
-          await fetchEntries("symptom");
-          await fetchEntries("mood");
-          await fetchMedicationEntries();
-          await fetchNotes();
-          await fetchCycleInfo();
-          await fetchIntercourse();
+        await fetchEntries("symptom");
+        await fetchEntries("mood");
+        await fetchMedicationEntries();
+        await fetchNotes();
+        await fetchCycleInfo();
+        await fetchIntercourse();
 
-          setSaveMessageVisible(false);
+        setSaveMessageVisible(false);
 
-          let savedContent = "";
+        let savedContent = "";
 
-          switch (state) {
-            case "flow":
-              if (flow_intensity !== 0) savedContent = "Flow";
-              break;
-            case "symptom":
-              if (selectedSymptoms.length > 0) savedContent = "Symptoms";
-              break;
-            case "mood":
-              if (selectedMoods.length > 0) savedContent = "Moods";
-              break;
-            case "medication":
-              if (selectedMedications.length > 0) savedContent = "Medications";
-              break;
-            case "birthControl":
-              if (selectedBirthControl) savedContent = "Birth Control";
-              break;
-            case "note":
-              if (notes && notes.trim() !== "") savedContent = "Notes";
-              break;
-            case "intercourse":
-              savedContent = "Intercourse";
-              break;
-            default:
-              if (lastSavedData) {
-                if (flow_intensity !== lastSavedData.flow)
-                  savedContent = "Flow";
-                else if (notes !== lastSavedData.notes) savedContent = "Notes";
-                else if (
-                  JSON.stringify(selectedSymptoms) !==
-                  JSON.stringify(lastSavedData.symptoms)
-                )
-                  savedContent = "Symptoms";
-                else if (
-                  JSON.stringify(selectedMoods) !==
-                  JSON.stringify(lastSavedData.moods)
-                )
-                  savedContent = "Moods";
-                else if (
-                  JSON.stringify(selectedMedications) !==
-                  JSON.stringify(lastSavedData.medications)
-                )
-                  savedContent = "Medications";
-                else if (selectedBirthControl !== lastSavedData.birthControl)
-                  savedContent = "Birth Control";
-                else if (intercourse !== lastSavedData.intercourse)
-                  savedContent = "Intercourse";
-              }
-              break;
-          }
+        switch (state) {
+          case "flow":
+            if (flow_intensity !== 0) savedContent = "Flow";
+            break;
+          case "symptom":
+            if (selectedSymptoms.length > 0) savedContent = "Symptoms";
+            break;
+          case "mood":
+            if (selectedMoods.length > 0) savedContent = "Moods";
+            break;
+          case "medication":
+            if (selectedMedications.length > 0) savedContent = "Medications";
+            break;
+          case "birthControl":
+            if (selectedBirthControl) savedContent = "Birth Control";
+            break;
+          case "note":
+            if (notes && notes.trim() !== "") savedContent = "Notes";
+            break;
+          case "intercourse":
+            savedContent = "Intercourse";
+            break;
+          default:
+            if (lastSavedData) {
+              if (flow_intensity !== lastSavedData.flow) savedContent = "Flow";
+              else if (notes !== lastSavedData.notes) savedContent = "Notes";
+              else if (
+                JSON.stringify(selectedSymptoms) !==
+                JSON.stringify(lastSavedData.symptoms)
+              )
+                savedContent = "Symptoms";
+              else if (
+                JSON.stringify(selectedMoods) !==
+                JSON.stringify(lastSavedData.moods)
+              )
+                savedContent = "Moods";
+              else if (
+                JSON.stringify(selectedMedications) !==
+                JSON.stringify(lastSavedData.medications)
+              )
+                savedContent = "Medications";
+              else if (selectedBirthControl !== lastSavedData.birthControl)
+                savedContent = "Birth Control";
+              else if (intercourse !== lastSavedData.intercourse)
+                savedContent = "Intercourse";
+            }
+            break;
+        }
 
-          if (savedContent) {
-            const message = `${savedContent} Saved!`;
-            setSaveMessageContent([message]);
-            setSaveMessageVisible(true);
-          }
-        },
-      );
+        if (savedContent) {
+          const message = `${savedContent} Saved!`;
+          setSaveMessageContent([message]);
+          setSaveMessageVisible(true);
+        }
+      });
     } finally {
       isSavingRef.current = false;
     }

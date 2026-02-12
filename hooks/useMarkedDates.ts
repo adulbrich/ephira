@@ -182,9 +182,9 @@ async function markedDatesBuilder(
     // Check if day has birth control logged (only show star if filter is enabled)
     let hasBirthControl = false;
     if (birthControlFiltersEnabled) {
-      const dayBirthControl = day.medications?.filter((med) =>
-        birthControlOptions.includes(med),
-      ) ?? [];
+      const dayBirthControl =
+        day.medications?.filter((med) => birthControlOptions.includes(med)) ??
+        [];
 
       // Check if "Any Birth Control" is selected or if a specific type matches
       if (filters.includes(anyBirthControlOption)) {
@@ -200,7 +200,12 @@ async function markedDatesBuilder(
 
     // Initialize marked date entry if needed
     if (!markedDates[day.date]) {
-      markedDates[day.date] = { selected: false, periods: [], hasBirthControl, hasIntercourse };
+      markedDates[day.date] = {
+        selected: false,
+        periods: [],
+        hasBirthControl,
+        hasIntercourse,
+      };
     } else {
       markedDates[day.date].hasBirthControl = hasBirthControl;
       markedDates[day.date].hasIntercourse = hasIntercourse;

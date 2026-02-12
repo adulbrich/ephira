@@ -97,7 +97,8 @@ export const CYCLE_PHASES: Record<CyclePhaseId, CyclePhaseDefinition> = {
       "Be aware of your fertility window if relevant to your goals",
       "Great time for important conversations and presentations",
     ],
-    learnMoreUrl: "https://my.clevelandclinic.org/health/articles/23439-ovulation",
+    learnMoreUrl:
+      "https://my.clevelandclinic.org/health/articles/23439-ovulation",
   },
   luteal: {
     id: "luteal",
