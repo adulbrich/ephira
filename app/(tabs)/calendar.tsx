@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Keyboard,
   TouchableWithoutFeedback,
+  Image,
 } from "react-native";
 import { Calendar } from "react-native-calendars";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
@@ -25,7 +26,6 @@ import CalendarHeader from "@/components/calendar/CalendarHeader";
 import CustomDay from "@/components/calendar/CustomDay";
 import { useMarkedDates } from "@/hooks/useMarkedDates";
 import { FilterColorsDark, FilterColorsLight } from "@/constants/Colors";
-import { Image } from "react-native";
 import FadeInView from "@/components/animations/FadeInView";
 import {
   birthControlOptions,

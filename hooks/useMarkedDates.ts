@@ -11,7 +11,11 @@ import {
   useSelectedDate,
   usePredictionChoice,
 } from "@/assets/src/calendar-storage";
-import { FlowColors } from "@/constants/Colors";
+import {
+  FlowColors,
+  FilterColorsDark,
+  FilterColorsLight,
+} from "@/constants/Colors";
 import { getFlowTypeString } from "@/constants/Flow";
 import { useLiveFilteredData } from "@/hooks/useLiveFilteredData";
 import { anySymptomOption } from "@/constants/Symptoms";
@@ -19,7 +23,6 @@ import { anyMoodOption } from "@/constants/Moods";
 import { anyMedicationOption } from "@/constants/Medications";
 import { anyBirthControlOption } from "@/constants/BirthControlTypes";
 import { useTheme } from "react-native-paper";
-import { FilterColorsDark, FilterColorsLight } from "@/constants/Colors";
 import { useFetchCycleData } from "./useFetchCycleData";
 
 function getStartingAndEndingDay(

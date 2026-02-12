@@ -20,4 +20,4 @@ jobs:
           npm install
       - name: Run ESLint
         run: |
-          ./node_modules/.bin/eslint . --max-warnings=0
+          npx eslint . --max-warnings=0

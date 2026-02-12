@@ -4,18 +4,23 @@ import * as SplashScreen from "expo-splash-screen";
 import * as LocalAuthentication from "expo-local-authentication";
 import * as Crypto from "expo-crypto";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, Suspense } from "react";
 import "react-native-reanimated";
 import { PaperProvider } from "react-native-paper";
-import { useColorScheme, View, AppState, AppStateStatus } from "react-native";
+import {
+  useColorScheme,
+  View,
+  AppState,
+  AppStateStatus,
+  ActivityIndicator,
+  Alert,
+} from "react-native";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import migrations from "@/drizzle/migrations";
 import { SQLiteProvider } from "expo-sqlite";
-import { Suspense } from "react";
-import { ActivityIndicator, Alert } from "react-native";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
-import { AUTH_TYPES, SettingsKeys } from "@/constants/Settings";
+import { AUTH_TYPES, SettingsKeys, DATABASE_NAME } from "@/constants/Settings";
 import {
   getDatabase,
   getDrizzleDatabase,
@@ -25,7 +30,6 @@ import {
 } from "@/db/database";
 import DatabaseMigrationError from "@/components/DatabaseMigrationError";
 import PasswordAuthenticationView from "@/components/PasswordAuthenticationView";
-import { DATABASE_NAME } from "@/constants/Settings";
 import { getTheme } from "@/components/ThemeHandler";
 import { useThemeColor } from "@/assets/src/calendar-storage";
 import * as Notifications from "expo-notifications";
