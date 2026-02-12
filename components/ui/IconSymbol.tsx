@@ -16,6 +16,7 @@ const MAPPING = {
   "chevron.right": "chevron-right",
   gearshape: "settings",
   "slider.horizontal.3": "filter",
+  "arrow.circlepath": "auto-mode",
 } as Partial<
   Record<
     import("expo-symbols").SymbolViewProps["name"],
