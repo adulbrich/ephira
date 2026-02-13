@@ -17,12 +17,12 @@ export default function OnboardingNameScreen() {
   const handleContinue = () => {
     if (!canContinue) return;
     setUserName(trimmed);
-    router.push("./track");
+    router.push("/onboarding/walkthrough");
   };
 
   const handleSkip = () => {
     setUserName("");
-    router.push("./track");
+    router.push("/onboarding/walkthrough");
   };
 
   return (
@@ -39,7 +39,7 @@ export default function OnboardingNameScreen() {
             variant="headlineMedium"
             style={[styles.title, { color: theme.colors.onBackground }]}
           >
-            👋 Welcome to Ephira
+            Welcome to Ephira
           </Text>
 
           <Text
@@ -196,5 +196,3 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
 });
-
-

@@ -9,6 +9,7 @@ export default function OnboardingLayout() {
         gestureEnabled: true,
         animation: 'fade',
       }}
+      
     />
   );
 }
