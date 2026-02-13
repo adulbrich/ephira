@@ -397,8 +397,8 @@ export function useMarkedDates(calendarFilters?: string[]) {
           }
           // High confidence keeps defaults (1.0 opacity, 16px height)
 
-          // Get the base color and apply opacity
-          const baseColor = colors[index];
+          // Get the base color and apply opacity (wrap index for color array bounds)
+          const baseColor = colors[index % colors.length];
           const colorWithOpacity = applyOpacityToColor(baseColor, opacity);
 
           newPredictedMarkedDates[prediction.date] = {
