@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { getAllDataAsJson } from "@/db/database";
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import { ThemedView } from "@/components/ThemedView";
 import {
