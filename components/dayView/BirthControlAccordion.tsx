@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { View, Modal, Platform } from "react-native";
-import { List, Text, Button, TextInput } from "react-native-paper";
+import { List, Text, Button, TextInput, useTheme } from "react-native-paper";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { getAllVisibleMedications } from "@/db/database";
 import SingleChipSelection from "./SingleChipSelection";
-import { useTheme } from "react-native-paper";
 import {
   useBirthControlNotes,
   useTimeTaken,

@@ -125,10 +125,7 @@ export default function CycleStatsCard({ stats }: CycleStatsCardProps) {
           <View
             style={[styles.regularityDot, { backgroundColor: regularityColor }]}
           />
-          <Text
-            variant="labelMedium"
-            style={{ color: regularityColor }}
-          >
+          <Text variant="labelMedium" style={{ color: regularityColor }}>
             {stats.isRegular
               ? "Your cycle is regular"
               : "Your cycle varies more than average"}

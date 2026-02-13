@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Keyboard,
   TouchableWithoutFeedback,
+  Image,
 } from "react-native";
 import { Calendar } from "react-native-calendars";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
@@ -22,10 +23,14 @@ import {
 } from "@/assets/src/calendar-storage";
 import { getSetting, insertSetting } from "@/db/database";
 import CalendarHeader from "@/components/calendar/CalendarHeader";
+import CustomDay from "@/components/calendar/CustomDay";
 import { useMarkedDates } from "@/hooks/useMarkedDates";
 import { FilterColorsDark, FilterColorsLight } from "@/constants/Colors";
-import { Image } from "react-native";
 import FadeInView from "@/components/animations/FadeInView";
+import {
+  birthControlOptions,
+  anyBirthControlOption,
+} from "@/constants/BirthControlTypes";
 import { useFocusEffect } from "expo-router";
 
 export default function FlowCalendar() {
@@ -63,11 +68,11 @@ export default function FlowCalendar() {
       if (filters?.value) {
         setSelectedFilters(JSON.parse(filters.value));
       } else {
-        // set Flow as first filter by default (filler color given since color isn't optional)
-        setSelectedFilters(["Flow"]);
+        // set Flow and Any Birth Control as default filters
+        setSelectedFilters(["Flow", "Any Birth Control"]);
         await insertSetting(
           SettingsKeys.calendarFilters,
-          JSON.stringify(["Flow"]),
+          JSON.stringify(["Flow", "Any Birth Control"]),
         );
       }
     };
@@ -133,7 +138,7 @@ export default function FlowCalendar() {
                       <CalendarHeader onJumpToToday={jumpToToday} date={date} />
                     )}
                     maxDate={today}
-                    markingType="multi-period"
+                    dayComponent={CustomDay as React.ComponentType<unknown>}
                     markedDates={{
                       ...markedDates,
                       [date]: {
@@ -184,6 +189,27 @@ export default function FlowCalendar() {
                               marginRight: 8,
                             }}
                           />
+                        ) : filter === anyBirthControlOption ||
+                          birthControlOptions.includes(filter) ? (
+                          <Text
+                            style={{
+                              fontSize: 16,
+                              marginRight: 8,
+                              color: theme.colors.primary,
+                            }}
+                          >
+                            ★
+                          </Text>
+                        ) : filter === "Intercourse" ? (
+                          <Text
+                            style={{
+                              fontSize: 16,
+                              marginRight: 8,
+                              color: theme.colors.error,
+                            }}
+                          >
+                            ♥
+                          </Text>
                         ) : (
                           <View
                             style={{

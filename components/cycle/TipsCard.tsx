@@ -7,16 +7,18 @@ interface TipsCardProps {
   phaseColor: string;
 }
 
-export default function TipsCard({ tips, phaseName, phaseColor }: TipsCardProps) {
+export default function TipsCard({
+  tips,
+  phaseName,
+  phaseColor,
+}: TipsCardProps) {
   const theme = useTheme();
 
   return (
     <Card style={styles.card} mode="outlined">
       <Card.Content style={styles.content}>
         <View style={styles.header}>
-          <View
-            style={[styles.accentBar, { backgroundColor: phaseColor }]}
-          />
+          <View style={[styles.accentBar, { backgroundColor: phaseColor }]} />
           <Text
             variant="titleMedium"
             style={[styles.title, { color: theme.colors.onSurface }]}
@@ -43,7 +45,10 @@ export default function TipsCard({ tips, phaseName, phaseColor }: TipsCardProps)
               </View>
               <Text
                 variant="bodyMedium"
-                style={[styles.tipText, { color: theme.colors.onSurfaceVariant }]}
+                style={[
+                  styles.tipText,
+                  { color: theme.colors.onSurfaceVariant },
+                ]}
               >
                 {tip}
               </Text>
