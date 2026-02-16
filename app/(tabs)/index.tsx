@@ -19,6 +19,7 @@ import { useCyclePhase } from "@/hooks/useCyclePhase";
 import { CYCLE_PHASES } from "@/constants/CyclePhases";
 import { useRouter } from "expo-router";
 import { useFetchCycleData } from "@/hooks/useFetchCycleData";
+import { LinearGradient } from "expo-linear-gradient";
 
 export default function HomeScreen() {
   const theme = useTheme();
@@ -85,7 +86,7 @@ export default function HomeScreen() {
           style={{ flex: 1, justifyContent: "center", alignContent: "center" }}
         >
           {/* Current Phase Button */}
-          {phaseName && (
+          {phaseName && currentPhase && (
             <Pressable
               onPress={handlePhasePress}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -93,14 +94,20 @@ export default function HomeScreen() {
               style={({ pressed }) => [
                 styles.phaseButton,
                 {
-                  backgroundColor: currentPhase?.color || theme.colors.primary,
                   opacity: pressed ? 0.8 : 1,
                 },
               ]}
             >
-              <Text style={styles.phaseButtonText}>
-                You're in your {phaseName} phase
-              </Text>
+              <LinearGradient
+                colors={currentPhase.gradientColors}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.phaseButtonGradient}
+              >
+                <Text style={styles.phaseButtonText}>
+                  You're in your {phaseName} phase
+                </Text>
+              </LinearGradient>
             </Pressable>
           )}
           <View style={styles.flowChartContainer}>
@@ -198,17 +205,21 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 48,
     marginBottom: -16,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
     borderRadius: 25,
-    alignItems: "center",
-    justifyContent: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
     zIndex: 10,
+    overflow: "hidden",
+  },
+  phaseButtonGradient: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 25,
+    alignItems: "center",
+    justifyContent: "center",
   },
   flowChartContainer: {
     marginTop: -16,
