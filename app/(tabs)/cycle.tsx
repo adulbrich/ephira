@@ -121,16 +121,11 @@ export default function Cycle() {
     predictedCycle,
   );
 
-  // Refresh data when database changes
+  // Load cycle data on mount and when database changes
   useEffect(() => {
     fetchCycleData();
     refresh();
   }, [databaseChange, fetchCycleData, refresh]);
-
-  // Initial load
-  useEffect(() => {
-    fetchCycleData();
-  }, [fetchCycleData]);
 
   if (loading) {
     return (
