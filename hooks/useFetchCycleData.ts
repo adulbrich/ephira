@@ -95,9 +95,7 @@ function calculateAverageCycleLength(cycles: GroupedCycle[]): number {
   // Calculate the number of days between cycle starts
   const cycleLengths: number[] = [];
   for (let i = 1; i < validCycles.length; i++) {
-    const prevCycleStart = new Date(
-      validCycles[i - 1].startDate + "T00:00:00",
-    );
+    const prevCycleStart = new Date(validCycles[i - 1].startDate + "T00:00:00");
     const currCycleStart = new Date(validCycles[i].startDate + "T00:00:00");
 
     const diffTime = currCycleStart.getTime() - prevCycleStart.getTime();
