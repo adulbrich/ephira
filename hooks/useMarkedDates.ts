@@ -15,6 +15,7 @@ import {
   FlowColors,
   FilterColorsDark,
   FilterColorsLight,
+  CyclePredictionColor,
 } from "@/constants/Colors";
 import { getFlowTypeString } from "@/constants/Flow";
 import { useLiveFilteredData } from "@/hooks/useLiveFilteredData";
@@ -397,8 +398,8 @@ export function useMarkedDates(calendarFilters?: string[]) {
           }
           // High confidence keeps defaults (1.0 opacity, 16px height)
 
-          // Get the base color and apply opacity (wrap index for color array bounds)
-          const baseColor = colors[index % colors.length];
+          // Use fixed dark blue for cycle predictions
+          const baseColor = CyclePredictionColor;
           const colorWithOpacity = applyOpacityToColor(baseColor, opacity);
 
           newPredictedMarkedDates[prediction.date] = {
