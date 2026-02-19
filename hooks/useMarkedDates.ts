@@ -379,7 +379,6 @@ export function useMarkedDates(calendarFilters?: string[]) {
       ) {
         const newPredictedDates = await fetchCycleDataRef.current();
         const newPredictedMarkedDates: MarkedDates = {};
-        const index = calendarFilters?.indexOf("Cycle Prediction");
 
         newPredictedDates.forEach((prediction) => {
           // Calculate opacity AND height based on confidence level
