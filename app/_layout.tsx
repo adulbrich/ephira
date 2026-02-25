@@ -6,6 +6,8 @@ import * as Crypto from "expo-crypto";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState, useRef, useCallback, Suspense } from "react";
 import "react-native-reanimated";
+import { TourProvider } from "@/assets/src/tour/TourContext";
+import { SpotlightOverlay } from "@/assets/src/tour/SpotlightOverlay";
 import { PaperProvider } from "react-native-paper";
 import {
   useColorScheme,
@@ -209,22 +211,28 @@ export default function RootLayout() {
   }
 
   return (
-    <Suspense fallback={<ActivityIndicator size="large" />}>
-      <SQLiteProvider databaseName={DATABASE_NAME} useSuspense>
-        <PaperProvider theme={theme}>
-          <SafeAreaProvider>
-            <SafeAreaView
-              style={{ flex: 1, backgroundColor: theme.colors.background }}
-            >
-              <Stack>
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="+not-found" />
-              </Stack>
-              <StatusBar style="auto" />
-            </SafeAreaView>
-          </SafeAreaProvider>
-        </PaperProvider>
-      </SQLiteProvider>
-    </Suspense>
+    <TourProvider>
+      <SpotlightOverlay />
+
+      <Suspense fallback={<ActivityIndicator size="large" />}>
+        <SQLiteProvider databaseName={DATABASE_NAME} useSuspense>
+          <PaperProvider theme={theme}>
+            <SafeAreaProvider>
+              <SafeAreaView
+                style={{ flex: 1, backgroundColor: theme.colors.background }}
+              >
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="index" />
+
+                  <Stack.Screen name="(tabs)" />
+                </Stack>
+
+                <StatusBar style="auto" />
+              </SafeAreaView>
+            </SafeAreaProvider>
+          </PaperProvider>
+        </SQLiteProvider>
+      </Suspense>
+    </TourProvider>
   );
 }

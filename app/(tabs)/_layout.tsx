@@ -3,11 +3,11 @@ import React, { useEffect, useState } from "react";
 import { Platform } from "react-native";
 import * as SplashScreen from "expo-splash-screen";
 import { getDrizzleDatabase } from "@/db/database";
-
 import { HapticTab } from "@/components/HapticTab";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import TabBarBackground from "@/components/ui/TabBarBackground";
 import { useTheme } from "react-native-paper";
+import { TourAnchor } from "@/assets/src/tour/TourAnchor";
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -59,6 +59,8 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: theme.colors.primary,
         headerShown: false,
+
+        // Keep your existing default behavior
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
         tabBarStyle: Platform.select({
@@ -83,6 +85,12 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="house.fill" color={color} />
           ),
+          // ✅ Wrap just this tab button with an anchor (keeps HapticTab)
+          tabBarButton: (props) => (
+            <TourAnchor id="tab.home">
+              <HapticTab {...props} />
+            </TourAnchor>
+          ),
         }}
       />
       <Tabs.Screen
@@ -91,6 +99,11 @@ export default function TabLayout() {
           title: "Calendar",
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="calendar" color={color} />
+          ),
+          tabBarButton: (props) => (
+            <TourAnchor id="tab.calendar">
+              <HapticTab {...props} />
+            </TourAnchor>
           ),
         }}
       />
@@ -101,6 +114,11 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="arrow.circlepath" color={color} />
           ),
+          tabBarButton: (props) => (
+            <TourAnchor id="tab.cycle">
+              <HapticTab {...props} />
+            </TourAnchor>
+          ),
         }}
       />
       <Tabs.Screen
@@ -109,6 +127,11 @@ export default function TabLayout() {
           title: "Settings",
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="gearshape" color={color} />
+          ),
+          tabBarButton: (props) => (
+            <TourAnchor id="tab.settings">
+              <HapticTab {...props} />
+            </TourAnchor>
           ),
         }}
       />

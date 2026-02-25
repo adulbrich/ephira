@@ -15,6 +15,8 @@ import {
   quickLogBirthControlForToday,
 } from "@/db/quickBirthControl";
 
+import { TourAnchor } from "@/assets/src/tour/TourAnchor";
+
 export default function HomeScreen() {
   const theme = useTheme();
   const { data: flowData } = useData();
@@ -56,29 +58,41 @@ export default function HomeScreen() {
         <View
           style={{ flex: 1, justifyContent: "center", alignContent: "center" }}
         >
-          <FlowChart />
+          {/* ✅ Spotlight the Flow chart */}
+          <TourAnchor id="home.flowChart">
+            <FlowChart />
+          </TourAnchor>
+
           <View style={{ alignItems: "center", marginTop: 8 }}>
-            <Button
-              mode="contained"
-              icon="pill"
-              loading={busy}
-              onPress={onQuickBC}
-              style={{ width: 220 }}
-            >
-              Quick Birth Control
-            </Button>
+            {/* ✅ Spotlight the Quick Birth Control button */}
+            <TourAnchor id="home.quickBirthControl">
+              <Button
+                mode="contained"
+                icon="pill"
+                loading={busy}
+                onPress={onQuickBC}
+                style={{ width: 220 }}
+              >
+                Quick Birth Control
+              </Button>
+            </TourAnchor>
           </View>
-          <Text
-            style={{
-              color: theme.colors.secondary,
-              fontSize: 24,
-              fontWeight: "bold",
-              paddingVertical: 16,
-              textAlign: "center",
-            }}
-          >
-            Your Most Recent Flow Dates
-          </Text>
+
+          {/* (Optional) spotlight the section title too */}
+          <TourAnchor id="home.recentFlowTitle">
+            <Text
+              style={{
+                color: theme.colors.secondary,
+                fontSize: 24,
+                fontWeight: "bold",
+                paddingVertical: 16,
+                textAlign: "center",
+              }}
+            >
+              Your Most Recent Flow Dates
+            </Text>
+          </TourAnchor>
+
           <View style={styles.flowLogContainer}>
             {recentFlowDays.length > 0 ? (
               <>
