@@ -25,10 +25,7 @@ import { getSetting, insertSetting } from "@/db/database";
 import CalendarHeader from "@/components/calendar/CalendarHeader";
 import CustomDay from "@/components/calendar/CustomDay";
 import { useMarkedDates } from "@/hooks/useMarkedDates";
-import {
-  CyclePredictionColor,
-  SpecialtyFilterColor,
-} from "@/constants/Colors";
+import { CyclePredictionColor, SpecialtyFilterColor } from "@/constants/Colors";
 import FadeInView from "@/components/animations/FadeInView";
 import {
   birthControlOptions,

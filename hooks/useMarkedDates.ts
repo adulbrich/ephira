@@ -130,10 +130,7 @@ function applyFilterToMarkedDates({
   });
 }
 
-async function markedDatesBuilder(
-  filters: string[],
-  data: DayData[],
-) {
+async function markedDatesBuilder(filters: string[], data: DayData[]) {
   const markedDates: MarkedDates = {};
 
   // get all visible symptoms, moods, medications, and birth control options
