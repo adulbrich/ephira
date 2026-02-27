@@ -31,6 +31,12 @@ export default function TourStart() {
           text: "Update preferences like notifications and tracking options anytime.",
           route: "/(tabs)/settings",
         },
+        {
+          id: "tab.home",
+          title: "Home",
+          text: "Your main dashboard for recent trends and quick actions.",
+          route: "/(tabs)",
+        },
       ];
 
       // Go to the first route, then start the tour overlay.
