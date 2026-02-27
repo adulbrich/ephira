@@ -1,4 +1,4 @@
-import { CYCLE_PHASES, CyclePhaseId, getNextPhase } from "../CyclePhases";
+import { CYCLE_PHASES, CyclePhaseId } from "../CyclePhases";
 
 describe("CyclePhases - Gradient Colors", () => {
   describe("Gradient Color Format Validation", () => {
@@ -71,7 +71,12 @@ describe("CyclePhases - Gradient Colors", () => {
     });
 
     it("should have unique gradient colors for each phase", () => {
-      const phaseIds: CyclePhaseId[] = ["menstrual", "follicular", "ovulation", "luteal"];
+      const phaseIds: CyclePhaseId[] = [
+        "menstrual",
+        "follicular",
+        "ovulation",
+        "luteal",
+      ];
       const gradients = phaseIds.map((id) => CYCLE_PHASES[id].gradientColors);
 
       // Each phase should have unique gradient colors

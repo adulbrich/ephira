@@ -1,21 +1,14 @@
-import { FlowType } from "@/constants/Colors";
-import { FlowColors } from "@/constants/Colors";
-import {
-  getFlowTypeString,
-  FLOW_TAIL_COLOR,
-} from "@/constants/Flow";
+import { FlowColors, FlowType } from "@/constants/Colors";
+import { FLOW_TAIL_COLOR, getFlowTypeString } from "@/constants/Flow";
 
 /**
  * Test helper: Extract gradient logic from FlowChart component
  * This mirrors the gradient generation logic in FlowChart.tsx
  */
 function generateGradientStops(flowDataForCurrentMonth: any[]): {
-  stops: Array<{ offset: string; color: string }>;
+  stops: { offset: string; color: string }[];
   flowStatesInOrder: FlowType[];
 } {
-  // Get unique flow states in chronological order
-  const flowStatesInOrder: FlowType[] = [];
-  
   if (flowDataForCurrentMonth.length === 0) {
     return {
       stops: [
@@ -51,20 +44,20 @@ function generateGradientStops(flowDataForCurrentMonth: any[]): {
   }
 
   const maxOffset = 90; // Leave room for tail fade
-  const stops: Array<{ offset: string; color: string }> = [];
+  const stops: { offset: string; color: string }[] = [];
 
   if (uniqueFlowTypes.length === 0) {
     // Default gradient if no flow data
     stops.push(
       { offset: "0%", color: FlowColors.spotting },
-      { offset: `${maxOffset}%`, color: FlowColors.heavy }
+      { offset: `${maxOffset}%`, color: FlowColors.heavy },
     );
   } else if (uniqueFlowTypes.length === 1) {
     // Single flow state - solid color
     const color = FlowColors[uniqueFlowTypes[0]];
     stops.push(
       { offset: "0%", color: color },
-      { offset: `${maxOffset}%`, color: color }
+      { offset: `${maxOffset}%`, color: color },
     );
   } else {
     // Multiple flow states - create gradient with proportional stops
@@ -95,7 +88,7 @@ describe("FlowChart Gradient Generation", () => {
 
     it("should generate default gradient when flow data array is empty", () => {
       const { stops } = generateGradientStops([]);
-      
+
       expect(stops[0].color).toBe(FlowColors.spotting);
       expect(stops[1].color).toBe(FlowColors.heavy);
       expect(stops[2].color).toBe(FLOW_TAIL_COLOR);
@@ -132,9 +125,7 @@ describe("FlowChart Gradient Generation", () => {
     });
 
     it("should generate solid color gradient for single flow type (medium)", () => {
-      const flowData = [
-        { date: "2024-01-15T00:00:00Z", flow_intensity: 3 },
-      ];
+      const flowData = [{ date: "2024-01-15T00:00:00Z", flow_intensity: 3 }];
 
       const { stops, flowStatesInOrder } = generateGradientStops(flowData);
 
@@ -144,9 +135,7 @@ describe("FlowChart Gradient Generation", () => {
     });
 
     it("should generate solid color gradient for single flow type (heavy)", () => {
-      const flowData = [
-        { date: "2024-01-15T00:00:00Z", flow_intensity: 4 },
-      ];
+      const flowData = [{ date: "2024-01-15T00:00:00Z", flow_intensity: 4 }];
 
       const { stops, flowStatesInOrder } = generateGradientStops(flowData);
 
@@ -341,7 +330,7 @@ describe("FlowChart Gradient Generation", () => {
       testCases.forEach((flowData) => {
         const { stops } = generateGradientStops(flowData);
         const lastStop = stops[stops.length - 1];
-        
+
         expect(lastStop.offset).toBe("95%");
         expect(lastStop.color).toBe(FLOW_TAIL_COLOR);
       });
@@ -366,8 +355,8 @@ describe("FlowChart Gradient Generation", () => {
         } else {
           expect(Object.values(FlowColors)).toContain(stop.color);
         }
-        // All should be valid hex colors
-        expect(stop.color).toMatch(/^#[0-9A-Fa-f]{6}$/);
+        // All should be valid hex colors (6 or 8 digits with optional alpha)
+        expect(stop.color).toMatch(/^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/);
       });
     });
 
