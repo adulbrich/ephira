@@ -32,6 +32,7 @@ const flowOption = "Flow";
 const PredictionOption = "Cycle Prediction";
 const notesOption = "Notes";
 const StartEndOption = "Cycle Start/End";
+const intercourseOption = "Intercourse";
 
 function FilterSection({
   selectedFilters,
@@ -243,15 +244,29 @@ export default function CalendarFilterDialog({
     setVisible(false);
   };
 
+  // Filters that don't consume "other" bar slots:
+  // - Icon filters: birth control (star), intercourse (heart)
+  // - Dedicated filters: Flow (own bar), Cycle Prediction (own bar)
+  const isSpecialFilter = (filter: string) =>
+    filter === intercourseOption ||
+    filter === anyBirthControlOption ||
+    birthControlOptions.includes(filter) ||
+    filter === PredictionOption ||
+    filter === flowOption;
+
+  const barFilterCount = tempSelectedFilters.filter(
+    (f) => !isSpecialFilter(f),
+  ).length;
+
   const onToggleSwitch = (filter: string) => {
     if (tempSelectedFilters.includes(filter)) {
       setTempSelectedFilters(tempSelectedFilters.filter((f) => f !== filter));
-    } else if (tempSelectedFilters.length < 3) {
+    } else if (isSpecialFilter(filter) || barFilterCount < 1) {
       setTempSelectedFilters([...tempSelectedFilters, filter]);
     }
   };
 
-  const isMaxFiltersSelected = tempSelectedFilters.length >= 3;
+  const isMaxFiltersSelected = barFilterCount >= 1;
 
   return (
     <Portal>
@@ -261,7 +276,7 @@ export default function CalendarFilterDialog({
         </Dialog.Title>
         <Dialog.Content>
           <Text variant="labelLarge" style={{ marginBottom: 8 }}>
-            Current Filters ({tempSelectedFilters.length}/3):
+            Current Filters ({barFilterCount}/1 data filter):
           </Text>
           <View style={styles.chipContainer}>
             {tempSelectedFilters.map((filter) => (
@@ -292,10 +307,7 @@ export default function CalendarFilterDialog({
                       key={`${flowOption}-${isSelected}`}
                       value={isSelected}
                       onValueChange={() => onToggleSwitch(flowOption)}
-                      disabled={
-                        isMaxFiltersSelected &&
-                        !tempSelectedFilters.includes(flowOption)
-                      }
+                      disabled={false}
                     />
                   );
                 }}
@@ -335,30 +347,38 @@ export default function CalendarFilterDialog({
                           key={`${PredictionOption}-${isSelected}`}
                           value={isSelected}
                           onValueChange={() => onToggleSwitch(PredictionOption)}
-                          disabled={
-                            isMaxFiltersSelected &&
-                            !tempSelectedFilters.includes(PredictionOption)
-                          }
+                          disabled={false}
                         />
                       );
                     }}
                   />
                 )}
+            </List.Section>
+            <Divider />
+            <FilterSection
+              selectedFilters={tempSelectedFilters}
+              onToggleSwitch={onToggleSwitch}
+              isMaxFiltersSelected={false}
+              subheader="Birth Control"
+              listItems={[anyBirthControlOption, ...birthControlOptions]}
+              anyOption={anyBirthControlOption}
+              expanded={birthControlExpanded}
+              setExpanded={setBirthControlExpanded}
+            />
+            <Divider />
+            <List.Section>
               <List.Item
                 style={styles.listItem}
-                key={notesOption}
-                title={notesOption}
+                key={intercourseOption}
+                title={intercourseOption}
                 right={() => {
-                  const isSelected = tempSelectedFilters.includes(notesOption);
+                  const isSelected =
+                    tempSelectedFilters.includes(intercourseOption);
                   return (
                     <Switch
-                      key={`${notesOption}-${isSelected}`}
+                      key={`${intercourseOption}-${isSelected}`}
                       value={isSelected}
-                      onValueChange={() => onToggleSwitch(notesOption)}
-                      disabled={
-                        isMaxFiltersSelected &&
-                        !tempSelectedFilters.includes(notesOption)
-                      }
+                      onValueChange={() => onToggleSwitch(intercourseOption)}
                     />
                   );
                 }}
@@ -398,16 +418,27 @@ export default function CalendarFilterDialog({
               setExpanded={setMedicationsExpanded}
             />
             <Divider />
-            <FilterSection
-              selectedFilters={tempSelectedFilters}
-              onToggleSwitch={onToggleSwitch}
-              isMaxFiltersSelected={isMaxFiltersSelected}
-              subheader="Birth Control"
-              listItems={[anyBirthControlOption, ...birthControlOptions]}
-              anyOption={anyBirthControlOption}
-              expanded={birthControlExpanded}
-              setExpanded={setBirthControlExpanded}
-            />
+            <List.Section>
+              <List.Item
+                style={styles.listItem}
+                key={notesOption}
+                title={notesOption}
+                right={() => {
+                  const isSelected = tempSelectedFilters.includes(notesOption);
+                  return (
+                    <Switch
+                      key={`${notesOption}-${isSelected}`}
+                      value={isSelected}
+                      onValueChange={() => onToggleSwitch(notesOption)}
+                      disabled={
+                        isMaxFiltersSelected &&
+                        !tempSelectedFilters.includes(notesOption)
+                      }
+                    />
+                  );
+                }}
+              />
+            </List.Section>
           </ScrollView>
         </Dialog.Content>
         <Dialog.Actions>

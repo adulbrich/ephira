@@ -1,5 +1,4 @@
-import { View } from "react-native";
-import { Dimensions } from "react-native";
+import { View, Dimensions } from "react-native";
 import Svg, {
   Circle,
   Text,
@@ -9,12 +8,11 @@ import Svg, {
   LinearGradient,
   Stop,
 } from "react-native-svg";
-import { useEffect, useRef, useMemo } from "react";
+import React, { useEffect, useRef, useMemo } from "react";
 import { FlowColors, FlowType } from "@/constants/Colors";
 import { useTheme } from "react-native-paper";
 import { useData, useFlowData } from "@/assets/src/calendar-storage";
 import { useFocusEffect } from "@react-navigation/native";
-import React from "react";
 import { useFetchFlowData } from "@/hooks/useFetchFlowData";
 import {
   getFlowTypeString,

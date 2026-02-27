@@ -22,6 +22,9 @@
     },
     "production": {
       "autoIncrement": true,
+      "ios": {
+        "distribution": "store"
+      },
       "android": {
         "gradleCommand": ":app:bundleRelease"
       }

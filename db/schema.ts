@@ -12,6 +12,7 @@ export const days = sqliteTable("days", {
   flow_intensity: integer(),
   is_cycle_start: integer({ mode: "boolean" }).default(false),
   is_cycle_end: integer({ mode: "boolean" }).default(false),
+  intercourse: integer({ mode: "boolean" }).default(false),
   notes: text(),
 });
 

@@ -4,7 +4,7 @@ This document provides an overview of the project structure and key components o
 
 ## Folder Structure
 
-```
+```text
 ├── app/                      # Holds the app entry point, screens, and navigation
 ├── assets/                   # Images, fonts, videos, icons, etc. and Zustand store
 ├── components/               # Components grouped by feature/screen/usage
@@ -86,8 +86,8 @@ This document provides an overview of the project structure and key components o
 ## Tools & Libraries
 
 - [Expo](https://docs.expo.dev/) - RN Framework
-- [React Native](https://reactnative.dev/docs/getting-started)
-- [React Native Paper]() - UI
+- [React Native (RN)](https://reactnative.dev/docs/getting-started)
+- [React Native Paper](https://reactnativepaper.com) - Material Design Library
 - [Drizzle](https://orm.drizzle.team/docs/connect-expo-sqlite) - Database
 - [pdf-lib](https://pdf-lib.js.org/) - PDF generation for data export
 - [react-native-calendars](https://wix.github.io/react-native-calendars/docs/Intro) - Calendar
@@ -97,8 +97,8 @@ This document provides an overview of the project structure and key components o
 
 Due to using Expo SQLite for the database, this project will only run on mobile devices or emulators.
 
-- Download the repo
-- `npm install`
+- Clone the repo
+- `npm install` (Node.js LTS recommended)
 - `npx expo start`
 
 In the output, you'll find options to open the app in a:

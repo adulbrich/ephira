@@ -180,17 +180,19 @@ export default function CyclePredictions() {
   const handleOptionChange = async () => {
     const newPredictionChoice = !predictionChoice;
     setPredictionChoice(newPredictionChoice);
-    if (selectedFilters.includes("Cycle Prediction")) {
-      if (newPredictionChoice) {
-        // If enabling cycle predictions, fetch the cycle data
-        await fetchCycleDataRef.current();
-      } else {
-        // If disabling cycle predictions, remove the filter
-        const updatedFilters = selectedFilters.filter(
-          (filter) => filter !== "Cycle Prediction",
-        );
-        setSelectedFilters(updatedFilters);
+
+    if (newPredictionChoice) {
+      // If enabling cycle predictions, add filter back if not present and fetch data
+      if (!selectedFilters.includes("Cycle Prediction")) {
+        setSelectedFilters([...selectedFilters, "Cycle Prediction"]);
       }
+      await fetchCycleDataRef.current();
+    } else {
+      // If disabling cycle predictions, remove the filter
+      const updatedFilters = selectedFilters.filter(
+        (filter) => filter !== "Cycle Prediction",
+      );
+      setSelectedFilters(updatedFilters);
     }
 
     await insertSetting(

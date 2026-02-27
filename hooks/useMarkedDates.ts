@@ -11,7 +11,12 @@ import {
   useSelectedDate,
   usePredictionChoice,
 } from "@/assets/src/calendar-storage";
-import { FlowColors } from "@/constants/Colors";
+import {
+  FlowColors,
+  FilterColorsDark,
+  FilterColorsLight,
+  CyclePredictionColor,
+} from "@/constants/Colors";
 import { getFlowTypeString } from "@/constants/Flow";
 import { useLiveFilteredData } from "@/hooks/useLiveFilteredData";
 import { anySymptomOption } from "@/constants/Symptoms";
@@ -19,7 +24,6 @@ import { anyMoodOption } from "@/constants/Moods";
 import { anyMedicationOption } from "@/constants/Medications";
 import { anyBirthControlOption } from "@/constants/BirthControlTypes";
 import { useTheme } from "react-native-paper";
-import { FilterColorsDark, FilterColorsLight } from "@/constants/Colors";
 import { useFetchCycleData } from "./useFetchCycleData";
 
 function getStartingAndEndingDay(
@@ -169,7 +173,48 @@ async function markedDatesBuilder(
         .map((medication) => medication.name),
   );
 
+  // Check if any birth control filter is enabled
+  const birthControlFiltersEnabled = filters.some(
+    (filter) =>
+      filter === anyBirthControlOption || birthControlOptions.includes(filter),
+  );
+
+  // Check if intercourse filter is enabled
+  const intercourseFilterEnabled = filters.includes("Intercourse");
+
   data.forEach((day, index) => {
+    // Check if day has birth control logged (only show star if filter is enabled)
+    let hasBirthControl = false;
+    if (birthControlFiltersEnabled) {
+      const dayBirthControl =
+        day.medications?.filter((med) => birthControlOptions.includes(med)) ??
+        [];
+
+      // Check if "Any Birth Control" is selected or if a specific type matches
+      if (filters.includes(anyBirthControlOption)) {
+        hasBirthControl = dayBirthControl.length > 0;
+      } else {
+        // Check for specific birth control types
+        hasBirthControl = dayBirthControl.some((med) => filters.includes(med));
+      }
+    }
+
+    // Check if day has intercourse logged (only show heart if filter is enabled)
+    const hasIntercourse = intercourseFilterEnabled && day.intercourse === true;
+
+    // Initialize marked date entry if needed
+    if (!markedDates[day.date]) {
+      markedDates[day.date] = {
+        selected: false,
+        periods: [],
+        hasBirthControl,
+        hasIntercourse,
+      };
+    } else {
+      markedDates[day.date].hasBirthControl = hasBirthControl;
+      markedDates[day.date].hasIntercourse = hasIntercourse;
+    }
+
     // flow
     if (filters.some((filter) => filter === "Flow")) {
       const { isStartingDay, isEndingDay } = getStartingAndEndingDay(
@@ -278,18 +323,7 @@ async function markedDatesBuilder(
       anyOption: anyMedicationOption,
     });
 
-    // birth control (it's stored in day's medication array)
-    applyFilterToMarkedDates({
-      markedDates,
-      filters,
-      filterColors,
-      day,
-      dayValues: day.medications ?? [],
-      prevDayValues: data[index - 1]?.medications ?? [],
-      nextDayValues: data[index + 1]?.medications ?? [],
-      options: birthControlOptions,
-      anyOption: anyBirthControlOption,
-    });
+    // birth control is handled via stars (hasBirthControl flag) instead of period lines
   });
 
   return markedDates;
@@ -345,7 +379,6 @@ export function useMarkedDates(calendarFilters?: string[]) {
       ) {
         const newPredictedDates = await fetchCycleDataRef.current();
         const newPredictedMarkedDates: MarkedDates = {};
-        const index = calendarFilters?.indexOf("Cycle Prediction");
 
         newPredictedDates.forEach((prediction) => {
           // Calculate opacity AND height based on confidence level
@@ -364,8 +397,8 @@ export function useMarkedDates(calendarFilters?: string[]) {
           }
           // High confidence keeps defaults (1.0 opacity, 16px height)
 
-          // Get the base color and apply opacity
-          const baseColor = colors[index];
+          // Use fixed dark blue for cycle predictions
+          const baseColor = CyclePredictionColor;
           const colorWithOpacity = applyOpacityToColor(baseColor, opacity);
 
           newPredictedMarkedDates[prediction.date] = {

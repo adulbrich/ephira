@@ -10,6 +10,7 @@ import {
   Medications,
   BirthControl,
   BirthControlNotes,
+  Intercourse,
   TimeTaken,
   TimePickerState,
   TempSelectedTime,
@@ -110,6 +111,11 @@ export const useBirthControlNotes = create<BirthControlNotes>((set) => ({
   birthControlNotes: "",
   setBirthControlNotes: (notes: string) =>
     set(() => ({ birthControlNotes: notes })),
+}));
+
+export const useIntercourse = create<Intercourse>((set) => ({
+  intercourse: false,
+  setIntercourse: (value: boolean) => set(() => ({ intercourse: value })),
 }));
 
 export const useTimeTaken = create<TimeTaken>((set) => ({
