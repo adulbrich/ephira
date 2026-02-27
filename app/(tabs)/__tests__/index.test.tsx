@@ -10,6 +10,7 @@ import {
   useDatabaseChangeNotifier,
 } from "@/assets/src/calendar-storage";
 import { useFetchCycleData } from "@/hooks/useFetchCycleData";
+import type { DayData, PredictedDate } from "@/constants/Interfaces";
 
 // Mock dependencies
 jest.mock("@/hooks/useCyclePhase");
@@ -58,24 +59,24 @@ jest.mock("expo-linear-gradient", () => ({
 }));
 
 describe("HomeScreen - Phase Button Gradient", () => {
-  const mockFlowData = [];
-  const mockPredictedCycle = [];
+  const mockFlowData: DayData[] = [];
+  const mockPredictedCycle: PredictedDate[] = [];
   const mockSetPredictedCycle = jest.fn();
   const mockFetchCycleData = jest.fn();
   const mockSetDatabaseChange = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (useData as jest.Mock).mockReturnValue({ data: mockFlowData });
-    (usePredictedCycle as jest.Mock).mockReturnValue({
+    (useData as unknown as jest.Mock).mockReturnValue({ data: mockFlowData });
+    (usePredictedCycle as unknown as jest.Mock).mockReturnValue({
       predictedCycle: mockPredictedCycle,
       setPredictedCycle: mockSetPredictedCycle,
     });
-    (useDatabaseChangeNotifier as jest.Mock).mockReturnValue({
+    (useDatabaseChangeNotifier as unknown as jest.Mock).mockReturnValue({
       databaseChange: null,
       setDatabaseChange: mockSetDatabaseChange,
     });
-    (useFetchCycleData as jest.Mock).mockReturnValue({
+    (useFetchCycleData as unknown as jest.Mock).mockReturnValue({
       fetchCycleData: mockFetchCycleData,
     });
   });

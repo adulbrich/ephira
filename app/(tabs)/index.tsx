@@ -248,7 +248,6 @@ const styles = StyleSheet.create({
   phaseButtonText: {
     fontSize: 18,
     fontWeight: "600",
-    color: "white",
     textShadowColor: "rgba(0, 0, 0, 0.2)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
