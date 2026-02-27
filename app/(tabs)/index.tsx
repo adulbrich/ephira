@@ -58,13 +58,13 @@ export default function HomeScreen() {
         <View
           style={{ flex: 1, justifyContent: "center", alignContent: "center" }}
         >
-          {/* ✅ Spotlight the Flow chart */}
+          {/*  Spotlight the Flow chart */}
           <TourAnchor id="home.flowChart">
             <FlowChart />
           </TourAnchor>
 
           <View style={{ alignItems: "center", marginTop: 8 }}>
-            {/* ✅ Spotlight the Quick Birth Control button */}
+            {/*  Spotlight the Quick Birth Control button */}
             <TourAnchor id="home.quickBirthControl">
               <Button
                 mode="contained"

@@ -16,6 +16,10 @@ function measure(ref: any): Promise<Rect | null> {
   });
 }
 
+function clamp(n: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, n));
+}
+
 export function SpotlightOverlay() {
   const { isActive, steps, stepIndex, getAnchor, next, prev, stop } = useTour();
   const step = steps[stepIndex];
@@ -32,7 +36,6 @@ export function SpotlightOverlay() {
 
       const anchorRef = getAnchor(step.id);
       if (!anchorRef) {
-        // Anchor not registered yet; try again shortly.
         setRect(null);
         setTimeout(() => {
           if (!cancelled) void run();
@@ -53,27 +56,26 @@ export function SpotlightOverlay() {
   const overlayParts = useMemo(() => {
     if (!rect) return null;
 
-    const pad = 8;
+    const pad = clamp(Math.round(screen.height * 0.01), 6, 12);
 
     const isTabArea = rect.y > screen.height * 0.75;
-
-    const extraHeight = isTabArea ? 28 : 0; // 👈 increase this if needed
+    const extraHeight = isTabArea
+      ? clamp(Math.round(screen.height * 0.04), 18, 44)
+      : 0;
+    const shiftUp = isTabArea
+      ? clamp(Math.round(screen.height * 0.008), 4, 10)
+      : 0;
 
     const x = Math.max(rect.x - pad, 0);
-    const y = Math.max(rect.y - pad - (isTabArea ? 6 : 0), 0);
+    const y = Math.max(rect.y - pad - shiftUp, 0);
     const w = Math.min(rect.width + pad * 2, screen.width - x);
     const h = Math.min(rect.height + pad * 2 + extraHeight, screen.height - y);
-    // Four rectangles: top, left, right, bottom
+
     return {
       hole: { x, y, w, h },
       top: { left: 0, top: 0, width: screen.width, height: y },
       left: { left: 0, top: y, width: x, height: h },
-      right: {
-        left: x + w,
-        top: y,
-        width: screen.width - (x + w),
-        height: h,
-      },
+      right: { left: x + w, top: y, width: screen.width - (x + w), height: h },
       bottom: {
         left: 0,
         top: y + h,
@@ -84,14 +86,14 @@ export function SpotlightOverlay() {
   }, [rect, screen.height, screen.width]);
 
   const tooltipBottom = useMemo(() => {
-    const base = insets.bottom + 16; // normal
+    const base = insets.bottom + 16;
     if (!overlayParts) return base;
 
     const holeBottom = overlayParts.hole.y + overlayParts.hole.h;
     const nearBottom = holeBottom > screen.height * 0.72;
 
-    // If near bottom, raise the tooltip so it doesn't cover the highlight
-    return nearBottom ? insets.bottom + 120 : base;
+    const raisedOffset = clamp(Math.round(screen.height * 0.14), 84, 160);
+    return nearBottom ? insets.bottom + raisedOffset : base;
   }, [insets.bottom, overlayParts, screen.height]);
 
   if (!isActive || !step) return null;
@@ -99,7 +101,6 @@ export function SpotlightOverlay() {
   return (
     <Modal transparent visible animationType="fade">
       <View style={{ flex: 1 }}>
-        {/* Dimming overlays */}
         {overlayParts && (
           <>
             {[
@@ -121,7 +122,6 @@ export function SpotlightOverlay() {
               />
             ))}
 
-            {/* Highlight box */}
             <View
               pointerEvents="none"
               style={{
@@ -138,13 +138,12 @@ export function SpotlightOverlay() {
           </>
         )}
 
-        {/* Tooltip / controls */}
         <View
           style={{
             position: "absolute",
             left: 16,
             right: 16,
-            bottom: tooltipBottom, // ✅ dynamic
+            bottom: tooltipBottom,
             borderRadius: 16,
             padding: 16,
             backgroundColor: "rgba(20,20,20,0.95)",
@@ -189,16 +188,18 @@ export function SpotlightOverlay() {
             </Pressable>
 
             <View style={{ flexDirection: "row", gap: 10 }}>
-              <Pressable
-                onPress={prev}
-                style={{
-                  paddingVertical: 10,
-                  paddingHorizontal: 14,
-                  borderRadius: 12,
-                }}
-              >
-                <Text style={{ color: "white" }}>Back</Text>
-              </Pressable>
+              {stepIndex > 0 && (
+                <Pressable
+                  onPress={prev}
+                  style={{
+                    paddingVertical: 10,
+                    paddingHorizontal: 14,
+                    borderRadius: 12,
+                  }}
+                >
+                  <Text style={{ color: "white" }}>Back</Text>
+                </Pressable>
+              )}
 
               <Pressable
                 onPress={next}

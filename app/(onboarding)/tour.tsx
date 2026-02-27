@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { router } from "expo-router";
 import { useTour } from "../../assets/src/tour/TourContext";
-import { setHasSeenWalkthrough } from "../../assets/src/onboarding/onboarding-storage";
+// import { setHasSeenWalkthrough } from "../../assets/src/onboarding/onboarding-storage";
 import type { TourStep } from "../../assets/src/tour/types";
 
 export default function TourStart() {
@@ -9,8 +9,8 @@ export default function TourStart() {
 
   useEffect(() => {
     (async () => {
-      // Mark as seen now (or do it at the end if you prefer)
-      await setHasSeenWalkthrough(true);
+      // temp comment this out, can uncomment once we want to force the tour to show again for testing
+      // await setHasSeenWalkthrough(true);
 
       const steps: TourStep[] = [
         {

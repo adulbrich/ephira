@@ -85,7 +85,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="house.fill" color={color} />
           ),
-          // ✅ Wrap just this tab button with an anchor (keeps HapticTab)
+          // Wrap just this tab button with an anchor (keeps HapticTab)
           tabBarButton: (props) => (
             <TourAnchor id="tab.home">
               <HapticTab {...props} />
