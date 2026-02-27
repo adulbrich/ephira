@@ -29,7 +29,10 @@ export default function HomeScreen() {
   const { setDatabaseChange, databaseChange } = useDatabaseChangeNotifier();
   const { predictedCycle, setPredictedCycle } = usePredictedCycle();
   const { fetchCycleData } = useFetchCycleData(setPredictedCycle);
-  const { cycleState } = useCyclePhase(flowData, predictedCycle);
+  const { cycleState, loading: cycleLoading } = useCyclePhase(
+    flowData,
+    predictedCycle,
+  );
 
   // Load cycle data on mount and when database changes
   useEffect(() => {
@@ -72,11 +75,7 @@ export default function HomeScreen() {
   const phaseName = currentPhase ? currentPhase.name : null;
 
   const handlePhasePress = useCallback(() => {
-    try {
-      router.push("/(tabs)/cycle");
-    } catch (error) {
-      console.error("Navigation error:", error);
-    }
+    router.push("/(tabs)/cycle");
   }, [router]);
 
   return (
@@ -85,12 +84,22 @@ export default function HomeScreen() {
         <View
           style={{ flex: 1, justifyContent: "center", alignContent: "center" }}
         >
-          {/* Current Phase Button */}
-          {phaseName && currentPhase && (
+          {/* Current Phase Button - show placeholder while loading */}
+          {(phaseName && currentPhase) || cycleLoading ? (
             <Pressable
               onPress={handlePhasePress}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              pressRetentionOffset={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              hitSlop={{
+                top: 10,
+                bottom: 10,
+                left: 10,
+                right: 10,
+              }}
+              pressRetentionOffset={{
+                top: 10,
+                bottom: 10,
+                left: 10,
+                right: 10,
+              }}
               style={({ pressed }) => [
                 styles.phaseButton,
                 {
@@ -99,21 +108,33 @@ export default function HomeScreen() {
               ]}
             >
               <LinearGradient
-                colors={currentPhase.gradientColors}
+                colors={
+                  currentPhase?.gradientColors ?? [
+                    theme.colors.primaryContainer,
+                    theme.colors.primary,
+                  ]
+                }
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.phaseButtonGradient}
               >
-                <Text style={styles.phaseButtonText}>
-                  You're in your {phaseName} phase
+                <Text
+                  style={[
+                    styles.phaseButtonText,
+                    { color: theme.colors.onPrimary },
+                  ]}
+                >
+                  {phaseName
+                    ? `You're in your ${phaseName} phase`
+                    : "Loading phase..."}
                 </Text>
               </LinearGradient>
             </Pressable>
-          )}
+          ) : null}
           <View style={styles.flowChartContainer}>
             <FlowChart />
           </View>
-          <View style={{ alignItems: "center", marginTop: -16 }}>
+          <View style={{ alignItems: "center", marginTop: 8 }}>
             <Button
               mode="contained"
               icon="pill"
@@ -204,7 +225,7 @@ const styles = StyleSheet.create({
   phaseButton: {
     marginHorizontal: 16,
     marginTop: 48,
-    marginBottom: -16,
+    marginBottom: 8,
     borderRadius: 25,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -222,12 +243,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   flowChartContainer: {
-    marginTop: -16,
+    marginTop: 4,
   },
   phaseButtonText: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#fff",
+    color: "white",
     textShadowColor: "rgba(0, 0, 0, 0.2)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,

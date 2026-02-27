@@ -1,9 +1,14 @@
 import React from "react";
 import { render } from "@testing-library/react-native";
+import { View } from "react-native";
 import { CYCLE_PHASES, CyclePhaseId } from "@/constants/CyclePhases";
 import HomeScreen from "../index";
 import { useCyclePhase } from "@/hooks/useCyclePhase";
-import { useData, usePredictedCycle, useDatabaseChangeNotifier } from "@/assets/src/calendar-storage";
+import {
+  useData,
+  usePredictedCycle,
+  useDatabaseChangeNotifier,
+} from "@/assets/src/calendar-storage";
 import { useFetchCycleData } from "@/hooks/useFetchCycleData";
 
 // Mock dependencies
@@ -34,16 +39,23 @@ jest.mock("react-native-paper", () => {
     }),
   };
 });
-jest.mock("expo-linear-gradient", () => {
-  const { View } = require("react-native");
-  return {
-    LinearGradient: ({ children, colors, style, ...props }: any) => (
-      <View style={[{ backgroundColor: colors[0] }, style]} {...props}>
-        {children}
-      </View>
-    ),
-  };
-});
+jest.mock("expo-linear-gradient", () => ({
+  LinearGradient: ({
+    children,
+    colors,
+    style,
+    ...props
+  }: {
+    children: React.ReactNode;
+    colors: string[];
+    style?: object;
+    [key: string]: unknown;
+  }) => (
+    <View style={[{ backgroundColor: colors[0] }, style]} {...props}>
+      {children}
+    </View>
+  ),
+}));
 
 describe("HomeScreen - Phase Button Gradient", () => {
   const mockFlowData = [];
@@ -69,7 +81,12 @@ describe("HomeScreen - Phase Button Gradient", () => {
   });
 
   describe("Gradient Colors for Each Phase", () => {
-    const phases: CyclePhaseId[] = ["menstrual", "follicular", "ovulation", "luteal"];
+    const phases: CyclePhaseId[] = [
+      "menstrual",
+      "follicular",
+      "ovulation",
+      "luteal",
+    ];
 
     phases.forEach((phaseId) => {
       it(`should use correct gradient colors for ${phaseId} phase`, () => {
@@ -161,6 +178,18 @@ describe("HomeScreen - Phase Button Gradient", () => {
       const { queryByText } = render(<HomeScreen />);
       const phaseButton = queryByText(/You're in your/);
       expect(phaseButton).toBeNull();
+    });
+
+    it("should render loading placeholder when phase is loading", () => {
+      (useCyclePhase as jest.Mock).mockReturnValue({
+        cycleState: null,
+        stats: null,
+        loading: true,
+        refresh: jest.fn(),
+      });
+
+      const { getByText } = render(<HomeScreen />);
+      expect(getByText("Loading phase...")).toBeTruthy();
     });
   });
 
