@@ -40,7 +40,8 @@ jest.mock("react-native-paper", () => {
   };
 });
 jest.mock("expo-linear-gradient", () => {
-  const { View } = require("react-native");
+  const { View } =
+    jest.requireActual<typeof import("react-native")>("react-native");
   return {
     LinearGradient: ({ children, colors, style, ...props }: any) => (
       <View style={[{ backgroundColor: colors[0] }, style]} {...props}>
@@ -74,7 +75,12 @@ describe("HomeScreen - Phase Button Gradient", () => {
   });
 
   describe("Gradient Colors for Each Phase", () => {
-    const phases: CyclePhaseId[] = ["menstrual", "follicular", "ovulation", "luteal"];
+    const phases: CyclePhaseId[] = [
+      "menstrual",
+      "follicular",
+      "ovulation",
+      "luteal",
+    ];
 
     phases.forEach((phaseId) => {
       it(`should use correct gradient colors for ${phaseId} phase`, () => {

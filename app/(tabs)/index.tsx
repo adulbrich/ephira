@@ -89,8 +89,18 @@ export default function HomeScreen() {
           {phaseName && currentPhase && (
             <Pressable
               onPress={handlePhasePress}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              pressRetentionOffset={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              hitSlop={{
+                top: 10,
+                bottom: 10,
+                left: 10,
+                right: 10,
+              }}
+              pressRetentionOffset={{
+                top: 10,
+                bottom: 10,
+                left: 10,
+                right: 10,
+              }}
               style={({ pressed }) => [
                 styles.phaseButton,
                 {
