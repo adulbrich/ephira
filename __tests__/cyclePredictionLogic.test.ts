@@ -13,7 +13,12 @@ import {
 import type { DayData } from "../constants/Interfaces";
 import { CYCLE_PREDICTION_CONSTANTS } from "../constants/CyclePrediction";
 
-function day(id: number, date: string, flow: number, opts?: { is_cycle_start?: boolean; is_cycle_end?: boolean }): DayData {
+function day(
+  id: number,
+  date: string,
+  flow: number,
+  opts?: { is_cycle_start?: boolean; is_cycle_end?: boolean },
+): DayData {
   return {
     id,
     date,
@@ -78,21 +83,50 @@ describe("groupFlowIntoCycles", () => {
 describe("calculateAverageCycleLength", () => {
   it("returns DEFAULT_CYCLE_LENGTH when fewer than 2 valid cycles", () => {
     const cycles = [
-      { dates: ["2025-01-01", "2025-01-02", "2025-01-03"], startDate: "2025-01-01", endDate: "2025-01-03", isManuallyMarked: false },
+      {
+        dates: ["2025-01-01", "2025-01-02", "2025-01-03"],
+        startDate: "2025-01-01",
+        endDate: "2025-01-03",
+        isManuallyMarked: false,
+      },
     ];
-    expect(calculateAverageCycleLength(cycles)).toBe(CYCLE_PREDICTION_CONSTANTS.DEFAULT_CYCLE_LENGTH);
+    expect(calculateAverageCycleLength(cycles)).toBe(
+      CYCLE_PREDICTION_CONSTANTS.DEFAULT_CYCLE_LENGTH,
+    );
   });
   it("returns DEFAULT_CYCLE_LENGTH when cycle lengths are all out of range", () => {
     const cycles = [
-      { dates: ["2025-01-01", "2025-01-02", "2025-01-03"], startDate: "2025-01-01", endDate: "2025-01-03", isManuallyMarked: false },
-      { dates: ["2025-02-15", "2025-02-16", "2025-02-17"], startDate: "2025-02-15", endDate: "2025-02-17", isManuallyMarked: false },
+      {
+        dates: ["2025-01-01", "2025-01-02", "2025-01-03"],
+        startDate: "2025-01-01",
+        endDate: "2025-01-03",
+        isManuallyMarked: false,
+      },
+      {
+        dates: ["2025-02-15", "2025-02-16", "2025-02-17"],
+        startDate: "2025-02-15",
+        endDate: "2025-02-17",
+        isManuallyMarked: false,
+      },
     ];
-    expect(calculateAverageCycleLength(cycles)).toBe(CYCLE_PREDICTION_CONSTANTS.DEFAULT_CYCLE_LENGTH);
+    expect(calculateAverageCycleLength(cycles)).toBe(
+      CYCLE_PREDICTION_CONSTANTS.DEFAULT_CYCLE_LENGTH,
+    );
   });
   it("returns average when two valid cycles 28 days apart", () => {
     const cycles = [
-      { dates: ["2025-01-01", "2025-01-02", "2025-01-03"], startDate: "2025-01-01", endDate: "2025-01-03", isManuallyMarked: false },
-      { dates: ["2025-01-29", "2025-01-30", "2025-01-31"], startDate: "2025-01-29", endDate: "2025-01-31", isManuallyMarked: false },
+      {
+        dates: ["2025-01-01", "2025-01-02", "2025-01-03"],
+        startDate: "2025-01-01",
+        endDate: "2025-01-03",
+        isManuallyMarked: false,
+      },
+      {
+        dates: ["2025-01-29", "2025-01-30", "2025-01-31"],
+        startDate: "2025-01-29",
+        endDate: "2025-01-31",
+        isManuallyMarked: false,
+      },
     ];
     expect(calculateAverageCycleLength(cycles)).toBe(28);
   });
@@ -100,8 +134,18 @@ describe("calculateAverageCycleLength", () => {
 
 describe("calculateConfidence", () => {
   const twoCycles = [
-    { dates: ["2025-01-01", "2025-01-02", "2025-01-03"], startDate: "2025-01-01", endDate: "2025-01-03", isManuallyMarked: false },
-    { dates: ["2025-01-29", "2025-01-30", "2025-01-31"], startDate: "2025-01-29", endDate: "2025-01-31", isManuallyMarked: false },
+    {
+      dates: ["2025-01-01", "2025-01-02", "2025-01-03"],
+      startDate: "2025-01-01",
+      endDate: "2025-01-03",
+      isManuallyMarked: false,
+    },
+    {
+      dates: ["2025-01-29", "2025-01-30", "2025-01-31"],
+      startDate: "2025-01-29",
+      endDate: "2025-01-31",
+      isManuallyMarked: false,
+    },
   ];
   it("returns 30 when cycleLengths.length < 2", () => {
     expect(calculateConfidence(twoCycles, [])).toBe(30);
@@ -137,7 +181,10 @@ describe("generatePredictions", () => {
       day(2, "2025-02-02", 1),
       day(3, "2025-02-03", 1),
     ];
-    const result = generatePredictions(data, { referenceDate: refDate, maxFutureCycles: 1 });
+    const result = generatePredictions(data, {
+      referenceDate: refDate,
+      maxFutureCycles: 1,
+    });
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBeGreaterThan(0);
     expect(result[0].confidence).toBeLessThanOrEqual(50);
@@ -184,7 +231,9 @@ describe("generatePredictions", () => {
       d.setDate(d.getDate() + i);
       data.push(day(data.length + 1, d.toISOString().split("T")[0], 1));
     }
-    const result = generatePredictions(data, { referenceDate: new Date("2025-04-01") });
+    const result = generatePredictions(data, {
+      referenceDate: new Date("2025-04-01"),
+    });
     expect(result.length).toBeGreaterThan(0);
     expect(result[0].confidence).toBeLessThanOrEqual(100);
   });
@@ -204,9 +253,13 @@ describe("generatePredictions", () => {
 
   it("8. Never returns null or undefined", () => {
     expect(generatePredictions([], { referenceDate: refDate })).not.toBeNull();
-    expect(generatePredictions([], { referenceDate: refDate })).not.toBeUndefined();
+    expect(
+      generatePredictions([], { referenceDate: refDate }),
+    ).not.toBeUndefined();
     const oneDay = [day(1, "2025-02-01", 1)];
-    expect(generatePredictions(oneDay, { referenceDate: refDate })).not.toBeNull();
+    expect(
+      generatePredictions(oneDay, { referenceDate: refDate }),
+    ).not.toBeNull();
   });
 
   it("9. Cycle lengths outside 21–35: uses default length, still returns predictions", () => {
@@ -218,7 +271,9 @@ describe("generatePredictions", () => {
       day(5, "2025-03-16", 1),
       day(6, "2025-03-17", 1),
     ];
-    const result = generatePredictions(data, { referenceDate: new Date("2025-04-01") });
+    const result = generatePredictions(data, {
+      referenceDate: new Date("2025-04-01"),
+    });
     expect(Array.isArray(result)).toBe(true);
     if (result.length > 0) {
       expect(result[0].date).toBeDefined();

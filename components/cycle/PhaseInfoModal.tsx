@@ -1,5 +1,12 @@
 import { ScrollView, View, StyleSheet, Linking } from "react-native";
-import { Dialog, Portal, Button, Text, Divider, useTheme } from "react-native-paper";
+import {
+  Dialog,
+  Portal,
+  Button,
+  Text,
+  Divider,
+  useTheme,
+} from "react-native-paper";
 import { CyclePhaseDefinition } from "@/constants/CyclePhases";
 
 const handleOpenUrl = (url: string) => {
@@ -30,10 +37,7 @@ export default function PhaseInfoModal({
             showsVerticalScrollIndicator={true}
           >
             <View
-              style={[
-                styles.phaseIndicator,
-                { backgroundColor: phase.color },
-              ]}
+              style={[styles.phaseIndicator, { backgroundColor: phase.color }]}
             />
 
             <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -41,7 +45,10 @@ export default function PhaseInfoModal({
             </Text>
             <Text
               variant="bodyMedium"
-              style={[styles.bodyText, { color: theme.colors.onSurfaceVariant }]}
+              style={[
+                styles.bodyText,
+                { color: theme.colors.onSurfaceVariant },
+              ]}
             >
               {phase.bodyDescription}
             </Text>
@@ -56,7 +63,10 @@ export default function PhaseInfoModal({
                 <Text
                   key={index}
                   variant="bodyMedium"
-                  style={[styles.listItem, { color: theme.colors.onSurfaceVariant }]}
+                  style={[
+                    styles.listItem,
+                    { color: theme.colors.onSurfaceVariant },
+                  ]}
                 >
                   {"\u2022"} {symptom}
                 </Text>
@@ -70,7 +80,10 @@ export default function PhaseInfoModal({
             </Text>
             <Text
               variant="bodyMedium"
-              style={[styles.bodyText, { color: theme.colors.onSurfaceVariant }]}
+              style={[
+                styles.bodyText,
+                { color: theme.colors.onSurfaceVariant },
+              ]}
             >
               {phase.hormoneInfo}
             </Text>
@@ -85,7 +98,10 @@ export default function PhaseInfoModal({
                 <Text
                   key={index}
                   variant="bodyMedium"
-                  style={[styles.listItem, { color: theme.colors.onSurfaceVariant }]}
+                  style={[
+                    styles.listItem,
+                    { color: theme.colors.onSurfaceVariant },
+                  ]}
                 >
                   {"\u2022"} {tip}
                 </Text>

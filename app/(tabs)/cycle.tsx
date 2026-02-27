@@ -1,7 +1,13 @@
 import { useEffect } from "react";
-import { StyleSheet, View, Platform, StatusBar, ScrollView } from "react-native";
+import {
+  StyleSheet,
+  View,
+  Platform,
+  StatusBar,
+  ScrollView,
+} from "react-native";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
-import { useTheme, Text, Card, Button, ActivityIndicator } from "react-native-paper";
+import { useTheme, Text, Card, ActivityIndicator } from "react-native-paper";
 import FadeInView from "@/components/animations/FadeInView";
 import StatusCard from "@/components/cycle/StatusCard";
 import PredictionCard from "@/components/cycle/PredictionCard";
@@ -58,15 +64,15 @@ function InsufficientDataCard({ cyclesTracked }: { cyclesTracked: number }) {
   return (
     <Card style={styles.insufficientCard} mode="outlined">
       <Card.Content style={styles.insufficientContent}>
-        <Text
-          variant="titleMedium"
-          style={{ color: theme.colors.onSurface }}
-        >
+        <Text variant="titleMedium" style={{ color: theme.colors.onSurface }}>
           Building Your Cycle Profile
         </Text>
         <Text
           variant="bodyMedium"
-          style={[styles.insufficientText, { color: theme.colors.onSurfaceVariant }]}
+          style={[
+            styles.insufficientText,
+            { color: theme.colors.onSurfaceVariant },
+          ]}
         >
           You've tracked {cyclesTracked} cycle{cyclesTracked !== 1 ? "s" : ""}.
           Track {needed} more to unlock predictions and detailed insights.
@@ -84,19 +90,19 @@ export default function Cycle() {
   const { fetchCycleData } = useFetchCycleData(setPredictedCycle);
   const { cycleState, stats, loading, refresh } = useCyclePhase(
     flowData,
-    predictedCycle
+    predictedCycle,
   );
 
   // Refresh data when database changes
   useEffect(() => {
     fetchCycleData();
     refresh();
-  }, [databaseChange]);
+  }, [databaseChange, fetchCycleData, refresh]);
 
   // Initial load
   useEffect(() => {
     fetchCycleData();
-  }, []);
+  }, [fetchCycleData]);
 
   if (loading) {
     return (

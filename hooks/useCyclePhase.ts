@@ -1,5 +1,10 @@
 import { useMemo, useState, useEffect, useCallback } from "react";
-import { DayData, PredictedDate, CurrentCycleState, CycleStats } from "@/constants/Interfaces";
+import {
+  DayData,
+  PredictedDate,
+  CurrentCycleState,
+  CycleStats,
+} from "@/constants/Interfaces";
 import {
   CyclePhaseId,
   getAdjustedPhaseBoundaries,
@@ -81,7 +86,8 @@ function groupIntoCycles(flowData: DayData[]): GroupedCycle[] {
  */
 function calculateAverageCycleLength(cycles: GroupedCycle[]): number {
   const validCycles = cycles.filter(
-    (cycle) => cycle.dates.length >= CYCLE_PREDICTION_CONSTANTS.MIN_CONSECUTIVE_DAYS
+    (cycle) =>
+      cycle.dates.length >= CYCLE_PREDICTION_CONSTANTS.MIN_CONSECUTIVE_DAYS,
   );
 
   if (validCycles.length < 2) {
@@ -93,7 +99,7 @@ function calculateAverageCycleLength(cycles: GroupedCycle[]): number {
     const prevStart = new Date(validCycles[i - 1].startDate + "T00:00:00");
     const currStart = new Date(validCycles[i].startDate + "T00:00:00");
     const diffDays = Math.round(
-      (currStart.getTime() - prevStart.getTime()) / (1000 * 60 * 60 * 24)
+      (currStart.getTime() - prevStart.getTime()) / (1000 * 60 * 60 * 24),
     );
 
     if (
@@ -108,7 +114,9 @@ function calculateAverageCycleLength(cycles: GroupedCycle[]): number {
     return CYCLE_PREDICTION_CONSTANTS.DEFAULT_CYCLE_LENGTH;
   }
 
-  return Math.round(cycleLengths.reduce((a, b) => a + b, 0) / cycleLengths.length);
+  return Math.round(
+    cycleLengths.reduce((a, b) => a + b, 0) / cycleLengths.length,
+  );
 }
 
 /**
@@ -116,7 +124,8 @@ function calculateAverageCycleLength(cycles: GroupedCycle[]): number {
  */
 function calculateCycleVariation(cycles: GroupedCycle[]): number {
   const validCycles = cycles.filter(
-    (cycle) => cycle.dates.length >= CYCLE_PREDICTION_CONSTANTS.MIN_CONSECUTIVE_DAYS
+    (cycle) =>
+      cycle.dates.length >= CYCLE_PREDICTION_CONSTANTS.MIN_CONSECUTIVE_DAYS,
   );
 
   if (validCycles.length < 2) return 0;
@@ -126,7 +135,7 @@ function calculateCycleVariation(cycles: GroupedCycle[]): number {
     const prevStart = new Date(validCycles[i - 1].startDate + "T00:00:00");
     const currStart = new Date(validCycles[i].startDate + "T00:00:00");
     const diffDays = Math.round(
-      (currStart.getTime() - prevStart.getTime()) / (1000 * 60 * 60 * 24)
+      (currStart.getTime() - prevStart.getTime()) / (1000 * 60 * 60 * 24),
     );
 
     if (
@@ -168,7 +177,7 @@ function determinePhase(cycleDay: number, cycleLength: number): CyclePhaseId {
  */
 export function useCyclePhase(
   flowData: DayData[],
-  predictedCycle: PredictedDate[]
+  predictedCycle: PredictedDate[],
 ): UseCyclePhaseResult {
   const [loading, setLoading] = useState(true);
   const [predictionAccuracy, setPredictionAccuracy] = useState(0);
@@ -192,9 +201,10 @@ export function useCyclePhase(
   const validCycles = useMemo(
     () =>
       cycles.filter(
-        (cycle) => cycle.dates.length >= CYCLE_PREDICTION_CONSTANTS.MIN_CONSECUTIVE_DAYS
+        (cycle) =>
+          cycle.dates.length >= CYCLE_PREDICTION_CONSTANTS.MIN_CONSECUTIVE_DAYS,
       ),
-    [cycles]
+    [cycles],
   );
 
   const cycleState = useMemo((): CurrentCycleState | null => {
@@ -211,7 +221,7 @@ export function useCyclePhase(
 
     // Calculate days since last period started
     const daysSinceStart = Math.floor(
-      (today.getTime() - lastStart.getTime()) / (1000 * 60 * 60 * 24)
+      (today.getTime() - lastStart.getTime()) / (1000 * 60 * 60 * 24),
     );
 
     // Cycle day (1-indexed, wraps around)
@@ -244,7 +254,8 @@ export function useCyclePhase(
 
     // Need at least 2 cycles for reliable predictions
     const hasEnoughData =
-      validCycles.length >= CYCLE_PREDICTION_CONSTANTS.MIN_CYCLES_FOR_PREDICTION;
+      validCycles.length >=
+      CYCLE_PREDICTION_CONSTANTS.MIN_CYCLES_FOR_PREDICTION;
 
     return {
       currentPhase,

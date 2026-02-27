@@ -46,7 +46,10 @@ export default function PhaseCard({
           <View style={styles.header}>
             <View style={styles.titleRow}>
               <View
-                style={[styles.phaseIndicator, { backgroundColor: phase.color }]}
+                style={[
+                  styles.phaseIndicator,
+                  { backgroundColor: phase.color },
+                ]}
               />
               <View>
                 <Text
@@ -65,7 +68,10 @@ export default function PhaseCard({
             </View>
             <Text
               variant="labelMedium"
-              style={[styles.dayRange, { color: theme.colors.onSurfaceVariant }]}
+              style={[
+                styles.dayRange,
+                { color: theme.colors.onSurfaceVariant },
+              ]}
             >
               {getDayRange()}
             </Text>
@@ -73,7 +79,10 @@ export default function PhaseCard({
 
           <Text
             variant="bodyMedium"
-            style={[styles.description, { color: theme.colors.onSurfaceVariant }]}
+            style={[
+              styles.description,
+              { color: theme.colors.onSurfaceVariant },
+            ]}
           >
             {phase.bodyDescription.slice(0, 100)}...
           </Text>

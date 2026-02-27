@@ -40,7 +40,7 @@ export function areConsecutive(date1: string, date2: string): boolean {
  */
 export function groupFlowIntoCycles(flowData: DayData[]): GroupedCycle[] {
   const sorted = [...flowData].sort(
-    (a, b) => new Date(a.date).valueOf() - new Date(b.date).valueOf()
+    (a, b) => new Date(a.date).valueOf() - new Date(b.date).valueOf(),
   );
   let lastDate: string | null = null;
   const grouped: GroupedCycle[] = [];
@@ -80,11 +80,9 @@ export function groupFlowIntoCycles(flowData: DayData[]): GroupedCycle[] {
  * Returns DEFAULT_CYCLE_LENGTH when there are fewer than 2 valid cycles
  * or no cycle lengths in the valid range (21–35 days).
  */
-export function calculateAverageCycleLength(
-  cycles: GroupedCycle[]
-): number {
+export function calculateAverageCycleLength(cycles: GroupedCycle[]): number {
   const validCycles = cycles.filter(
-    (c) => c.dates.length >= CYCLE_PREDICTION_CONSTANTS.MIN_CONSECUTIVE_DAYS
+    (c) => c.dates.length >= CYCLE_PREDICTION_CONSTANTS.MIN_CONSECUTIVE_DAYS,
   );
   if (validCycles.length < 2) {
     return CYCLE_PREDICTION_CONSTANTS.DEFAULT_CYCLE_LENGTH;
@@ -95,7 +93,7 @@ export function calculateAverageCycleLength(
     const prev = new Date(validCycles[i - 1].startDate + "T00:00:00");
     const curr = new Date(validCycles[i].startDate + "T00:00:00");
     const diffDays = Math.round(
-      (curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24)
+      (curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24),
     );
     if (
       diffDays >= CYCLE_PREDICTION_CONSTANTS.MIN_CYCLE_LENGTH &&
@@ -119,7 +117,7 @@ export function calculateAverageCycleLength(
 export function calculateConfidence(
   cycles: GroupedCycle[],
   cycleLengths: number[],
-  referenceDate: Date = new Date()
+  referenceDate: Date = new Date(),
 ): number {
   if (cycleLengths.length < 2) {
     return 30;
@@ -128,10 +126,8 @@ export function calculateConfidence(
   const average =
     cycleLengths.reduce((acc, len) => acc + len, 0) / cycleLengths.length;
   const variance =
-    cycleLengths.reduce(
-      (acc, len) => acc + Math.pow(len - average, 2),
-      0
-    ) / cycleLengths.length;
+    cycleLengths.reduce((acc, len) => acc + Math.pow(len - average, 2), 0) /
+    cycleLengths.length;
   const stdDev = Math.sqrt(variance);
 
   let regularityScore: number;
@@ -146,12 +142,12 @@ export function calculateConfidence(
   else dataAmountScore = 50;
 
   const validCycles = cycles.filter(
-    (c) => c.dates.length >= CYCLE_PREDICTION_CONSTANTS.MIN_CONSECUTIVE_DAYS
+    (c) => c.dates.length >= CYCLE_PREDICTION_CONSTANTS.MIN_CONSECUTIVE_DAYS,
   );
   const lastCycle = validCycles[validCycles.length - 1];
   const lastEnd = new Date(lastCycle.endDate + "T00:00:00");
   const daysSinceLast = Math.floor(
-    (referenceDate.getTime() - lastEnd.getTime()) / (1000 * 60 * 60 * 24)
+    (referenceDate.getTime() - lastEnd.getTime()) / (1000 * 60 * 60 * 24),
   );
 
   let recencyScore: number;
@@ -161,7 +157,7 @@ export function calculateConfidence(
   else recencyScore = 25;
 
   const confidence = Math.round(
-    regularityScore * 0.7 + dataAmountScore * 0.2 + recencyScore * 0.1
+    regularityScore * 0.7 + dataAmountScore * 0.2 + recencyScore * 0.1,
   );
   return Math.max(0, Math.min(100, confidence));
 }
@@ -173,25 +169,25 @@ export function calculateConfidence(
  */
 export function generatePredictions(
   flowData: DayData[],
-  options: GeneratePredictionsOptions = {}
+  options: GeneratePredictionsOptions = {},
 ): PredictedDate[] {
-  const referenceDate =
-    options.referenceDate ? new Date(options.referenceDate) : new Date();
+  const referenceDate = options.referenceDate
+    ? new Date(options.referenceDate)
+    : new Date();
   const maxCycles =
-    options.maxFutureCycles ??
-    CYCLE_PREDICTION_CONSTANTS.MAX_FUTURE_CYCLES;
+    options.maxFutureCycles ?? CYCLE_PREDICTION_CONSTANTS.MAX_FUTURE_CYCLES;
 
   const flowDays = flowData.filter(
     (d) =>
       d.flow_intensity !== undefined &&
       d.flow_intensity !== null &&
-      d.flow_intensity > 0
+      d.flow_intensity > 0,
   );
   if (flowDays.length === 0) return [];
 
   const cycles = groupFlowIntoCycles(flowDays);
   const validCycles = cycles.filter(
-    (c) => c.dates.length >= CYCLE_PREDICTION_CONSTANTS.MIN_CONSECUTIVE_DAYS
+    (c) => c.dates.length >= CYCLE_PREDICTION_CONSTANTS.MIN_CONSECUTIVE_DAYS,
   );
   if (validCycles.length === 0) return [];
 
@@ -203,7 +199,7 @@ export function generatePredictions(
     const prev = new Date(validCycles[i - 1].startDate + "T00:00:00");
     const curr = new Date(validCycles[i].startDate + "T00:00:00");
     const diffDays = Math.round(
-      (curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24)
+      (curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24),
     );
     if (
       diffDays >= CYCLE_PREDICTION_CONSTANTS.MIN_CYCLE_LENGTH &&
@@ -216,7 +212,7 @@ export function generatePredictions(
   const baseConfidence = calculateConfidence(
     cycles,
     cycleLengths,
-    referenceDate
+    referenceDate,
   );
 
   const predictedDates: PredictedDate[] = [];
@@ -226,7 +222,7 @@ export function generatePredictions(
   for (let cycleNum = 1; cycleNum <= maxCycles; cycleNum++) {
     const predictedCycleStart = new Date(lastCycleStart);
     predictedCycleStart.setDate(
-      predictedCycleStart.getDate() + averageCycleLength * cycleNum
+      predictedCycleStart.getDate() + averageCycleLength * cycleNum,
     );
 
     if (predictedCycleStart <= referenceDate) continue;
