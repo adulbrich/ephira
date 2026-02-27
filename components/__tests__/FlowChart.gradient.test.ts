@@ -180,9 +180,9 @@ describe("FlowChart Gradient Generation", () => {
 
     it("should maintain chronological order even when data is unsorted", () => {
       const flowData = [
-        { date: "2024-01-17T00:00:00Z", flow_intensity: 4 }, // heavy (later)
-        { date: "2024-01-15T00:00:00Z", flow_intensity: 2 }, // light (earlier)
-        { date: "2024-01-16T00:00:00Z", flow_intensity: 3 }, // medium (middle)
+        { date: "2024-01-17", flow_intensity: 4 }, // heavy (later)
+        { date: "2024-01-15", flow_intensity: 2 }, // light (earlier)
+        { date: "2024-01-16", flow_intensity: 3 }, // medium (middle)
       ];
 
       const { flowStatesInOrder } = generateGradientStops(flowData);
