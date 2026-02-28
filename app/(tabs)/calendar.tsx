@@ -25,7 +25,7 @@ import { getSetting, insertSetting } from "@/db/database";
 import CalendarHeader from "@/components/calendar/CalendarHeader";
 import CustomDay from "@/components/calendar/CustomDay";
 import { useMarkedDates } from "@/hooks/useMarkedDates";
-import { FilterColorsDark, FilterColorsLight } from "@/constants/Colors";
+import { CyclePredictionColor, SpecialtyFilterColor } from "@/constants/Colors";
 import FadeInView from "@/components/animations/FadeInView";
 import {
   birthControlOptions,
@@ -45,7 +45,6 @@ export default function FlowCalendar() {
 
   const { loading, markedDates } = useMarkedDates(selectedFilters);
   const theme = useTheme();
-  const filterColors = theme.dark ? FilterColorsDark : FilterColorsLight;
   const styles = makeStyles({ theme });
 
   // get date in local time
@@ -210,12 +209,22 @@ export default function FlowCalendar() {
                           >
                             ♥
                           </Text>
+                        ) : filter === "Cycle Prediction" ? (
+                          <View
+                            style={{
+                              width: 16,
+                              height: 16,
+                              backgroundColor: CyclePredictionColor,
+                              borderRadius: 8,
+                              marginRight: 8,
+                            }}
+                          />
                         ) : (
                           <View
                             style={{
                               width: 16,
                               height: 16,
-                              backgroundColor: filterColors[index],
+                              backgroundColor: SpecialtyFilterColor,
                               borderRadius: 8,
                               marginRight: 8,
                             }}

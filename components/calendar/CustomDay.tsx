@@ -102,6 +102,7 @@ export default function CustomDay({
               styles.period,
               {
                 backgroundColor: period.color,
+                height: period.height ?? 4,
                 borderTopLeftRadius: period.startingDay ? 2 : 0,
                 borderBottomLeftRadius: period.startingDay ? 2 : 0,
                 borderTopRightRadius: period.endingDay ? 2 : 0,

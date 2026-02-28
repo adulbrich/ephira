@@ -173,6 +173,18 @@ describe("HomeScreen - Phase Button Gradient", () => {
       const phaseButton = queryByText(/You're in your/);
       expect(phaseButton).toBeNull();
     });
+
+    it("should render loading placeholder when phase is loading", () => {
+      (useCyclePhase as jest.Mock).mockReturnValue({
+        cycleState: null,
+        stats: null,
+        loading: true,
+        refresh: jest.fn(),
+      });
+
+      const { getByText } = render(<HomeScreen />);
+      expect(getByText("Loading phase...")).toBeTruthy();
+    });
   });
 
   describe("Gradient Color Transitions", () => {

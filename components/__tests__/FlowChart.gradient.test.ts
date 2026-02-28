@@ -1,5 +1,5 @@
 import { FlowColors, FlowType } from "@/constants/Colors";
-import { getFlowTypeString, FLOW_TAIL_COLOR } from "@/constants/Flow";
+import { FLOW_TAIL_COLOR, getFlowTypeString } from "@/constants/Flow";
 
 /**
  * Test helper: Extract gradient logic from FlowChart component
@@ -355,7 +355,7 @@ describe("FlowChart Gradient Generation", () => {
         } else {
           expect(Object.values(FlowColors)).toContain(stop.color);
         }
-        // All should be valid hex colors (6 or 8 chars for alpha)
+        // All should be valid hex colors (6 or 8 digits with optional alpha)
         expect(stop.color).toMatch(/^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/);
       });
     });

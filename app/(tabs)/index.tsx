@@ -21,6 +21,8 @@ import { useRouter } from "expo-router";
 import { useFetchCycleData } from "@/hooks/useFetchCycleData";
 import { LinearGradient } from "expo-linear-gradient";
 
+import { TourAnchor } from "@/assets/src/tour/TourAnchor";
+
 export default function HomeScreen() {
   const theme = useTheme();
   const router = useRouter();
@@ -29,7 +31,10 @@ export default function HomeScreen() {
   const { setDatabaseChange, databaseChange } = useDatabaseChangeNotifier();
   const { predictedCycle, setPredictedCycle } = usePredictedCycle();
   const { fetchCycleData } = useFetchCycleData(setPredictedCycle);
-  const { cycleState } = useCyclePhase(flowData, predictedCycle);
+  const { cycleState, loading: cycleLoading } = useCyclePhase(
+    flowData,
+    predictedCycle,
+  );
 
   // Load cycle data on mount and when database changes
   useEffect(() => {
@@ -72,11 +77,7 @@ export default function HomeScreen() {
   const phaseName = currentPhase ? currentPhase.name : null;
 
   const handlePhasePress = useCallback(() => {
-    try {
-      router.push("/(tabs)/cycle");
-    } catch (error) {
-      console.error("Navigation error:", error);
-    }
+    router.push("/(tabs)/cycle");
   }, [router]);
 
   return (
@@ -85,8 +86,8 @@ export default function HomeScreen() {
         <View
           style={{ flex: 1, justifyContent: "center", alignContent: "center" }}
         >
-          {/* Current Phase Button */}
-          {phaseName && currentPhase && (
+          {/* Current Phase Button - show placeholder while loading */}
+          {(phaseName && currentPhase) || cycleLoading ? (
             <Pressable
               onPress={handlePhasePress}
               hitSlop={{
@@ -109,42 +110,64 @@ export default function HomeScreen() {
               ]}
             >
               <LinearGradient
-                colors={currentPhase.gradientColors}
+                colors={
+                  currentPhase?.gradientColors ?? [
+                    theme.colors.primaryContainer,
+                    theme.colors.primary,
+                  ]
+                }
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.phaseButtonGradient}
               >
-                <Text style={styles.phaseButtonText}>
-                  You're in your {phaseName} phase
+                <Text
+                  style={[
+                    styles.phaseButtonText,
+                    { color: theme.colors.onPrimary },
+                  ]}
+                >
+                  {phaseName
+                    ? `You're in your ${phaseName} phase`
+                    : "Loading phase..."}
                 </Text>
               </LinearGradient>
             </Pressable>
-          )}
+          ) : null}
           <View style={styles.flowChartContainer}>
-            <FlowChart />
+            <TourAnchor id="home.flowChart">
+              <FlowChart />
+            </TourAnchor>
           </View>
-          <View style={{ alignItems: "center", marginTop: -16 }}>
-            <Button
-              mode="contained"
-              icon="pill"
-              loading={busy}
-              onPress={onQuickBC}
-              style={{ width: 220 }}
+          <View style={{ alignItems: "center", marginTop: 8 }}>
+            {/*  Spotlight the Quick Birth Control button */}
+            <TourAnchor id="home.quickBirthControl">
+              <Button
+                mode="contained"
+                icon="pill"
+                loading={busy}
+                onPress={onQuickBC}
+                style={{ width: 220 }}
+              >
+                Quick Birth Control
+              </Button>
+            </TourAnchor>
+          </View>
+
+          {/* (Optional) spotlight the section title too */}
+          <TourAnchor id="home.recentFlowTitle">
+            <Text
+              style={{
+                color: theme.colors.secondary,
+                fontSize: 24,
+                fontWeight: "bold",
+                paddingVertical: 16,
+                textAlign: "center",
+              }}
             >
-              Quick Birth Control
-            </Button>
-          </View>
-          <Text
-            style={{
-              color: theme.colors.secondary,
-              fontSize: 24,
-              fontWeight: "bold",
-              paddingVertical: 16,
-              textAlign: "center",
-            }}
-          >
-            Your Most Recent Flow Dates
-          </Text>
+              Your Most Recent Flow Dates
+            </Text>
+          </TourAnchor>
+
           <View style={styles.flowLogContainer}>
             {recentFlowDays.length > 0 ? (
               <>
@@ -214,7 +237,7 @@ const styles = StyleSheet.create({
   phaseButton: {
     marginHorizontal: 16,
     marginTop: 48,
-    marginBottom: -16,
+    marginBottom: 8,
     borderRadius: 25,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -232,12 +255,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   flowChartContainer: {
-    marginTop: -16,
+    marginTop: 4,
   },
   phaseButtonText: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#fff",
     textShadowColor: "rgba(0, 0, 0, 0.2)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,

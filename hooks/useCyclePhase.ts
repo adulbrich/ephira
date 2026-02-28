@@ -248,9 +248,9 @@ export function useCyclePhase(
     const nextPredictedStart =
       predictedCycle.length > 0 ? predictedCycle[0].date : null;
 
-    // Confidence from predictions
+    // Confidence from predictions; 0 when no predictions (UI shows "Low confidence")
     const confidence =
-      predictedCycle.length > 0 ? predictedCycle[0].confidence : 50;
+      predictedCycle.length > 0 ? predictedCycle[0].confidence : 0;
 
     // Need at least 2 cycles for reliable predictions
     const hasEnoughData =
