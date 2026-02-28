@@ -1,6 +1,5 @@
 import React from "react";
 import { render } from "@testing-library/react-native";
-import { View } from "react-native";
 import { CYCLE_PHASES, CyclePhaseId } from "@/constants/CyclePhases";
 import HomeScreen from "../index";
 import { useCyclePhase } from "@/hooks/useCyclePhase";
@@ -40,23 +39,17 @@ jest.mock("react-native-paper", () => {
     }),
   };
 });
-jest.mock("expo-linear-gradient", () => ({
-  LinearGradient: ({
-    children,
-    colors,
-    style,
-    ...props
-  }: {
-    children: React.ReactNode;
-    colors: string[];
-    style?: object;
-    [key: string]: unknown;
-  }) => (
-    <View style={[{ backgroundColor: colors[0] }, style]} {...props}>
-      {children}
-    </View>
-  ),
-}));
+jest.mock("expo-linear-gradient", () => {
+  const { View } =
+    jest.requireActual<typeof import("react-native")>("react-native");
+  return {
+    LinearGradient: ({ children, colors, style, ...props }: any) => (
+      <View style={[{ backgroundColor: colors[0] }, style]} {...props}>
+        {children}
+      </View>
+    ),
+  };
+});
 
 describe("HomeScreen - Phase Button Gradient", () => {
   const mockFlowData: DayData[] = [];
