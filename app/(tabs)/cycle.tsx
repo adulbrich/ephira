@@ -127,6 +127,11 @@ export default function Cycle() {
     refresh();
   }, [databaseChange, fetchCycleData, refresh]);
 
+  // Initial load
+  useEffect(() => {
+    fetchCycleData();
+  }, [fetchCycleData]);
+
   if (loading) {
     return (
       <FadeInView duration={200} backgroundColor={theme.colors.background}>

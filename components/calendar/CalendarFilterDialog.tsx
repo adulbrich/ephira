@@ -244,25 +244,29 @@ export default function CalendarFilterDialog({
     setVisible(false);
   };
 
-  // Icon-based filters (birth control & intercourse) don't use bar slots
-  const isIconFilter = (filter: string) =>
+  // Filters that don't consume "other" bar slots:
+  // - Icon filters: birth control (star), intercourse (heart)
+  // - Dedicated filters: Flow (own bar), Cycle Prediction (own bar)
+  const isSpecialFilter = (filter: string) =>
     filter === intercourseOption ||
     filter === anyBirthControlOption ||
-    birthControlOptions.includes(filter);
+    birthControlOptions.includes(filter) ||
+    filter === PredictionOption ||
+    filter === flowOption;
 
   const barFilterCount = tempSelectedFilters.filter(
-    (f) => !isIconFilter(f),
+    (f) => !isSpecialFilter(f),
   ).length;
 
   const onToggleSwitch = (filter: string) => {
     if (tempSelectedFilters.includes(filter)) {
       setTempSelectedFilters(tempSelectedFilters.filter((f) => f !== filter));
-    } else if (isIconFilter(filter) || barFilterCount < 3) {
+    } else if (isSpecialFilter(filter) || barFilterCount < 1) {
       setTempSelectedFilters([...tempSelectedFilters, filter]);
     }
   };
 
-  const isMaxFiltersSelected = barFilterCount >= 3;
+  const isMaxFiltersSelected = barFilterCount >= 1;
 
   return (
     <Portal>
@@ -272,7 +276,7 @@ export default function CalendarFilterDialog({
         </Dialog.Title>
         <Dialog.Content>
           <Text variant="labelLarge" style={{ marginBottom: 8 }}>
-            Current Filters ({barFilterCount}/3):
+            Current Filters ({barFilterCount}/1 data filter):
           </Text>
           <View style={styles.chipContainer}>
             {tempSelectedFilters.map((filter) => (
@@ -303,10 +307,7 @@ export default function CalendarFilterDialog({
                       key={`${flowOption}-${isSelected}`}
                       value={isSelected}
                       onValueChange={() => onToggleSwitch(flowOption)}
-                      disabled={
-                        isMaxFiltersSelected &&
-                        !tempSelectedFilters.includes(flowOption)
-                      }
+                      disabled={false}
                     />
                   );
                 }}
@@ -346,10 +347,7 @@ export default function CalendarFilterDialog({
                           key={`${PredictionOption}-${isSelected}`}
                           value={isSelected}
                           onValueChange={() => onToggleSwitch(PredictionOption)}
-                          disabled={
-                            isMaxFiltersSelected &&
-                            !tempSelectedFilters.includes(PredictionOption)
-                          }
+                          disabled={false}
                         />
                       );
                     }}

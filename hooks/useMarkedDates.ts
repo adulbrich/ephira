@@ -13,8 +13,8 @@ import {
 } from "@/assets/src/calendar-storage";
 import {
   FlowColors,
-  FilterColorsDark,
-  FilterColorsLight,
+  CyclePredictionColor,
+  SpecialtyFilterColor,
 } from "@/constants/Colors";
 import { getFlowTypeString } from "@/constants/Flow";
 import { useLiveFilteredData } from "@/hooks/useLiveFilteredData";
@@ -22,7 +22,6 @@ import { anySymptomOption } from "@/constants/Symptoms";
 import { anyMoodOption } from "@/constants/Moods";
 import { anyMedicationOption } from "@/constants/Medications";
 import { anyBirthControlOption } from "@/constants/BirthControlTypes";
-import { useTheme } from "react-native-paper";
 import { useFetchCycleData } from "./useFetchCycleData";
 
 function getStartingAndEndingDay(
@@ -78,78 +77,60 @@ function applyOpacityToColor(hexColor: string, opacity: number): string {
 
 function applyFilterToMarkedDates({
   markedDates,
-  filters,
-  filterColors,
+  activeFilter,
   day,
+  prevDay,
+  nextDay,
   dayValues,
   prevDayValues,
   nextDayValues,
-  options,
   anyOption,
 }: {
   markedDates: MarkedDates;
-  filters: string[];
-  filterColors: string[];
+  activeFilter: string;
   day: DayData;
+  prevDay?: DayData;
+  nextDay?: DayData;
   dayValues: string[];
   prevDayValues: string[];
   nextDayValues: string[];
-  options: string[];
   anyOption: string;
 }) {
-  const relevantFilters = filters.filter(
-    (filter) => filter === anyOption || options.includes(filter),
+  if (!markedDates[day.date])
+    markedDates[day.date] = { selected: false, periods: [] };
+
+  const isAny = activeFilter === anyOption;
+  const dayMatch = isAny
+    ? dayValues.length > 0
+    : dayValues.includes(activeFilter);
+
+  if (!dayMatch) {
+    markedDates[day.date].periods.push({ color: "transparent" });
+    return;
+  }
+
+  const prevMatch = isAny
+    ? prevDayValues.length > 0
+    : prevDayValues.includes(activeFilter);
+
+  const nextMatch = isAny
+    ? nextDayValues.length > 0
+    : nextDayValues.includes(activeFilter);
+
+  const { isStartingDay, isEndingDay } = getStartingAndEndingDay(
+    day.date,
+    prevMatch ? prevDay?.date : undefined,
+    nextMatch ? nextDay?.date : undefined,
   );
 
-  if (relevantFilters.length > 0) {
-    if (!markedDates[day.date])
-      markedDates[day.date] = { selected: false, periods: [] };
-
-    if (dayValues?.length === 0) {
-      markedDates[day.date].periods.push({
-        color: "transparent",
-      });
-      return;
-    }
-
-    for (const filter of relevantFilters) {
-      const match = dayValues.includes(filter) || filter === anyOption;
-
-      if (match) {
-        const filterIndex = filters.findIndex((f) => f === filter);
-        const prevMatch =
-          prevDayValues.includes(filter) ||
-          (filter === anyOption && prevDayValues.length > 0);
-
-        const nextMatch =
-          nextDayValues.includes(filter) ||
-          (filter === anyOption && nextDayValues.length > 0);
-
-        const { isStartingDay, isEndingDay } = getStartingAndEndingDay(
-          day.date,
-          prevMatch ? prevDayValues[prevDayValues.length - 1] : undefined,
-          nextMatch ? nextDayValues[0] : undefined,
-        );
-
-        markedDates[day.date].periods.push({
-          startingDay: isStartingDay,
-          endingDay: isEndingDay,
-          color: filterColors[filterIndex],
-        });
-      } else {
-        markedDates[day.date].periods.push({
-          color: "transparent",
-        });
-      }
-    }
-  }
+  markedDates[day.date].periods.push({
+    startingDay: isStartingDay,
+    endingDay: isEndingDay,
+    color: SpecialtyFilterColor,
+  });
 }
 
-async function markedDatesBuilder(
-  filters: string[],
-  data: DayData[],
-  filterColors: string[],
-) {
+async function markedDatesBuilder(filters: string[], data: DayData[]) {
   const markedDates: MarkedDates = {};
 
   // get all visible symptoms, moods, medications, and birth control options
@@ -243,7 +224,6 @@ async function markedDatesBuilder(
 
     // notes
     const notesFilter = filters.includes("Notes");
-    const notesIndex = filters.findIndex((filter) => filter === "Notes");
     if (notesFilter) {
       if (!markedDates[day.date])
         markedDates[day.date] = { selected: false, periods: [] };
@@ -256,16 +236,13 @@ async function markedDatesBuilder(
         markedDates[day.date].periods.push({
           startingDay: true,
           endingDay: true,
-          color: filterColors[notesIndex],
+          color: SpecialtyFilterColor,
         });
       }
     }
 
     // Cycle Start/End
     const startEndFilter = filters.includes("Cycle Start/End");
-    const startEndIndex = filters.findIndex(
-      (filter) => filter === "Cycle Start/End",
-    );
     if (startEndFilter) {
       if (!markedDates[day.date])
         markedDates[day.date] = { selected: false, periods: [] };
@@ -278,49 +255,64 @@ async function markedDatesBuilder(
         markedDates[day.date].periods.push({
           startingDay: true,
           endingDay: true,
-          color: filterColors[startEndIndex],
+          color: SpecialtyFilterColor,
         });
       }
     }
 
     // symptoms
-    applyFilterToMarkedDates({
-      markedDates,
-      filters,
-      filterColors,
-      day,
-      dayValues: day.symptoms ?? [],
-      prevDayValues: data[index - 1]?.symptoms ?? [],
-      nextDayValues: data[index + 1]?.symptoms ?? [],
-      options: symptomOptions,
-      anyOption: anySymptomOption,
-    });
+    const symptomFilter = filters.find(
+      (f) => f === anySymptomOption || symptomOptions.includes(f),
+    );
+    if (symptomFilter) {
+      applyFilterToMarkedDates({
+        markedDates,
+        activeFilter: symptomFilter,
+        day,
+        prevDay: data[index - 1],
+        nextDay: data[index + 1],
+        dayValues: day.symptoms ?? [],
+        prevDayValues: data[index - 1]?.symptoms ?? [],
+        nextDayValues: data[index + 1]?.symptoms ?? [],
+        anyOption: anySymptomOption,
+      });
+    }
 
     // moods
-    applyFilterToMarkedDates({
-      markedDates,
-      filters,
-      filterColors,
-      day,
-      dayValues: day.moods ?? [],
-      prevDayValues: data[index - 1]?.moods ?? [],
-      nextDayValues: data[index + 1]?.moods ?? [],
-      options: moodOptions,
-      anyOption: anyMoodOption,
-    });
+    const moodFilter = filters.find(
+      (f) => f === anyMoodOption || moodOptions.includes(f),
+    );
+    if (moodFilter) {
+      applyFilterToMarkedDates({
+        markedDates,
+        activeFilter: moodFilter,
+        day,
+        prevDay: data[index - 1],
+        nextDay: data[index + 1],
+        dayValues: day.moods ?? [],
+        prevDayValues: data[index - 1]?.moods ?? [],
+        nextDayValues: data[index + 1]?.moods ?? [],
+        anyOption: anyMoodOption,
+      });
+    }
 
     // medications
-    applyFilterToMarkedDates({
-      markedDates,
-      filters,
-      filterColors,
-      day,
-      dayValues: day.medications ?? [],
-      prevDayValues: data[index - 1]?.medications ?? [],
-      nextDayValues: data[index + 1]?.medications ?? [],
-      options: medicationOptions,
-      anyOption: anyMedicationOption,
-    });
+    const medicationFilter = filters.find(
+      (f) => f === anyMedicationOption || medicationOptions.includes(f),
+    );
+    if (medicationFilter) {
+      applyFilterToMarkedDates({
+        markedDates,
+        activeFilter: medicationFilter,
+        day,
+        prevDay: data[index - 1],
+        nextDay: data[index + 1],
+        dayValues: day.medications ?? [],
+        prevDayValues: data[index - 1]?.medications ?? [],
+        nextDayValues: data[index + 1]?.medications ?? [],
+        anyOption: anyMedicationOption,
+      });
+    }
 
     // birth control is handled via stars (hasBirthControl flag) instead of period lines
   });
@@ -329,8 +321,6 @@ async function markedDatesBuilder(
 }
 
 export function useMarkedDates(calendarFilters?: string[]) {
-  const theme = useTheme();
-  const colors = theme.dark ? FilterColorsDark : FilterColorsLight;
   const [markedDates, setMarkedDates] = useState<MarkedDates>({});
   const { loading, filteredData } = useLiveFilteredData(
     calendarFilters ? calendarFilters : [],
@@ -369,7 +359,6 @@ export function useMarkedDates(calendarFilters?: string[]) {
       const newMarkedDates = await markedDatesBuilder(
         calendarFilters ?? [],
         allDays,
-        colors,
       );
 
       if (
@@ -378,37 +367,40 @@ export function useMarkedDates(calendarFilters?: string[]) {
       ) {
         const newPredictedDates = await fetchCycleDataRef.current();
         const newPredictedMarkedDates: MarkedDates = {};
-        const index = calendarFilters?.indexOf("Cycle Prediction");
 
-        newPredictedDates.forEach((prediction) => {
-          // Calculate opacity AND height based on confidence level
-          // High confidence (80-100): full opacity, tall marker (16px)
-          // Medium confidence (50-79): 70% opacity, medium marker (12px)
-          // Low confidence (0-49): 40% opacity, short marker (8px)
+        const sortedPredictions = [...newPredictedDates].sort((a, b) =>
+          a.date.localeCompare(b.date),
+        );
+
+        sortedPredictions.forEach((prediction, index) => {
+          const prevDate = sortedPredictions[index - 1]?.date;
+          const nextDate = sortedPredictions[index + 1]?.date;
+          const { isStartingDay, isEndingDay } = getStartingAndEndingDay(
+            prediction.date,
+            prevDate,
+            nextDate,
+          );
+
+          // Vary opacity by confidence but keep height consistent with flow bars
           let opacity = 1.0;
-          let height = 16; // Default height
-
           if (prediction.confidence < 50) {
             opacity = 0.4;
-            height = 8; // Small marker for low confidence
           } else if (prediction.confidence < 80) {
             opacity = 0.7;
-            height = 12; // Medium marker for medium confidence
           }
-          // High confidence keeps defaults (1.0 opacity, 16px height)
 
-          // Get the base color and apply opacity (wrap index for color array bounds)
-          const baseColor = colors[index % colors.length];
-          const colorWithOpacity = applyOpacityToColor(baseColor, opacity);
+          const colorWithOpacity = applyOpacityToColor(
+            CyclePredictionColor,
+            opacity,
+          );
 
           newPredictedMarkedDates[prediction.date] = {
             selected: false,
             periods: [
               {
-                startingDay: true,
-                endingDay: true,
+                startingDay: isStartingDay,
+                endingDay: isEndingDay,
                 color: colorWithOpacity,
-                height: height, // Apply custom height
               },
             ],
           };
@@ -422,7 +414,7 @@ export function useMarkedDates(calendarFilters?: string[]) {
     }
 
     refreshCalendar(filteredData as DayData[]);
-  }, [filteredData, date, setDate, calendarFilters, colors, predictionChoice]);
+  }, [filteredData, date, setDate, calendarFilters, predictionChoice]);
 
   // get data for selected date on calendar (when user presses a different day)
   useEffect(() => {

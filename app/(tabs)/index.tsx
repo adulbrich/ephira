@@ -21,6 +21,8 @@ import { useRouter } from "expo-router";
 import { useFetchCycleData } from "@/hooks/useFetchCycleData";
 import { LinearGradient } from "expo-linear-gradient";
 
+import { TourAnchor } from "@/assets/src/tour/TourAnchor";
+
 export default function HomeScreen() {
   const theme = useTheme();
   const router = useRouter();
@@ -132,30 +134,40 @@ export default function HomeScreen() {
             </Pressable>
           ) : null}
           <View style={styles.flowChartContainer}>
-            <FlowChart />
+            <TourAnchor id="home.flowChart">
+              <FlowChart />
+            </TourAnchor>
           </View>
           <View style={{ alignItems: "center", marginTop: 8 }}>
-            <Button
-              mode="contained"
-              icon="pill"
-              loading={busy}
-              onPress={onQuickBC}
-              style={{ width: 220 }}
-            >
-              Quick Birth Control
-            </Button>
+            {/*  Spotlight the Quick Birth Control button */}
+            <TourAnchor id="home.quickBirthControl">
+              <Button
+                mode="contained"
+                icon="pill"
+                loading={busy}
+                onPress={onQuickBC}
+                style={{ width: 220 }}
+              >
+                Quick Birth Control
+              </Button>
+            </TourAnchor>
           </View>
-          <Text
-            style={{
-              color: theme.colors.secondary,
-              fontSize: 24,
-              fontWeight: "bold",
-              paddingVertical: 16,
-              textAlign: "center",
-            }}
-          >
-            Your Most Recent Flow Dates
-          </Text>
+
+          {/* (Optional) spotlight the section title too */}
+          <TourAnchor id="home.recentFlowTitle">
+            <Text
+              style={{
+                color: theme.colors.secondary,
+                fontSize: 24,
+                fontWeight: "bold",
+                paddingVertical: 16,
+                textAlign: "center",
+              }}
+            >
+              Your Most Recent Flow Dates
+            </Text>
+          </TourAnchor>
+
           <View style={styles.flowLogContainer}>
             {recentFlowDays.length > 0 ? (
               <>
