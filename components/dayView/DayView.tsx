@@ -166,15 +166,72 @@ export default function DayView() {
     if (isSavingRef.current) return;
     isSavingRef.current = true;
 
-    try {
-      insertDay(
-        date,
-        flow_intensity,
-        notes,
-        is_cycle_start,
-        is_cycle_end,
-        intercourse,
-      ).then(async () => {
+    // Compute what changed before the async save so the message can show immediately
+    let savedContent = "";
+    switch (state) {
+      case "flow":
+        if (flow_intensity !== 0) savedContent = "Flow";
+        break;
+      case "symptom":
+        if (selectedSymptoms.length > 0) savedContent = "Symptoms";
+        break;
+      case "mood":
+        if (selectedMoods.length > 0) savedContent = "Moods";
+        break;
+      case "medication":
+        if (selectedMedications.length > 0) savedContent = "Medications";
+        break;
+      case "birthControl":
+        if (selectedBirthControl) savedContent = "Birth Control";
+        break;
+      case "note":
+        if (notes && notes.trim() !== "") savedContent = "Notes";
+        break;
+      case "intercourse":
+        savedContent = "Intercourse";
+        break;
+      default:
+        if (lastSavedData) {
+          if (flow_intensity !== lastSavedData.flow) savedContent = "Flow";
+          else if (notes !== lastSavedData.notes) savedContent = "Notes";
+          else if (
+            JSON.stringify(selectedSymptoms) !==
+            JSON.stringify(lastSavedData.symptoms)
+          )
+            savedContent = "Symptoms";
+          else if (
+            JSON.stringify(selectedMoods) !==
+            JSON.stringify(lastSavedData.moods)
+          )
+            savedContent = "Moods";
+          else if (
+            JSON.stringify(selectedMedications) !==
+            JSON.stringify(lastSavedData.medications)
+          )
+            savedContent = "Medications";
+          else if (selectedBirthControl !== lastSavedData.birthControl)
+            savedContent = "Birth Control";
+          else if (intercourse !== lastSavedData.intercourse)
+            savedContent = "Intercourse";
+        }
+        break;
+    }
+
+    // Optimistically show the save message before the DB write completes
+    if (savedContent) {
+      setSaveMessageContent([`${savedContent} Saved!`]);
+      setSaveMessageVisible(true);
+    }
+
+    insertDay(
+      date,
+      flow_intensity,
+      notes,
+      is_cycle_start,
+      is_cycle_end,
+      intercourse,
+    )
+      .then(async () => {
         setFlow(flow_intensity);
 
         await syncEntries(selectedSymptoms, "symptom");
@@ -198,69 +255,14 @@ export default function DayView() {
         await fetchNotes();
         await fetchCycleInfo();
         await fetchIntercourse();
-
-        setSaveMessageVisible(false);
-
-        let savedContent = "";
-
-        switch (state) {
-          case "flow":
-            if (flow_intensity !== 0) savedContent = "Flow";
-            break;
-          case "symptom":
-            if (selectedSymptoms.length > 0) savedContent = "Symptoms";
-            break;
-          case "mood":
-            if (selectedMoods.length > 0) savedContent = "Moods";
-            break;
-          case "medication":
-            if (selectedMedications.length > 0) savedContent = "Medications";
-            break;
-          case "birthControl":
-            if (selectedBirthControl) savedContent = "Birth Control";
-            break;
-          case "note":
-            if (notes && notes.trim() !== "") savedContent = "Notes";
-            break;
-          case "intercourse":
-            savedContent = "Intercourse";
-            break;
-          default:
-            if (lastSavedData) {
-              if (flow_intensity !== lastSavedData.flow) savedContent = "Flow";
-              else if (notes !== lastSavedData.notes) savedContent = "Notes";
-              else if (
-                JSON.stringify(selectedSymptoms) !==
-                JSON.stringify(lastSavedData.symptoms)
-              )
-                savedContent = "Symptoms";
-              else if (
-                JSON.stringify(selectedMoods) !==
-                JSON.stringify(lastSavedData.moods)
-              )
-                savedContent = "Moods";
-              else if (
-                JSON.stringify(selectedMedications) !==
-                JSON.stringify(lastSavedData.medications)
-              )
-                savedContent = "Medications";
-              else if (selectedBirthControl !== lastSavedData.birthControl)
-                savedContent = "Birth Control";
-              else if (intercourse !== lastSavedData.intercourse)
-                savedContent = "Intercourse";
-            }
-            break;
-        }
-
-        if (savedContent) {
-          const message = `${savedContent} Saved!`;
-          setSaveMessageContent([message]);
-          setSaveMessageVisible(true);
-        }
+      })
+      .catch(() => {
+        setSaveMessageContent(["Save failed. Please try again."]);
+        setSaveMessageVisible(true);
+      })
+      .finally(() => {
+        isSavingRef.current = false;
       });
-    } finally {
-      isSavingRef.current = false;
-    }
   }, [
     date,
     flow_intensity,
@@ -386,11 +388,19 @@ export default function DayView() {
         clearTimeout(saveTimeoutRef.current);
       }
 
+      // Capture the save function now so a date change mid-debounce
+      // doesn't replace it with the new day's version before it fires.
+      const pendingSave = onSaveRef.current;
       saveTimeoutRef.current = setTimeout(() => {
-        onSaveRef.current();
-        setLastSavedData(currentData);
-        lastSavedDataRef.current = currentData;
-      }, 500);
+        pendingSave();
+        // Only update lastSavedData if we're still on the same date.
+        // If the user switched days before this fired, lastSavedDataRef will
+        // already hold the new day's data and we must not overwrite it.
+        if (lastSavedDataRef.current?.date === currentData.date) {
+          setLastSavedData(currentData);
+          lastSavedDataRef.current = currentData;
+        }
+      }, 100);
     }
   }, [
     flow_intensity,

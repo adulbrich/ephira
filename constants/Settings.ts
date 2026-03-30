@@ -8,6 +8,7 @@ export const SettingsKeys = {
   cyclePredictions: "cyclePredictions",
   notificationsEnabled: "notificationsEnabled",
   notificationSettings: "notificationSettings",
+  activeBirthControlType: "activeBirthControlType",
 };
 
 export const AUTH_TYPES = {

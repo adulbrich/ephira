@@ -10,6 +10,7 @@ import FadeInView from "@/components/animations/FadeInView";
 import CyclePredictions from "@/components/settings/CyclePrediction";
 import NotificationSettings from "@/components/settings/NotificationSettings";
 import WalkthroughReplay from "@/components/settings/WalkthroughReplay";
+import BirthControlSettings from "@/components/settings/BirthControlSettings";
 
 export default function Settings() {
   const theme = useTheme();
@@ -39,6 +40,7 @@ export default function Settings() {
             <Divider style={styles.divider} />
             <DataSettings />
             <Divider style={styles.divider} />
+            <BirthControlSettings />
             <CyclePredictions />
             <Divider style={styles.divider} />
             <NotificationSettings />

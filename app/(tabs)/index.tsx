@@ -12,8 +12,10 @@ import { useTheme, Text, Button } from "react-native-paper";
 import FadeInView from "@/components/animations/FadeInView";
 import { useState, useCallback, useEffect } from "react";
 import {
-  getLastUsedBirthControlName,
+  getActiveBirthControlType,
   quickLogBirthControlForToday,
+  getTodaysBirthControlName,
+  LONG_TERM_BC_TYPES,
 } from "@/db/quickBirthControl";
 import { useCyclePhase } from "@/hooks/useCyclePhase";
 import { CYCLE_PHASES } from "@/constants/CyclePhases";
@@ -28,6 +30,8 @@ export default function HomeScreen() {
   const router = useRouter();
   const { data: flowData } = useData();
   const [busy, setBusy] = useState(false);
+  const [activeBCType, setActiveBCType] = useState<string | null>(null);
+  const [loggedToday, setLoggedToday] = useState<string | null>(null);
   const { setDatabaseChange, databaseChange } = useDatabaseChangeNotifier();
   const { predictedCycle, setPredictedCycle } = usePredictedCycle();
   const { fetchCycleData } = useFetchCycleData(setPredictedCycle);
@@ -41,18 +45,18 @@ export default function HomeScreen() {
     fetchCycleData();
   }, [databaseChange, fetchCycleData]);
 
+  // Load active BC type and today's log status
+  useEffect(() => {
+    getActiveBirthControlType().then(setActiveBCType);
+    getTodaysBirthControlName().then(setLoggedToday);
+  }, [databaseChange]);
+
   const onQuickBC = useCallback(async () => {
-    if (busy) return;
+    if (busy || loggedToday || !activeBCType) return;
     setBusy(true);
     try {
-      const last = await getLastUsedBirthControlName();
-      if (!last) {
-        alert("No previous birth control found to quick-log.");
-        setBusy(false);
-        return;
-      }
-      await quickLogBirthControlForToday(last);
-      // Trigger database change notification to refresh the calendar
+      await quickLogBirthControlForToday(activeBCType);
+      setLoggedToday(activeBCType);
       setDatabaseChange(Date.now().toString());
     } catch (e) {
       console.error("Quick BC Error:", e);
@@ -62,7 +66,7 @@ export default function HomeScreen() {
     } finally {
       setBusy(false);
     }
-  }, [busy, setDatabaseChange]);
+  }, [busy, loggedToday, activeBCType, setDatabaseChange]);
 
   // Get up to 5 most recent logged days
   const recentFlowDays = [...flowData]
@@ -138,19 +142,52 @@ export default function HomeScreen() {
               <FlowChart />
             </TourAnchor>
           </View>
-          <View style={{ alignItems: "center", marginTop: 8 }}>
-            {/*  Spotlight the Quick Birth Control button */}
+          <View style={{ alignItems: "center", marginTop: 8, gap: 6 }}>
             <TourAnchor id="home.quickBirthControl">
-              <Button
-                mode="contained"
-                icon="pill"
-                loading={busy}
-                onPress={onQuickBC}
-                style={{ width: 220 }}
-              >
-                Quick Birth Control
-              </Button>
+              {!activeBCType ? (
+                <Button
+                  mode="outlined"
+                  icon="pill"
+                  onPress={() => router.push("/(tabs)/settings")}
+                  style={{ width: 220 }}
+                >
+                  Set up Birth Control
+                </Button>
+              ) : LONG_TERM_BC_TYPES.includes(activeBCType) ? (
+                <Button
+                  mode="outlined"
+                  icon="shield-check"
+                  disabled
+                  style={{ width: 220 }}
+                >
+                  On {activeBCType}
+                </Button>
+              ) : (
+                <Button
+                  mode="contained"
+                  icon="pill"
+                  loading={busy}
+                  disabled={!!loggedToday}
+                  onPress={onQuickBC}
+                  style={{ width: 220 }}
+                >
+                  Quick Birth Control
+                </Button>
+              )}
             </TourAnchor>
+            {activeBCType &&
+              !LONG_TERM_BC_TYPES.includes(activeBCType) &&
+              loggedToday && (
+                <Text
+                  style={{
+                    color: theme.colors.primary,
+                    fontSize: 13,
+                    textAlign: "center",
+                  }}
+                >
+                  {loggedToday} logged today!
+                </Text>
+              )}
           </View>
 
           {/* (Optional) spotlight the section title too */}
