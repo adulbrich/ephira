@@ -17,7 +17,8 @@ export const TRACKING_MODES = {
   PREGNANCY: "pregnancy",
 } as const;
 
-export type TrackingModeType = (typeof TRACKING_MODES)[keyof typeof TRACKING_MODES];
+export type TrackingModeType =
+  (typeof TRACKING_MODES)[keyof typeof TRACKING_MODES];
 
 export const AUTH_TYPES = {
   NONE: "none",
