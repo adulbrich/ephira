@@ -7,13 +7,11 @@ import { Text, Divider, useTheme } from "react-native-paper";
 import { ScrollView, SafeAreaView, StyleSheet } from "react-native";
 import ThemeSelector from "@/components/settings/ThemeSelector";
 import FadeInView from "@/components/animations/FadeInView";
-import CyclePredictions from "@/components/settings/CyclePrediction";
 import NotificationSettings from "@/components/settings/NotificationSettings";
 import WalkthroughReplay from "@/components/settings/WalkthroughReplay";
-import BirthControlSettings from "@/components/settings/BirthControlSettings";
 import TrackingModeSettings from "@/components/settings/TrackingModeSettings";
 
-export default function Settings() {
+export default function PregnancySettings() {
   const theme = useTheme();
   return (
     <FadeInView duration={200} backgroundColor={theme.colors.background}>
@@ -43,9 +41,6 @@ export default function Settings() {
             <Divider style={styles.divider} />
             <DataSettings />
             <Divider style={styles.divider} />
-            <BirthControlSettings />
-            <CyclePredictions />
-            <Divider style={styles.divider} />
             <NotificationSettings />
             <WalkthroughReplay />
             <Divider style={styles.divider} />
@@ -58,7 +53,6 @@ export default function Settings() {
 }
 
 const styles = StyleSheet.create({
-  /* Divider wouldn't show up on Android with the margin added */
   divider: {
     marginBottom: 0.2,
   },

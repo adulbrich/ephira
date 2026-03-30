@@ -177,6 +177,11 @@ export interface CurrentCycleState {
   hasEnoughData: boolean;
 }
 
+export interface TrackingMode {
+  trackingMode: string;
+  setTrackingMode: (mode: string) => void;
+}
+
 export interface CycleStats {
   averageCycleLength: number;
   cycleVariation: number;
