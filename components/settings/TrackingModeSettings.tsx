@@ -9,7 +9,7 @@ import { useTrackingMode } from "@/assets/src/calendar-storage";
 export default function TrackingModeSettings() {
   const theme = useTheme();
   const router = useRouter();
-  const { trackingMode, setTrackingMode } = useTrackingMode();
+  const { setTrackingMode } = useTrackingMode();
   const [localMode, setLocalMode] = useState<string>(TRACKING_MODES.CYCLE);
 
   useEffect(() => {
