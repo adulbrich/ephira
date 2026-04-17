@@ -85,6 +85,23 @@ export const predictionSnapshots = sqliteTable("prediction_snapshots", {
   checked_date: text(),
 });
 
+export const pregnancyDays = sqliteTable("pregnancy_days", {
+  id: integer().primaryKey({ autoIncrement: true }),
+  date: text().notNull().unique(),
+  kicks: integer(),
+  symptoms: text(), // JSON array of symptom name strings
+  moods: text(), // JSON array of mood name strings
+  notes: text(),
+});
+
+export const pregnancyAppointments = sqliteTable("pregnancy_appointments", {
+  id: integer().primaryKey({ autoIncrement: true }),
+  date: text().notNull(),
+  title: text().notNull(),
+  type: text(), // "OB Visit", "Ultrasound", "Lab Work", "Other"
+  notes: text(),
+});
+
 export type Settings = typeof settings.$inferSelect;
 export type Day = typeof days.$inferSelect;
 export type Mood = typeof moods.$inferSelect;
@@ -94,3 +111,5 @@ export type SymptomEntry = typeof symptomEntries.$inferSelect;
 export type Medication = typeof medications.$inferSelect;
 export type MedicationEntry = typeof medicationEntries.$inferSelect;
 export type PredictionSnapshot = typeof predictionSnapshots.$inferSelect;
+export type PregnancyDay = typeof pregnancyDays.$inferSelect;
+export type PregnancyAppointment = typeof pregnancyAppointments.$inferSelect;
