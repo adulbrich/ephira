@@ -20,7 +20,7 @@ import { IconSymbol } from "@/components/ui/IconSymbol";
 const currentWeek = 5;
 
 const pregnancyWeekInfo = {
-  week: 5,
+  week: currentWeek,
   trimester: "First Trimester",
   babyDevelopment:
     "The brain, spinal cord, and early heart tissue are starting to develop.",
