@@ -10,6 +10,7 @@ export const SettingsKeys = {
   notificationSettings: "notificationSettings",
   activeBirthControlType: "activeBirthControlType",
   trackingMode: "trackingMode",
+  pregnancyCalendarFilters: "pregnancyCalendarFilters",
 };
 
 export const TRACKING_MODES = {

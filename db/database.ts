@@ -220,3 +220,5 @@ export * from "@/db/operations/medicationEntries";
 export * from "@/db/operations/symptoms";
 export * from "@/db/operations/symptomEntries";
 export * from "@/db/operations/predictionSnapshots";
+export * from "@/db/operations/pregnancyDays";
+export * from "@/db/operations/pregnancyAppointments";
