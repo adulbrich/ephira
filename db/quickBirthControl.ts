@@ -1,37 +1,47 @@
-import { getAllDataAsJson } from "@/db/database";
 import { getDay, insertDay } from "@/db/operations/days";
 import {
   getMedicationEntriesForDay,
   insertMedicationEntry,
 } from "@/db/operations/medicationEntries";
 import { getMedication } from "@/db/operations/medications";
+import { getSetting } from "@/db/operations/settings";
+import { SettingsKeys } from "@/constants/Settings";
+import { birthControlOptions } from "@/constants/BirthControlTypes";
 
-type BirthControlEntry = {
-  name: string;
-  time_taken?: string | null;
-  notes?: string | null;
-};
+export const LONG_TERM_BC_TYPES = ["IUD", "Implant"];
 
 const todayISO = () => {
-  // Get date in local time (same logic as calendar.tsx)
   const day = new Date();
   const offset = day.getTimezoneOffset();
   const localDate = new Date(day.getTime() - offset * 60 * 1000);
   return localDate.toISOString().slice(0, 10);
 };
 
-// find the most recently used birth-control name
-export async function getLastUsedBirthControlName(): Promise<string | null> {
-  const exportData = await getAllDataAsJson();
-  if (!exportData) return null;
-
-  const dates = Object.keys(exportData.dailyData).sort().reverse(); // get newest
-  for (const d of dates) {
-    const list: BirthControlEntry[] =
-      exportData.dailyData[d]?.birth_control ?? [];
-    if (list.length && list[0]?.name) return list[0].name;
-  }
+// get the user's configured BC type from settings, or null if none set
+export async function getActiveBirthControlType(): Promise<string | null> {
+  const setting = await getSetting(SettingsKeys.activeBirthControlType);
+  const value = setting?.value ?? null;
+  if (value && birthControlOptions.includes(value)) return value;
   return null;
+}
+
+// check if birth control was already logged today, return its name or null
+export async function getTodaysBirthControlName(): Promise<string | null> {
+  const date = todayISO();
+  const day = await getDay(date);
+  if (!day?.id) return null;
+
+  const todaysEntries = await getMedicationEntriesForDay(day.id);
+  if (!todaysEntries?.length) return null;
+
+  const type = await getActiveBirthControlType();
+  if (!type) return null;
+
+  const med = await getMedication(type);
+  if (!med?.id) return null;
+
+  const logged = todaysEntries.some((e) => e.medication_id === med.id);
+  return logged ? type : null;
 }
 
 // log birth control for today

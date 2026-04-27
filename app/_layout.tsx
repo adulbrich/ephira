@@ -22,7 +22,12 @@ import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import migrations from "@/drizzle/migrations";
 import { SQLiteProvider } from "expo-sqlite";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
-import { AUTH_TYPES, SettingsKeys, DATABASE_NAME } from "@/constants/Settings";
+import {
+  AUTH_TYPES,
+  SettingsKeys,
+  DATABASE_NAME,
+  TRACKING_MODES,
+} from "@/constants/Settings";
 import {
   getDatabase,
   getDrizzleDatabase,
@@ -33,7 +38,7 @@ import {
 import DatabaseMigrationError from "@/components/DatabaseMigrationError";
 import PasswordAuthenticationView from "@/components/PasswordAuthenticationView";
 import { getTheme } from "@/components/ThemeHandler";
-import { useThemeColor } from "@/assets/src/calendar-storage";
+import { useThemeColor, useTrackingMode } from "@/assets/src/calendar-storage";
 import * as Notifications from "expo-notifications";
 import { NotificationTypes } from "@/constants/Notifications";
 
@@ -43,6 +48,7 @@ export default function RootLayout() {
   const systemTheme = useColorScheme();
   const isDarkMode = systemTheme === "dark";
   const { themeColor, setThemeColor } = useThemeColor();
+  const { setTrackingMode } = useTrackingMode();
 
   useEffect(() => {
     async function fetchThemeColor() {
@@ -55,6 +61,14 @@ export default function RootLayout() {
     }
     fetchThemeColor();
   }, [setThemeColor]);
+
+  useEffect(() => {
+    async function fetchTrackingMode() {
+      const saved = await getSetting(SettingsKeys.trackingMode);
+      setTrackingMode(saved?.value ?? TRACKING_MODES.CYCLE);
+    }
+    fetchTrackingMode();
+  }, [setTrackingMode]);
 
   const finalSelectedColor = themeColor as
     | "blue"
@@ -225,6 +239,7 @@ export default function RootLayout() {
                   <Stack.Screen name="index" />
                   <Stack.Screen name="(onboarding)" />
                   <Stack.Screen name="(tabs)" />
+                  <Stack.Screen name="(pregnancy-tabs)" />
                 </Stack>
 
                 <StatusBar style="auto" />

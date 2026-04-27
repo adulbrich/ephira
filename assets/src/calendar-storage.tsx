@@ -21,6 +21,7 @@ import {
   PredictionToggle,
   PredictedCycleState,
   PredictedDate,
+  TrackingMode,
 } from "@/constants/Interfaces";
 
 const initialDay: DayData = {
@@ -172,4 +173,9 @@ export const usePredictedCycle = create<PredictedCycleState>((set) => ({
     set(() => ({ predictedCycle: data })),
   setPredictedMarkedDates: (data: MarkedDates) =>
     set(() => ({ predictedMarkedDates: data })),
+}));
+
+export const useTrackingMode = create<TrackingMode>((set) => ({
+  trackingMode: "cycle",
+  setTrackingMode: (mode: string) => set(() => ({ trackingMode: mode })),
 }));

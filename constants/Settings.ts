@@ -8,7 +8,17 @@ export const SettingsKeys = {
   cyclePredictions: "cyclePredictions",
   notificationsEnabled: "notificationsEnabled",
   notificationSettings: "notificationSettings",
+  activeBirthControlType: "activeBirthControlType",
+  trackingMode: "trackingMode",
 };
+
+export const TRACKING_MODES = {
+  CYCLE: "cycle",
+  PREGNANCY: "pregnancy",
+} as const;
+
+export type TrackingModeType =
+  (typeof TRACKING_MODES)[keyof typeof TRACKING_MODES];
 
 export const AUTH_TYPES = {
   NONE: "none",
