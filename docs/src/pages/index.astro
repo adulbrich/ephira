@@ -77,7 +77,7 @@ import googlePlayBadge from "../assets/google-play-badge.png";
     <section class="space-y-8">
       <h2 class="text-3xl font-bold font-serif text-[#f2e4bf]">Project Overview</h2>
       <p>
-        Ephira is a local-only, open-source menstrual tracking app designed to prioritize user privacy and data security. It allows users to track their reproductive health without exposing sensitive data to cloud-based platforms or third parties. While there are many privacy-focused menstrual tracking apps out there, many back data up in the cloud or aren't open source. 
+        Ephira is a local-only, open-source menstrual tracking app designed to prioritize user privacy and data security. It allows users to track their reproductive health without exposing sensitive data to cloud-based platforms or third parties. While there are many privacy-focused menstrual tracking apps out there, many back data up in the cloud or aren't open source.
       </p>
 
       <h3 class="text-xl font-semibold mt-8">Tech Stack & Implementation</h3>
@@ -93,7 +93,7 @@ import googlePlayBadge from "../assets/google-play-badge.png";
       <div class="flex flex-col md:flex-row-reverse md:items-center gap-6">
         <div class="md:w-1/2">
           <h4 class="text-lg font-semibold text-[#f2e4bf] mb-2">App Locking with Passcode & Biometrics</h4>
-          <p>Protect your data with Face ID or a custom password unique to Ephira.</p>
+          <p>Protect your data with Face ID, fingerprint, or a custom password unique to Ephira. No account needed — your lock is local to your device.</p>
         </div>
         <video src="assets/feature-password.mp4" autoplay loop muted playsinline class="rounded aspect-video w-full md:w-1/2 min-h-[600px] object-contain"></video>
       </div>
@@ -101,7 +101,7 @@ import googlePlayBadge from "../assets/google-play-badge.png";
       <div class="flex flex-col md:flex-row md:items-center gap-6">
         <div class="md:w-1/2">
           <h4 class="text-lg font-semibold text-[#f2e4bf] mb-2">Customizable Calendar & Symptom Tracking</h4>
-          <p>Add and track custom symptoms, moods, medications, and more with a smooth, visual calendar interface.</p>
+          <p>Log menstrual flow, symptoms, moods, medications, birth control, and notes. Add your own custom entries and track exactly what matters to you with a smooth, visual calendar interface.</p>
         </div>
         <video src="assets/feature-custom-entries.mp4" autoplay loop muted playsinline class="rounded aspect-video w-full md:w-1/2 min-h-[600px] object-contain"></video>
       </div>
@@ -116,11 +116,33 @@ import googlePlayBadge from "../assets/google-play-badge.png";
 
       <div class="flex flex-col md:flex-row md:items-center gap-6">
         <div class="md:w-1/2">
+          <h4 class="text-lg font-semibold text-[#f2e4bf] mb-2">Cycle Insights & Predictions</h4>
+          <p>The Cycle tab gives you a personalized view of your menstrual health. Track your current phase — follicular, ovulation, luteal, or menstrual — and get predicted period start dates based on your logged history. View cycle statistics like average length and duration, and receive phase-specific wellness tips. Predictions kick in after 2 complete cycles and can be toggled on or off in Settings.</p>
+        </div>
+        <!-- MEDIA NEEDED: a screen recording or screenshot of the Cycle tab showing phase tracking, predictions, and stats -->
+        <div class="rounded w-full md:w-1/2 min-h-[300px] bg-[#9892a0] bg-opacity-10 flex items-center justify-center text-[#9892a0] text-sm italic">
+          Cycle insights demo coming soon
+        </div>
+      </div>
+
+      <div class="flex flex-col md:flex-row-reverse md:items-center gap-6">
+        <div class="md:w-1/2">
           <h4 class="text-lg font-semibold text-[#f2e4bf] mb-2">Custom Themes & Color Schemes</h4>
-          <p>Personalize your app with six different themes and light/dark mode support based on your device settings.</p>
+          <p>Personalize your app with multiple themes and light/dark mode support based on your device settings.</p>
         </div>
         <img src="assets/feature-color-schemes.gif" alt="Color Scheme Demo" class="rounded w-full md:w-1/2 max-h-[600px] object-contain" />
       </div>
-    </div>
+
+      <div class="flex flex-col md:flex-row md:items-center gap-6">
+        <div class="md:w-1/2">
+          <h4 class="text-lg font-semibold text-[#f2e4bf] mb-2">Data Export</h4>
+          <p>Export your full health history as a PDF at any time from the Settings screen. Your data stays yours — take it with you or share it with a healthcare provider.</p>
+        </div>
+        <!-- MEDIA NEEDED: a screen recording or screenshot showing the export flow (Settings › Export Data, generating and viewing the PDF) -->
+        <div class="rounded w-full md:w-1/2 min-h-[300px] bg-[#9892a0] bg-opacity-10 flex items-center justify-center text-[#9892a0] text-sm italic">
+          Data export demo coming soon
+        </div>
+      </div>
+    </section>
   </section>
 </Layout>
