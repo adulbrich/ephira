@@ -36,15 +36,15 @@
 
 ## About The Project
 
-Stay aware of your cycle without sacrificing your privacy. Ephira is a secure period-tracker that keeps your data encrypted locally on your device.
+Stay aware of your cycle without sacrificing your privacy. Ephira is a secure period tracker that keeps your data encrypted locally on your device.
 
-Track Your Health: Log menstrual flow, symptoms, moods, medications, birth control, and notes.
+**Track Your Health:** Log menstrual flow, symptoms, moods, medications, birth control, and notes.
 
-Privacy First: Data is encrypted and never leaves your device. It can be locked behind biometrics (Face ID/Fingerprint) or a custom password, and can be deleted at any time.
+**Privacy First:** Data is encrypted and never leaves your device. It can be locked behind biometrics (Face ID/Fingerprint) or a custom password, and can be deleted at any time.
 
-Open and Transparent: Ephira is open source under the MIT license, and you can review the code at any time on Github.
+**Open and Transparent:** Ephira is open source under the MIT license, and you can review the code at any time on GitHub.
 
-<!-- VIDEO DEMOS -->
+<!-- KEY FEATURES -->
 
 ## Key Features
 
@@ -52,19 +52,72 @@ Open and Transparent: Ephira is open source under the MIT license, and you can r
 
 Add and track custom symptoms, moods, medications, and more with a smooth, visual calendar interface. Filter your calendar legend to only show the symptoms, moods, and medications you want to see. This makes it easy to focus on the data that matters most to you.
 
-‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎ ‎<img src="https://github.com/user-attachments/assets/c0aaa86b-1fcb-4cac-874e-49b39a04bfb1" width="650"/>
+\u200E \u200E \u200E \u200E \u200E \u200E \u200E \u200E \u200E<img src="https://github.com/user-attachments/assets/c0aaa86b-1fcb-4cac-874e-49b39a04bfb1" width="650"/>
+
+### Cycle Insights & Predictions
+
+The Cycle tab gives you a personalized view of your menstrual health. Once you've logged enough data, Ephira provides:
+
+- **Current cycle status** — where you are in your cycle today
+- **Phase tracking** — follicular, ovulation, luteal, and menstrual phases with wellness context
+- **Cycle predictions** — predicted period start dates based on your logged history
+- **Cycle statistics** — average cycle length, period duration, and historical trends
+- **Wellness tips** — phase-specific suggestions tailored to your current cycle stage
+
+Predictions require at least 2 complete cycles and can be toggled on or off in Settings.
 
 ### App Locking with Passcode & Biometrics
 
-Protect your data with Face ID or a custom password unique to Ephira.
+Protect your data with Face ID, fingerprint, or a custom password unique to Ephira.
 
 ![Password Demo (Final-All)](https://github.com/user-attachments/assets/296864e6-ae4e-48ac-8ee8-b9ca0cd0f9e9)
+
+### Data Export
+
+Export your full health history as a PDF at any time from the Settings screen. Your data stays yours — you can take it with you or share it with a healthcare provider.
+
+### Color Themes
+
+Choose from multiple color themes to personalize the look and feel of the app. Themes apply across the entire interface.
+
+### Birth Control Tracking
+
+Log and track birth control alongside your other health data. Configure your birth control type in Settings to keep everything in one place.
+
+### Notifications
+
+Set up reminders to log your data or be notified about upcoming predicted periods.
+
+### Guided Onboarding & Walkthrough
+
+A step-by-step walkthrough helps new users get set up quickly. The walkthrough can be replayed at any time from Settings.
+
+<!-- LICENSE -->
 
 ## License
 
 [![License][license-shield]][license-url]
 
 See `LICENSE.txt` for more information.
+
+<!-- CONTRIBUTING -->
+
+## Contributing
+
+We welcome contributions! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on branching, commits, pull requests, and code quality standards.
+
+**Quick start:**
+
+```bash
+git clone https://github.com/adulbrich/ephira.git
+cd ephira
+npm install
+npx expo start
+```
+
+See [PROJECTSTRUCTURE.md](PROJECTSTRUCTURE.md) for an overview of the codebase, key libraries, and local setup instructions.
+
+> **Note:** Due to using Expo SQLite, the app only runs on physical devices or emulators (not Expo web).
 
 ## Acknowledgments
 
@@ -84,12 +137,6 @@ See `LICENSE.txt` for more information.
 ### Fonts
 
 [Minion Variable Concept](https://fonts.adobe.com/fonts/minion)
-
-<!-- GETTING STARTED -->
-
-## Getting Started
-
-Check out the [Project Structure](https://github.com/adulbrich/ephira/blob/main/PROJECTSTRUCTURE.md) document for an overview of the key components of the app, main libraries used, and how to set up the app locally.
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
