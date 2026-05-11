@@ -10,6 +10,7 @@ import {
   useTimePickerState,
   useTempSelectedTime,
 } from "@/assets/src/calendar-storage";
+import { loggingAccordionTitleStyles } from "@/components/dayView/loggingGridLayout";
 
 export default function BirthControlAccordion({
   state,
@@ -213,9 +214,9 @@ export default function BirthControlAccordion({
   return (
     <List.Accordion
       title={
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Text style={{ width: 120, fontSize: 16 }}>Birth Control</Text>
-          <Text style={{ fontSize: 16 }}>
+        <View style={loggingAccordionTitleStyles.row}>
+          <Text style={loggingAccordionTitleStyles.label}>Birth Control</Text>
+          <Text style={loggingAccordionTitleStyles.value}>
             |{"\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"}
             {selectedBirthControlLabel}
           </Text>

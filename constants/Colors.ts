@@ -11,6 +11,8 @@ export const FlowColors: Record<FlowType | "white", string> = {
 export const CyclePredictionColor = "#3050A0";
 export const SpecialtyFilterColor = "#4A9B5F";
 export const AppointmentColor = "#5C6BC0";
+export const PregnancyRingLilac = "#C4B5FD";
+export const PregnancyRingDarkViolet = "#4C1D95";
 
 const warmGold = "#E6B657";
 const peachOrange = "#FFA770";

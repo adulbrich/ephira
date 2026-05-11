@@ -16,6 +16,10 @@ import {
   getPregnancyAppointmentsForDate,
 } from "@/db/database";
 import type { PregnancyAppointment } from "@/db/schema";
+import {
+  loggingAccordionTitleStyles,
+  loggingGridStyles,
+} from "@/components/dayView/loggingGridLayout";
 
 const APPOINTMENT_TYPES = ["OB Visit", "Ultrasound", "Lab Work", "Other"];
 
@@ -66,9 +70,9 @@ export default function AppointmentsAccordion({
   return (
     <List.Accordion
       title={
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Text style={{ width: 120, fontSize: 16 }}>Appointments</Text>
-          <Text style={{ fontSize: 16 }}>
+        <View style={loggingAccordionTitleStyles.row}>
+          <Text style={loggingAccordionTitleStyles.label}>Appointments</Text>
+          <Text style={loggingAccordionTitleStyles.value}>
             |{"      "}
             {appointments.length > 0 ? `${appointments.length} logged` : "None"}
           </Text>
@@ -136,7 +140,7 @@ export default function AppointmentsAccordion({
               mode="outlined"
               dense
             />
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+            <View style={loggingGridStyles.gridInline}>
               {APPOINTMENT_TYPES.map((type) => (
                 <Chip
                   key={type}
