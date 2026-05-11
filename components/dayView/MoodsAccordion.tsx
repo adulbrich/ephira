@@ -4,6 +4,7 @@ import { List, Text, Button } from "react-native-paper";
 import { getAllVisibleMoods } from "@/db/database";
 import ChipSelection from "./ChipSelection";
 import CustomEntries from "@/components/settings/CustomEntries";
+import { loggingAccordionTitleStyles } from "@/components/dayView/loggingGridLayout";
 
 export default function MoodsAccordion({
   state,
@@ -39,9 +40,9 @@ export default function MoodsAccordion({
     <>
       <List.Accordion
         title={
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Text style={{ width: 120, fontSize: 16 }}>Moods</Text>
-            <Text style={{ fontSize: 16 }}>
+          <View style={loggingAccordionTitleStyles.row}>
+            <Text style={loggingAccordionTitleStyles.label}>Moods</Text>
+            <Text style={loggingAccordionTitleStyles.value}>
               |{"\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"}
               {selectedVisibleMoods.length + " Selected"}
             </Text>
