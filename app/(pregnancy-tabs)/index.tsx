@@ -26,11 +26,7 @@ const PREGNANCY_WEEKS = 40;
 const DAYS_IN_WEEK = 7;
 const FULL_TERM_DAYS = PREGNANCY_WEEKS * DAYS_IN_WEEK;
 
-type SetupMethod =
-  | "dueDate"
-  | "weeksPregnant"
-  | "lastPeriod"
-  | "notSure";
+type SetupMethod = "dueDate" | "weeksPregnant" | "lastPeriod" | "notSure";
 type NotSurePath =
   | "doctorDueDate"
   | "ultrasoundEstimate"
@@ -124,7 +120,11 @@ const hexToRgb = (hex: string) => {
 
 const rgbToHex = (r: number, g: number, b: number) =>
   `#${[r, g, b]
-    .map((v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0"))
+    .map((v) =>
+      Math.max(0, Math.min(255, Math.round(v)))
+        .toString(16)
+        .padStart(2, "0"),
+    )
     .join("")}`;
 
 const interpolateHexColor = (startHex: string, endHex: string, t: number) => {
@@ -146,19 +146,27 @@ export default function PregnancyHome() {
   const [dueDateInput, setDueDateInput] = useState(new Date());
   const [lastPeriodInput, setLastPeriodInput] = useState(new Date());
   const [conceptionDateInput, setConceptionDateInput] = useState(new Date());
-  const [positiveTestDateInput, setPositiveTestDateInput] = useState(new Date());
+  const [positiveTestDateInput, setPositiveTestDateInput] = useState(
+    new Date(),
+  );
   const [setupMethod, setSetupMethod] = useState<SetupMethod | null>(null);
   const [notSurePath, setNotSurePath] = useState<NotSurePath | null>(null);
-  const [activeDateField, setActiveDateField] = useState<DateFieldKey | null>(null);
+  const [activeDateField, setActiveDateField] = useState<DateFieldKey | null>(
+    null,
+  );
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [weeksInput, setWeeksInput] = useState("0");
   const [daysInput, setDaysInput] = useState("0");
   const [saving, setSaving] = useState(false);
   const [setupError, setSetupError] = useState<string | null>(null);
   const [isContractionRunning, setIsContractionRunning] = useState(false);
-  const [contractionStartAt, setContractionStartAt] = useState<number | null>(null);
+  const [contractionStartAt, setContractionStartAt] = useState<number | null>(
+    null,
+  );
   const [elapsedMs, setElapsedMs] = useState(0);
-  const [lastContractionMs, setLastContractionMs] = useState<number | null>(null);
+  const [lastContractionMs, setLastContractionMs] = useState<number | null>(
+    null,
+  );
 
   const loadPregnancySettings = useCallback(async () => {
     try {
@@ -189,7 +197,8 @@ export default function PregnancyHome() {
             0,
             differenceInDays(startDate, normalizedToday) + offset,
           );
-          const derivedWeek = Math.floor(currentPregnancyDay / DAYS_IN_WEEK) + 1;
+          const derivedWeek =
+            Math.floor(currentPregnancyDay / DAYS_IN_WEEK) + 1;
           setWeeksInput(String(derivedWeek));
           setDaysInput(String(currentPregnancyDay % DAYS_IN_WEEK));
           const derivedDayZero = addDays(normalizedToday, -currentPregnancyDay);
@@ -231,12 +240,18 @@ export default function PregnancyHome() {
   const pregnancyDay = useMemo(() => {
     if (!startDateIso) return null;
     const startDate = parseISODate(startDateIso);
-    return Math.max(0, differenceInDays(startDate, today) + gestationOffsetDays);
+    return Math.max(
+      0,
+      differenceInDays(startDate, today) + gestationOffsetDays,
+    );
   }, [startDateIso, today, gestationOffsetDays]);
 
   const weekNumber = useMemo(() => {
     if (pregnancyDay === null) return null;
-    return Math.min(PREGNANCY_WEEKS, Math.floor(pregnancyDay / DAYS_IN_WEEK) + 1);
+    return Math.min(
+      PREGNANCY_WEEKS,
+      Math.floor(pregnancyDay / DAYS_IN_WEEK) + 1,
+    );
   }, [pregnancyDay]);
 
   const daysInCurrentWeek = useMemo(() => {
@@ -246,7 +261,10 @@ export default function PregnancyHome() {
 
   const babySize = useMemo(() => {
     if (!weekNumber) return "";
-    const index = Math.max(0, Math.min(babySizeByWeek.length - 1, weekNumber - 1));
+    const index = Math.max(
+      0,
+      Math.min(babySizeByWeek.length - 1, weekNumber - 1),
+    );
     return babySizeByWeek[index];
   }, [weekNumber]);
 
@@ -271,7 +289,10 @@ export default function PregnancyHome() {
 
   const ringProgress = useMemo(() => {
     if (pregnancyDay === null) return 0;
-    return Math.min(1, Math.max(0, pregnancyDay / (PREGNANCY_WEEKS * DAYS_IN_WEEK)));
+    return Math.min(
+      1,
+      Math.max(0, pregnancyDay / (PREGNANCY_WEEKS * DAYS_IN_WEEK)),
+    );
   }, [pregnancyDay]);
 
   const ringSize = 290;
@@ -280,7 +301,10 @@ export default function PregnancyHome() {
   const ringCircumference = 2 * Math.PI * ringRadius;
   const ringOffset = ringCircumference * (1 - ringProgress);
   const dueDateMin = useMemo(() => addDays(today, 1), [today]);
-  const dueDateMax = useMemo(() => addDays(today, FULL_TERM_DAYS + 21), [today]);
+  const dueDateMax = useMemo(
+    () => addDays(today, FULL_TERM_DAYS + 21),
+    [today],
+  );
   const ringEndColor = useMemo(
     () =>
       interpolateHexColor(
@@ -479,7 +503,10 @@ export default function PregnancyHome() {
         <SafeAreaView style={styles.safeArea}>
           {loading ? (
             <View style={styles.content}>
-              <Text variant="bodyLarge" style={{ color: theme.colors.onSurface }}>
+              <Text
+                variant="bodyLarge"
+                style={{ color: theme.colors.onSurface }}
+              >
                 Loading your progress...
               </Text>
             </View>
@@ -508,9 +535,21 @@ export default function PregnancyHome() {
                           x2="100%"
                           y2="100%"
                         >
-                          <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.24" />
-                          <Stop offset="45%" stopColor={PregnancyRingLilac} stopOpacity="0.10" />
-                          <Stop offset="100%" stopColor={PregnancyRingDarkViolet} stopOpacity="0.12" />
+                          <Stop
+                            offset="0%"
+                            stopColor="#FFFFFF"
+                            stopOpacity="0.24"
+                          />
+                          <Stop
+                            offset="45%"
+                            stopColor={PregnancyRingLilac}
+                            stopOpacity="0.10"
+                          />
+                          <Stop
+                            offset="100%"
+                            stopColor={PregnancyRingDarkViolet}
+                            stopOpacity="0.12"
+                          />
                         </LinearGradient>
                         <LinearGradient
                           id="bubbleHighlightFill"
@@ -519,8 +558,16 @@ export default function PregnancyHome() {
                           x2="100%"
                           y2="100%"
                         >
-                          <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.28" />
-                          <Stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.02" />
+                          <Stop
+                            offset="0%"
+                            stopColor="#FFFFFF"
+                            stopOpacity="0.28"
+                          />
+                          <Stop
+                            offset="100%"
+                            stopColor="#FFFFFF"
+                            stopOpacity="0.02"
+                          />
                         </LinearGradient>
                       </Defs>
                       <Circle
@@ -589,20 +636,29 @@ export default function PregnancyHome() {
                     <View style={styles.progressRingCenter}>
                       <Text
                         variant="headlineSmall"
-                        style={[styles.weeksText, { color: theme.colors.primary }]}
+                        style={[
+                          styles.weeksText,
+                          { color: theme.colors.primary },
+                        ]}
                       >
                         Week {weekNumber ?? 0}
                       </Text>
                       <Text
                         variant="bodyMedium"
-                        style={{ color: theme.colors.onSurfaceVariant, textAlign: "center" }}
+                        style={{
+                          color: theme.colors.onSurfaceVariant,
+                          textAlign: "center",
+                        }}
                       >
                         Baby is the size of a {babySize}
                       </Text>
                     </View>
                   </View>
 
-                  <Text variant="titleMedium" style={{ color: theme.colors.onSurface }}>
+                  <Text
+                    variant="titleMedium"
+                    style={{ color: theme.colors.onSurface }}
+                  >
                     Week {weekNumber ?? 0} • Day {daysInCurrentWeek + 1}
                   </Text>
                   <Text
@@ -621,7 +677,10 @@ export default function PregnancyHome() {
 
                 <Text
                   variant="bodyMedium"
-                  style={[styles.subText, { color: theme.colors.onSurfaceVariant }]}
+                  style={[
+                    styles.subText,
+                    { color: theme.colors.onSurfaceVariant },
+                  ]}
                 >
                   {dueDaysRemaining !== null
                     ? `${dueDaysRemaining} days until week ${PREGNANCY_WEEKS}.`
@@ -630,14 +689,19 @@ export default function PregnancyHome() {
                 {lastContractionMs !== null && !isContractionRunning ? (
                   <Text
                     variant="bodySmall"
-                    style={{ color: theme.colors.onSurfaceVariant, textAlign: "center" }}
+                    style={{
+                      color: theme.colors.onSurfaceVariant,
+                      textAlign: "center",
+                    }}
                   >
                     Last contraction: {formatDuration(lastContractionMs)}
                   </Text>
                 ) : null}
                 <Button
                   mode={isContractionRunning ? "contained-tonal" : "contained"}
-                  icon={isContractionRunning ? "timer-off-outline" : "timer-outline"}
+                  icon={
+                    isContractionRunning ? "timer-off-outline" : "timer-outline"
+                  }
                   onPress={handleContractionTimerPress}
                   style={styles.actionButton}
                 >
@@ -670,13 +734,18 @@ export default function PregnancyHome() {
             </Dialog.Title>
             <Dialog.Content style={{ gap: 12 }}>
               <Text variant="titleMedium">How would you like to begin?</Text>
-              <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+              <Text
+                variant="bodySmall"
+                style={{ color: theme.colors.onSurfaceVariant }}
+              >
                 Every pregnancy is unique. We'll help track yours beautifully.
               </Text>
 
               <View style={styles.methodCards}>
                 <Button
-                  mode={setupMethod === "dueDate" ? "contained-tonal" : "outlined"}
+                  mode={
+                    setupMethod === "dueDate" ? "contained-tonal" : "outlined"
+                  }
                   onPress={() => {
                     setSetupMethod("dueDate");
                     setNotSurePath(null);
@@ -687,7 +756,9 @@ export default function PregnancyHome() {
 
                 <Button
                   mode={
-                    setupMethod === "weeksPregnant" ? "contained-tonal" : "outlined"
+                    setupMethod === "weeksPregnant"
+                      ? "contained-tonal"
+                      : "outlined"
                   }
                   onPress={() => {
                     setSetupMethod("weeksPregnant");
@@ -698,7 +769,11 @@ export default function PregnancyHome() {
                 </Button>
 
                 <Button
-                  mode={setupMethod === "lastPeriod" ? "contained-tonal" : "outlined"}
+                  mode={
+                    setupMethod === "lastPeriod"
+                      ? "contained-tonal"
+                      : "outlined"
+                  }
                   onPress={() => {
                     setSetupMethod("lastPeriod");
                     setNotSurePath(null);
@@ -708,7 +783,9 @@ export default function PregnancyHome() {
                 </Button>
 
                 <Button
-                  mode={setupMethod === "notSure" ? "contained-tonal" : "outlined"}
+                  mode={
+                    setupMethod === "notSure" ? "contained-tonal" : "outlined"
+                  }
                   onPress={() => setSetupMethod("notSure")}
                 >
                   I'm not sure
@@ -726,7 +803,9 @@ export default function PregnancyHome() {
                         icon="minus"
                         mode="outlined"
                         disabled={parsedWeekValue <= 0}
-                        onPress={() => setWeeksInput(String(parsedWeekValue - 1))}
+                        onPress={() =>
+                          setWeeksInput(String(parsedWeekValue - 1))
+                        }
                       />
                       <Text variant="headlineSmall" style={styles.stepperValue}>
                         {parsedWeekValue}
@@ -735,7 +814,9 @@ export default function PregnancyHome() {
                         icon="plus"
                         mode="outlined"
                         disabled={parsedWeekValue >= 42}
-                        onPress={() => setWeeksInput(String(parsedWeekValue + 1))}
+                        onPress={() =>
+                          setWeeksInput(String(parsedWeekValue + 1))
+                        }
                       />
                     </View>
                   </View>
@@ -763,7 +844,8 @@ export default function PregnancyHome() {
               )}
 
               {(setupMethod === "dueDate" ||
-                (setupMethod === "notSure" && notSurePath === "doctorDueDate")) && (
+                (setupMethod === "notSure" &&
+                  notSurePath === "doctorDueDate")) && (
                 <Button
                   mode="outlined"
                   icon="calendar"
@@ -774,7 +856,8 @@ export default function PregnancyHome() {
               )}
 
               {(setupMethod === "lastPeriod" ||
-                (setupMethod === "notSure" && notSurePath === "lastPeriod")) && (
+                (setupMethod === "notSure" &&
+                  notSurePath === "lastPeriod")) && (
                 <Button
                   mode="outlined"
                   icon="calendar"
@@ -786,27 +869,45 @@ export default function PregnancyHome() {
 
               {setupMethod === "notSure" && (
                 <View style={styles.notSureGroup}>
-                  <Text variant="bodyMedium">No worries. Do you know any of these?</Text>
+                  <Text variant="bodyMedium">
+                    No worries. Do you know any of these?
+                  </Text>
                   <Button
-                    mode={notSurePath === "doctorDueDate" ? "contained-tonal" : "outlined"}
+                    mode={
+                      notSurePath === "doctorDueDate"
+                        ? "contained-tonal"
+                        : "outlined"
+                    }
                     onPress={() => setNotSurePath("doctorDueDate")}
                   >
                     Doctor due date
                   </Button>
                   <Button
-                    mode={notSurePath === "ultrasoundEstimate" ? "contained-tonal" : "outlined"}
+                    mode={
+                      notSurePath === "ultrasoundEstimate"
+                        ? "contained-tonal"
+                        : "outlined"
+                    }
                     onPress={() => setNotSurePath("ultrasoundEstimate")}
                   >
                     Ultrasound estimate
                   </Button>
                   <Button
-                    mode={notSurePath === "lastPeriod" ? "contained-tonal" : "outlined"}
+                    mode={
+                      notSurePath === "lastPeriod"
+                        ? "contained-tonal"
+                        : "outlined"
+                    }
                     onPress={() => setNotSurePath("lastPeriod")}
                   >
                     First day of last period
                   </Button>
                   <Button
-                    mode={notSurePath === "conceptionDate" ? "contained-tonal" : "outlined"}
+                    mode={
+                      notSurePath === "conceptionDate"
+                        ? "contained-tonal"
+                        : "outlined"
+                    }
                     onPress={() => setNotSurePath("conceptionDate")}
                   >
                     Approximate conception date
@@ -814,15 +915,16 @@ export default function PregnancyHome() {
                 </View>
               )}
 
-              {setupMethod === "notSure" && notSurePath === "conceptionDate" && (
-                <Button
-                  mode="outlined"
-                  icon="calendar"
-                  onPress={() => openDatePicker("conceptionDate")}
-                >
-                  Conception Date: {formatAsISODate(conceptionDateInput)}
-                </Button>
-              )}
+              {setupMethod === "notSure" &&
+                notSurePath === "conceptionDate" && (
+                  <Button
+                    mode="outlined"
+                    icon="calendar"
+                    onPress={() => openDatePicker("conceptionDate")}
+                  >
+                    Conception Date: {formatAsISODate(conceptionDateInput)}
+                  </Button>
+                )}
 
               {Platform.OS === "ios" && showDatePicker && activeDateField ? (
                 <View style={styles.iosPickerContainer}>
@@ -838,23 +940,36 @@ export default function PregnancyHome() {
                     }
                     mode="date"
                     display="spinner"
-                    minimumDate={activeDateField === "dueDate" ? dueDateMin : undefined}
-                    maximumDate={activeDateField === "dueDate" ? dueDateMax : today}
+                    minimumDate={
+                      activeDateField === "dueDate" ? dueDateMin : undefined
+                    }
+                    maximumDate={
+                      activeDateField === "dueDate" ? dueDateMax : today
+                    }
                     onChange={onDateChange}
                   />
                   <Button onPress={() => setShowDatePicker(false)}>Done</Button>
                 </View>
               ) : null}
 
-              <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+              <Text
+                variant="bodySmall"
+                style={{ color: theme.colors.onSurfaceVariant }}
+              >
                 Your pregnancy timeline can always be updated later.
               </Text>
-              <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+              <Text
+                variant="bodySmall"
+                style={{ color: theme.colors.onSurfaceVariant }}
+              >
                 Your pregnancy data stays private and on-device.
               </Text>
 
               {setupError ? (
-                <Text variant="bodyMedium" style={{ color: theme.colors.error }}>
+                <Text
+                  variant="bodyMedium"
+                  style={{ color: theme.colors.error }}
+                >
                   {setupError}
                 </Text>
               ) : null}
@@ -863,7 +978,11 @@ export default function PregnancyHome() {
               {startDateIso ? (
                 <Button onPress={() => setSetupVisible(false)}>Cancel</Button>
               ) : null}
-              <Button loading={saving} mode="contained" onPress={handleSaveSetup}>
+              <Button
+                loading={saving}
+                mode="contained"
+                onPress={handleSaveSetup}
+              >
                 Save
               </Button>
             </Dialog.Actions>
