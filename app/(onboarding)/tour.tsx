@@ -14,6 +14,12 @@ export default function TourStart() {
 
       const steps: TourStep[] = [
         {
+          id: "tab.home",
+          title: "Home",
+          text: "Your main dashboard for recent trends and quick actions.",
+          route: "/(tabs)",
+        },
+        {
           id: "tab.calendar",
           title: "Calendar",
           text: "See your cycle events on the calendar and tap dates to log symptoms.",
@@ -30,12 +36,6 @@ export default function TourStart() {
           title: "Settings",
           text: "Update preferences like notifications and tracking options anytime.",
           route: "/(tabs)/settings",
-        },
-        {
-          id: "tab.home",
-          title: "Home",
-          text: "Your main dashboard for recent trends and quick actions.",
-          route: "/(tabs)",
         },
       ];
 
