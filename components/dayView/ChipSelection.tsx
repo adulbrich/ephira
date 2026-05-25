@@ -1,5 +1,9 @@
 import { View, StyleSheet } from "react-native";
 import { Text, Chip, useTheme } from "react-native-paper";
+import {
+  loggingGridStyles,
+  useLoggingChipGridStyle,
+} from "@/components/dayView/loggingGridLayout";
 
 export default function ChipSelection({
   options,
@@ -13,11 +17,12 @@ export default function ChipSelection({
   label: string;
 }) {
   const theme = useTheme();
+  const { chipStyle } = useLoggingChipGridStyle();
 
   return (
     <View>
       <Text style={styles.sectionLabel}>{label}</Text>
-      <View style={styles.chipContainer}>
+      <View style={loggingGridStyles.grid}>
         {options.map((option) => (
           <Chip
             mode="flat"
@@ -36,10 +41,10 @@ export default function ChipSelection({
               backgroundColor: selectedValues.includes(option)
                 ? theme.colors.onSecondary
                 : theme.colors.secondary,
-              margin: 4,
               borderRadius: 20,
               height: 36,
               justifyContent: "center",
+              ...chipStyle,
             }}
             textStyle={{
               color: selectedValues.includes(option)
@@ -56,14 +61,6 @@ export default function ChipSelection({
 }
 
 const styles = StyleSheet.create({
-  chipContainer: {
-    paddingLeft: 16,
-    paddingRight: 16,
-    paddingBottom: 16,
-    paddingTop: 8,
-    flexDirection: "row",
-    flexWrap: "wrap",
-  },
   sectionLabel: {
     display: "none",
   },

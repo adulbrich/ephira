@@ -1,5 +1,6 @@
 import { View } from "react-native";
 import { List, Text, IconButton, useTheme } from "react-native-paper";
+import { loggingAccordionTitleStyles } from "@/components/dayView/loggingGridLayout";
 
 export default function KicksAccordion({
   state,
@@ -17,9 +18,9 @@ export default function KicksAccordion({
   return (
     <List.Accordion
       title={
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Text style={{ width: 120, fontSize: 16 }}>Kicks</Text>
-          <Text style={{ fontSize: 16 }}>
+        <View style={loggingAccordionTitleStyles.row}>
+          <Text style={loggingAccordionTitleStyles.label}>Kicks</Text>
+          <Text style={loggingAccordionTitleStyles.value}>
             |{"      "}
             {kicks > 0 ? `${kicks} logged` : "None"}
           </Text>
@@ -32,6 +33,7 @@ export default function KicksAccordion({
       <View
         style={{
           flexDirection: "row",
+          flexWrap: "wrap",
           alignItems: "center",
           justifyContent: "center",
           paddingVertical: 16,

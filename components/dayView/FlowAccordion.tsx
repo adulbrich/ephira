@@ -1,7 +1,12 @@
-import { View, StyleSheet } from "react-native";
+import { View } from "react-native";
 import { List, useTheme, Text, Chip } from "react-native-paper";
 import { ThemedView } from "../ThemedView";
 import { FlowColors } from "@/constants/Colors";
+import {
+  loggingGridStyles,
+  loggingAccordionTitleStyles,
+  useLoggingChipGridStyle,
+} from "@/components/dayView/loggingGridLayout";
 
 const flowOptions = ["None", "Spotting", "Light", "Medium", "Heavy"];
 
@@ -23,20 +28,6 @@ const getFlowColor = (option: string): string => {
   }
 };
 
-const styles = StyleSheet.create({
-  chipContainer: {
-    paddingLeft: 16,
-    paddingRight: 16,
-    paddingBottom: 16,
-    paddingTop: 8,
-    flexDirection: "row",
-    flexWrap: "wrap",
-  },
-  sectionLabel: {
-    display: "none",
-  },
-});
-
 function FlowChips({
   selectedOption,
   setSelectedOption,
@@ -46,10 +37,11 @@ function FlowChips({
 }) {
   const theme = useTheme();
   const selectedValue = flowOptions[selectedOption];
+  const { chipStyle } = useLoggingChipGridStyle();
 
   return (
     <View style={{ width: "100%" }}>
-      <View style={styles.chipContainer}>
+      <View style={loggingGridStyles.grid}>
         {flowOptions.map((option) => {
           const isSelected = selectedValue === option;
           const flowColor = getFlowColor(option);
@@ -69,12 +61,12 @@ function FlowChips({
               }}
               style={{
                 backgroundColor: flowColor,
-                margin: 4,
                 borderRadius: 20,
                 height: 36,
                 justifyContent: "center",
                 borderWidth: isSelected ? 2 : 0,
                 borderColor: theme.colors.onSecondaryContainer,
+                ...chipStyle,
               }}
               textStyle={{
                 color: textColor,
@@ -102,6 +94,7 @@ function CycleToggleButtons({
   setEnd: (option: boolean) => void;
 }) {
   const theme = useTheme();
+  const { chipStyle } = useLoggingChipGridStyle();
 
   const handleUserToggleStart = () => {
     setStart(!toggleStart);
@@ -115,17 +108,17 @@ function CycleToggleButtons({
 
   return (
     <ThemedView>
-      <View style={styles.chipContainer}>
+      <View style={loggingGridStyles.grid}>
         <Chip
           mode="flat"
           style={{
             backgroundColor: toggleStart
               ? theme.colors.onSecondary
               : theme.colors.secondary,
-            margin: 4,
             borderRadius: 20,
             height: 36,
             justifyContent: "center",
+            ...chipStyle,
           }}
           textStyle={{
             color: toggleStart
@@ -142,10 +135,10 @@ function CycleToggleButtons({
             backgroundColor: toggleEnd
               ? theme.colors.onSecondary
               : theme.colors.secondary,
-            margin: 4,
             borderRadius: 20,
             height: 36,
             justifyContent: "center",
+            ...chipStyle,
           }}
           textStyle={{
             color: toggleEnd
@@ -183,9 +176,9 @@ export default function FlowAccordion({
   return (
     <List.Accordion
       title={
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Text style={{ width: 120, fontSize: 16 }}>Flow</Text>
-          <Text style={{ fontSize: 16 }}>
+        <View style={loggingAccordionTitleStyles.row}>
+          <Text style={loggingAccordionTitleStyles.label}>Flow</Text>
+          <Text style={loggingAccordionTitleStyles.value}>
             |{"\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"}
             {flowOptions[flow_intensity]}
           </Text>

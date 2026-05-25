@@ -420,7 +420,7 @@ export default function DayView() {
   return (
     <View style={{ backgroundColor: theme.colors.background }}>
       <View style={styles.titleContainer}>
-        <Text variant="titleLarge">
+        <Text variant="titleLarge" style={styles.titleText}>
           {new Intl.DateTimeFormat("en-US", {
             weekday: "long",
             month: "long",
@@ -501,5 +501,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 10,
     paddingBottom: 0,
+    paddingHorizontal: 12,
+    flexWrap: "wrap",
+  },
+  titleText: {
+    textAlign: "center",
+    flexShrink: 1,
   },
 });
