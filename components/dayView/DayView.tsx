@@ -402,6 +402,13 @@ export default function DayView() {
         }
       }, 100);
     }
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
+      }
+    };
   }, [
     flow_intensity,
     notes,

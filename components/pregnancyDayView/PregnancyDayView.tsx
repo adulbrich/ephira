@@ -97,6 +97,13 @@ export default function PregnancyDayView() {
     saveTimeoutRef.current = setTimeout(() => {
       saveRef.current();
     }, 400);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
+      }
+    };
   }, [kicks, symptoms, moods, notes, date]);
 
   return (
