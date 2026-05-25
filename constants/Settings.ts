@@ -11,6 +11,8 @@ export const SettingsKeys = {
   activeBirthControlType: "activeBirthControlType",
   trackingMode: "trackingMode",
   pregnancyCalendarFilters: "pregnancyCalendarFilters",
+  pregnancyStartDate: "pregnancyStartDate",
+  pregnancyGestationOffsetDays: "pregnancyGestationOffsetDays",
 };
 
 export const TRACKING_MODES = {

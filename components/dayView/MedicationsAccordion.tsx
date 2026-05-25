@@ -5,6 +5,7 @@ import { getAllVisibleMedications } from "@/db/database";
 import ChipSelection from "./ChipSelection";
 import { birthControlOptions } from "@/constants/BirthControlTypes";
 import CustomEntries from "@/components/settings/CustomEntries";
+import { loggingAccordionTitleStyles } from "@/components/dayView/loggingGridLayout";
 
 export default function MedicationsAccordion({
   state,
@@ -47,9 +48,9 @@ export default function MedicationsAccordion({
     <>
       <List.Accordion
         title={
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Text style={{ width: 120, fontSize: 16 }}>Medications</Text>
-            <Text style={{ fontSize: 16 }}>
+          <View style={loggingAccordionTitleStyles.row}>
+            <Text style={loggingAccordionTitleStyles.label}>Medications</Text>
+            <Text style={loggingAccordionTitleStyles.value}>
               |{"\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"}
               {medicationsWithoutBirthControl.length + " Selected"}
             </Text>
@@ -71,9 +72,9 @@ export default function MedicationsAccordion({
         <View
           style={{
             width: "100%",
+            maxWidth: "100%",
             padding: 6,
-            paddingLeft: 20,
-            paddingRight: 20,
+            paddingHorizontal: 20,
             marginBottom: 14,
           }}
         >

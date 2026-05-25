@@ -4,6 +4,7 @@ import { List, Text, Button } from "react-native-paper";
 import ChipSelection from "./ChipSelection";
 import { getAllVisibleSymptoms } from "@/db/database";
 import CustomEntries from "@/components/settings/CustomEntries";
+import { loggingAccordionTitleStyles } from "@/components/dayView/loggingGridLayout";
 
 export default function SymptomsAccordion({
   state,
@@ -39,9 +40,9 @@ export default function SymptomsAccordion({
     <>
       <List.Accordion
         title={
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Text style={{ width: 120, fontSize: 16 }}>Symptoms</Text>
-            <Text style={{ fontSize: 16 }}>
+          <View style={loggingAccordionTitleStyles.row}>
+            <Text style={loggingAccordionTitleStyles.label}>Symptoms</Text>
+            <Text style={loggingAccordionTitleStyles.value}>
               |{"\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"}
               {selectedVisibleSymptoms.length + " Selected"}
             </Text>
