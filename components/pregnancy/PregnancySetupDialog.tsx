@@ -10,7 +10,10 @@ import {
   Text,
   useTheme,
 } from "react-native-paper";
-import { MAX_DAY_IN_WEEK_INPUT, MAX_PREGNANCY_WEEK_INPUT } from "@/constants/Pregnancy";
+import {
+  MAX_DAY_IN_WEEK_INPUT,
+  MAX_PREGNANCY_WEEK_INPUT,
+} from "@/constants/Pregnancy";
 import { formatAsISODate } from "@/utils/pregnancyDates";
 import type {
   DateFieldKey,
@@ -91,7 +94,11 @@ export default function PregnancySetupDialog({
   return (
     <>
       <Portal>
-        <Dialog visible={visible} dismissable={dismissable} onDismiss={onDismiss}>
+        <Dialog
+          visible={visible}
+          dismissable={dismissable}
+          onDismiss={onDismiss}
+        >
           <Dialog.Title style={{ textAlign: "center" }}>
             Set up Pregnancy Progress
           </Dialog.Title>
@@ -133,9 +140,7 @@ export default function PregnancySetupDialog({
 
               <Button
                 mode={
-                  setupMethod === "lastPeriod"
-                    ? "contained-tonal"
-                    : "outlined"
+                  setupMethod === "lastPeriod" ? "contained-tonal" : "outlined"
                 }
                 onPress={() => {
                   setSetupMethod("lastPeriod");
@@ -166,9 +171,7 @@ export default function PregnancySetupDialog({
                       icon="minus"
                       mode="outlined"
                       disabled={parsedWeekValue <= 0}
-                      onPress={() =>
-                        setWeeksInput(String(parsedWeekValue - 1))
-                      }
+                      onPress={() => setWeeksInput(String(parsedWeekValue - 1))}
                     />
                     <Text variant="headlineSmall" style={styles.stepperValue}>
                       {parsedWeekValue}
@@ -177,9 +180,7 @@ export default function PregnancySetupDialog({
                       icon="plus"
                       mode="outlined"
                       disabled={parsedWeekValue >= MAX_PREGNANCY_WEEK_INPUT}
-                      onPress={() =>
-                        setWeeksInput(String(parsedWeekValue + 1))
-                      }
+                      onPress={() => setWeeksInput(String(parsedWeekValue + 1))}
                     />
                   </View>
                 </View>
@@ -325,9 +326,7 @@ export default function PregnancySetupDialog({
             ) : null}
           </Dialog.Content>
           <Dialog.Actions>
-            {startDateIso ? (
-              <Button onPress={onDismiss}>Cancel</Button>
-            ) : null}
+            {startDateIso ? <Button onPress={onDismiss}>Cancel</Button> : null}
             <Button loading={saving} mode="contained" onPress={onSave}>
               Save
             </Button>

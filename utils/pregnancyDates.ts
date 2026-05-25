@@ -11,9 +11,7 @@ export const parseISODate = (value: string): Date => {
 };
 
 export const differenceInDays = (startDate: Date, endDate: Date): number =>
-  Math.floor(
-    (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
-  );
+  Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
 
 export const addDays = (base: Date, days: number): Date => {
   const next = new Date(base);

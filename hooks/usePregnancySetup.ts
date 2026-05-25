@@ -65,7 +65,11 @@ export function usePregnancySetup({
   const [setupError, setSetupError] = useState<string | null>(null);
 
   const applyDefaultDateInputs = useCallback(
-    (normalizedToday: Date, configured: boolean, currentPregnancyDay?: number) => {
+    (
+      normalizedToday: Date,
+      configured: boolean,
+      currentPregnancyDay?: number,
+    ) => {
       if (configured && currentPregnancyDay !== undefined) {
         const derivedDayZero = addDays(normalizedToday, -currentPregnancyDay);
         setDueDateInput(addDays(derivedDayZero, FULL_TERM_DAYS));
@@ -84,9 +88,7 @@ export function usePregnancySetup({
       setDueDateInput(addDays(normalizedToday, DAYS_FROM_LMP_TO_DUE));
       setLastPeriodInput(addDays(normalizedToday, -DEFAULT_LMP_DAYS_AGO));
       setConceptionDateInput(normalizedToday);
-      setPositiveTestDateInput(
-        addDays(normalizedToday, DEFAULT_LMP_DAYS_AGO),
-      );
+      setPositiveTestDateInput(addDays(normalizedToday, DEFAULT_LMP_DAYS_AGO));
     },
     [],
   );
@@ -147,56 +149,62 @@ export function usePregnancySetup({
     return clampPregnancyValue(parsed, 0, MAX_DAY_IN_WEEK_INPUT);
   }, [daysInput]);
 
-  const onDateChange = useCallback((event: DateTimePickerEvent, selectedDate?: Date) => {
-    if (Platform.OS === "android") {
-      setShowDatePicker(false);
-    }
+  const onDateChange = useCallback(
+    (event: DateTimePickerEvent, selectedDate?: Date) => {
+      if (Platform.OS === "android") {
+        setShowDatePicker(false);
+      }
 
-    if (event.type === "set" && selectedDate) {
-      if (activeDateField === "dueDate") setDueDateInput(selectedDate);
-      if (activeDateField === "lastPeriod") setLastPeriodInput(selectedDate);
-      if (activeDateField === "conceptionDate")
-        setConceptionDateInput(selectedDate);
-      if (activeDateField === "positiveTestDate")
-        setPositiveTestDateInput(selectedDate);
-    }
-  }, [activeDateField]);
+      if (event.type === "set" && selectedDate) {
+        if (activeDateField === "dueDate") setDueDateInput(selectedDate);
+        if (activeDateField === "lastPeriod") setLastPeriodInput(selectedDate);
+        if (activeDateField === "conceptionDate")
+          setConceptionDateInput(selectedDate);
+        if (activeDateField === "positiveTestDate")
+          setPositiveTestDateInput(selectedDate);
+      }
+    },
+    [activeDateField],
+  );
 
-  const openDatePicker = useCallback((field?: DateFieldKey) => {
-    const targetField = field ?? activeDateField;
-    if (!targetField) return;
-    setActiveDateField(targetField);
-    const dateForField =
-      targetField === "dueDate"
-        ? dueDateInput
-        : targetField === "lastPeriod"
-          ? lastPeriodInput
-          : targetField === "conceptionDate"
-            ? conceptionDateInput
-            : positiveTestDateInput;
+  const openDatePicker = useCallback(
+    (field?: DateFieldKey) => {
+      const targetField = field ?? activeDateField;
+      if (!targetField) return;
+      setActiveDateField(targetField);
+      const dateForField =
+        targetField === "dueDate"
+          ? dueDateInput
+          : targetField === "lastPeriod"
+            ? lastPeriodInput
+            : targetField === "conceptionDate"
+              ? conceptionDateInput
+              : positiveTestDateInput;
 
-    if (Platform.OS === "android") {
-      DateTimePickerAndroid.open({
-        value: dateForField,
-        mode: "date",
-        minimumDate: targetField === "dueDate" ? dueDateMin : undefined,
-        maximumDate: targetField === "dueDate" ? dueDateMax : today,
-        onChange: onDateChange,
-      });
-      return;
-    }
-    setShowDatePicker((prev) => !prev);
-  }, [
-    activeDateField,
-    conceptionDateInput,
-    dueDateInput,
-    dueDateMax,
-    dueDateMin,
-    lastPeriodInput,
-    onDateChange,
-    positiveTestDateInput,
-    today,
-  ]);
+      if (Platform.OS === "android") {
+        DateTimePickerAndroid.open({
+          value: dateForField,
+          mode: "date",
+          minimumDate: targetField === "dueDate" ? dueDateMin : undefined,
+          maximumDate: targetField === "dueDate" ? dueDateMax : today,
+          onChange: onDateChange,
+        });
+        return;
+      }
+      setShowDatePicker((prev) => !prev);
+    },
+    [
+      activeDateField,
+      conceptionDateInput,
+      dueDateInput,
+      dueDateMax,
+      dueDateMin,
+      lastPeriodInput,
+      onDateChange,
+      positiveTestDateInput,
+      today,
+    ],
+  );
 
   const handleSaveSetup = useCallback(async () => {
     if (!setupMethod) {

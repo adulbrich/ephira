@@ -5,13 +5,8 @@ import { formatDuration } from "@/utils/formatDuration";
 const TICK_MS = 1000;
 
 export function useContractionTimer() {
-  const {
-    isRunning,
-    startAt,
-    lastDurationMs,
-    startTimer,
-    stopTimer,
-  } = useContractionTimerStore();
+  const { isRunning, startAt, lastDurationMs, startTimer, stopTimer } =
+    useContractionTimerStore();
   const [elapsedMs, setElapsedMs] = useState(0);
 
   useEffect(() => {

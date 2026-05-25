@@ -23,11 +23,11 @@ export default function PregnancyProgressRing({
   const ringCircumference = 2 * Math.PI * ringRadius;
   const ringOffset = ringCircumference * (1 - ringProgress);
   const ringEndColor = useMemo(
-    () =>
-      interpolateHexColor(visuals.lilac, visuals.darkViolet, ringProgress),
+    () => interpolateHexColor(visuals.lilac, visuals.darkViolet, ringProgress),
     [ringProgress, visuals.darkViolet, visuals.lilac],
   );
-  const innerBubbleRadius = ringRadius - visuals.stroke * visuals.innerFillScale;
+  const innerBubbleRadius =
+    ringRadius - visuals.stroke * visuals.innerFillScale;
   const highlightRadius =
     ringRadius - visuals.stroke * visuals.highlightFillScale;
 

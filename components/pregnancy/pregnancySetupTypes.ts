@@ -1,4 +1,8 @@
-export type SetupMethod = "dueDate" | "weeksPregnant" | "lastPeriod" | "notSure";
+export type SetupMethod =
+  | "dueDate"
+  | "weeksPregnant"
+  | "lastPeriod"
+  | "notSure";
 
 export type NotSurePath =
   | "doctorDueDate"
