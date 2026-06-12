@@ -62,3 +62,27 @@ export const usePregnancyAppointments = create<PregnancyAppointmentsState>(
     setAppointments: (appointments) => set({ appointments }),
   }),
 );
+
+interface ContractionTimerState {
+  isRunning: boolean;
+  startAt: number | null;
+  lastDurationMs: number | null;
+  startTimer: () => void;
+  stopTimer: () => void;
+}
+
+/** Persists across pregnancy tab navigation while the app session is active. */
+export const useContractionTimerStore = create<ContractionTimerState>(
+  (set, get) => ({
+    isRunning: false,
+    startAt: null,
+    lastDurationMs: null,
+    startTimer: () =>
+      set({ isRunning: true, startAt: Date.now(), lastDurationMs: null }),
+    stopTimer: () => {
+      const { startAt } = get();
+      const elapsed = startAt ? Date.now() - startAt : 0;
+      set({ isRunning: false, startAt: null, lastDurationMs: elapsed });
+    },
+  }),
+);
