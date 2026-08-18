@@ -22,7 +22,7 @@ import {
   useDatabaseChangeNotifier,
   usePredictionChoice,
 } from "@/assets/src/calendar-storage";
-import { useFetchCycleData } from "@/hooks/useFetchCycleData";
+import { refreshPredictions } from "@/services/cyclePredictions";
 import { CYCLE_PHASES, getNextPhase } from "@/constants/CyclePhases";
 import { CYCLE_PREDICTION_CONSTANTS } from "@/constants/CyclePrediction";
 
@@ -116,7 +116,6 @@ export default function Cycle() {
   const { predictedCycle, setPredictedCycle } = usePredictedCycle();
   const { databaseChange } = useDatabaseChangeNotifier();
   const { predictionChoice } = usePredictionChoice();
-  const { fetchCycleData } = useFetchCycleData(setPredictedCycle);
   const today = useMemo(() => startOfLocalDay(), []);
   const { cycleState, stats, loading, refresh } = useCyclePhase(
     flowData,
@@ -124,16 +123,14 @@ export default function Cycle() {
     today,
   );
 
-  // Load cycle data on mount and when database changes
+  // One effect, not two. The second was an "initial load" that duplicated
+  // what this one already does on mount.
   useEffect(() => {
-    fetchCycleData();
+    refreshPredictions(today)
+      .then(setPredictedCycle)
+      .catch(() => setPredictedCycle([]));
     refresh();
-  }, [databaseChange, fetchCycleData, refresh]);
-
-  // Initial load
-  useEffect(() => {
-    fetchCycleData();
-  }, [fetchCycleData]);
+  }, [databaseChange, today, setPredictedCycle, refresh]);
 
   if (loading) {
     return (

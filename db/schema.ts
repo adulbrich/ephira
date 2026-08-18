@@ -1,4 +1,9 @@
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import {
+  sqliteTable,
+  text,
+  integer,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 
 export const settings = sqliteTable("settings", {
   id: integer().primaryKey({ autoIncrement: true }),
@@ -76,14 +81,27 @@ export const medicationEntries = sqliteTable("medication_entries", {
 });
 
 // to track when prediction were made
-export const predictionSnapshots = sqliteTable("prediction_snapshots", {
-  id: integer().primaryKey({ autoIncrement: true }),
-  prediction_made_date: text().notNull(),
-  predicted_date: text().notNull(),
-  confidence: integer().notNull(),
-  actual_had_flow: integer({ mode: "boolean" }),
-  checked_date: text(),
-});
+export const predictionSnapshots = sqliteTable(
+  "prediction_snapshots",
+  {
+    id: integer().primaryKey({ autoIncrement: true }),
+    prediction_made_date: text().notNull(),
+    predicted_date: text().notNull(),
+    confidence: integer().notNull(),
+    actual_had_flow: integer({ mode: "boolean" }),
+    checked_date: text(),
+  },
+  (table) => [
+    // A Prediction Snapshot is identified by when it was made and what it
+    // predicted. Deliberately not predicted_date alone: the table is a time
+    // series, and the accuracy check depends on knowing what was predicted
+    // before the outcome was known.
+    uniqueIndex("prediction_snapshots_generation_unique").on(
+      table.prediction_made_date,
+      table.predicted_date,
+    ),
+  ],
+);
 
 export const pregnancyDays = sqliteTable("pregnancy_days", {
   id: integer().primaryKey({ autoIncrement: true }),

@@ -6,6 +6,7 @@ import m0001 from './0001_serious_yellowjacket.sql';
 import m0002 from './0002_ambitious_makkari.sql';
 import m0003 from './0003_puzzling_the_initiative.sql';
 import m0004 from './0004_orphaned_entries_cleanup.sql';
+import m0005 from './0005_prediction_snapshot_identity.sql';
 
   export default {
     journal,
@@ -14,7 +15,8 @@ import m0004 from './0004_orphaned_entries_cleanup.sql';
 m0001,
 m0002,
 m0003,
-m0004
+m0004,
+m0005
     }
   }
   
