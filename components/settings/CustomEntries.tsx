@@ -29,7 +29,6 @@ import {
 } from "react-native-paper";
 import { ScrollView, StyleSheet, Dimensions } from "react-native";
 import {
-  useAccordion,
   useCalendarFilters,
   useDatabaseChangeNotifier,
 } from "@/stores/calendar-storage";
@@ -37,6 +36,7 @@ import { symptomOptions } from "@/constants/Symptoms";
 import { medicationOptions } from "@/constants/Medications";
 import { moodOptions } from "@/constants/Moods";
 import { birthControlOptions } from "@/constants/BirthControlTypes";
+import { invalidateCatalogue, type CatalogueKind } from "@/db/catalogue";
 
 function InfoDialog({
   visible,
@@ -202,18 +202,17 @@ function AccordionContents({
 
 function CustomEntriesModal({
   onDismiss,
-  initialExpandedAccordion = "1",
+  initialExpandedCatalogue = "symptom",
 }: {
   onDismiss: () => void;
-  initialExpandedAccordion?: string;
+  initialExpandedCatalogue?: CatalogueKind;
 }) {
   const theme = useTheme();
   const { width, height } = Dimensions.get("window");
   const styles = makeStyles(theme, width, height);
   const setDbChange = useDatabaseChangeNotifier().setDatabaseChange;
   const { selectedFilters, setSelectedFilters } = useCalendarFilters();
-  const setAccordionState = useAccordion().setExpandedAccordion;
-  const [expanded, setExpanded] = useState<string>(initialExpandedAccordion);
+  const [expanded, setExpanded] = useState<string>(initialExpandedCatalogue);
   const [symptoms, setSymptoms] = useState<string[]>([]);
   const [moods, setMoods] = useState<string[]>([]);
   const [medications, setMedications] = useState<string[]>([]);
@@ -338,9 +337,10 @@ function CustomEntriesModal({
   };
 
   const onDismissModal = () => {
-    // this closes any open accordions on the calendar page,
-    // which will force them to re-render with the updated data
-    setAccordionState(null);
+    // Say the Catalogue changed. This used to collapse the day view's
+    // accordions instead, because their fetch was keyed on that state, which
+    // meant adding a custom Mood shut the Section the user was working in.
+    invalidateCatalogue();
     // force useLiveQuery to update
     setDbChange(Math.random().toString());
     onDismiss();
@@ -366,7 +366,7 @@ function CustomEntriesModal({
           >
             <List.Accordion
               title="Symptoms"
-              id="1"
+              id="symptom"
               titleStyle={styles.listTitle}
             >
               <AccordionContents
@@ -377,7 +377,11 @@ function CustomEntriesModal({
               />
             </List.Accordion>
             <Divider />
-            <List.Accordion title="Moods" id="2" titleStyle={styles.listTitle}>
+            <List.Accordion
+              title="Moods"
+              id="mood"
+              titleStyle={styles.listTitle}
+            >
               <AccordionContents
                 items={moods}
                 itemType="mood"
@@ -388,7 +392,7 @@ function CustomEntriesModal({
             <Divider />
             <List.Accordion
               title="Medications"
-              id="3"
+              id="medication"
               titleStyle={styles.listTitle}
             >
               <AccordionContents
@@ -401,7 +405,7 @@ function CustomEntriesModal({
             <Divider />
             <List.Accordion
               title="Birth Control"
-              id="4"
+              id="birth control"
               titleStyle={styles.listTitle}
             >
               <AccordionContents
@@ -431,11 +435,11 @@ function CustomEntriesModal({
 export default function CustomEntries({
   modalVisibleInitially = false,
   onModalClose,
-  initialExpandedAccordion = "1",
+  initialExpandedCatalogue = "symptom",
 }: {
   modalVisibleInitially?: boolean;
   onModalClose?: () => void;
-  initialExpandedAccordion?: string;
+  initialExpandedCatalogue?: CatalogueKind;
 } = {}) {
   const [modalVisible, setModalVisible] = useState(modalVisibleInitially);
 
@@ -457,7 +461,7 @@ export default function CustomEntries({
       {modalVisible && (
         <CustomEntriesModal
           onDismiss={handleModalClose}
-          initialExpandedAccordion={initialExpandedAccordion}
+          initialExpandedCatalogue={initialExpandedCatalogue}
         />
       )}
     </ThemedView>

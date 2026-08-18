@@ -1,6 +1,7 @@
 import { View } from "react-native";
 import { List, Text, IconButton, useTheme } from "react-native-paper";
 import { loggingAccordionTitleStyles } from "@/components/dayView/loggingGridLayout";
+import { Section } from "@/constants/Sections";
 
 export default function KicksAccordion({
   state,
@@ -8,8 +9,8 @@ export default function KicksAccordion({
   kicks,
   setKicks,
 }: {
-  state: string | null;
-  setExpandedAccordion: (accordion: string | null) => void;
+  state: Section | null;
+  setExpandedAccordion: (section: Section | null) => void;
   kicks: number;
   setKicks: (kicks: number) => void;
 }) {
@@ -26,8 +27,10 @@ export default function KicksAccordion({
           </Text>
         </View>
       }
-      expanded={state === "kicks"}
-      onPress={() => setExpandedAccordion(state === "kicks" ? null : "kicks")}
+      expanded={state === Section.Kicks}
+      onPress={() =>
+        setExpandedAccordion(state === Section.Kicks ? null : Section.Kicks)
+      }
       left={(props) => <List.Icon {...props} icon="baby-face-outline" />}
     >
       <View

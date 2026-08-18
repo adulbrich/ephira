@@ -8,9 +8,10 @@ import {
 } from "@/db/database";
 import {
   usePregnancySelectedDate,
-  usePregnancyAccordion,
   usePregnancyAppointments,
 } from "@/stores/pregnancy-storage";
+import { Section } from "@/constants/Sections";
+import { useCatalogue } from "@/hooks/useCatalogue";
 import KicksAccordion from "./KicksAccordion";
 import AppointmentsAccordion from "./AppointmentsAccordion";
 import SymptomsAccordion from "@/components/dayView/SymptomsAccordion";
@@ -20,7 +21,10 @@ import Snackbar from "@/components/ui/Snackbar";
 
 export default function PregnancyDayView() {
   const theme = useTheme();
-  const { state, setExpandedAccordion } = usePregnancyAccordion();
+  // Local, like the cycle day view's. Settings screens used to null the cycle
+  // accordion store to refresh the Catalogue, which never reached this view.
+  const [state, setExpandedAccordion] = useState<Section | null>(null);
+  const catalogue = useCatalogue();
   const {
     date,
     kicks,
@@ -138,6 +142,7 @@ export default function PregnancyDayView() {
           <SymptomsAccordion
             state={state}
             setExpandedAccordion={setExpandedAccordion}
+            symptomOptions={catalogue.symptoms}
             selectedSymptoms={symptoms}
             setSelectedSymptoms={setSymptoms}
           />
@@ -145,6 +150,7 @@ export default function PregnancyDayView() {
           <MoodsAccordion
             state={state}
             setExpandedAccordion={setExpandedAccordion}
+            moodOptions={catalogue.moods}
             selectedMoods={moods}
             setSelectedMoods={setMoods}
           />

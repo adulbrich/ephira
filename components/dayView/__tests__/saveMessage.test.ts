@@ -1,5 +1,6 @@
 import { savedSectionLabel } from "@/components/dayView/saveMessage";
 import { emptyLoggedDay, type LoggedDay } from "@/db/loggedDay";
+import { Section } from "@/constants/Sections";
 
 // This decision touches no database. The stub says so: db/loggedDay.ts opens a
 // handle when it loads, and nothing here ever reaches it.
@@ -9,20 +10,18 @@ jest.mock("@/db/operations/setup", () => ({
 }));
 
 /**
- * The exact strings the accordions pass to `setExpandedAccordion`. Kept here
- * as literals on purpose: this test's job is to prove the save-message logic
- * agrees with what the accordions actually send, so reading them from a shared
- * constant would assume the very thing under test. #184 replaces both sides
- * with one enumeration, at which point this list becomes that enumeration.
+ * Both sides now name the same enumeration, so the drift this test was written
+ * to catch cannot compile. What is left worth checking is the mapping from a
+ * Section to its label, and the fallback when no Section is expanded.
  */
 const SECTION_FROM_ACCORDION = {
-  flow: "flow", // FlowAccordion.tsx:188
-  symptoms: "symptoms", // SymptomsAccordion.tsx:53
-  moods: "mood", // MoodsAccordion.tsx:52
-  medications: "medications", // MedicationsAccordion.tsx:61
-  birthControl: "birthControl", // BirthControlAccordion.tsx:227
-  intercourse: "intercourse", // IntercourseAccordion.tsx:29
-  notes: "notes", // NotesAccordion.tsx:24
+  flow: Section.Flow,
+  symptoms: Section.Symptoms,
+  moods: Section.Moods,
+  medications: Section.Medications,
+  birthControl: Section.BirthControl,
+  intercourse: Section.Intercourse,
+  notes: Section.Notes,
 };
 
 const empty: LoggedDay = emptyLoggedDay("2026-04-01");

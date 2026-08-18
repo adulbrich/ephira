@@ -10,11 +10,11 @@ This file is maintained lazily: terms are added when a design decision actually 
 
 **Logged Day**: the whole of what the user has recorded for one Day: flow, notes, cycle start/end markers, intercourse, and the Moods, Symptoms and Medications selected. This is the unit the app loads and saves as one snapshot. It is a view over several tables, not a table itself.
 
-**Section**: one loggable area of a Logged Day, as presented in the day view: Flow, Moods, Symptoms, Medications, Birth Control, Intercourse, Notes, and in pregnancy mode Kicks and Appointments. Sections are a property of what can be logged, not of which tracking mode is active; each mode renders its own subset. One Section is expanded at a time.
+**Section**: one loggable area of a Logged Day, as presented in the day view: Flow, Moods, Symptoms, Medications, Birth Control, Intercourse, Notes, and in pregnancy mode Kicks and Appointments. Sections are a property of what can be logged, not of which tracking mode is active; each mode renders its own subset. One Section is expanded at a time, and which one is local to the view showing it. The names live in `constants/Sections.ts`.
 
 **Selected Date**: which date the day view is showing. Shared, because the calendar picks it and the day view reads it. Only the date is shared: the Selected Date is not a Logged Day, and the day's contents belong to whatever is displaying them.
 
-**Catalogue**: the set of Moods, Symptoms or Medications a user can choose from. Distinct from the entries that reference them. The Catalogue is edited rarely, in settings, while entries are written constantly, while logging. `moods`, `symptoms` and `medications` are Catalogue tables.
+**Catalogue**: the set of Moods, Symptoms or Medications a user can choose from. Distinct from the entries that reference them. The Catalogue is edited rarely, in settings, while entries are written constantly, while logging. `moods`, `symptoms` and `medications` are Catalogue tables. It is read once and held; whoever edits it says so explicitly. Birth control is a Medication row distinguished by its `type`, and the day view offers it as its own Section.
 
 **Entry**: a single recorded selection joining a Day to a Catalogue item: `mood_entries`, `symptom_entries`, `medication_entries`. An Entry may carry its own detail, such as a Medication's `time_taken`.
 

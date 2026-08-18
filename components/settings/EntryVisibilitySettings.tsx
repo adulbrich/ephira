@@ -25,10 +25,10 @@ import {
 } from "react-native-paper";
 import { ScrollView, StyleSheet, Dimensions } from "react-native";
 import {
-  useAccordion,
   useCalendarFilters,
   useDatabaseChangeNotifier,
 } from "@/stores/calendar-storage";
+import { invalidateCatalogue } from "@/db/catalogue";
 
 interface Symptom {
   id: number;
@@ -138,7 +138,6 @@ function CalendarEntriesModal({ onDismiss }: { onDismiss: () => void }) {
   const styles = makeStyles(theme, width, height);
   const setDbChange = useDatabaseChangeNotifier().setDatabaseChange;
   const { selectedFilters, setSelectedFilters } = useCalendarFilters();
-  const setAccordionState = useAccordion().setExpandedAccordion;
   const [expanded, setExpanded] = useState<string>("1");
   const [symptoms, setSymptoms] = useState<Symptom[]>([]);
   const [moods, setMoods] = useState<Mood[]>([]);
@@ -237,9 +236,10 @@ function CalendarEntriesModal({ onDismiss }: { onDismiss: () => void }) {
   };
 
   const onDismissModal = () => {
-    // this closes any open accordions on the calendar page,
-    // which will force them to re-render with the updated data
-    setAccordionState(null);
+    // Say the Catalogue changed. This used to collapse the day view's
+    // accordions instead, because their fetch was keyed on that state, which
+    // meant adding a custom Mood shut the Section the user was working in.
+    invalidateCatalogue();
     // force useLiveQuery to update
     setDbChange(Math.random().toString());
     onDismiss();
@@ -265,7 +265,7 @@ function CalendarEntriesModal({ onDismiss }: { onDismiss: () => void }) {
           >
             <List.Accordion
               title="Symptoms"
-              id="1"
+              id="symptom"
               titleStyle={styles.listTitle}
             >
               <AccordionContents
@@ -275,7 +275,11 @@ function CalendarEntriesModal({ onDismiss }: { onDismiss: () => void }) {
               />
             </List.Accordion>
             <Divider />
-            <List.Accordion title="Moods" id="2" titleStyle={styles.listTitle}>
+            <List.Accordion
+              title="Moods"
+              id="mood"
+              titleStyle={styles.listTitle}
+            >
               <AccordionContents
                 items={moods}
                 itemType="mood"
@@ -285,7 +289,7 @@ function CalendarEntriesModal({ onDismiss }: { onDismiss: () => void }) {
             <Divider />
             <List.Accordion
               title="Medications"
-              id="3"
+              id="medication"
               titleStyle={styles.listTitle}
             >
               <AccordionContents
@@ -297,7 +301,7 @@ function CalendarEntriesModal({ onDismiss }: { onDismiss: () => void }) {
             <Divider />
             <List.Accordion
               title="Birth Control"
-              id="4"
+              id="birth control"
               titleStyle={styles.listTitle}
             >
               <AccordionContents

@@ -14,11 +14,6 @@ interface PregnancySelectedDate {
   setNotes: (notes: string) => void;
 }
 
-interface PregnancyAccordion {
-  state: string | null;
-  setExpandedAccordion: (state: string | null) => void;
-}
-
 interface PregnancyCalendarFilters {
   selectedFilters: string[];
   setSelectedFilters: (filters: string[]) => void;
@@ -43,11 +38,6 @@ export const usePregnancySelectedDate = create<PregnancySelectedDate>(
     setNotes: (notes) => set({ notes }),
   }),
 );
-
-export const usePregnancyAccordion = create<PregnancyAccordion>((set) => ({
-  state: null,
-  setExpandedAccordion: (state) => set({ state }),
-}));
 
 export const usePregnancyCalendarFilters = create<PregnancyCalendarFilters>(
   (set) => ({

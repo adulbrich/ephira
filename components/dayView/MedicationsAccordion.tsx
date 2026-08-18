@@ -1,37 +1,26 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { View } from "react-native";
 import { List, Text, Button } from "react-native-paper";
-import { getAllVisibleMedications } from "@/db/database";
 import ChipSelection from "./ChipSelection";
 import { birthControlOptions } from "@/constants/BirthControlTypes";
 import CustomEntries from "@/components/settings/CustomEntries";
 import { loggingAccordionTitleStyles } from "@/components/dayView/loggingGridLayout";
+import { Section } from "@/constants/Sections";
 
 export default function MedicationsAccordion({
   state,
   setExpandedAccordion,
+  medicationOptions,
   selectedMedications,
   setSelectedMedications,
 }: {
-  state: string | null;
-  setExpandedAccordion: (accordion: string | null) => void;
+  state: Section | null;
+  setExpandedAccordion: (section: Section | null) => void;
+  medicationOptions: string[];
   selectedMedications: string[];
   setSelectedMedications: (medications: string[]) => void;
 }) {
-  const [medicationOptions, setMedicationOptions] = useState<string[]>([]);
   const [customEntriesVisible, setCustomEntriesVisible] = useState(false);
-
-  useEffect(() => {
-    const fetchMedications = async () => {
-      const medications = await getAllVisibleMedications();
-      setMedicationOptions(
-        medications
-          .filter((medication) => medication.type !== "birth control")
-          .map((medication) => medication.name),
-      );
-    };
-    fetchMedications();
-  }, [state, customEntriesVisible]);
 
   // Filter out birth control medications and only include visible medications to calculate the count
   const medicationsWithoutBirthControl = selectedMedications.filter(
@@ -56,9 +45,11 @@ export default function MedicationsAccordion({
             </Text>
           </View>
         }
-        expanded={state === "medications"}
+        expanded={state === Section.Medications}
         onPress={() =>
-          setExpandedAccordion(state === "medications" ? null : "medications")
+          setExpandedAccordion(
+            state === Section.Medications ? null : Section.Medications,
+          )
         }
         left={(props) => <List.Icon {...props} icon="pill" />}
       >
@@ -92,8 +83,7 @@ export default function MedicationsAccordion({
       {customEntriesVisible && (
         <CustomEntries
           modalVisibleInitially={true}
-          // automatically opens to the "medications" section (id=3)
-          initialExpandedAccordion="3"
+          initialExpandedCatalogue="medication"
           onModalClose={() => setCustomEntriesVisible(false)}
         />
       )}

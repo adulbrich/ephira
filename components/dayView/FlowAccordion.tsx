@@ -7,6 +7,7 @@ import {
   loggingAccordionTitleStyles,
   useLoggingChipGridStyle,
 } from "@/components/dayView/loggingGridLayout";
+import { Section } from "@/constants/Sections";
 
 const flowOptions = ["None", "Spotting", "Light", "Medium", "Heavy"];
 
@@ -164,8 +165,8 @@ export default function FlowAccordion({
   is_cycle_end,
   setCycleEnd,
 }: {
-  state: string | null;
-  setExpandedAccordion: (accordion: string | null) => void;
+  state: Section | null;
+  setExpandedAccordion: (section: Section | null) => void;
   flow_intensity: number;
   setFlow: (intensity: number) => void;
   is_cycle_start?: boolean;
@@ -184,8 +185,10 @@ export default function FlowAccordion({
           </Text>
         </View>
       }
-      expanded={state === "flow"}
-      onPress={() => setExpandedAccordion(state === "flow" ? null : "flow")}
+      expanded={state === Section.Flow}
+      onPress={() =>
+        setExpandedAccordion(state === Section.Flow ? null : Section.Flow)
+      }
       left={(props) => <List.Icon {...props} icon="water" />}
     >
       {flow_intensity !== 0 && (

@@ -49,11 +49,6 @@ export interface LoadData {
   setShow: (show: boolean) => void;
 }
 
-export interface Accordion {
-  state: string | null;
-  setExpandedAccordion: (state: string | null) => void;
-}
-
 export interface FlowDataState {
   flowDataForCurrentMonth: DayData[];
   setFlowDataForCurrentMonth: (data: DayData[]) => void;
