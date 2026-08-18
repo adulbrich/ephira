@@ -8,9 +8,7 @@ import { getSetting, updateSetting } from "@/db/database";
 import { SettingsKeys } from "@/constants/Settings";
 import {
   clampPregnancyValue,
-  CONCEPTION_TO_CURRENT_DAY_OFFSET,
   DAYS_FROM_LMP_TO_DUE,
-  DAYS_IN_WEEK,
   DEFAULT_DAYS_WHEN_UNCONFIGURED,
   DEFAULT_GESTATION_OFFSET_DAYS,
   DEFAULT_LMP_DAYS_AGO,
@@ -31,10 +29,10 @@ import type {
 } from "@/components/pregnancy/pregnancySetupTypes";
 import {
   addDays,
-  differenceInDays,
-  formatAsISODate,
-  parseISODate,
+  anchorFromSetupAnswer,
+  gestationalAge,
   startOfLocalDay,
+  type SetupAnswer,
 } from "@/utils/pregnancyDates";
 
 type UsePregnancySetupOptions = {
@@ -113,15 +111,10 @@ export function usePregnancySetup({
       }
 
       if (startSetting?.value) {
-        const startDate = parseISODate(startSetting.value);
-        const currentPregnancyDay = Math.max(
-          0,
-          differenceInDays(startDate, normalizedToday) + offset,
-        );
-        const derivedWeek = Math.floor(currentPregnancyDay / DAYS_IN_WEEK) + 1;
-        setWeeksInput(String(derivedWeek));
-        setDaysInput(String(currentPregnancyDay % DAYS_IN_WEEK));
-        applyDefaultDateInputs(normalizedToday, true, currentPregnancyDay);
+        const age = gestationalAge(startSetting.value, offset, normalizedToday);
+        setWeeksInput(String(age.weekNumber));
+        setDaysInput(String(age.dayInWeek));
+        applyDefaultDateInputs(normalizedToday, true, age.pregnancyDay);
       } else {
         applyDefaultDateInputs(normalizedToday, false);
       }
@@ -220,83 +213,61 @@ export function usePregnancySetup({
     setSetupError(null);
     setSaving(true);
     try {
-      let targetCurrentPregnancyDay = 0;
-      let anchorStartDate = today;
+      const weeksAndDaysAreValid = () =>
+        !Number.isNaN(parsedWeeks) &&
+        parsedWeeks >= 0 &&
+        parsedWeeks <= MAX_PREGNANCY_WEEK_INPUT &&
+        !Number.isNaN(parsedDays) &&
+        parsedDays >= 0 &&
+        parsedDays <= MAX_DAY_IN_WEEK_INPUT;
 
-      const computeFromDueDate = () => {
-        const daysUntilDue = differenceInDays(today, dueDateInput);
-        return clampPregnancyValue(
-          FULL_TERM_DAYS - daysUntilDue,
-          0,
-          MAX_PREGNANCY_WEEK_INPUT * DAYS_IN_WEEK,
-        );
-      };
+      const weeksAndDaysError = `Please choose a valid week (0-${MAX_PREGNANCY_WEEK_INPUT}) and day (0-${MAX_DAY_IN_WEEK_INPUT}).`;
+
+      // Which question the user answered. The "not sure" paths lead back to
+      // the same four answers rather than repeating their arithmetic.
+      let answer: SetupAnswer;
 
       if (setupMethod === "dueDate") {
-        targetCurrentPregnancyDay = computeFromDueDate();
+        answer = { method: "dueDate", dueDate: dueDateInput };
       } else if (setupMethod === "weeksPregnant") {
-        if (
-          Number.isNaN(parsedWeeks) ||
-          parsedWeeks < 0 ||
-          parsedWeeks > MAX_PREGNANCY_WEEK_INPUT ||
-          Number.isNaN(parsedDays) ||
-          parsedDays < 0 ||
-          parsedDays > MAX_DAY_IN_WEEK_INPUT
-        ) {
-          setSetupError(
-            `Please choose a valid week (0-${MAX_PREGNANCY_WEEK_INPUT}) and day (0-${MAX_DAY_IN_WEEK_INPUT}).`,
-          );
+        if (!weeksAndDaysAreValid()) {
+          setSetupError(weeksAndDaysError);
           return;
         }
-        targetCurrentPregnancyDay =
-          Math.max(0, parsedWeeks - 1) * DAYS_IN_WEEK + parsedDays;
+        answer = {
+          method: "weeksPregnant",
+          weeks: parsedWeeks,
+          days: parsedDays,
+        };
       } else if (setupMethod === "lastPeriod") {
-        anchorStartDate = lastPeriodInput;
-        targetCurrentPregnancyDay = Math.max(
-          0,
-          differenceInDays(lastPeriodInput, today),
-        );
-      } else {
-        if (!notSurePath) {
-          setSetupError("Choose one option so we can estimate your timeline.");
+        answer = { method: "lastPeriod", lastPeriod: lastPeriodInput };
+      } else if (!notSurePath) {
+        setSetupError("Choose one option so we can estimate your timeline.");
+        return;
+      } else if (notSurePath === "doctorDueDate") {
+        answer = { method: "dueDate", dueDate: dueDateInput };
+      } else if (notSurePath === "ultrasoundEstimate") {
+        if (!weeksAndDaysAreValid()) {
+          setSetupError(weeksAndDaysError);
           return;
         }
-        if (notSurePath === "doctorDueDate") {
-          targetCurrentPregnancyDay = computeFromDueDate();
-        } else if (notSurePath === "ultrasoundEstimate") {
-          if (
-            Number.isNaN(parsedWeeks) ||
-            parsedWeeks < 0 ||
-            parsedWeeks > MAX_PREGNANCY_WEEK_INPUT ||
-            Number.isNaN(parsedDays) ||
-            parsedDays < 0 ||
-            parsedDays > MAX_DAY_IN_WEEK_INPUT
-          ) {
-            setSetupError(
-              `Please choose a valid week (0-${MAX_PREGNANCY_WEEK_INPUT}) and day (0-${MAX_DAY_IN_WEEK_INPUT}).`,
-            );
-            return;
-          }
-          targetCurrentPregnancyDay =
-            Math.max(0, parsedWeeks - 1) * DAYS_IN_WEEK + parsedDays;
-        } else if (notSurePath === "lastPeriod") {
-          anchorStartDate = lastPeriodInput;
-          targetCurrentPregnancyDay = Math.max(
-            0,
-            differenceInDays(lastPeriodInput, today),
-          );
-        } else {
-          targetCurrentPregnancyDay = Math.max(
-            0,
-            differenceInDays(conceptionDateInput, today) +
-              CONCEPTION_TO_CURRENT_DAY_OFFSET,
-          );
-        }
+        answer = {
+          method: "weeksPregnant",
+          weeks: parsedWeeks,
+          days: parsedDays,
+        };
+      } else if (notSurePath === "lastPeriod") {
+        answer = { method: "lastPeriod", lastPeriod: lastPeriodInput };
+      } else {
+        answer = {
+          method: "conceptionDate",
+          conceptionDate: conceptionDateInput,
+        };
       }
 
-      const daysSinceStart = differenceInDays(anchorStartDate, today);
-      const offsetDays = targetCurrentPregnancyDay - daysSinceStart;
-      const isoDate = formatAsISODate(anchorStartDate);
+      const { startDateIso: isoDate, gestationOffsetDays: offsetDays } =
+        anchorFromSetupAnswer(answer, today);
+
       await Promise.all([
         updateSetting(SettingsKeys.pregnancyStartDate, isoDate),
         updateSetting(

@@ -15,12 +15,11 @@ import { IconSymbol } from "@/components/ui/IconSymbol";
 import { getSetting } from "@/db/database";
 import { SettingsKeys } from "@/constants/Settings";
 import {
-  DAYS_IN_WEEK,
-  PREGNANCY_WEEKS,
+  DEFAULT_GESTATION_OFFSET_DAYS,
   getPregnancyWeekContent,
   getTrimesterLabel,
 } from "@/constants/Pregnancy";
-import { differenceInDays, parseISODate } from "@/utils/pregnancyDates";
+import { gestationalAge, startOfLocalDay } from "@/utils/pregnancyDates";
 
 // The idea here is that this tab will eventually be up to date with whatever week the user is at
 // Placeholder is week 5, but by the end of pregnancy tracking implementation, this tab *should* be providing information accurate
@@ -198,25 +197,13 @@ export default function PregnancyInfo() {
       return;
     }
 
-    const todayDate = new Date();
-    const today = new Date(
-      todayDate.getFullYear(),
-      todayDate.getMonth(),
-      todayDate.getDate(),
+    const age = gestationalAge(
+      startSetting.value,
+      Number(offsetSetting?.value ?? DEFAULT_GESTATION_OFFSET_DAYS),
+      startOfLocalDay(),
     );
 
-    const startDate = parseISODate(startSetting.value);
-    const offset = Number(offsetSetting?.value ?? 14);
-
-    const pregnancyDay = Math.max(
-      0,
-      differenceInDays(startDate, today) + offset,
-    );
-
-    const week = Math.min(
-      PREGNANCY_WEEKS,
-      Math.floor(pregnancyDay / DAYS_IN_WEEK) + 1,
-    );
+    const week = age.weekNumber;
 
     setCurrentWeek(week);
   }, []);

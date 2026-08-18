@@ -8,19 +8,11 @@ import PregnancyProgressRing from "@/components/pregnancy/PregnancyProgressRing"
 import PregnancySetupDialog from "@/components/pregnancy/PregnancySetupDialog";
 import { getSetting } from "@/db/database";
 import { SettingsKeys } from "@/constants/Settings";
-import {
-  DAYS_IN_WEEK,
-  FULL_TERM_DAYS,
-  getBabySizeForWeek,
-  getTrimesterLabel,
-  PREGNANCY_WEEKS,
-} from "@/constants/Pregnancy";
+import { getBabySizeForWeek, PREGNANCY_WEEKS } from "@/constants/Pregnancy";
 import { usePregnancySetup } from "@/hooks/usePregnancySetup";
 import {
-  addDays,
-  differenceInDays,
   formatDueDate,
-  parseISODate,
+  gestationalAge,
   startOfLocalDay,
 } from "@/utils/pregnancyDates";
 
@@ -90,54 +82,17 @@ export default function PregnancyHome() {
     loadPregnancySettings();
   }, [loadPregnancySettings]);
 
-  const pregnancyDay = useMemo(() => {
-    if (!startDateIso) return null;
-    const startDate = parseISODate(startDateIso);
-    return Math.max(
-      0,
-      differenceInDays(startDate, today) + gestationOffsetDays,
-    );
-  }, [startDateIso, today, gestationOffsetDays]);
+  // One derivation, from utils/pregnancyDates.ts, rather than seven memos
+  // retyping the rule that also lives in usePregnancySetup and the info route.
+  const age = useMemo(
+    () =>
+      startDateIso
+        ? gestationalAge(startDateIso, gestationOffsetDays, today)
+        : null,
+    [startDateIso, gestationOffsetDays, today],
+  );
 
-  const weekNumber = useMemo(() => {
-    if (pregnancyDay === null) return null;
-    return Math.min(
-      PREGNANCY_WEEKS,
-      Math.floor(pregnancyDay / DAYS_IN_WEEK) + 1,
-    );
-  }, [pregnancyDay]);
-
-  const daysInCurrentWeek = useMemo(() => {
-    if (pregnancyDay === null) return 0;
-    return pregnancyDay % DAYS_IN_WEEK;
-  }, [pregnancyDay]);
-
-  const babySize = useMemo(() => {
-    if (!weekNumber) return "";
-    return getBabySizeForWeek(weekNumber);
-  }, [weekNumber]);
-
-  const dueDaysRemaining = useMemo(() => {
-    if (pregnancyDay === null) return null;
-    return Math.max(0, FULL_TERM_DAYS - pregnancyDay);
-  }, [pregnancyDay]);
-
-  const dueDate = useMemo(() => {
-    if (!startDateIso) return null;
-    const startDate = parseISODate(startDateIso);
-    const effectivePregnancyDayZero = addDays(startDate, -gestationOffsetDays);
-    return addDays(effectivePregnancyDayZero, FULL_TERM_DAYS);
-  }, [startDateIso, gestationOffsetDays]);
-
-  const trimesterLabel = useMemo(() => {
-    if (!weekNumber) return "";
-    return getTrimesterLabel(weekNumber);
-  }, [weekNumber]);
-
-  const ringProgress = useMemo(() => {
-    if (pregnancyDay === null) return 0;
-    return Math.min(1, Math.max(0, pregnancyDay / FULL_TERM_DAYS));
-  }, [pregnancyDay]);
+  const babySize = age ? getBabySizeForWeek(age.weekNumber) : "";
 
   return (
     <FadeInView duration={200} backgroundColor={theme.colors.background}>
@@ -157,28 +112,29 @@ export default function PregnancyHome() {
               <View style={styles.progressSection}>
                 <View style={styles.progressContent}>
                   <PregnancyProgressRing
-                    weekNumber={weekNumber ?? 0}
+                    weekNumber={age?.weekNumber ?? 0}
                     babySize={babySize}
-                    ringProgress={ringProgress}
+                    ringProgress={age?.progress ?? 0}
                   />
 
                   <Text
                     variant="titleMedium"
                     style={{ color: theme.colors.onSurface }}
                   >
-                    Week {weekNumber ?? 0} • Day {daysInCurrentWeek + 1}
+                    Week {age?.weekNumber ?? 0} • Day{" "}
+                    {(age?.dayInWeek ?? 0) + 1}
                   </Text>
                   <Text
                     variant="bodyLarge"
                     style={{ color: theme.colors.onSurfaceVariant }}
                   >
-                    {trimesterLabel}
+                    {age?.trimesterLabel ?? ""}
                   </Text>
                   <Text
                     variant="bodyLarge"
                     style={{ color: theme.colors.onSurfaceVariant }}
                   >
-                    Due Date: {dueDate ? formatDueDate(dueDate) : "-"}
+                    Due Date: {age ? formatDueDate(age.dueDate) : "-"}
                   </Text>
                 </View>
 
@@ -189,8 +145,8 @@ export default function PregnancyHome() {
                     { color: theme.colors.onSurfaceVariant },
                   ]}
                 >
-                  {dueDaysRemaining !== null
-                    ? `${dueDaysRemaining} days until week ${PREGNANCY_WEEKS}.`
+                  {age
+                    ? `${age.dueDaysRemaining} days until week ${PREGNANCY_WEEKS}.`
                     : "Set up your pregnancy details to see progress."}
                 </Text>
 
