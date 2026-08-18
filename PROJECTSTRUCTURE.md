@@ -65,6 +65,7 @@ This document provides an overview of the project structure and key components o
 
 - Contains the [Drizzle (Expo SQLite)](https://orm.drizzle.team/docs/connect-expo-sqlite) database schema and operations, which are separated by table in the `/db/operatiosn/` folder.
 - Drizzle handles schema migrations automatically using their [CLI tool](https://orm.drizzle.team/docs/connect-expo-sqlite#generate-migrations) and stores the files in the `/drizzle/` folder - don't edit these files directly.
+- **Data** migrations are the exception. drizzle-kit generates DDL from the schema and has nothing to say about the rows already on a user's device, so a migration that repairs or moves data is written by hand: add the `.sql` file, an entry in `drizzle/meta/_journal.json`, a snapshot copied from the previous one with a fresh `id`, and the import in `drizzle/migrations.js`. See `docs/adr/0002-hand-written-data-migrations.md`.
 
 ### `/hooks/`
 
