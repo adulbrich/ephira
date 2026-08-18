@@ -20,7 +20,7 @@ This file is maintained lazily: terms are added when a design decision actually 
 
 **Prediction**: a forecast of a future Day with flow, carrying a confidence. Predictions are derived, never authored.
 
-**Prediction Snapshot**: a record of what was predicted, and when, kept so that accuracy can be measured after the fact. Identified by `(prediction_made_date, predicted_date)`. Its purpose is a time series: overwriting history would make the accuracy metric measure something else.
+**Prediction Snapshot**: a record of what was predicted, and when, kept so that accuracy can be measured after the fact. Identified by `(prediction_made_date, predicted_date)`. Its purpose is a time series: overwriting history would make the accuracy metric measure something else. Within a single day the stored generation is reconciled to what is currently forecast: confidence updates in place, and a date no longer forecast is retracted. Once a Snapshot's outcome has been measured it is never retracted and its outcome is never rewritten, because that is the history the metric reads.
 
 **Marked Dates**: the value handed to the calendar describing how each date should be drawn. Cycle mode encodes runs, with start and end caps, adjacency to neighbouring days, and confidence-scaled opacity for Prediction overlays. Pregnancy mode encodes point events. Both modes produce the same value type; they do not share the rules for building it.
 
