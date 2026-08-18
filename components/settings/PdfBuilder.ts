@@ -1,5 +1,5 @@
 import { PDFDocument, StandardFonts, rgb, PDFPage, PDFFont } from "pdf-lib";
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import type { ExportData } from "../../constants/Interfaces";
 
@@ -97,9 +97,9 @@ function drawRowText(
 
 async function exportFinishedPdf(pdfDoc: PDFDocument) {
   const pdfBase64 = await pdfDoc.saveAsBase64();
-  const pdfPath = `${FileSystem.documentDirectory}ephira.pdf`; //"import/namespace": "off"
+  const pdfPath = `${FileSystem.documentDirectory}ephira.pdf`;
   await FileSystem.writeAsStringAsync(pdfPath, pdfBase64, {
-    encoding: FileSystem.EncodingType.Base64, //"import/namespace": "off"
+    encoding: FileSystem.EncodingType.Base64,
   });
 
   await Sharing.shareAsync(pdfPath, {
