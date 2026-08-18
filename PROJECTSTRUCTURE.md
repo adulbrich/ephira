@@ -60,6 +60,7 @@ This document provides an overview of the project structure and key components o
 
 - Main component for the DayView logic, which sits underneath the calendar on the Calendar screen.
 - Displays the selected date's entries and allows users to edit them.
+- Holds no rules: `db/loggedDay.ts` owns loading and saving a Logged Day, including the debounce and its guards, and `db/catalogue.ts` owns what the user can choose from.
 
 ### `/db/`
 

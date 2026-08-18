@@ -3,12 +3,6 @@ import {
   getAllSymptoms,
   getAllMoods,
   getAllMedications,
-  insertSymptom,
-  insertMood,
-  insertMedication,
-  deleteSymptom,
-  deleteMedication,
-  deleteMood,
   updateSetting,
 } from "@/db/database";
 import { SettingsKeys } from "@/constants/Settings";
@@ -36,7 +30,12 @@ import { symptomOptions } from "@/constants/Symptoms";
 import { medicationOptions } from "@/constants/Medications";
 import { moodOptions } from "@/constants/Moods";
 import { birthControlOptions } from "@/constants/BirthControlTypes";
-import { invalidateCatalogue, type CatalogueKind } from "@/db/catalogue";
+import {
+  addCatalogueItem,
+  invalidateCatalogue,
+  removeCatalogueItem,
+  type CatalogueKind,
+} from "@/db/catalogue";
 
 function InfoDialog({
   visible,
@@ -261,6 +260,15 @@ function CustomEntriesModal({
     fetchMedications();
   }, []);
 
+  /** This screen's own copy of each list. Display state, not the Catalogue. */
+  const listFor = (kind: string) =>
+    ({
+      symptom: { get: () => symptoms, set: setSymptoms },
+      mood: { get: () => moods, set: setMoods },
+      medication: { get: () => medications, set: setMedications },
+      "birth control": { get: () => birthControl, set: setBirthControl },
+    })[kind] ?? { get: () => [] as string[], set: () => {} };
+
   const onAddEntry = (entryType: string, entryName: string) => {
     // check for duplicate entries, account for spaces, underscore, and capitilazation
     const squashedEntryName = entryName.replace(/[_\s]/g, "").toLowerCase();
@@ -283,45 +291,19 @@ function CustomEntriesModal({
       return;
     }
 
-    switch (entryType) {
-      case "symptom":
-        insertSymptom(entryName, true);
-        setSymptoms([...symptoms, entryName]);
-        break;
-      case "mood":
-        insertMood(entryName, true);
-        setMoods([...moods, entryName]);
-        break;
-      case "medication":
-        insertMedication(entryName, true, "medication");
-        setMedications([...medications, entryName]);
-        break;
-      case "birth control":
-        insertMedication(entryName, true, "birth control");
-        setBirthControl([...birthControl, entryName]);
-        break;
-    }
+    // Which table a kind means lives in db/catalogue.ts. What is left here is
+    // this screen's own list, which is display state.
+    addCatalogueItem(entryType as CatalogueKind, entryName);
+    listFor(entryType).set([...listFor(entryType).get(), entryName]);
   };
 
   const onDeleteEntry = (entryType: string, entryName: string) => {
-    switch (entryType) {
-      case "symptom":
-        deleteSymptom(entryName);
-        setSymptoms(symptoms.filter((item) => item !== entryName));
-        break;
-      case "mood":
-        deleteMood(entryName);
-        setMoods(moods.filter((item) => item !== entryName));
-        break;
-      case "medication":
-        deleteMedication(entryName);
-        setMedications(medications.filter((item) => item !== entryName));
-        break;
-      case "birth control":
-        deleteMedication(entryName);
-        setBirthControl(birthControl.filter((item) => item !== entryName));
-        break;
-    }
+    removeCatalogueItem(entryType as CatalogueKind, entryName);
+    listFor(entryType).set(
+      listFor(entryType)
+        .get()
+        .filter((item) => item !== entryName),
+    );
 
     // check if entry is in calendar filters and remove if needed
     if (selectedFilters.includes(entryName)) {

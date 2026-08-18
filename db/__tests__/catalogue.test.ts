@@ -1,8 +1,11 @@
 import {
+  addCatalogueItem,
   CATALOGUE_KINDS,
   invalidateCatalogue,
   loadCatalogue,
   onCatalogueInvalidated,
+  removeCatalogueItem,
+  setCatalogueItemVisible,
 } from "@/db/catalogue";
 import { medications, moods, symptoms } from "@/db/schema";
 import {
@@ -126,5 +129,64 @@ describe("CATALOGUE_KINDS", () => {
       "medication",
       "birth control",
     ]);
+  });
+});
+
+describe("editing the catalogue", () => {
+  it("adds an item of each kind, visible", async () => {
+    for (const kind of CATALOGUE_KINDS) {
+      await addCatalogueItem(kind, `New ${kind}`);
+    }
+
+    const catalogue = await loadCatalogue();
+
+    expect(catalogue.symptoms).toContain("New symptom");
+    expect(catalogue.moods).toContain("New mood");
+    expect(catalogue.medications).toContain("New medication");
+    expect(catalogue.birthControl).toContain("New birth control");
+  });
+
+  it("knows a birth control is a medication with a type", async () => {
+    await addCatalogueItem("birth control", "Patch");
+
+    const catalogue = await loadCatalogue();
+
+    expect(catalogue.birthControl).toContain("Patch");
+    expect(catalogue.medications).not.toContain("Patch");
+  });
+
+  it("removes an item", async () => {
+    await addCatalogueItem("mood", "Restless");
+    await removeCatalogueItem("mood", "Restless");
+
+    expect((await loadCatalogue()).moods).not.toContain("Restless");
+  });
+
+  it("hides an item without deleting it", async () => {
+    await addCatalogueItem("symptom", "Aura");
+    await setCatalogueItemVisible("symptom", "Aura", false);
+
+    expect((await loadCatalogue()).symptoms).not.toContain("Aura");
+
+    await setCatalogueItemVisible("symptom", "Aura", true);
+
+    expect((await loadCatalogue()).symptoms).toContain("Aura");
+  });
+
+  it("invalidates as it writes, so readers do not go stale", async () => {
+    await loadCatalogue();
+    await addCatalogueItem("mood", "Restless");
+
+    expect((await loadCatalogue()).moods).toContain("Restless");
+  });
+
+  it("keeps a hidden birth control out of the medications list too", async () => {
+    await addCatalogueItem("birth control", "Patch");
+    await setCatalogueItemVisible("birth control", "Patch", false);
+
+    const catalogue = await loadCatalogue();
+
+    expect(catalogue.birthControl).not.toContain("Patch");
+    expect(catalogue.medications).not.toContain("Patch");
   });
 });
