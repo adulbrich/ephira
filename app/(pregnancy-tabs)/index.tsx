@@ -10,11 +10,8 @@ import { getSetting } from "@/db/database";
 import { SettingsKeys } from "@/constants/Settings";
 import { getBabySizeForWeek, PREGNANCY_WEEKS } from "@/constants/Pregnancy";
 import { usePregnancySetup } from "@/hooks/usePregnancySetup";
-import {
-  formatDueDate,
-  gestationalAge,
-  startOfLocalDay,
-} from "@/utils/pregnancyDates";
+import { startOfLocalDay } from "@/utils/dates";
+import { formatDueDate, gestationalAge } from "@/utils/pregnancyDates";
 
 export default function PregnancyHome() {
   const theme = useTheme();

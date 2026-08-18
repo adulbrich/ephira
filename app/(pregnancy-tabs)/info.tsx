@@ -19,7 +19,8 @@ import {
   getPregnancyWeekContent,
   getTrimesterLabel,
 } from "@/constants/Pregnancy";
-import { gestationalAge, startOfLocalDay } from "@/utils/pregnancyDates";
+import { startOfLocalDay } from "@/utils/dates";
+import { gestationalAge } from "@/utils/pregnancyDates";
 
 // The idea here is that this tab will eventually be up to date with whatever week the user is at
 // Placeholder is week 5, but by the end of pregnancy tracking implementation, this tab *should* be providing information accurate

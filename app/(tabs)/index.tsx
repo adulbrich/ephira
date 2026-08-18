@@ -10,7 +10,7 @@ import {
 import { getFlowTypeString } from "@/constants/Flow";
 import { useTheme, Text, Button } from "react-native-paper";
 import FadeInView from "@/components/animations/FadeInView";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import {
   getActiveBirthControlType,
   quickLogBirthControlForToday,
@@ -18,6 +18,7 @@ import {
   LONG_TERM_BC_TYPES,
 } from "@/db/quickBirthControl";
 import { useCyclePhase } from "@/hooks/useCyclePhase";
+import { startOfLocalDay } from "@/utils/dates";
 import { CYCLE_PHASES } from "@/constants/CyclePhases";
 import { useRouter } from "expo-router";
 import { useFetchCycleData } from "@/hooks/useFetchCycleData";
@@ -35,9 +36,11 @@ export default function HomeScreen() {
   const { setDatabaseChange, databaseChange } = useDatabaseChangeNotifier();
   const { predictedCycle, setPredictedCycle } = usePredictedCycle();
   const { fetchCycleData } = useFetchCycleData(setPredictedCycle);
+  const today = useMemo(() => startOfLocalDay(), []);
   const { cycleState, loading: cycleLoading } = useCyclePhase(
     flowData,
     predictedCycle,
+    today,
   );
 
   // Load cycle data on mount and when database changes

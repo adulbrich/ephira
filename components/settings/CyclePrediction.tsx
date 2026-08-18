@@ -24,6 +24,11 @@ import {
   deleteAllPredictionSnapshots,
 } from "@/db/database";
 import { CYCLE_PREDICTION_CONSTANTS } from "@/constants/CyclePrediction";
+import {
+  countCompleteCycles,
+  hasEnoughCyclesForPrediction,
+} from "@/services/cyclePredictionLogic";
+import type { DayData } from "@/constants/Interfaces";
 
 export default function CyclePredictions() {
   const theme = useTheme();
@@ -81,40 +86,13 @@ export default function CyclePredictions() {
           return;
         }
 
-        // Count cycles
-        let cycleCount = 0;
-        let consecutiveDays = 0;
-        const sortedDays = flowDays.sort(
-          (a, b) => new Date(a.date).valueOf() - new Date(b.date).valueOf(),
-        );
+        // One definition of a Cycle, shared with the cycle tab. This used to
+        // be its own gap-detection pass that never consulted the
+        // is_cycle_start / is_cycle_end markers, so marking a cycle start
+        // changed what the cycle tab said and not what this screen said.
+        const cycleCount = countCompleteCycles(flowDays as DayData[]);
 
-        for (let i = 0; i < sortedDays.length; i++) {
-          const currentDate = new Date(sortedDays[i].date);
-          const nextDate =
-            i < sortedDays.length - 1 ? new Date(sortedDays[i + 1].date) : null;
-
-          consecutiveDays++;
-
-          const isLastDay = i === sortedDays.length - 1;
-          const isGap = nextDate
-            ? (nextDate.getTime() - currentDate.getTime()) /
-                (1000 * 60 * 60 * 24) >
-              1
-            : false;
-
-          if (
-            (isLastDay || isGap) &&
-            consecutiveDays >= CYCLE_PREDICTION_CONSTANTS.MIN_CONSECUTIVE_DAYS
-          ) {
-            cycleCount++;
-            consecutiveDays = 0;
-          } else if (isGap) {
-            consecutiveDays = 0;
-          }
-        }
-
-        const hasEnough =
-          cycleCount >= CYCLE_PREDICTION_CONSTANTS.MIN_CYCLES_FOR_PREDICTION;
+        const hasEnough = hasEnoughCyclesForPrediction(flowDays as DayData[]);
         let message = "";
 
         if (hasEnough) {
