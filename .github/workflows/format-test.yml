@@ -1,12 +1,12 @@
-name: Check Formatting
+name: Checks
 on:
   pull_request:
     branches:
       - main
 
 jobs:
-  format:
-    name: Check Formatting
+  checks:
+    name: Lint, typecheck and test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -14,10 +14,17 @@ jobs:
       - name: Set-up Node
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 22
+          cache: npm
       - name: Install Dependencies
         run: |
           npm install
       - name: Run ESLint
         run: |
           npx eslint . --max-warnings=0
+      - name: Typecheck
+        run: |
+          npm run typecheck
+      - name: Run tests
+        run: |
+          npm test -- --ci

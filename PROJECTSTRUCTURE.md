@@ -5,6 +5,7 @@ This document provides an overview of the project structure and key components o
 ## Folder Structure
 
 ```text
+├── __tests__/                # Root-level tests, and the shared test database helper
 ├── app/                      # Holds the app entry point, screens, and navigation
 ├── assets/                   # Images, fonts, videos, icons, etc. and Zustand store
 ├── components/               # Components grouped by feature/screen/usage
@@ -110,6 +111,38 @@ In the output, you'll find options to open the app in a:
   - If you get an error about the app not being able to connect or taking longer than it should, try running `npx expo start --tunnel` in the terminal and scanning the QR code again.
 
 This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+
+## Testing
+
+Run once with `npm test`, or `npm run test:watch` while working. `npm run typecheck` runs `tsc --noEmit`. All three, plus ESLint, run on every pull request to `main` via `.github/workflows/format-test.yml`.
+
+Tests live in `__tests__/` folders beside the code they cover, and must be named `*.test.ts` or `*.test.tsx`. Anything else under `__tests__/` is treated as a helper, not a suite.
+
+### Testing code that touches the database
+
+Tests run against a real in-memory SQLite database rather than a fake, using `better-sqlite3` with the checked-in `drizzle/` migrations applied. Substitute the database handle at the single specifier every `db/operations/*.ts` file reaches it through:
+
+```ts
+import { resetTestDatabase } from "@/__tests__/helpers/testDatabase";
+import { insertDay } from "@/db/operations/days";
+
+jest.mock("@/db/operations/setup", () =>
+  jest.requireActual("@/__tests__/helpers/testDatabase"),
+);
+
+beforeEach(() => {
+  resetTestDatabase();
+});
+```
+
+Babel hoists `jest.mock` above the imports wherever it is written, so it takes effect before the module-level `const db = getDrizzleDatabase()` in each operations file evaluates. With it in place `expo-sqlite` is never loaded, so no production code needs to change to be testable.
+
+Two things worth knowing:
+
+- **Foreign keys are ON in tests**, deliberately stricter than the device, which has no `PRAGMA foreign_keys` anywhere and so runs with them off. A delete that orphans child rows passes on device and fails here. That is the point; do not turn them off to make a test pass.
+- **The handle is per test file**, because those module-level captures happen once per module registry. Isolation between tests comes from `resetTestDatabase()`, which empties every table and leaves the schema in place.
+
+Live queries are out of scope: `useLiveQuery` is not exercised, so `hooks/useLiveFilteredData.ts` and `hooks/usePregnancyMarkedDates.ts` are not covered by this setup.
 
 ## CI/CD
 
