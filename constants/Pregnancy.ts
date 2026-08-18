@@ -1,4 +1,8 @@
 import { BABY_SIZE_BY_WEEK } from "@/data/pregnancyBabySizes";
+import {
+  PREGNANCY_WEEK_CONTENT,
+  type PregnancyWeekContent,
+} from "@/data/pregnancyWeeks";
 
 export const PREGNANCY_WEEKS = 40;
 export const DAYS_IN_WEEK = 7;
@@ -46,4 +50,18 @@ export function clampPregnancyValue(
   max: number,
 ): number {
   return Math.min(max, Math.max(min, value));
+}
+
+/**
+ * Week-by-week guidance, clamped to the weeks the content covers.
+ *
+ * Clamps rather than returning nothing, because a pregnancy can run past week
+ * 40 and a blank screen at that point is worst exactly when it is most likely
+ * to be read. Same shape as getBabySizeForWeek above.
+ */
+export function getPregnancyWeekContent(
+  weekNumber: number,
+): PregnancyWeekContent {
+  const week = clampPregnancyValue(weekNumber, 1, PREGNANCY_WEEKS);
+  return PREGNANCY_WEEK_CONTENT[week];
 }
