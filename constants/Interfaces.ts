@@ -30,15 +30,16 @@ export interface MarkedDates {
   [key: string]: MarkedDate;
 }
 
-export interface DayDataStore extends DayData {
-  setData: (data: DayData) => void;
+/**
+ * The selected date, and nothing else.
+ *
+ * The date is genuinely shared: the calendar picks it and the day view reads
+ * it. The selected day's *contents* were only ever global so that accordions
+ * and fetch hooks could talk past each other, which db/loggedDay.ts absorbed.
+ */
+export interface SelectedDateStore {
+  date: string;
   setDate: (date: string) => void;
-  setId: (num: number) => void;
-  setFlow: (flow: number) => void;
-  setNotes: (text: string) => void;
-  setCycleStart: (start: boolean) => void;
-  setCycleEnd: (end: boolean) => void;
-  reset: () => void;
 }
 
 export interface LoadData {
@@ -51,51 +52,6 @@ export interface LoadData {
 export interface Accordion {
   state: string | null;
   setExpandedAccordion: (state: string | null) => void;
-}
-
-export interface Mood {
-  selectedMoods: string[];
-  setSelectedMoods: (values: string[]) => void;
-}
-
-export interface Symptoms {
-  selectedSymptoms: string[];
-  setSelectedSymptoms: (values: string[]) => void;
-}
-
-export interface Medications {
-  selectedMedications: string[];
-  setSelectedMedications: (values: string[]) => void;
-}
-
-export interface BirthControl {
-  selectedBirthControl: string | null;
-  setSelectedBirthControl: (value: string | null) => void;
-}
-
-export interface BirthControlNotes {
-  birthControlNotes: string;
-  setBirthControlNotes: (notes: string) => void;
-}
-
-export interface Intercourse {
-  intercourse: boolean;
-  setIntercourse: (value: boolean) => void;
-}
-
-export interface TimeTaken {
-  timeTaken: string;
-  setTimeTaken: (time: string) => void;
-}
-
-export interface TimePickerState {
-  showTimePicker: boolean;
-  setShowTimePicker: (show: boolean) => void;
-}
-
-export interface TempSelectedTime {
-  tempSelectedTime: Date | null;
-  setTempSelectedTime: (time: Date | null) => void;
 }
 
 export interface FlowDataState {

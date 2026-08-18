@@ -12,6 +12,8 @@ This file is maintained lazily: terms are added when a design decision actually 
 
 **Section**: one loggable area of a Logged Day, as presented in the day view: Flow, Moods, Symptoms, Medications, Birth Control, Intercourse, Notes, and in pregnancy mode Kicks and Appointments. Sections are a property of what can be logged, not of which tracking mode is active; each mode renders its own subset. One Section is expanded at a time.
 
+**Selected Date**: which date the day view is showing. Shared, because the calendar picks it and the day view reads it. Only the date is shared: the Selected Date is not a Logged Day, and the day's contents belong to whatever is displaying them.
+
 **Catalogue**: the set of Moods, Symptoms or Medications a user can choose from. Distinct from the entries that reference them. The Catalogue is edited rarely, in settings, while entries are written constantly, while logging. `moods`, `symptoms` and `medications` are Catalogue tables.
 
 **Entry**: a single recorded selection joining a Day to a Catalogue item: `mood_entries`, `symptom_entries`, `medication_entries`. An Entry may carry its own detail, such as a Medication's `time_taken`.
