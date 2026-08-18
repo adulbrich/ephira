@@ -1,7 +1,12 @@
-import {
-  savedSectionLabel,
-  type LoggedDaySnapshot,
-} from "@/components/dayView/saveMessage";
+import { savedSectionLabel } from "@/components/dayView/saveMessage";
+import { emptyLoggedDay, type LoggedDay } from "@/db/loggedDay";
+
+// This decision touches no database. The stub says so: db/loggedDay.ts opens a
+// handle when it loads, and nothing here ever reaches it.
+jest.mock("@/db/operations/setup", () => ({
+  getDatabase: jest.fn(),
+  getDrizzleDatabase: jest.fn(),
+}));
 
 /**
  * The exact strings the accordions pass to `setExpandedAccordion`. Kept here
@@ -20,23 +25,15 @@ const SECTION_FROM_ACCORDION = {
   notes: "notes", // NotesAccordion.tsx:24
 };
 
-const empty: LoggedDaySnapshot = {
-  flow: 0,
-  notes: "",
-  symptoms: [],
-  moods: [],
-  medications: [],
-  birthControl: null,
-  intercourse: false,
-};
+const empty: LoggedDay = emptyLoggedDay("2026-04-01");
 
-const filled: LoggedDaySnapshot = {
+const filled: LoggedDay = {
+  ...empty,
   flow: 3,
   notes: "slept badly",
   symptoms: ["Cramps"],
   moods: ["Calm"],
-  medications: ["Ibuprofen"],
-  birthControl: "Pill",
+  medications: [{ name: "Ibuprofen" }, { name: "Pill" }],
   intercourse: true,
 };
 
@@ -75,7 +72,7 @@ describe("savedSectionLabel, with a section expanded", () => {
     // The defect: "symptoms" was a dead case, so this fell through to the
     // fixed-priority fallback and announced "Flow Saved!" while the user was
     // editing symptoms.
-    const lastSaved: LoggedDaySnapshot = { ...filled, flow: 1, symptoms: [] };
+    const lastSaved: LoggedDay = { ...filled, flow: 1, symptoms: [] };
 
     expect(
       savedSectionLabel(SECTION_FROM_ACCORDION.symptoms, filled, lastSaved),
@@ -92,19 +89,6 @@ describe("savedSectionLabel, with no section expanded", () => {
 
   it("says nothing when there is no last save to compare against", () => {
     expect(savedSectionLabel(null, filled, null)).toBeNull();
-  });
-
-  it("treats an unset note as empty rather than as a change", () => {
-    expect(
-      savedSectionLabel(
-        SECTION_FROM_ACCORDION.notes,
-        {
-          ...filled,
-          notes: undefined,
-        },
-        null,
-      ),
-    ).toBeNull();
   });
 
   it("says nothing when nothing changed", () => {
