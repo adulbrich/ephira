@@ -43,7 +43,7 @@ export function useFetchCycleData(
 
       if (predictedDates.length > 0) {
         try {
-          await savePredictions(predictedDates);
+          await savePredictions(predictedDates, localDate);
           await NotificationService.scheduleAllPredictionNotifications(
             predictedDates,
           );
