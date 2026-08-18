@@ -12,7 +12,7 @@ import {
   useTimeTaken,
   useDatabaseChangeNotifier,
   useIntercourse,
-} from "@/assets/src/calendar-storage";
+} from "@/stores/calendar-storage";
 import FlowAccordion from "@/components/dayView/FlowAccordion";
 import MedicationsAccordion from "./MedicationsAccordion";
 import BirthControlAccordion from "./BirthControlAccordion";

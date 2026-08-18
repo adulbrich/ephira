@@ -7,7 +7,7 @@ This document provides an overview of the project structure and key components o
 ```text
 ├── __tests__/                # Root-level tests, and the shared test database helper
 ├── app/                      # Holds the app entry point, screens, and navigation
-├── assets/                   # Images, fonts, videos, icons, etc. and Zustand store
+├── assets/                   # Images, fonts, videos, icons, etc.
 ├── components/               # Components grouped by feature/screen/usage
 ├── constants/                # App-wide constants (colors, fonts, etc.)
 ├── constants/                # Constants (colors, TS interfaces, etc.)
@@ -52,9 +52,9 @@ This document provides an overview of the project structure and key components o
   - etc.
 - See `/components/settings/` folder for individual components.
 
-### `/assets/src/calendar-storage.tsx`
+### `/stores/calendar-storage.tsx`
 
-- Zustand store for managing app state.
+- Zustand store for cycle-mode app state. `/stores/pregnancy-storage.tsx` is its pregnancy-mode counterpart; see `docs/adr/0001-keep-cycle-and-pregnancy-modes-separate.md` for why they are separate.
 
 ### `/components/dayView/DayView.tsx`
 

@@ -32,7 +32,7 @@ import {
   useAccordion,
   useCalendarFilters,
   useDatabaseChangeNotifier,
-} from "@/assets/src/calendar-storage";
+} from "@/stores/calendar-storage";
 import { symptomOptions } from "@/constants/Symptoms";
 import { medicationOptions } from "@/constants/Medications";
 import { moodOptions } from "@/constants/Moods";

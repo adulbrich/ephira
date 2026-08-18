@@ -22,7 +22,7 @@ import {
   useCalendarFilters,
   useDatabaseChangeNotifier,
   usePredictionChoice,
-} from "@/assets/src/calendar-storage";
+} from "@/stores/calendar-storage";
 import { anySymptomOption } from "@/constants/Symptoms";
 import { anyMoodOption } from "@/constants/Moods";
 import { anyMedicationOption } from "@/constants/Medications";

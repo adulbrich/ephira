@@ -1,5 +1,5 @@
 import { getAllDays } from "@/db/database";
-import { useData } from "@/assets/src/calendar-storage";
+import { useData } from "@/stores/calendar-storage";
 import { DayData } from "@/constants/Interfaces";
 
 export function useFetchFlowData() {

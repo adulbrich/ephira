@@ -10,7 +10,7 @@ import {
   usePredictedCycle,
   useSelectedDate,
   usePredictionChoice,
-} from "@/assets/src/calendar-storage";
+} from "@/stores/calendar-storage";
 import {
   FlowColors,
   CyclePredictionColor,

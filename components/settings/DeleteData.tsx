@@ -14,7 +14,7 @@ import {
   Button,
 } from "react-native-paper";
 import { StyleSheet, Dimensions, Alert } from "react-native";
-import { useSelectedDate } from "@/assets/src/calendar-storage";
+import { useSelectedDate } from "@/stores/calendar-storage";
 
 function DeleteDataModal({ onDismiss }: { onDismiss: () => void }) {
   const theme = useTheme();

@@ -21,7 +21,7 @@ import {
   usePredictedCycle,
   useDatabaseChangeNotifier,
   usePredictionChoice,
-} from "@/assets/src/calendar-storage";
+} from "@/stores/calendar-storage";
 import { refreshPredictions } from "@/services/cyclePredictions";
 import { CYCLE_PHASES, getNextPhase } from "@/constants/CyclePhases";
 import { CYCLE_PREDICTION_CONSTANTS } from "@/constants/CyclePrediction";

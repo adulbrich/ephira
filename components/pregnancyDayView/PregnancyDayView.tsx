@@ -10,7 +10,7 @@ import {
   usePregnancySelectedDate,
   usePregnancyAccordion,
   usePregnancyAppointments,
-} from "@/assets/src/pregnancy-storage";
+} from "@/stores/pregnancy-storage";
 import KicksAccordion from "./KicksAccordion";
 import AppointmentsAccordion from "./AppointmentsAccordion";
 import SymptomsAccordion from "@/components/dayView/SymptomsAccordion";
