@@ -32,8 +32,8 @@ This file is maintained lazily: terms are added when a design decision actually 
 
 ## Terms we avoid
 
-**`Mood`, `Symptom`, `Medication` as UI state.** These names belong to the Catalogue entities in `db/schema.ts`. `constants/Interfaces.ts` currently also uses them for selection state, so `Mood` means two different things depending on the import. Selection state is part of a Logged Day and is named accordingly.
+**`Mood`, `Symptom`, `Medication` as UI state.** These names belong to the Catalogue entities in `db/schema.ts`. `constants/Interfaces.ts` used them for selection state as well, so `Mood` meant two different things depending on the import; those declarations are gone. Selection state is part of a Logged Day and is named accordingly.
 
 **"Component", "service", "wrapper", "layer", "boundary".** Architecture discussion uses the vocabulary in `docs/agents/domain.md` and the `codebase-design` skill: module, interface, implementation, depth, seam, adapter, leverage, locality.
 
-**"Period" as a synonym for Cycle.** `periodData` in `constants/Interfaces.ts` is a drawing instruction for the calendar, not a domain concept. Say Cycle for the domain, Marked Dates for the drawing.
+**"Period" as a synonym for Cycle.** `PeriodData` in `constants/Interfaces.ts` is a drawing instruction for the calendar, not a domain concept. Say Cycle for the domain, Marked Dates for the drawing.

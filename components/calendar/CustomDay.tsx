@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { useTheme } from "react-native-paper";
 import type { DateData } from "react-native-calendars";
-import type { MarkedDate, periodData } from "@/constants/Interfaces";
+import type { MarkedDate, PeriodData } from "@/constants/Interfaces";
 
 type DayState = "selected" | "disabled" | "inactive" | "today" | "";
 
@@ -95,7 +95,7 @@ export default function CustomDay({
 
       {/* Period markers */}
       <View style={styles.periodsContainer}>
-        {periods.map((period: periodData, index: number) => (
+        {periods.map((period: PeriodData, index: number) => (
           <View
             key={index}
             style={[

@@ -1,3 +1,12 @@
+/**
+ * The domain and view data types the app passes around.
+ *
+ * Zustand store shapes used to live here too, which made this one file because
+ * everything in it was an `interface` and for no other reason. They are now
+ * declared beside their store in `stores/calendar-storage.tsx`, un-exported,
+ * matching `stores/pregnancy-storage.tsx`.
+ */
+
 export interface DayData {
   id: number;
   date: string;
@@ -12,7 +21,7 @@ export interface DayData {
   birth_control?: string;
 }
 
-export interface periodData {
+export interface PeriodData {
   startingDay?: boolean;
   endingDay?: boolean;
   color: string;
@@ -21,52 +30,13 @@ export interface periodData {
 
 export interface MarkedDate {
   selected: boolean;
-  periods: periodData[];
+  periods: PeriodData[];
   hasBirthControl?: boolean;
   hasIntercourse?: boolean;
 }
 
 export interface MarkedDates {
   [key: string]: MarkedDate;
-}
-
-/**
- * The selected date, and nothing else.
- *
- * The date is genuinely shared: the calendar picks it and the day view reads
- * it. The selected day's *contents* were only ever global so that accordions
- * and fetch hooks could talk past each other, which db/loggedDay.ts absorbed.
- */
-export interface SelectedDateStore {
-  date: string;
-  setDate: (date: string) => void;
-}
-
-export interface LoadData {
-  data: DayData[];
-  show: boolean;
-  setData: (data: DayData[]) => void;
-  setShow: (show: boolean) => void;
-}
-
-export interface FlowDataState {
-  flowDataForCurrentMonth: DayData[];
-  setFlowDataForCurrentMonth: (data: DayData[]) => void;
-}
-
-export interface CalendarFilters {
-  selectedFilters: string[];
-  setSelectedFilters: (values: string[]) => void;
-}
-
-export interface ThemeColor {
-  themeColor: string;
-  setThemeColor: (color: string) => void;
-}
-
-export interface DatabaseChangeNotifier {
-  databaseChange: string;
-  setDatabaseChange: (databaseChange: string) => void;
 }
 
 export interface ExportDataHeaders {
@@ -100,21 +70,9 @@ export interface ExportData {
   dailyData: Record<string, ExportDayEntry>;
 }
 
-export interface PredictionToggle {
-  predictionChoice: boolean;
-  setPredictionChoice: (predictionChoice: boolean) => void;
-}
-
 export interface PredictedDate {
   date: string;
   confidence: number; // 0-100
-}
-
-export interface PredictedCycleState {
-  predictedCycle: PredictedDate[];
-  predictedMarkedDates: MarkedDates;
-  setPredictedCycle: (data: PredictedDate[]) => void;
-  setPredictedMarkedDates: (data: MarkedDates) => void;
 }
 
 export interface CurrentCycleState {
@@ -126,11 +84,6 @@ export interface CurrentCycleState {
   nextPredictedStart: string | null;
   confidence: number;
   hasEnoughData: boolean;
-}
-
-export interface TrackingMode {
-  trackingMode: string;
-  setTrackingMode: (mode: string) => void;
 }
 
 export interface CycleStats {
