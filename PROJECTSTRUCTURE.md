@@ -126,7 +126,7 @@ This project uses [file-based routing](https://docs.expo.dev/router/introduction
 
 ## Testing
 
-Run once with `npm test`, or `npm run test:watch` while working. `npm run typecheck` runs `tsc --noEmit`, and `npm run lint` runs Biome, which does both linting and formatting. All three run on every pull request via `.github/workflows/format-test.yml`; `npm run format` fixes what is fixable.
+Run once with `npm test`, or `npm run test:watch` while working. `npm run typecheck` runs `tsc --noEmit`. `npm run lint` runs Biome, which does both linting and formatting, followed by a narrow ESLint pass for the handful of Expo and import rules Biome cannot express (see the header of `eslint.config.js`). All three run on every pull request via `.github/workflows/format-test.yml`; `npm run format` fixes what is fixable.
 
 Tests live in `__tests__/` folders beside the code they cover, and must be named `*.test.ts` or `*.test.tsx`. Anything else under `__tests__/` is treated as a helper, not a suite.
 

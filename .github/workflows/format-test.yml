@@ -29,6 +29,10 @@ jobs:
       - name: Lint and check formatting
         run: |
           npx biome ci .
+      # The rules Biome cannot express; see the header of eslint.config.js.
+      - name: Lint the rules Biome cannot express
+        run: |
+          npx eslint . --max-warnings=0
       - name: Typecheck
         run: |
           npm run typecheck
