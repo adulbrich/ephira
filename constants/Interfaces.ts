@@ -10,11 +10,11 @@
 export interface DayData {
   id: number;
   date: string;
-  flow_intensity: number;
-  is_cycle_start?: boolean;
-  is_cycle_end?: boolean;
+  flow_intensity: number | null;
+  is_cycle_start?: boolean | null;
+  is_cycle_end?: boolean | null;
   intercourse?: boolean | null;
-  notes?: string;
+  notes?: string | null;
   moods?: string[];
   symptoms?: string[];
   medications?: string[];

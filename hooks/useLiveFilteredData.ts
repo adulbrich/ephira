@@ -5,43 +5,7 @@ import { eq } from "drizzle-orm";
 import type { DayData } from "@/constants/Interfaces";
 import { useEffect, useState } from "react";
 import { useDatabaseChangeNotifier } from "@/stores/calendar-storage";
-
-function formatSQLData(data: any) {
-  const formattedData = data.reduce((acc: any, row: any) => {
-    const { days, moodQuery, symptomQuery, medicationQuery } = row;
-
-    let dayEntry = acc.find((entry: any) => entry.id === days.id);
-
-    if (!dayEntry) {
-      dayEntry = {
-        ...days,
-        moods: [],
-        symptoms: [],
-        medications: [],
-      };
-      acc.push(dayEntry);
-    }
-
-    if (moodQuery && !dayEntry.moods.includes(moodQuery.name)) {
-      dayEntry.moods.push(moodQuery.name);
-    }
-
-    if (symptomQuery && !dayEntry.symptoms.includes(symptomQuery.name)) {
-      dayEntry.symptoms.push(symptomQuery.name);
-    }
-
-    if (
-      medicationQuery &&
-      !dayEntry.medications.includes(medicationQuery.name)
-    ) {
-      dayEntry.medications.push(medicationQuery.name);
-    }
-
-    return acc;
-  }, []);
-
-  return formattedData;
-}
+import { daysFromJoinedRows } from "@/db/dayRows";
 
 export const useLiveFilteredData = (filters: string[]) => {
   const db = getDrizzleDatabase();
@@ -104,8 +68,7 @@ export const useLiveFilteredData = (filters: string[]) => {
   useEffect(() => {
     setLoading(true);
     if (data && filters.length > 0) {
-      const formattedData = formatSQLData(data);
-      setFilteredData(formattedData as DayData[]);
+      setFilteredData(daysFromJoinedRows(data));
     } else {
       setFilteredData([]);
     }
