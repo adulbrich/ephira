@@ -79,9 +79,13 @@ export default function HomeScreen() {
     .sort((a, b) => new Date(b.date).valueOf() - new Date(a.date).valueOf())
     .slice(0, 5);
 
-  // Get current phase name
-  const currentPhase = cycleState
-    ? CYCLE_PHASES[cycleState.currentPhase]
+  // The phase is knowable from one logged cycle, and the home screen is the
+  // thing that requires two before showing it (#163). `hasEnoughData` is
+  // countCompleteCycles(...) >= MIN_CYCLES_FOR_PREDICTION, the same gate the
+  // settings screen and the cycle tab's prediction card already use.
+  const shownCycleState = cycleState?.hasEnoughData ? cycleState : null;
+  const currentPhase = shownCycleState
+    ? CYCLE_PHASES[shownCycleState.currentPhase]
     : null;
   const phaseName = currentPhase ? currentPhase.name : null;
 
@@ -95,8 +99,9 @@ export default function HomeScreen() {
         <View
           style={{ flex: 1, justifyContent: "center", alignContent: "center" }}
         >
-          {/* Current Phase Button - show placeholder while loading */}
-          {(phaseName && currentPhase) || cycleLoading ? (
+          {/* The placeholder is for a cycle state not yet known, not for one
+              known to be short of two cycles. */}
+          {(phaseName && currentPhase) || (cycleLoading && !cycleState) ? (
             <Pressable
               onPress={handlePhasePress}
               hitSlop={{
