@@ -1,6 +1,31 @@
 import { View, StyleSheet } from "react-native";
 import { Card, Text, useTheme, MD3Theme } from "react-native-paper";
 import { PredictedDate } from "@/constants/Interfaces";
+import { addDays, formatAsISODate, startOfLocalDay } from "@/utils/dates";
+
+/**
+ * The seven days the strip shows, starting at `from`.
+ *
+ * Dated with `formatAsISODate`, which reads the local calendar day. This used
+ * `toISOString`, which is UTC: east of UTC every date in the strip was
+ * labelled a day early, so the "today" marker sat on the wrong column and
+ * each column matched a prediction belonging to the day before it.
+ *
+ * `from` is a parameter rather than a clock read, which is what lets this be
+ * tested in both directions without pinning a timezone.
+ */
+export function upcomingWeek(from: Date) {
+  const start = startOfLocalDay(from);
+
+  return Array.from({ length: 7 }, (_, offset) => {
+    const date = addDays(start, offset);
+    return {
+      dateStr: formatAsISODate(date),
+      dayNum: date.getDate(),
+      weekday: date.toLocaleDateString("en-US", { weekday: "short" }).charAt(0),
+    };
+  });
+}
 
 interface PredictionCardProps {
   daysUntilNextPeriod: number;
@@ -16,19 +41,8 @@ function MiniCalendar({
   predictedDates: PredictedDate[];
   theme: MD3Theme;
 }) {
-  const today = new Date();
-  const todayStr = today.toISOString().split("T")[0];
-
-  // Show next 7 days
-  const days = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date(today);
-    date.setDate(date.getDate() + i);
-    return {
-      dateStr: date.toISOString().split("T")[0],
-      dayNum: date.getDate(),
-      weekday: date.toLocaleDateString("en-US", { weekday: "short" }).charAt(0),
-    };
-  });
+  const days = upcomingWeek(new Date());
+  const todayStr = days[0].dateStr;
 
   const predictedSet = new Set(predictedDates.map((p) => p.date));
 

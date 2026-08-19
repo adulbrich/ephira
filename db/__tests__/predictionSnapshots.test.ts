@@ -13,10 +13,13 @@ jest.mock("@/db/operations/setup", () =>
   jest.requireActual("@/__tests__/helpers/testDatabase"),
 );
 
-// UTC, because savePredictions formats with toISOString, matching the
-// convention services/cyclePredictionLogic.ts already uses for date strings.
-const MARCH_1 = new Date("2026-03-01T00:00:00Z");
-const MARCH_2 = new Date("2026-03-02T00:00:00Z");
+// Local, because savePredictions formats the reference day with
+// formatAsISODate. These were UTC instants when this file was written, which
+// name the previous day everywhere west of UTC: midnight UTC on the 1st is
+// 16:00 on the 28th in Los Angeles, so the assertions below failed for half
+// the world while passing in CI.
+const MARCH_1 = new Date(2026, 2, 1);
+const MARCH_2 = new Date(2026, 2, 2);
 
 const storedSnapshots = () =>
   getTestDatabase()

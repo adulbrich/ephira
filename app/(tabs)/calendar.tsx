@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   StyleSheet,
   View,
@@ -12,7 +12,6 @@ import {
 } from "react-native";
 import { Calendar } from "react-native-calendars";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
-import { SettingsKeys } from "@/constants/Settings";
 import DayView from "@/components/dayView/DayView";
 import { useTheme, MD3Theme, Divider, Text } from "react-native-paper";
 import {
@@ -21,7 +20,6 @@ import {
   useThemeColor,
   usePredictionChoice,
 } from "@/stores/calendar-storage";
-import { getSetting, insertSetting } from "@/db/database";
 import CalendarHeader from "@/components/calendar/CalendarHeader";
 import CustomDay from "@/components/calendar/CustomDay";
 import { useMarkedDates } from "@/hooks/useMarkedDates";
@@ -32,14 +30,15 @@ import {
   anyBirthControlOption,
 } from "@/constants/BirthControlTypes";
 import { useFocusEffect } from "expo-router";
+import { formatAsISODate } from "@/utils/dates";
 
 export default function FlowCalendar() {
   const [key, setKey] = useState<string>("");
 
   // access state management
   const { date, setDate } = useSelectedDate();
-  const { selectedFilters, setSelectedFilters } = useCalendarFilters();
-  const { predictionChoice, setPredictionChoice } = usePredictionChoice();
+  const { selectedFilters } = useCalendarFilters();
+  const { predictionChoice } = usePredictionChoice();
   // can also be used like this
   // const selectedDate = useSelectedDate().date
 
@@ -47,11 +46,7 @@ export default function FlowCalendar() {
   const theme = useTheme();
   const styles = makeStyles({ theme });
 
-  // get date in local time
-  const day = new Date();
-  const offset = day.getTimezoneOffset();
-  const localDate = new Date(day.getTime() - offset * 60 * 1000);
-  const today = localDate.toISOString().split("T")[0];
+  const today = formatAsISODate(new Date());
 
   const dismissKeyboard = () => {
     Keyboard.dismiss();
@@ -59,42 +54,6 @@ export default function FlowCalendar() {
 
   const { themeColor } = useThemeColor();
   const themeKey = `${theme.dark ? "dark" : "light"}-${themeColor}`;
-
-  // load filters from secure store
-  useEffect(() => {
-    const loadFilters = async () => {
-      const filters = await getSetting(SettingsKeys.calendarFilters);
-      if (filters?.value) {
-        setSelectedFilters(JSON.parse(filters.value));
-      } else {
-        // set Flow and Any Birth Control as default filters
-        setSelectedFilters(["Flow", "Any Birth Control"]);
-        await insertSetting(
-          SettingsKeys.calendarFilters,
-          JSON.stringify(["Flow", "Any Birth Control"]),
-        );
-      }
-    };
-    loadFilters();
-  }, [setSelectedFilters]);
-
-  // load filters from secure store
-  useEffect(() => {
-    const loadPredictionChoice = async () => {
-      const filters = await getSetting(SettingsKeys.cyclePredictions);
-      if (filters?.value) {
-        setPredictionChoice(JSON.parse(filters.value));
-      } else {
-        // set Flow as first filter by default (filler color given since color isn't optional)
-        setPredictionChoice(true);
-        await insertSetting(
-          SettingsKeys.cyclePredictions,
-          JSON.stringify(true),
-        );
-      }
-    };
-    loadPredictionChoice();
-  }, [setPredictionChoice]);
 
   // Set selected date to today when screen is focused
   useFocusEffect(
