@@ -380,6 +380,45 @@ describe("the saver's timing rules", () => {
     expect((await getDay(OTHER_DATE))?.flow_intensity).toBe(2);
   });
 
+  it("disarms a pending write the user has backed out of", async () => {
+    // Select Heavy, change your mind back to None inside the debounce. The
+    // second schedule sees nothing changed against the baseline, and the
+    // first write must not still be armed behind it (#214).
+    const saver = createLoggedDaySaver();
+    const none = emptyLoggedDay(DATE);
+    saver.reset(none);
+
+    const heavy = saver.schedule(aDay({ flow: 3 }));
+    const reverted = await saver.schedule(none);
+
+    await settle();
+    // Await the first schedule, not just the timer. Advancing timers alone
+    // reports a false pass, because the write has not settled by then.
+    const outcome = await heavy;
+
+    // The harm first: the database held Heavy while the UI showed None, and
+    // nothing said so, because the save message renders from the snapshot.
+    expect(await getDay(DATE)).toBeUndefined();
+    expect(reverted.status).toBe("unchanged");
+    expect(outcome.status).toBe("superseded");
+  });
+
+  it("still writes a pending edit for a day that is no longer open", async () => {
+    // The asymmetry. `unchanged` means there is nothing left to write, so it
+    // disarms. `wrong-day` means the edit belongs to another day, and
+    // disarming there is #162.
+    const saver = createLoggedDaySaver();
+    saver.reset(emptyLoggedDay(DATE));
+
+    const pending = saver.schedule(aDay({ flow: 3 }));
+    const elsewhere = await saver.schedule(aDay({ date: OTHER_DATE, flow: 1 }));
+    await settle();
+
+    expect(elsewhere.status).toBe("wrong-day");
+    expect((await pending).status).toBe("saved");
+    expect((await getDay(DATE))?.flow_intensity).toBe(3);
+  });
+
   it("has nothing to flush when no write is pending", async () => {
     const saver = createLoggedDaySaver();
     saver.reset(emptyLoggedDay(DATE));

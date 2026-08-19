@@ -375,6 +375,9 @@ export const DEFAULT_SAVE_DELAY_MS = 100;
  * tested:
  *
  * - **Debounce.** A burst of edits collapses into one write.
+ * - **Back where it started.** A burst that ends at the baseline writes
+ *   nothing, including the pending write it began with. Selecting Heavy and
+ *   reverting to None inside the debounce leaves nothing behind.
  * - **In flight.** A save already running is never re-entered.
  * - **Right day, before.** A snapshot for a day other than the one now open is
  *   not written. The user switching days mid-debounce must not write the old
@@ -458,10 +461,18 @@ export function createLoggedDaySaver(
     },
 
     schedule(day) {
+      // Deliberately does not disarm. A pending edit belongs to the day it
+      // was made against, and this call is about a different day; discarding
+      // it here is the bug #162 fixed.
       if (baseline && baseline.date !== day.date) {
         return Promise.resolve({ status: "wrong-day" as const });
       }
+
+      // Disarms, because this one means there is nothing left to write. The
+      // user backed out of an edit inside the debounce, so any pending write
+      // is now for a value they have already abandoned (#214).
       if (baseline && !loggedDayChanged(day, baseline)) {
+        clearPending({ status: "superseded" });
         return Promise.resolve({ status: "unchanged" as const });
       }
 
