@@ -49,7 +49,7 @@ import {
   loadCyclePredictionChoice,
 } from "@/db/preferences";
 import * as Notifications from "expo-notifications";
-import { NotificationTypes } from "@/constants/Notifications";
+import { routeForNotification } from "@/constants/Notifications";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -145,16 +145,12 @@ export default function RootLayout() {
     const subscription = Notifications.addNotificationResponseReceivedListener(
       (response) => {
         const data = response.notification.request.content.data;
-        console.log("[Notification] Tapped:", data.type);
+        console.log("[Notification] Tapped:", data?.type);
 
-        if (
-          data.type === NotificationTypes.PERIOD_UPCOMING ||
-          data.type === NotificationTypes.PERIOD_TODAY ||
-          data.type === NotificationTypes.PERIOD_LATE
-        ) {
-          // Navigate to calendar tab when notification is tapped
-          router.push("/(tabs)/calendar");
-        }
+        // A notification can arrive with no payload at all, which SDK 55 made
+        // explicit in the type. Reading .type off it used to throw here.
+        const route = routeForNotification(data);
+        if (route) router.push(route);
       },
     );
 
