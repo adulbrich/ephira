@@ -358,21 +358,26 @@ describe("the saver's timing rules", () => {
   });
 
   it("does not move the baseline onto a day that is no longer open", async () => {
-    // The flush settled after reset, so the new day's baseline is the new
-    // day's contents and an edit to it is still detected as a change.
+    // The flush settles after the new day's reset, so the baseline has to be
+    // the new day's real contents, not the snapshot the flush just wrote.
+    const newDay = aDay({ date: OTHER_DATE, flow: 1 });
     const saver = createLoggedDaySaver();
     saver.reset(emptyLoggedDay(DATE));
 
     saver.schedule(aDay({ flow: 3 }));
     const flushed = saver.flush();
-    saver.reset(emptyLoggedDay(OTHER_DATE));
+    saver.reset(newDay);
     await flushed;
 
-    const next = saver.schedule(aDay({ date: OTHER_DATE, flow: 1 }));
+    // Unchanged, not wrong-day: the baseline still names the new day, and it
+    // still holds what was loaded for it.
+    expect((await saver.schedule(newDay)).status).toBe("unchanged");
+
+    const edited = saver.schedule({ ...newDay, flow: 2 });
     await settle();
 
-    expect((await next).status).toBe("saved");
-    expect((await getDay(OTHER_DATE))?.flow_intensity).toBe(1);
+    expect((await edited).status).toBe("saved");
+    expect((await getDay(OTHER_DATE))?.flow_intensity).toBe(2);
   });
 
   it("has nothing to flush when no write is pending", async () => {
