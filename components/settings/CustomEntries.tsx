@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { Fragment, useState, useEffect } from "react";
 import {
   getAllSymptoms,
   getAllMoods,
@@ -32,9 +32,14 @@ import { moodOptions } from "@/constants/Moods";
 import { birthControlOptions } from "@/constants/BirthControlTypes";
 import {
   addCatalogueItem,
+  CATALOGUE_KIND_TITLES,
+  CATALOGUE_KINDS,
+  type CatalogueKind,
+  type CatalogueLists,
+  catalogueNameTaken,
+  emptyCatalogueLists,
   invalidateCatalogue,
   removeCatalogueItem,
-  type CatalogueKind,
 } from "@/db/catalogue";
 
 function InfoDialog({
@@ -120,9 +125,9 @@ function AccordionContents({
   onDeleteEntry,
 }: {
   items: string[];
-  itemType: string;
-  onAddEntry: (entryType: string, entryName: string) => void;
-  onDeleteEntry: (entryType: string, entryName: string) => void;
+  itemType: CatalogueKind;
+  onAddEntry: (entryType: CatalogueKind, entryName: string) => void;
+  onDeleteEntry: (entryType: CatalogueKind, entryName: string) => void;
 }) {
   const theme = useTheme();
   const { width, height } = Dimensions.get("window");
@@ -130,7 +135,7 @@ function AccordionContents({
   const [input, setInput] = useState("");
   const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
   const [entryName, setEntryName] = useState("");
-  const [entryType, setEntryType] = useState("");
+  const [entryType, setEntryType] = useState<CatalogueKind>(itemType);
 
   return (
     <ScrollView style={styles.scrollview}>
@@ -212,10 +217,9 @@ function CustomEntriesModal({
   const setDbChange = useDatabaseChangeNotifier().setDatabaseChange;
   const { selectedFilters, setSelectedFilters } = useCalendarFilters();
   const [expanded, setExpanded] = useState<string>(initialExpandedCatalogue);
-  const [symptoms, setSymptoms] = useState<string[]>([]);
-  const [moods, setMoods] = useState<string[]>([]);
-  const [medications, setMedications] = useState<string[]>([]);
-  const [birthControl, setBirthControl] = useState<string[]>([]);
+  const [lists, setLists] = useState<CatalogueLists<string>>(
+    emptyCatalogueLists<string>,
+  );
   const [infoDialogVisible, setInfoDialogVisible] = useState(false);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarText, setSnackbarText] = useState("");
@@ -223,69 +227,62 @@ function CustomEntriesModal({
   // Get all custom entries from the database. Custom entries are ones that
   // aren't included in the default list of symptoms, moods, and medications.
   useEffect(() => {
-    const fetchSymptoms = async () => {
-      const symptoms = await getAllSymptoms();
-      const customSymptoms = symptoms.filter(
-        (symptom) => !symptomOptions.includes(symptom.name),
-      );
-      setSymptoms(customSymptoms.map((symptom) => symptom.name));
-    };
-    const fetchMoods = async () => {
-      const moods = await getAllMoods();
-      const customMoods = moods.filter(
-        (mood) => !moodOptions.includes(mood.name),
-      );
-      setMoods(customMoods.map((mood) => mood.name));
-    };
-    const fetchMedications = async () => {
-      const medications = await getAllMedications();
-      const customMedications = medications.filter(
+    const fetchCustomEntries = async () => {
+      const [allSymptoms, allMoods, allMedications] = await Promise.all([
+        getAllSymptoms(),
+        getAllMoods(),
+        getAllMedications(),
+      ]);
+
+      // A medication is custom if it is in neither shipped list, whichever
+      // Section it belongs to; `type` only decides which of the two it lands
+      // in afterwards.
+      const customMedications = allMedications.filter(
         (medication) =>
           !medicationOptions.includes(medication.name) &&
-          !birthControlOptions.includes(medication.name) &&
-          medication.type !== "birth control",
+          !birthControlOptions.includes(medication.name),
       );
-      const customBirthControl = medications.filter(
-        (medication) =>
-          !medicationOptions.includes(medication.name) &&
-          !birthControlOptions.includes(medication.name) &&
-          medication.type === "birth control",
-      );
-      setMedications(customMedications.map((medication) => medication.name));
-      setBirthControl(customBirthControl.map((bc) => bc.name));
+
+      setLists({
+        symptom: allSymptoms
+          .filter((symptom) => !symptomOptions.includes(symptom.name))
+          .map((symptom) => symptom.name),
+        mood: allMoods
+          .filter((mood) => !moodOptions.includes(mood.name))
+          .map((mood) => mood.name),
+        medication: customMedications
+          .filter((medication) => medication.type !== "birth control")
+          .map((medication) => medication.name),
+        "birth control": customMedications
+          .filter((medication) => medication.type === "birth control")
+          .map((medication) => medication.name),
+      });
     };
 
-    fetchSymptoms();
-    fetchMoods();
-    fetchMedications();
+    fetchCustomEntries();
   }, []);
 
-  /** This screen's own copy of each list. Display state, not the Catalogue. */
-  const listFor = (kind: string) =>
-    ({
-      symptom: { get: () => symptoms, set: setSymptoms },
-      mood: { get: () => moods, set: setMoods },
-      medication: { get: () => medications, set: setMedications },
-      "birth control": { get: () => birthControl, set: setBirthControl },
-    })[kind] ?? { get: () => [] as string[], set: () => {} };
+  /**
+   * This screen's own copy of each list. Display state, not the Catalogue.
+   *
+   * Functional, so two updates in one tick cannot lose each other. The four
+   * separate `useState`s this replaces were updated from a closed-over value.
+   */
+  const updateList = (
+    kind: CatalogueKind,
+    update: (names: string[]) => string[],
+  ) =>
+    setLists((previous) => ({ ...previous, [kind]: update(previous[kind]) }));
 
-  const onAddEntry = (entryType: string, entryName: string) => {
-    // check for duplicate entries, account for spaces, underscore, and capitilazation
-    const squashedEntryName = entryName.replace(/[_\s]/g, "").toLowerCase();
-    const allEntries = [
-      ...symptoms,
-      ...moods,
-      ...medications,
-      ...birthControl,
+  const onAddEntry = (entryType: CatalogueKind, entryName: string) => {
+    const taken = catalogueNameTaken(entryName, [
+      ...CATALOGUE_KINDS.flatMap((kind) => lists[kind]),
       ...symptomOptions,
       ...moodOptions,
       ...medicationOptions,
       ...birthControlOptions,
-    ];
-    const squashedAllEntries = allEntries.map((entry) =>
-      entry.replace(/[_\s]/g, "").toLowerCase(),
-    );
-    if (squashedAllEntries.includes(squashedEntryName)) {
+    ]);
+    if (taken) {
       setSnackbarText(`${entryName} already exists.`);
       setSnackbarVisible(true);
       return;
@@ -293,16 +290,14 @@ function CustomEntriesModal({
 
     // Which table a kind means lives in db/catalogue.ts. What is left here is
     // this screen's own list, which is display state.
-    addCatalogueItem(entryType as CatalogueKind, entryName);
-    listFor(entryType).set([...listFor(entryType).get(), entryName]);
+    addCatalogueItem(entryType, entryName);
+    updateList(entryType, (names) => [...names, entryName]);
   };
 
-  const onDeleteEntry = (entryType: string, entryName: string) => {
-    removeCatalogueItem(entryType as CatalogueKind, entryName);
-    listFor(entryType).set(
-      listFor(entryType)
-        .get()
-        .filter((item) => item !== entryName),
+  const onDeleteEntry = (entryType: CatalogueKind, entryName: string) => {
+    removeCatalogueItem(entryType, entryName);
+    updateList(entryType, (names) =>
+      names.filter((name) => name !== entryName),
     );
 
     // check if entry is in calendar filters and remove if needed
@@ -346,58 +341,23 @@ function CustomEntriesModal({
             expandedId={expanded}
             onAccordionPress={(expandedId) => setExpanded(String(expandedId))}
           >
-            <List.Accordion
-              title="Symptoms"
-              id="symptom"
-              titleStyle={styles.listTitle}
-            >
-              <AccordionContents
-                items={symptoms}
-                itemType="symptom"
-                onAddEntry={onAddEntry}
-                onDeleteEntry={onDeleteEntry}
-              />
-            </List.Accordion>
-            <Divider />
-            <List.Accordion
-              title="Moods"
-              id="mood"
-              titleStyle={styles.listTitle}
-            >
-              <AccordionContents
-                items={moods}
-                itemType="mood"
-                onAddEntry={onAddEntry}
-                onDeleteEntry={onDeleteEntry}
-              />
-            </List.Accordion>
-            <Divider />
-            <List.Accordion
-              title="Medications"
-              id="medication"
-              titleStyle={styles.listTitle}
-            >
-              <AccordionContents
-                items={medications}
-                itemType="medication"
-                onAddEntry={onAddEntry}
-                onDeleteEntry={onDeleteEntry}
-              />
-            </List.Accordion>
-            <Divider />
-            <List.Accordion
-              title="Birth Control"
-              id="birth control"
-              titleStyle={styles.listTitle}
-            >
-              <AccordionContents
-                items={birthControl}
-                itemType="birth control"
-                onAddEntry={onAddEntry}
-                onDeleteEntry={onDeleteEntry}
-              />
-            </List.Accordion>
-            <Divider />
+            {CATALOGUE_KINDS.map((kind) => (
+              <Fragment key={kind}>
+                <List.Accordion
+                  title={CATALOGUE_KIND_TITLES[kind]}
+                  id={kind}
+                  titleStyle={styles.listTitle}
+                >
+                  <AccordionContents
+                    items={lists[kind]}
+                    itemType={kind}
+                    onAddEntry={onAddEntry}
+                    onDeleteEntry={onDeleteEntry}
+                  />
+                </List.Accordion>
+                <Divider />
+              </Fragment>
+            ))}
           </List.AccordionGroup>
         </ThemedView>
         <InfoDialog

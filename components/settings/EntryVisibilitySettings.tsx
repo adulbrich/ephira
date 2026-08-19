@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { Fragment, useState, useEffect } from "react";
 import {
   getAllSymptoms,
   getAllMoods,
@@ -26,33 +26,23 @@ import {
   useDatabaseChangeNotifier,
 } from "@/stores/calendar-storage";
 import {
+  CATALOGUE_KIND_TITLES,
+  CATALOGUE_KINDS,
+  type CatalogueKind,
+  type CatalogueLists,
+  emptyCatalogueLists,
   invalidateCatalogue,
   setCatalogueItemVisible,
-  type CatalogueKind,
 } from "@/db/catalogue";
 
-interface Symptom {
-  id: number;
-  name: string;
-  visible?: boolean;
-  description?: string;
-}
-
-interface Mood {
-  id: number;
-  name: string;
-  visible?: boolean;
-  description?: string;
-}
-
-interface Medication {
-  id: number;
-  name: string;
-  dose?: string;
-  visible?: boolean;
-  type?: string;
-  description?: string;
-}
+/**
+ * What this screen needs of a catalogue row: enough to list it and toggle it.
+ *
+ * Replaces three near-identical local interfaces that restated
+ * `db/schema.ts`'s Symptom, Mood and Medication and disagreed with them on
+ * nullability, which is why every fetch here used to end in an `as` cast.
+ */
+type VisibilityItem = { id: number; name: string; visible: boolean | null };
 
 function InfoDialog({
   visible,
@@ -96,12 +86,9 @@ function AccordionContents({
   itemType,
   onToggleSwitch,
 }: {
-  items: Symptom[] | Mood[] | Medication[];
-  itemType: string;
-  onToggleSwitch: (
-    entryType: string,
-    entry: Symptom | Mood | Medication,
-  ) => void;
+  items: VisibilityItem[];
+  itemType: CatalogueKind;
+  onToggleSwitch: (entryType: CatalogueKind, entry: VisibilityItem) => void;
 }) {
   const theme = useTheme();
   const { width, height } = Dimensions.get("window");
@@ -121,7 +108,9 @@ function AccordionContents({
             title={item.name}
             right={() => (
               <Switch
-                key={`${item}-${isVisible}`}
+                // `${item}` here stringified the row to "[object Object]",
+                // making every switch in the list share one key.
+                key={`${item.id}-${isVisible}`}
                 value={isVisible}
                 onValueChange={() => onToggleSwitch(itemType, item)}
               />
@@ -140,71 +129,55 @@ function CalendarEntriesModal({ onDismiss }: { onDismiss: () => void }) {
   const setDbChange = useDatabaseChangeNotifier().setDatabaseChange;
   const { selectedFilters, setSelectedFilters } = useCalendarFilters();
   const [expanded, setExpanded] = useState<string>("1");
-  const [symptoms, setSymptoms] = useState<Symptom[]>([]);
-  const [moods, setMoods] = useState<Mood[]>([]);
-  const [medications, setMedications] = useState<Medication[]>([]);
-  const [birthControl, setBirthControl] = useState<Medication[]>([]);
+  const [lists, setLists] = useState<CatalogueLists<VisibilityItem>>(
+    emptyCatalogueLists<VisibilityItem>,
+  );
   const [infoDialogVisible, setInfoDialogVisible] = useState(false);
 
   useEffect(() => {
-    const fetchSymptoms = async () => {
-      const symptoms = await getAllSymptoms();
-      setSymptoms(symptoms as Symptom[]);
-    };
-    const fetchMoods = async () => {
-      const moods = await getAllMoods();
-      setMoods(moods as Mood[]);
-    };
-    const fetchMedications = async () => {
-      const medications = await getAllMedications();
-      setMedications(
-        medications.filter(
+    const fetchEntries = async () => {
+      const [allSymptoms, allMoods, allMedications] = await Promise.all([
+        getAllSymptoms(),
+        getAllMoods(),
+        getAllMedications(),
+      ]);
+
+      setLists({
+        symptom: allSymptoms,
+        mood: allMoods,
+        medication: allMedications.filter(
           (medication) => medication.type !== "birth control",
-        ) as Medication[],
-      );
-      setBirthControl(
-        medications.filter(
+        ),
+        "birth control": allMedications.filter(
           (medication) => medication.type === "birth control",
-        ) as Medication[],
-      );
+        ),
+      });
     };
 
-    fetchSymptoms();
-    fetchMoods();
-    fetchMedications();
+    fetchEntries();
   }, []);
 
-  /** This screen's own copy of each list. Display state, not the Catalogue. */
-  const listFor = (kind: string) =>
-    ({
-      symptom: { get: () => symptoms, set: setSymptoms },
-      mood: { get: () => moods, set: setMoods },
-      medication: { get: () => medications, set: setMedications },
-      "birth control": { get: () => birthControl, set: setBirthControl },
-    })[kind] ?? {
-      get: () => [] as { id: number; name: string; visible: boolean }[],
-      set: () => {},
-    };
+  /**
+   * This screen's own copy of each list. Display state, not the Catalogue.
+   *
+   * Functional, so two updates in one tick cannot lose each other. The four
+   * separate `useState`s this replaces were updated from a closed-over value.
+   */
+  const updateList = (
+    kind: CatalogueKind,
+    update: (items: VisibilityItem[]) => VisibilityItem[],
+  ) =>
+    setLists((previous) => ({ ...previous, [kind]: update(previous[kind]) }));
 
-  const onToggleSwitch = (
-    entryType: string,
-    entry: Symptom | Mood | Medication,
-  ) => {
+  const onToggleSwitch = (entryType: CatalogueKind, entry: VisibilityItem) => {
     // Which table a kind means lives in db/catalogue.ts. What is left here is
     // this screen's own list, which is display state.
-    setCatalogueItemVisible(
-      entryType as CatalogueKind,
-      entry.name,
-      !entry.visible,
-    );
+    setCatalogueItemVisible(entryType, entry.name, !entry.visible);
 
-    const list = listFor(entryType);
-    list.set(
-      list
-        .get()
-        .map((item) =>
-          item.id === entry.id ? { ...item, visible: !item.visible } : item,
-        ),
+    updateList(entryType, (items) =>
+      items.map((item) =>
+        item.id === entry.id ? { ...item, visible: !item.visible } : item,
+      ),
     );
 
     // check if entry is in calendar filters and remove if needed
@@ -248,54 +221,22 @@ function CalendarEntriesModal({ onDismiss }: { onDismiss: () => void }) {
             expandedId={expanded}
             onAccordionPress={(expandedId) => setExpanded(String(expandedId))}
           >
-            <List.Accordion
-              title="Symptoms"
-              id="symptom"
-              titleStyle={styles.listTitle}
-            >
-              <AccordionContents
-                items={symptoms}
-                itemType="symptom"
-                onToggleSwitch={onToggleSwitch}
-              />
-            </List.Accordion>
-            <Divider />
-            <List.Accordion
-              title="Moods"
-              id="mood"
-              titleStyle={styles.listTitle}
-            >
-              <AccordionContents
-                items={moods}
-                itemType="mood"
-                onToggleSwitch={onToggleSwitch}
-              />
-            </List.Accordion>
-            <Divider />
-            <List.Accordion
-              title="Medications"
-              id="medication"
-              titleStyle={styles.listTitle}
-            >
-              <AccordionContents
-                items={medications}
-                itemType="medication"
-                onToggleSwitch={onToggleSwitch}
-              />
-            </List.Accordion>
-            <Divider />
-            <List.Accordion
-              title="Birth Control"
-              id="birth control"
-              titleStyle={styles.listTitle}
-            >
-              <AccordionContents
-                items={birthControl}
-                itemType="birth control"
-                onToggleSwitch={onToggleSwitch}
-              />
-            </List.Accordion>
-            <Divider />
+            {CATALOGUE_KINDS.map((kind) => (
+              <Fragment key={kind}>
+                <List.Accordion
+                  title={CATALOGUE_KIND_TITLES[kind]}
+                  id={kind}
+                  titleStyle={styles.listTitle}
+                >
+                  <AccordionContents
+                    items={lists[kind]}
+                    itemType={kind}
+                    onToggleSwitch={onToggleSwitch}
+                  />
+                </List.Accordion>
+                <Divider />
+              </Fragment>
+            ))}
           </List.AccordionGroup>
         </ThemedView>
         <InfoDialog
