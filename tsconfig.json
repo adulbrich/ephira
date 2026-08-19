@@ -2,6 +2,11 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    // TypeScript 6 no longer pulls every node_modules/@types package into the
+    // global scope on its own, so the jest globals (describe, it, expect)
+    // stopped resolving in 837 places. Naming them is the fix; nothing else in
+    // this repo relies on ambient types.
+    "types": ["jest", "node"],
     "paths": {
       "@/*": ["./*"]
     }
