@@ -129,8 +129,10 @@ function CalendarEntriesModal({ onDismiss }: { onDismiss: () => void }) {
   const setDbChange = useDatabaseChangeNotifier().setDatabaseChange;
   const { selectedFilters, setSelectedFilters } = useCalendarFilters();
   const [expanded, setExpanded] = useState<string>("1");
-  const [lists, setLists] = useState<CatalogueLists<VisibilityItem>>(
-    emptyCatalogueLists<VisibilityItem>,
+  // Called, not passed: useState treats a bare function as a lazy
+  // initializer, which happens to work here and reads like a value.
+  const [lists, setLists] = useState<CatalogueLists<VisibilityItem>>(() =>
+    emptyCatalogueLists<VisibilityItem>(),
   );
   const [infoDialogVisible, setInfoDialogVisible] = useState(false);
 

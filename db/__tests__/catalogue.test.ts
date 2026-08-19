@@ -3,6 +3,7 @@ import {
   CATALOGUE_KIND_TITLES,
   CATALOGUE_KINDS,
   catalogueNameTaken,
+  emptyCatalogueLists,
   invalidateCatalogue,
   loadCatalogue,
   onCatalogueInvalidated,
@@ -246,5 +247,26 @@ describe("the four kinds, as settings shows them", () => {
       "Medications",
       "Birth Control",
     ]);
+  });
+});
+
+describe("emptyCatalogueLists", () => {
+  it("has an empty list for every kind", () => {
+    expect(emptyCatalogueLists<string>()).toEqual({
+      symptom: [],
+      mood: [],
+      medication: [],
+      "birth control": [],
+    });
+  });
+
+  it("builds a fresh record each time", () => {
+    // Both settings screens hold one of these as component state. Returning a
+    // shared object would let one open modal mutate the other's lists.
+    const first = emptyCatalogueLists<string>();
+    const second = emptyCatalogueLists<string>();
+
+    expect(first).not.toBe(second);
+    expect(first.symptom).not.toBe(second.symptom);
   });
 });

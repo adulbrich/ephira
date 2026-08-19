@@ -217,8 +217,10 @@ function CustomEntriesModal({
   const setDbChange = useDatabaseChangeNotifier().setDatabaseChange;
   const { selectedFilters, setSelectedFilters } = useCalendarFilters();
   const [expanded, setExpanded] = useState<string>(initialExpandedCatalogue);
-  const [lists, setLists] = useState<CatalogueLists<string>>(
-    emptyCatalogueLists<string>,
+  // Called, not passed: useState treats a bare function as a lazy
+  // initializer, which happens to work here and reads like a value.
+  const [lists, setLists] = useState<CatalogueLists<string>>(() =>
+    emptyCatalogueLists<string>(),
   );
   const [infoDialogVisible, setInfoDialogVisible] = useState(false);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
