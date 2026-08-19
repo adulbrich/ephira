@@ -204,6 +204,24 @@ describe("currentCycleState", () => {
     expect(state?.nextPredictedStart).toBeNull();
   });
 
+  it("does not claim enough data from a single cycle", () => {
+    // The home screen renders the phase button off this flag (#163). One
+    // logged cycle is enough to know the phase and not enough to show it.
+    const state = currentCycleState(cycleWithFlow, [], localDay("2026-01-11"));
+
+    expect(countCompleteCycles(cycleWithFlow)).toBe(1);
+    expect(state?.hasEnoughData).toBe(false);
+  });
+
+  it("claims enough data once a second cycle is logged", () => {
+    const twoCycles = [...run(1, 1, 5), ...run(10, 10, 5)];
+
+    const state = currentCycleState(twoCycles, [], localDay("2026-01-20"));
+
+    expect(countCompleteCycles(twoCycles)).toBe(2);
+    expect(state?.hasEnoughData).toBe(true);
+  });
+
   it("gates on the same count the settings screen uses", () => {
     const oneCycle = currentCycleState(
       cycleWithFlow,
