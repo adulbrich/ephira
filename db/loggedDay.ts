@@ -1,6 +1,7 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { getDrizzleDatabase } from "@/db/operations/setup";
 import {
+  days,
   medicationEntries,
   medications,
   moodEntries,
@@ -96,39 +97,50 @@ export function loggedDayChanged(a: LoggedDay, b: LoggedDay): boolean {
 }
 
 /**
- * Loads the whole Logged Day.
+ * The catalogue row an entry names, or null if it is no longer there.
  *
- * Entry names are resolved by joining in the database. The path this replaces
- * issued a query per entry after already fetching the same Day row six times.
+ * drizzle's relational query returns the `one(...)` side as null when the row
+ * is missing, and the row really can be missing: the app ships no
+ * `PRAGMA foreign_keys`, so on device the constraint is not enforced and an
+ * entry outlives a deleted Symptom, Mood or Medication. `drizzle/0004` exists
+ * to clean those up, which is the proof they occur.
+ *
+ * Skipping them is what the four `innerJoin`s this replaces did implicitly. A
+ * relational `with` hands them back instead, so the skip has to be written
+ * down. Reading `.name` off one of these without checking is a crash on
+ * opening a day, and it is not a crash `tsc` can see.
+ */
+function nameOf(item: { name: string } | null): string | null {
+  return item?.name ?? null;
+}
+
+function loggedNames<Entry>(
+  entries: Entry[],
+  catalogueItem: (entry: Entry) => { name: string } | null,
+): string[] {
+  return entries.flatMap((entry) => {
+    const name = nameOf(catalogueItem(entry));
+    return name === null ? [] : [name];
+  });
+}
+
+/**
+ * Loads the whole Logged Day, in one query.
+ *
+ * Entry names are resolved in the database through the relations declared in
+ * `db/schema.ts`. The path before #202 issued a query per entry after already
+ * fetching the same Day row six times; #202 got that to four; this is one.
  */
 export async function loadLoggedDay(date: string): Promise<LoggedDay> {
-  const day = await getDay(date);
+  const day = await db.query.days.findFirst({
+    where: eq(days.date, date),
+    with: {
+      symptomEntries: { with: { symptom: true } },
+      moodEntries: { with: { mood: true } },
+      medicationEntries: { with: { medication: true } },
+    },
+  });
   if (!day) return emptyLoggedDay(date);
-
-  const [symptomRows, moodRows, medicationRows] = await Promise.all([
-    db
-      .select({ name: symptoms.name })
-      .from(symptomEntries)
-      .innerJoin(symptoms, eq(symptomEntries.symptom_id, symptoms.id))
-      .where(eq(symptomEntries.day_id, day.id)),
-    db
-      .select({ name: moods.name })
-      .from(moodEntries)
-      .innerJoin(moods, eq(moodEntries.mood_id, moods.id))
-      .where(eq(moodEntries.day_id, day.id)),
-    db
-      .select({
-        name: medications.name,
-        timeTaken: medicationEntries.time_taken,
-        notes: medicationEntries.notes,
-      })
-      .from(medicationEntries)
-      .innerJoin(
-        medications,
-        eq(medicationEntries.medication_id, medications.id),
-      )
-      .where(eq(medicationEntries.day_id, day.id)),
-  ]);
 
   return {
     date,
@@ -137,13 +149,19 @@ export async function loadLoggedDay(date: string): Promise<LoggedDay> {
     isCycleStart: day.is_cycle_start ?? false,
     isCycleEnd: day.is_cycle_end ?? false,
     intercourse: day.intercourse ?? false,
-    symptoms: symptomRows.map((row) => row.name),
-    moods: moodRows.map((row) => row.name),
-    medications: medicationRows.map((row) => ({
-      name: row.name,
-      ...(row.timeTaken ? { timeTaken: row.timeTaken } : {}),
-      ...(row.notes ? { notes: row.notes } : {}),
-    })),
+    symptoms: loggedNames(day.symptomEntries, (entry) => entry.symptom),
+    moods: loggedNames(day.moodEntries, (entry) => entry.mood),
+    medications: day.medicationEntries.flatMap((entry) => {
+      const name = nameOf(entry.medication);
+      if (name === null) return [];
+      return [
+        {
+          name,
+          ...(entry.time_taken ? { timeTaken: entry.time_taken } : {}),
+          ...(entry.notes ? { notes: entry.notes } : {}),
+        },
+      ];
+    }),
   };
 }
 
