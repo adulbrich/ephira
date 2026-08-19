@@ -1,6 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { StyleSheet, View } from "react-native";
-import { insertDay, getDay } from "@/db/database";
 import { List, Text, useTheme, Divider } from "react-native-paper";
 import {
   useAccordion,
@@ -23,10 +22,14 @@ import NotesAccordion from "./NotesAccordion";
 import IntercourseAccordion from "./IntercourseAccordion";
 import Snackbar from "@/components/ui/Snackbar";
 import { savedSectionLabel } from "@/components/dayView/saveMessage";
-import { useSyncEntries } from "@/hooks/useSyncEntries";
-import { useFetchEntries } from "@/hooks/useFetchEntries";
-import { useFetchMedicationEntries } from "@/hooks/useFetchMedicationEntries";
-import { useSyncMedicationEntries } from "@/hooks/useSyncMedicationEntries";
+import {
+  birthControlIn,
+  createLoggedDaySaver,
+  emptyLoggedDay,
+  loadLoggedDay,
+  medicationsExcludingBirthControl,
+  type LoggedDay,
+} from "@/db/loggedDay";
 
 export default function DayView() {
   const theme = useTheme();
@@ -51,340 +54,42 @@ export default function DayView() {
   const { databaseChange } = useDatabaseChangeNotifier();
   const { intercourse, setIntercourse } = useIntercourse();
 
-  const { syncEntries } = useSyncEntries(date);
-  const { fetchEntries } = useFetchEntries(
-    date,
-    setSelectedSymptoms,
-    setSelectedMoods,
-  );
-  const { syncMedicationEntries } = useSyncMedicationEntries(date);
-  const { fetchMedicationEntries } = useFetchMedicationEntries(
-    date,
-    setSelectedBirthControl,
-    setSelectedMedications,
-    setBirthControlNotes,
-    setTimeTaken,
-  );
-
-  const fetchNotes = useCallback(async () => {
-    const day = await getDay(date);
-    if (day && day.notes) {
-      setNotes(day.notes);
-    } else {
-      setNotes("");
-    }
-  }, [date, setNotes]);
-
-  const fetchCycleInfo = useCallback(async () => {
-    const day = await getDay(date);
-    if (day && day.is_cycle_start) {
-      setCycleStart(day.is_cycle_start);
-    } else {
-      setCycleStart(false);
-    }
-
-    if (day && day.is_cycle_end) {
-      setCycleEnd(day.is_cycle_end);
-    } else {
-      setCycleEnd(false);
-    }
-  }, [date, setCycleStart, setCycleEnd]);
-
-  const fetchIntercourse = useCallback(async () => {
-    const day = await getDay(date);
-    if (day && day.intercourse) {
-      setIntercourse(day.intercourse);
-    } else {
-      setIntercourse(false);
-    }
-  }, [date, setIntercourse]);
-
   const [saveMessageVisible, setSaveMessageVisible] = useState(false);
   const [saveMessageContent, setSaveMessageContent] = useState<string[]>([]);
 
-  type SavedData = {
-    date: string;
-    flow: number;
-    notes: string;
-    is_cycle_start: boolean;
-    is_cycle_end: boolean;
-    intercourse: boolean;
-    symptoms: string[];
-    moods: string[];
-    medications: string[];
-    birthControl: string | null;
-    birthControlNotes: string;
-    timeTaken: string;
-  };
+  // Everything about when and how a day is written lives in db/loggedDay.ts.
+  // What is left here is turning store state into a snapshot and back.
+  const saver = useRef(createLoggedDaySaver()).current;
+  const [lastSaved, setLastSaved] = useState<LoggedDay | null>(null);
+  const loaded = useRef(false);
 
-  const [lastSavedData, setLastSavedData] = useState<SavedData | null>(null);
-  const isSavingRef = useRef(false);
-  const initialLoadComplete = useRef(false);
-  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const snapshot: LoggedDay = useMemo(() => {
+    const birthControl = selectedBirthControl
+      ? [
+          {
+            name: selectedBirthControl,
+            timeTaken: timeTaken,
+            notes: birthControlNotes,
+          },
+        ]
+      : [];
 
-  const fetchEntriesRef = useRef(fetchEntries);
-  const fetchMedicationEntriesRef = useRef(fetchMedicationEntries);
-  const fetchNotesRef = useRef(fetchNotes);
-  const fetchCycleInfoRef = useRef(fetchCycleInfo);
-  const fetchIntercourseRef = useRef(fetchIntercourse);
-  const selectedSymptomsRef = useRef(selectedSymptoms);
-  const selectedMoodsRef = useRef(selectedMoods);
-  const selectedMedicationsRef = useRef(selectedMedications);
-  const selectedBirthControlRef = useRef(selectedBirthControl);
-  const birthControlNotesRef = useRef(birthControlNotes);
-  const timeTakenRef = useRef(timeTaken);
-  const intercourseRef = useRef(intercourse);
-
-  useEffect(() => {
-    fetchEntriesRef.current = fetchEntries;
-    fetchMedicationEntriesRef.current = fetchMedicationEntries;
-    fetchNotesRef.current = fetchNotes;
-    fetchCycleInfoRef.current = fetchCycleInfo;
-    fetchIntercourseRef.current = fetchIntercourse;
-    selectedSymptomsRef.current = selectedSymptoms;
-    selectedMoodsRef.current = selectedMoods;
-    selectedMedicationsRef.current = selectedMedications;
-    selectedBirthControlRef.current = selectedBirthControl;
-    birthControlNotesRef.current = birthControlNotes;
-    timeTakenRef.current = timeTaken;
-    intercourseRef.current = intercourse;
-  }, [
-    fetchEntries,
-    fetchMedicationEntries,
-    fetchNotes,
-    fetchCycleInfo,
-    fetchIntercourse,
-    selectedSymptoms,
-    selectedMoods,
-    selectedMedications,
-    selectedBirthControl,
-    birthControlNotes,
-    timeTaken,
-    intercourse,
-  ]);
-
-  const onSave = useCallback(() => {
-    if (isSavingRef.current) return;
-    isSavingRef.current = true;
-
-    // Compute what changed before the async save so the message can show immediately
-    const savedContent = savedSectionLabel(
-      state,
-      {
-        flow: flow_intensity,
-        notes,
-        symptoms: selectedSymptoms,
-        moods: selectedMoods,
-        medications: selectedMedications,
-        birthControl: selectedBirthControl,
-        intercourse,
-      },
-      lastSavedData
-        ? {
-            flow: lastSavedData.flow,
-            notes: lastSavedData.notes,
-            symptoms: lastSavedData.symptoms,
-            moods: lastSavedData.moods,
-            medications: lastSavedData.medications,
-            birthControl: lastSavedData.birthControl,
-            intercourse: lastSavedData.intercourse,
-          }
-        : null,
-    );
-
-    // Optimistically show the save message before the DB write completes
-    if (savedContent) {
-      setSaveMessageContent([`${savedContent} Saved!`]);
-      setSaveMessageVisible(true);
-    }
-
-    insertDay(
+    return {
       date,
-      flow_intensity,
-      notes,
-      is_cycle_start,
-      is_cycle_end,
-      intercourse,
-    )
-      .then(async () => {
-        setFlow(flow_intensity);
-
-        await syncEntries(selectedSymptoms, "symptom");
-        await syncEntries(selectedMoods, "mood");
-
-        let combinedMedications = selectedMedications;
-
-        if (selectedBirthControl != null) {
-          combinedMedications = [...selectedMedications, selectedBirthControl];
-        }
-
-        await syncMedicationEntries(
-          combinedMedications,
-          timeTaken,
-          birthControlNotes,
-        );
-
-        await fetchEntries("symptom");
-        await fetchEntries("mood");
-        await fetchMedicationEntries();
-        await fetchNotes();
-        await fetchCycleInfo();
-        await fetchIntercourse();
-      })
-      .catch(() => {
-        setSaveMessageContent(["Save failed. Please try again."]);
-        setSaveMessageVisible(true);
-      })
-      .finally(() => {
-        isSavingRef.current = false;
-      });
-  }, [
-    date,
-    flow_intensity,
-    notes,
-    is_cycle_start,
-    is_cycle_end,
-    intercourse,
-    selectedSymptoms,
-    selectedMoods,
-    selectedMedications,
-    selectedBirthControl,
-    timeTaken,
-    birthControlNotes,
-    syncEntries,
-    syncMedicationEntries,
-    fetchEntries,
-    fetchMedicationEntries,
-    fetchNotes,
-    fetchCycleInfo,
-    fetchIntercourse,
-    setFlow,
-    state,
-    lastSavedData,
-  ]);
-
-  useEffect(() => {
-    if (flow_intensity !== null) {
-      setFlow(flow_intensity);
-    }
-  }, [flow_intensity, setFlow]);
-
-  useEffect(() => {
-    const fetchAll = async () => {
-      await fetchEntriesRef.current("symptom");
-      await fetchEntriesRef.current("mood");
-      await fetchMedicationEntriesRef.current();
-      await fetchNotesRef.current();
-      await fetchCycleInfoRef.current();
-      await fetchIntercourseRef.current();
-
-      const existingDay = await getDay(date);
-      const isNewDay = !existingDay;
-
-      setLastSavedData({
-        date: date,
-        flow: existingDay?.flow_intensity ?? 0,
-        notes: existingDay?.notes ?? "",
-        is_cycle_start: existingDay?.is_cycle_start ?? false,
-        is_cycle_end: existingDay?.is_cycle_end ?? false,
-        intercourse: existingDay?.intercourse ?? false,
-        symptoms: isNewDay ? [] : [...selectedSymptomsRef.current],
-        moods: isNewDay ? [] : [...selectedMoodsRef.current],
-        medications: isNewDay ? [] : [...selectedMedicationsRef.current],
-        birthControl: isNewDay ? null : selectedBirthControlRef.current,
-        birthControlNotes: isNewDay ? "" : birthControlNotesRef.current,
-        timeTaken: isNewDay ? "" : timeTakenRef.current,
-      });
-
-      initialLoadComplete.current = true;
-    };
-
-    fetchAll();
-    setExpandedAccordion(null);
-  }, [date, setExpandedAccordion, databaseChange]);
-
-  const hasChanged = useCallback((newData: SavedData, oldData: SavedData) => {
-    const normalize = (data: SavedData) => ({
-      ...data,
-      symptoms: [...data.symptoms].sort(),
-      moods: [...data.moods].sort(),
-      medications: [...data.medications].sort(),
-      notes: data.notes.trim(),
-      birthControlNotes: data.birthControlNotes.trim(),
-      timeTaken: data.timeTaken.trim(),
-    });
-
-    const a = normalize(newData);
-    const b = normalize(oldData);
-
-    return JSON.stringify(a) !== JSON.stringify(b);
-  }, []);
-
-  const onSaveRef = useRef(onSave);
-  const hasChangedRef = useRef(hasChanged);
-  const lastSavedDataRef = useRef(lastSavedData);
-
-  useEffect(() => {
-    onSaveRef.current = onSave;
-    hasChangedRef.current = hasChanged;
-    lastSavedDataRef.current = lastSavedData;
-  }, [onSave, hasChanged, lastSavedData]);
-
-  // debounced auto-save
-  useEffect(() => {
-    if (!date) return;
-
-    const currentData = {
-      date,
-      flow: flow_intensity,
+      flow: flow_intensity ?? 0,
       notes: notes ?? "",
-      is_cycle_start: is_cycle_start ?? false,
-      is_cycle_end: is_cycle_end ?? false,
+      isCycleStart: is_cycle_start ?? false,
+      isCycleEnd: is_cycle_end ?? false,
       intercourse: intercourse ?? false,
       symptoms: selectedSymptoms,
       moods: selectedMoods,
-      medications: selectedMedications,
-      birthControl: selectedBirthControl,
-      birthControlNotes,
-      timeTaken,
-    };
-
-    // skip auto-saving on initial component load
-    if (!initialLoadComplete.current) return;
-
-    // skip auto-saving if selected date has changed since last save
-    if (lastSavedDataRef.current?.date !== date) return;
-
-    if (
-      !lastSavedDataRef.current ||
-      hasChangedRef.current(currentData, lastSavedDataRef.current)
-    ) {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-
-      // Capture the save function now so a date change mid-debounce
-      // doesn't replace it with the new day's version before it fires.
-      const pendingSave = onSaveRef.current;
-      saveTimeoutRef.current = setTimeout(() => {
-        pendingSave();
-        // Only update lastSavedData if we're still on the same date.
-        // If the user switched days before this fired, lastSavedDataRef will
-        // already hold the new day's data and we must not overwrite it.
-        if (lastSavedDataRef.current?.date === currentData.date) {
-          setLastSavedData(currentData);
-          lastSavedDataRef.current = currentData;
-        }
-      }, 100);
-    }
-
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-        saveTimeoutRef.current = null;
-      }
+      medications: [
+        ...selectedMedications.map((name) => ({ name })),
+        ...birthControl,
+      ],
     };
   }, [
+    date,
     flow_intensity,
     notes,
     is_cycle_start,
@@ -396,8 +101,68 @@ export default function DayView() {
     selectedBirthControl,
     birthControlNotes,
     timeTaken,
-    date,
   ]);
+
+  // Open a day: one load, and the saver's baseline comes from what was read.
+  useEffect(() => {
+    let stale = false;
+    loaded.current = false;
+
+    loadLoggedDay(date).then((day) => {
+      if (stale) return;
+
+      setFlow(day.flow);
+      setNotes(day.notes);
+      setCycleStart(day.isCycleStart);
+      setCycleEnd(day.isCycleEnd);
+      setIntercourse(day.intercourse);
+      setSelectedSymptoms(day.symptoms);
+      setSelectedMoods(day.moods);
+      setSelectedMedications(medicationsExcludingBirthControl(day));
+
+      const birthControl = birthControlIn(day);
+      setSelectedBirthControl(birthControl?.name ?? null);
+      setBirthControlNotes(birthControl?.notes ?? "");
+      setTimeTaken(birthControl?.timeTaken ?? "");
+
+      saver.reset(day);
+      setLastSaved(day);
+      loaded.current = true;
+    });
+
+    setExpandedAccordion(null);
+
+    return () => {
+      stale = true;
+      saver.cancel();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date, databaseChange]);
+
+  // Auto-save. The debounce, the in-flight guard and the two same-date guards
+  // are the saver's, not this component's.
+  useEffect(() => {
+    if (!date || !loaded.current) return;
+
+    const previous = lastSaved ?? emptyLoggedDay(date);
+
+    saver.schedule(snapshot).then((outcome) => {
+      if (outcome.status === "saved") {
+        setLastSaved(outcome.day);
+        const section = savedSectionLabel(state, outcome.day, previous);
+        if (section) {
+          setSaveMessageContent([`${section} Saved!`]);
+          setSaveMessageVisible(true);
+        }
+      } else if (outcome.status === "failed") {
+        setSaveMessageContent(["Save failed. Please try again."]);
+        setSaveMessageVisible(true);
+      }
+    });
+    // `state` and `lastSaved` are read when the save lands, not what triggers
+    // one; including them would schedule a save on every accordion tap.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [snapshot, date]);
 
   return (
     <View style={{ backgroundColor: theme.colors.background }}>
