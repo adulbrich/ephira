@@ -363,6 +363,15 @@ export type LoggedDaySaver = {
   flush(): Promise<SaveOutcome>;
   /** Discards a pending edit. For teardown that should not write. */
   cancel(): void;
+  /**
+   * Resolves when no write is outstanding, convergence included.
+   *
+   * `schedule` resolves as soon as the caller's own snapshot has been
+   * written, which is what a save message wants. That is not the same moment
+   * the day stops changing, because a revert arriving mid-write triggers a
+   * further pass. Anything that needs the settled state waits on this.
+   */
+  settled(): Promise<void>;
 };
 
 export const DEFAULT_SAVE_DELAY_MS = 100;
@@ -395,12 +404,17 @@ export function createLoggedDaySaver(
   const delayMs = options.delayMs ?? DEFAULT_SAVE_DELAY_MS;
 
   let baseline: LoggedDay | null = null;
+  // The last snapshot the caller reported, whatever came of it. Kept even for
+  // calls that write nothing, because a revert arriving mid-write is exactly
+  // the case that has no pending timer left to disarm.
+  let desired: LoggedDay | null = null;
   let timer: ReturnType<typeof setTimeout> | null = null;
   let pending: {
     day: LoggedDay;
     resolve: (outcome: SaveOutcome) => void;
   } | null = null;
   let inFlight = false;
+  let running: Promise<unknown> = Promise.resolve();
 
   const takePending = () => {
     if (timer) clearTimeout(timer);
@@ -419,6 +433,41 @@ export function createLoggedDaySaver(
    * now. Resolves whoever called `schedule` and returns the same outcome to
    * whoever asked for the flush.
    */
+  /** Writes `day`, moving the baseline with it if that day is still open. */
+  const write = async (day: LoggedDay) => {
+    inFlight = true;
+    try {
+      await saveLoggedDay(day);
+      if (baseline?.date === day.date) baseline = day;
+    } finally {
+      inFlight = false;
+    }
+  };
+
+  /**
+   * Converges on what the caller last asked for.
+   *
+   * A save takes long enough for the user to change their mind inside it, and
+   * once it has started there is no timer to disarm. Rather than queueing,
+   * which needs its own ordering rules, each completed write checks whether
+   * the answer has moved and writes again if it has. It terminates because
+   * every pass sets the baseline to what it just wrote.
+   */
+  const converge = async () => {
+    while (
+      desired &&
+      baseline &&
+      desired.date === baseline.date &&
+      loggedDayChanged(desired, baseline)
+    ) {
+      try {
+        await write(desired);
+      } catch {
+        return; // the next edit or day-open corrects it
+      }
+    }
+  };
+
   const runPending = async (): Promise<SaveOutcome> => {
     const taken = takePending();
     if (!taken) return { status: "unchanged" };
@@ -434,26 +483,31 @@ export function createLoggedDaySaver(
       return settle({ status: "wrong-day" });
     }
 
-    inFlight = true;
     try {
-      await saveLoggedDay(day);
-      if (baseline?.date === day.date) baseline = day;
-      return settle({ status: "saved", day });
+      await write(day);
     } catch (error) {
       return settle({ status: "failed", error });
-    } finally {
-      inFlight = false;
     }
+
+    const outcome = settle({ status: "saved", day });
+    await converge();
+    return outcome;
   };
 
   return {
     reset(day) {
       clearPending({ status: "superseded" });
       baseline = day;
+      desired = day;
     },
 
     flush() {
-      return runPending();
+      running = runPending();
+      return running as Promise<SaveOutcome>;
+    },
+
+    settled() {
+      return running.then(() => undefined);
     },
 
     cancel() {
@@ -471,6 +525,8 @@ export function createLoggedDaySaver(
       // Disarms, because this one means there is nothing left to write. The
       // user backed out of an edit inside the debounce, so any pending write
       // is now for a value they have already abandoned (#214).
+      desired = day;
+
       if (baseline && !loggedDayChanged(day, baseline)) {
         clearPending({ status: "superseded" });
         return Promise.resolve({ status: "unchanged" as const });
@@ -481,7 +537,8 @@ export function createLoggedDaySaver(
       return new Promise<SaveOutcome>((resolve) => {
         pending = { day, resolve };
         timer = setTimeout(() => {
-          void runPending();
+          running = runPending();
+          void running;
         }, delayMs);
       });
     },
