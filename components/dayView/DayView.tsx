@@ -22,6 +22,7 @@ import MoodsAccordion from "./MoodsAccordion";
 import NotesAccordion from "./NotesAccordion";
 import IntercourseAccordion from "./IntercourseAccordion";
 import Snackbar from "@/components/ui/Snackbar";
+import { savedSectionLabel } from "@/components/dayView/saveMessage";
 import { useSyncEntries } from "@/hooks/useSyncEntries";
 import { useFetchEntries } from "@/hooks/useFetchEntries";
 import { useFetchMedicationEntries } from "@/hooks/useFetchMedicationEntries";
@@ -167,55 +168,29 @@ export default function DayView() {
     isSavingRef.current = true;
 
     // Compute what changed before the async save so the message can show immediately
-    let savedContent = "";
-    switch (state) {
-      case "flow":
-        if (flow_intensity !== 0) savedContent = "Flow";
-        break;
-      case "symptom":
-        if (selectedSymptoms.length > 0) savedContent = "Symptoms";
-        break;
-      case "mood":
-        if (selectedMoods.length > 0) savedContent = "Moods";
-        break;
-      case "medication":
-        if (selectedMedications.length > 0) savedContent = "Medications";
-        break;
-      case "birthControl":
-        if (selectedBirthControl) savedContent = "Birth Control";
-        break;
-      case "note":
-        if (notes && notes.trim() !== "") savedContent = "Notes";
-        break;
-      case "intercourse":
-        savedContent = "Intercourse";
-        break;
-      default:
-        if (lastSavedData) {
-          if (flow_intensity !== lastSavedData.flow) savedContent = "Flow";
-          else if (notes !== lastSavedData.notes) savedContent = "Notes";
-          else if (
-            JSON.stringify(selectedSymptoms) !==
-            JSON.stringify(lastSavedData.symptoms)
-          )
-            savedContent = "Symptoms";
-          else if (
-            JSON.stringify(selectedMoods) !==
-            JSON.stringify(lastSavedData.moods)
-          )
-            savedContent = "Moods";
-          else if (
-            JSON.stringify(selectedMedications) !==
-            JSON.stringify(lastSavedData.medications)
-          )
-            savedContent = "Medications";
-          else if (selectedBirthControl !== lastSavedData.birthControl)
-            savedContent = "Birth Control";
-          else if (intercourse !== lastSavedData.intercourse)
-            savedContent = "Intercourse";
-        }
-        break;
-    }
+    const savedContent = savedSectionLabel(
+      state,
+      {
+        flow: flow_intensity,
+        notes,
+        symptoms: selectedSymptoms,
+        moods: selectedMoods,
+        medications: selectedMedications,
+        birthControl: selectedBirthControl,
+        intercourse,
+      },
+      lastSavedData
+        ? {
+            flow: lastSavedData.flow,
+            notes: lastSavedData.notes,
+            symptoms: lastSavedData.symptoms,
+            moods: lastSavedData.moods,
+            medications: lastSavedData.medications,
+            birthControl: lastSavedData.birthControl,
+            intercourse: lastSavedData.intercourse,
+          }
+        : null,
+    );
 
     // Optimistically show the save message before the DB write completes
     if (savedContent) {
