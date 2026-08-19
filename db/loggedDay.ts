@@ -186,11 +186,18 @@ async function catalogueIdsByName(
  *
  * Reconcile, not insert: names no longer selected have their entries removed,
  * and per-entry detail is updated in place.
+ *
+ * `checkedOn` is today, which is not `day.date` — a user can log a day in the
+ * past. It reaches the prediction accuracy check that every flow write fires.
  */
-export async function saveLoggedDay(day: LoggedDay): Promise<void> {
+export async function saveLoggedDay(
+  day: LoggedDay,
+  checkedOn: Date,
+): Promise<void> {
   await insertDay(
     day.date,
     day.flow,
+    checkedOn,
     day.notes,
     day.isCycleStart,
     day.isCycleEnd,
@@ -363,6 +370,15 @@ export type LoggedDaySaver = {
   flush(): Promise<SaveOutcome>;
   /** Discards a pending edit. For teardown that should not write. */
   cancel(): void;
+  /**
+   * Resolves when no write is outstanding, convergence included.
+   *
+   * `schedule` resolves as soon as the caller's own snapshot has been
+   * written, which is what a save message wants. That is not the same moment
+   * the day stops changing, because a revert arriving mid-write triggers a
+   * further pass. Anything that needs the settled state waits on this.
+   */
+  settled(): Promise<void>;
 };
 
 export const DEFAULT_SAVE_DELAY_MS = 100;
@@ -389,18 +405,32 @@ export const DEFAULT_SAVE_DELAY_MS = 100;
  * same pending write immediately, under the same four rules, which is what
  * closing a day needs.
  */
-export function createLoggedDaySaver(
-  options: { delayMs?: number } = {},
-): LoggedDaySaver {
+export function createLoggedDaySaver(options: {
+  /**
+   * Reads the clock at write time, for the prediction accuracy check.
+   *
+   * Required and injected rather than defaulted, so the clock is read at the
+   * app's edge and a test can pin it. A saver outlives any single write, so
+   * it needs a function rather than a value.
+   */
+  now: () => Date;
+  delayMs?: number;
+}): LoggedDaySaver {
+  const { now } = options;
   const delayMs = options.delayMs ?? DEFAULT_SAVE_DELAY_MS;
 
   let baseline: LoggedDay | null = null;
+  // The last snapshot the caller reported, whatever came of it. Kept even for
+  // calls that write nothing, because a revert arriving mid-write is exactly
+  // the case that has no pending timer left to disarm.
+  let desired: LoggedDay | null = null;
   let timer: ReturnType<typeof setTimeout> | null = null;
   let pending: {
     day: LoggedDay;
     resolve: (outcome: SaveOutcome) => void;
   } | null = null;
   let inFlight = false;
+  let running: Promise<unknown> = Promise.resolve();
 
   const takePending = () => {
     if (timer) clearTimeout(timer);
@@ -419,6 +449,43 @@ export function createLoggedDaySaver(
    * now. Resolves whoever called `schedule` and returns the same outcome to
    * whoever asked for the flush.
    */
+  /** Writes `day`, moving the baseline with it if that day is still open. */
+  const write = async (day: LoggedDay) => {
+    inFlight = true;
+    try {
+      // now() at write time, not at schedule time: the accuracy check records
+      // when the outcome became known, and a converge pass can run later.
+      await saveLoggedDay(day, now());
+      if (baseline?.date === day.date) baseline = day;
+    } finally {
+      inFlight = false;
+    }
+  };
+
+  /**
+   * Converges on what the caller last asked for.
+   *
+   * A save takes long enough for the user to change their mind inside it, and
+   * once it has started there is no timer to disarm. Rather than queueing,
+   * which needs its own ordering rules, each completed write checks whether
+   * the answer has moved and writes again if it has. It terminates because
+   * every pass sets the baseline to what it just wrote.
+   */
+  const converge = async () => {
+    while (
+      desired &&
+      baseline &&
+      desired.date === baseline.date &&
+      loggedDayChanged(desired, baseline)
+    ) {
+      try {
+        await write(desired);
+      } catch {
+        return; // the next edit or day-open corrects it
+      }
+    }
+  };
+
   const runPending = async (): Promise<SaveOutcome> => {
     const taken = takePending();
     if (!taken) return { status: "unchanged" };
@@ -434,26 +501,31 @@ export function createLoggedDaySaver(
       return settle({ status: "wrong-day" });
     }
 
-    inFlight = true;
     try {
-      await saveLoggedDay(day);
-      if (baseline?.date === day.date) baseline = day;
-      return settle({ status: "saved", day });
+      await write(day);
     } catch (error) {
       return settle({ status: "failed", error });
-    } finally {
-      inFlight = false;
     }
+
+    const outcome = settle({ status: "saved", day });
+    await converge();
+    return outcome;
   };
 
   return {
     reset(day) {
       clearPending({ status: "superseded" });
       baseline = day;
+      desired = day;
     },
 
     flush() {
-      return runPending();
+      running = runPending();
+      return running as Promise<SaveOutcome>;
+    },
+
+    settled() {
+      return running.then(() => undefined);
     },
 
     cancel() {
@@ -471,6 +543,8 @@ export function createLoggedDaySaver(
       // Disarms, because this one means there is nothing left to write. The
       // user backed out of an edit inside the debounce, so any pending write
       // is now for a value they have already abandoned (#214).
+      desired = day;
+
       if (baseline && !loggedDayChanged(day, baseline)) {
         clearPending({ status: "superseded" });
         return Promise.resolve({ status: "unchanged" as const });
@@ -481,7 +555,8 @@ export function createLoggedDaySaver(
       return new Promise<SaveOutcome>((resolve) => {
         pending = { day, resolve };
         timer = setTimeout(() => {
-          void runPending();
+          running = runPending();
+          void running;
         }, delayMs);
       });
     },

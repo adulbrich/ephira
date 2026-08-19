@@ -78,7 +78,7 @@ export default function DayView() {
   const [saveMessageContent, setSaveMessageContent] = useState<string[]>([]);
 
   // Everything about when and how a day is written lives in db/loggedDay.ts.
-  const saver = useRef(createLoggedDaySaver()).current;
+  const saver = useRef(createLoggedDaySaver({ now: () => new Date() })).current;
   const [lastSaved, setLastSaved] = useState<LoggedDay | null>(null);
   const loaded = useRef(false);
 

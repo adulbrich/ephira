@@ -20,6 +20,7 @@ export const getAllDays = async () => {
 export const updateDay = async (
   date: string,
   flowIntensity: number,
+  checkedOn: Date,
   notes?: string | null,
   is_cycle_start?: boolean,
   is_cycle_end?: boolean,
@@ -38,14 +39,18 @@ export const updateDay = async (
 
   // Check prediction accuracy when flow is logged
   try {
-    await checkPredictionAccuracy(date, flowIntensity > 0);
+    await checkPredictionAccuracy(date, flowIntensity > 0, checkedOn);
   } catch (error) {
     console.error("Error checking prediction accuracy:", error);
     // Don't fail the whole operation if accuracy checking fails
   }
 };
 
-export const updateDayFlow = async (date: string, flowIntensity: number) => {
+export const updateDayFlow = async (
+  date: string,
+  flowIntensity: number,
+  checkedOn: Date,
+) => {
   await db
     .update(days)
     .set({ flow_intensity: flowIntensity })
@@ -53,7 +58,7 @@ export const updateDayFlow = async (date: string, flowIntensity: number) => {
 
   // Check prediction accuracy when flow is logged
   try {
-    await checkPredictionAccuracy(date, flowIntensity > 0);
+    await checkPredictionAccuracy(date, flowIntensity > 0, checkedOn);
   } catch (error) {
     console.error("Error checking prediction accuracy:", error);
     // Don't fail the whole operation if accuracy checking fails
@@ -97,6 +102,7 @@ export const updateDayIntercourse = async (
 export const insertDay = async (
   date: string,
   flowIntensity: number,
+  checkedOn: Date,
   notes?: string,
   is_cycle_start?: boolean,
   is_cycle_end?: boolean,
@@ -107,6 +113,7 @@ export const insertDay = async (
     await updateDay(
       date,
       flowIntensity,
+      checkedOn,
       notes ?? null,
       is_cycle_start,
       is_cycle_end,

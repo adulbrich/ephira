@@ -26,6 +26,9 @@ jest.mock("@/db/operations/setup", () =>
 );
 
 const DATE = "2026-04-01";
+
+/** Fixed "today" for the prediction accuracy check these writes trigger. */
+const CHECKED_ON = new Date(2026, 3, 1);
 const OTHER_DATE = "2026-04-02";
 
 const aDay = (overrides: Partial<LoggedDay> = {}): LoggedDay => ({
@@ -42,7 +45,7 @@ describe("saveLoggedDay", () => {
   it("creates the Day row before writing its entries", async () => {
     // The rule stated three times with two different answers: quickBirthControl
     // creates a missing Day, the sync hooks silently returned. One answer now.
-    await saveLoggedDay(aDay({ moods: ["Calm"] }));
+    await saveLoggedDay(aDay({ moods: ["Calm"] }), CHECKED_ON);
 
     const day = await getDay(DATE);
     expect(day).toBeTruthy();
@@ -58,6 +61,7 @@ describe("saveLoggedDay", () => {
         isCycleEnd: false,
         intercourse: true,
       }),
+      CHECKED_ON,
     );
 
     expect(await getDay(DATE)).toMatchObject({
@@ -70,7 +74,7 @@ describe("saveLoggedDay", () => {
   });
 
   it("adds catalogue items it has never seen", async () => {
-    await saveLoggedDay(aDay({ symptoms: ["Aura"] }));
+    await saveLoggedDay(aDay({ symptoms: ["Aura"] }), CHECKED_ON);
 
     expect(
       getTestDatabase()
@@ -84,14 +88,14 @@ describe("saveLoggedDay", () => {
   it("reuses a catalogue item that already exists", async () => {
     getTestDatabase().insert(moods).values({ name: "Calm" }).run();
 
-    await saveLoggedDay(aDay({ moods: ["Calm"] }));
+    await saveLoggedDay(aDay({ moods: ["Calm"] }), CHECKED_ON);
 
     expect(getTestDatabase().select().from(moods).all()).toHaveLength(1);
   });
 
   it("removes entries the user has deselected", async () => {
-    await saveLoggedDay(aDay({ symptoms: ["Cramps", "Nausea"] }));
-    await saveLoggedDay(aDay({ symptoms: ["Cramps"] }));
+    await saveLoggedDay(aDay({ symptoms: ["Cramps", "Nausea"] }), CHECKED_ON);
+    await saveLoggedDay(aDay({ symptoms: ["Cramps"] }), CHECKED_ON);
 
     expect(getTestDatabase().select().from(symptomEntries).all()).toHaveLength(
       1,
@@ -105,10 +109,10 @@ describe("saveLoggedDay", () => {
       medications: [{ name: "Ibuprofen" }],
     });
 
-    await saveLoggedDay(day);
+    await saveLoggedDay(day, CHECKED_ON);
     const first = getTestDatabase().select().from(symptomEntries).all();
 
-    await saveLoggedDay(day);
+    await saveLoggedDay(day, CHECKED_ON);
 
     expect(getTestDatabase().select().from(symptomEntries).all()).toEqual(
       first,
@@ -126,6 +130,7 @@ describe("saveLoggedDay", () => {
           { name: "Pill", timeTaken: "08:00", notes: "with breakfast" },
         ],
       }),
+      CHECKED_ON,
     );
 
     expect(
@@ -136,9 +141,11 @@ describe("saveLoggedDay", () => {
   it("updates per-entry detail in place rather than duplicating", async () => {
     await saveLoggedDay(
       aDay({ medications: [{ name: "Pill", timeTaken: "08:00" }] }),
+      CHECKED_ON,
     );
     await saveLoggedDay(
       aDay({ medications: [{ name: "Pill", timeTaken: "21:00" }] }),
+      CHECKED_ON,
     );
 
     const entries = getTestDatabase().select().from(medicationEntries).all();
@@ -149,7 +156,10 @@ describe("saveLoggedDay", () => {
   it("leaves no entry pointing at a catalogue item that is gone", async () => {
     // Foreign keys are on in tests, so an ordering mistake fails loudly here.
     await expect(
-      saveLoggedDay(aDay({ moods: ["Calm"], symptoms: ["Cramps"] })),
+      saveLoggedDay(
+        aDay({ moods: ["Calm"], symptoms: ["Cramps"] }),
+        CHECKED_ON,
+      ),
     ).resolves.not.toThrow();
   });
 });
@@ -170,7 +180,7 @@ describe("loadLoggedDay", () => {
       medications: [{ name: "Pill", timeTaken: "08:00", notes: "am" }],
     });
 
-    await saveLoggedDay(day);
+    await saveLoggedDay(day, CHECKED_ON);
 
     expect(await loadLoggedDay(DATE)).toEqual(day);
   });
@@ -178,6 +188,7 @@ describe("loadLoggedDay", () => {
   it("resolves entry names without a per-entry lookup", async () => {
     await saveLoggedDay(
       aDay({ symptoms: ["Cramps", "Nausea", "Aura"], moods: ["Calm", "Sad"] }),
+      CHECKED_ON,
     );
 
     const loaded = await loadLoggedDay(DATE);
@@ -187,11 +198,14 @@ describe("loadLoggedDay", () => {
   });
 
   it("does not leak another day's entries", async () => {
-    await saveLoggedDay(aDay({ symptoms: ["Cramps"] }));
-    await saveLoggedDay({
-      ...emptyLoggedDay("2026-04-02"),
-      symptoms: ["Nausea"],
-    });
+    await saveLoggedDay(aDay({ symptoms: ["Cramps"] }), CHECKED_ON);
+    await saveLoggedDay(
+      {
+        ...emptyLoggedDay("2026-04-02"),
+        symptoms: ["Nausea"],
+      },
+      CHECKED_ON,
+    );
 
     expect((await loadLoggedDay(DATE)).symptoms).toEqual(["Cramps"]);
   });
@@ -264,7 +278,7 @@ describe("the saver's timing rules", () => {
   };
 
   it("collapses a burst of edits into one write", async () => {
-    const saver = createLoggedDaySaver();
+    const saver = createLoggedDaySaver({ now: () => CHECKED_ON });
     saver.reset(emptyLoggedDay(DATE));
 
     const first = saver.schedule(aDay({ flow: 1 }));
@@ -280,7 +294,7 @@ describe("the saver's timing rules", () => {
   });
 
   it("does not write when nothing changed", async () => {
-    const saver = createLoggedDaySaver();
+    const saver = createLoggedDaySaver({ now: () => CHECKED_ON });
     const day = aDay({ flow: 2 });
     saver.reset(day);
 
@@ -293,7 +307,7 @@ describe("the saver's timing rules", () => {
   it("refuses to save a day other than the one currently open", async () => {
     // The user switched days mid-debounce. Writing the old snapshot now would
     // write it against whichever day is open.
-    const saver = createLoggedDaySaver();
+    const saver = createLoggedDaySaver({ now: () => CHECKED_ON });
     saver.reset(emptyLoggedDay("2026-04-02"));
 
     const outcome = await saver.schedule(aDay({ flow: 3 }));
@@ -303,7 +317,7 @@ describe("the saver's timing rules", () => {
   });
 
   it("moves its baseline forward after a successful save", async () => {
-    const saver = createLoggedDaySaver();
+    const saver = createLoggedDaySaver({ now: () => CHECKED_ON });
     saver.reset(emptyLoggedDay(DATE));
 
     const saved = saver.schedule(aDay({ flow: 3 }));
@@ -314,7 +328,7 @@ describe("the saver's timing rules", () => {
   });
 
   it("cancels a pending write", async () => {
-    const saver = createLoggedDaySaver();
+    const saver = createLoggedDaySaver({ now: () => CHECKED_ON });
     saver.reset(emptyLoggedDay(DATE));
 
     const pending = saver.schedule(aDay({ flow: 3 }));
@@ -329,7 +343,7 @@ describe("the saver's timing rules", () => {
     // The report: select a flow, tap another day inside the 100ms debounce,
     // and the flow was silently discarded (#162). The user's edit was to the
     // old day, and writing the old snapshot to the old date is correct.
-    const saver = createLoggedDaySaver();
+    const saver = createLoggedDaySaver({ now: () => CHECKED_ON });
     saver.reset(emptyLoggedDay(DATE));
 
     const pending = saver.schedule(aDay({ flow: 3 }));
@@ -344,7 +358,7 @@ describe("the saver's timing rules", () => {
     // DayView flushes in the load effect's cleanup, so the flush starts before
     // loadLoggedDay resolves and calls reset for the new day. The flushed
     // write must still land on the day it was made against.
-    const saver = createLoggedDaySaver();
+    const saver = createLoggedDaySaver({ now: () => CHECKED_ON });
     saver.reset(emptyLoggedDay(DATE));
 
     const pending = saver.schedule(aDay({ flow: 3 }));
@@ -361,7 +375,7 @@ describe("the saver's timing rules", () => {
     // The flush settles after the new day's reset, so the baseline has to be
     // the new day's real contents, not the snapshot the flush just wrote.
     const newDay = aDay({ date: OTHER_DATE, flow: 1 });
-    const saver = createLoggedDaySaver();
+    const saver = createLoggedDaySaver({ now: () => CHECKED_ON });
     saver.reset(emptyLoggedDay(DATE));
 
     saver.schedule(aDay({ flow: 3 }));
@@ -384,7 +398,7 @@ describe("the saver's timing rules", () => {
     // Select Heavy, change your mind back to None inside the debounce. The
     // second schedule sees nothing changed against the baseline, and the
     // first write must not still be armed behind it (#214).
-    const saver = createLoggedDaySaver();
+    const saver = createLoggedDaySaver({ now: () => CHECKED_ON });
     const none = emptyLoggedDay(DATE);
     saver.reset(none);
 
@@ -407,7 +421,7 @@ describe("the saver's timing rules", () => {
     // The asymmetry. `unchanged` means there is nothing left to write, so it
     // disarms. `wrong-day` means the edit belongs to another day, and
     // disarming there is #162.
-    const saver = createLoggedDaySaver();
+    const saver = createLoggedDaySaver({ now: () => CHECKED_ON });
     saver.reset(emptyLoggedDay(DATE));
 
     const pending = saver.schedule(aDay({ flow: 3 }));
@@ -420,15 +434,65 @@ describe("the saver's timing rules", () => {
   });
 
   it("has nothing to flush when no write is pending", async () => {
-    const saver = createLoggedDaySaver();
+    const saver = createLoggedDaySaver({ now: () => CHECKED_ON });
     saver.reset(emptyLoggedDay(DATE));
 
     expect((await saver.flush()).status).toBe("unchanged");
     expect(await getDay(DATE)).toBeUndefined();
   });
 
+  it("corrects a revert that lands while the save is already running", async () => {
+    // Narrower than the debounce window #214 closed: the timer has fired and
+    // saveLoggedDay is midway through its queries, so there is no timer left
+    // to disarm. The write still has to converge on what the user last chose.
+    const saver = createLoggedDaySaver({ now: () => CHECKED_ON });
+    const baseline = { ...emptyLoggedDay(DATE), flow: 0 };
+    await saveLoggedDay(baseline, CHECKED_ON);
+    saver.reset(baseline);
+
+    const heavy = saver.schedule({ ...baseline, flow: 3 });
+    jest.advanceTimersByTime(100); // the write starts and suspends
+    const reverted = saver.schedule(baseline); // user backs out mid-write
+
+    await heavy; // the user's own write landed
+    await saver.settled(); // and then the day stopped changing
+
+    expect((await getDay(DATE))?.flow_intensity).toBe(0);
+    expect((await reverted).status).toBe("unchanged");
+  });
+
+  it("does not drop a different edit made while the save is running", async () => {
+    const saver = createLoggedDaySaver({ now: () => CHECKED_ON });
+    const baseline = { ...emptyLoggedDay(DATE), flow: 0 };
+    await saveLoggedDay(baseline, CHECKED_ON);
+    saver.reset(baseline);
+
+    const first = saver.schedule({ ...baseline, flow: 1 });
+    jest.advanceTimersByTime(100); // the write starts and suspends
+    saver.schedule({ ...baseline, flow: 4 }); // a second edit lands inside it
+
+    await first;
+    await saver.settled();
+
+    // The second edit's own debounce is still armed and never awaited: the
+    // convergence pass after the first write already wrote what it asked for.
+    expect((await getDay(DATE))?.flow_intensity).toBe(4);
+  });
+
+  it("writes once when nothing follows the save", async () => {
+    const saver = createLoggedDaySaver({ now: () => CHECKED_ON });
+    const baseline = { ...emptyLoggedDay(DATE), flow: 0 };
+    saver.reset(baseline);
+
+    const only = saver.schedule({ ...baseline, flow: 2 });
+    jest.advanceTimersByTime(100);
+
+    expect((await only).status).toBe("saved");
+    expect((await getDay(DATE))?.flow_intensity).toBe(2);
+  });
+
   it("reports a failure rather than throwing at the caller", async () => {
-    const saver = createLoggedDaySaver();
+    const saver = createLoggedDaySaver({ now: () => CHECKED_ON });
     saver.reset(emptyLoggedDay(DATE));
 
     const outcome = saver.schedule(aDay({ date: DATE, flow: NaN }));

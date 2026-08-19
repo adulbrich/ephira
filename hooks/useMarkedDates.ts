@@ -22,7 +22,7 @@ import { anyMoodOption } from "@/constants/Moods";
 import { anyMedicationOption } from "@/constants/Medications";
 import { anyBirthControlOption } from "@/constants/BirthControlTypes";
 import { refreshPredictions } from "@/services/cyclePredictions";
-import { startOfLocalDay } from "@/utils/dates";
+import { startOfLocalDay, formatAsISODate } from "@/utils/dates";
 
 function getStartingAndEndingDay(
   day: string,
@@ -338,11 +338,7 @@ export function useMarkedDates(calendarFilters?: string[]) {
   // identity to hold in a ref the way the hook it replaced needed.
   const referenceDay = useMemo(() => startOfLocalDay(), []);
 
-  // get date in local time
-  const day = new Date();
-  const offset = day.getTimezoneOffset();
-  const localDate = new Date(day.getTime() - offset * 60 * 1000);
-  const today = localDate.toISOString().split("T")[0];
+  const today = formatAsISODate(new Date());
 
   // useLiveQuery will automatically update the calendar when the db data changes
   useEffect(() => {

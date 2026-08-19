@@ -13,10 +13,13 @@ jest.mock("@/db/operations/setup", () =>
   jest.requireActual("@/__tests__/helpers/testDatabase"),
 );
 
-// UTC, because savePredictions formats with toISOString, matching the
-// convention services/cyclePredictionLogic.ts already uses for date strings.
-const MARCH_1 = new Date("2026-03-01T00:00:00Z");
-const MARCH_2 = new Date("2026-03-02T00:00:00Z");
+// Local, because savePredictions formats the reference day with
+// formatAsISODate. These were UTC instants when this file was written, which
+// name the previous day everywhere west of UTC: midnight UTC on the 1st is
+// 16:00 on the 28th in Los Angeles, so the assertions below failed for half
+// the world while passing in CI.
+const MARCH_1 = new Date(2026, 2, 1);
+const MARCH_2 = new Date(2026, 2, 2);
 
 const storedSnapshots = () =>
   getTestDatabase()
@@ -30,6 +33,38 @@ const storedSnapshots = () =>
 
 beforeEach(() => {
   resetTestDatabase();
+});
+
+describe("checkPredictionAccuracy", () => {
+  it("records when the outcome became known, from its caller", async () => {
+    await savePredictions([{ date: "2026-03-20", confidence: 80 }], MARCH_1);
+
+    await checkPredictionAccuracy("2026-03-20", true, new Date(2026, 2, 20));
+
+    expect(storedSnapshots()[0].checked_date).toBe("2026-03-20");
+  });
+
+  it("does not read the clock", async () => {
+    await savePredictions([{ date: "2026-03-20", confidence: 80 }], MARCH_1);
+
+    // A date the machine's clock cannot be on.
+    await checkPredictionAccuracy("2026-03-20", false, new Date(1999, 0, 5));
+
+    expect(storedSnapshots()[0].checked_date).toBe("1999-01-05");
+  });
+
+  it("dates the check locally", async () => {
+    await savePredictions([{ date: "2026-03-20", confidence: 80 }], MARCH_1);
+
+    // Half past eleven at night is tomorrow in UTC west of it.
+    await checkPredictionAccuracy(
+      "2026-03-20",
+      true,
+      new Date(2026, 2, 20, 23, 30),
+    );
+
+    expect(storedSnapshots()[0].checked_date).toBe("2026-03-20");
+  });
 });
 
 describe("savePredictions", () => {
@@ -116,7 +151,7 @@ describe("savePredictions", () => {
 
   it("never retracts a prediction whose outcome has already been measured", async () => {
     await savePredictions([{ date: "2026-03-20", confidence: 80 }], MARCH_1);
-    await checkPredictionAccuracy("2026-03-20", true);
+    await checkPredictionAccuracy("2026-03-20", true, MARCH_1);
 
     await savePredictions([{ date: "2026-03-25", confidence: 60 }], MARCH_1);
 
@@ -131,7 +166,7 @@ describe("savePredictions", () => {
 
   it("leaves a measured outcome alone when confidence is updated", async () => {
     await savePredictions([{ date: "2026-03-20", confidence: 80 }], MARCH_1);
-    await checkPredictionAccuracy("2026-03-20", true);
+    await checkPredictionAccuracy("2026-03-20", true, MARCH_1);
 
     await savePredictions([{ date: "2026-03-20", confidence: 40 }], MARCH_1);
 
@@ -151,8 +186,8 @@ describe("savePredictions", () => {
       await savePredictions(predictions, MARCH_1);
     }
 
-    await checkPredictionAccuracy("2026-03-20", true);
-    await checkPredictionAccuracy("2026-03-21", false);
+    await checkPredictionAccuracy("2026-03-20", true, MARCH_1);
+    await checkPredictionAccuracy("2026-03-21", false, MARCH_1);
 
     expect(await getPredictionAccuracy()).toEqual({
       totalChecked: 2,
