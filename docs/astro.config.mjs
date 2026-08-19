@@ -9,6 +9,11 @@ import vercel from "@astrojs/vercel";
 // https://astro.build/config
 export default defineConfig({
   site: "https://ephira.capucity.be",
+  // Astro 7 defaults this to "jsx", which strips whitespace between inline
+  // elements. In hand-written HTML that whitespace is a word separator: it
+  // rendered "ourGitHub" and "spyware.ephira" on this site. JSX semantics are
+  // wrong for prose, so keep the v6 behaviour.
+  compressHTML: true,
   output: "static",
   adapter: vercel({
     // Omitting this is equivalent -- the adapter checks `webAnalytics?.enabled`
