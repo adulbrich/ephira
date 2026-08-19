@@ -1,0 +1,10 @@
+/* Tailwind's entry point.
+ *
+ * @astrojs/tailwind used to inject this for us; @tailwindcss/vite does not,
+ * so this file has to be imported from src/layouts/Layout.astro. Drop that
+ * import and every page still builds and still deploys, completely unstyled.
+ */
+@import "tailwindcss";
+
+/* v4 loads plugins from CSS. `prose` is used on /contact and /privacy. */
+@plugin "@tailwindcss/typography";
