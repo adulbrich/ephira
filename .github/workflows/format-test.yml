@@ -26,9 +26,9 @@ jobs:
       - name: Install Dependencies
         run: |
           npm install
-      - name: Run ESLint
+      - name: Lint and check formatting
         run: |
-          npx eslint . --max-warnings=0
+          npx biome ci .
       - name: Typecheck
         run: |
           npm run typecheck

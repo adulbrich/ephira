@@ -118,7 +118,7 @@ export default function PregnancyDayView() {
             month: "long",
             day: "numeric",
             year: "numeric",
-          }).format(new Date(date + "T00:00:00"))}
+          }).format(new Date(`${date}T00:00:00`))}
         </Text>
       </View>
       <View>

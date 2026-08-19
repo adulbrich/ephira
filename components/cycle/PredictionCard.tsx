@@ -1,6 +1,6 @@
 import { View, StyleSheet } from "react-native";
-import { Card, Text, useTheme, MD3Theme } from "react-native-paper";
-import { PredictedDate } from "@/constants/Interfaces";
+import { Card, Text, useTheme, type MD3Theme } from "react-native-paper";
+import type { PredictedDate } from "@/constants/Interfaces";
 import { addDays, formatAsISODate, startOfLocalDay } from "@/utils/dates";
 
 /**
@@ -103,7 +103,7 @@ export default function PredictionCard({
   const theme = useTheme();
 
   const formattedDate = nextPredictedStart
-    ? new Date(nextPredictedStart + "T00:00:00").toLocaleDateString("en-US", {
+    ? new Date(`${nextPredictedStart}T00:00:00`).toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
       })

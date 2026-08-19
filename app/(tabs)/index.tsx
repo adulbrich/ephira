@@ -217,36 +217,34 @@ export default function HomeScreen() {
 
           <View style={styles.flowLogContainer}>
             {recentFlowDays.length > 0 ? (
-              <>
-                {recentFlowDays.map((day, index) => {
-                  const localDate = new Date(day.date + "T00:00:00");
-                  const weekday = localDate.toLocaleDateString(undefined, {
-                    weekday: "short",
-                  });
-                  const month = localDate.toLocaleDateString(undefined, {
-                    month: "short",
-                  });
-                  const dayOfMonth = localDate.toLocaleDateString(undefined, {
-                    day: "numeric",
-                  });
+              recentFlowDays.map((day) => {
+                const localDate = new Date(`${day.date}T00:00:00`);
+                const weekday = localDate.toLocaleDateString(undefined, {
+                  weekday: "short",
+                });
+                const month = localDate.toLocaleDateString(undefined, {
+                  month: "short",
+                });
+                const dayOfMonth = localDate.toLocaleDateString(undefined, {
+                  day: "numeric",
+                });
 
-                  const flowType = getFlowTypeString(day.flow_intensity ?? 0);
-                  const backgroundColor = flowType
-                    ? FlowColors[flowType]
-                    : FlowColors.white;
+                const flowType = getFlowTypeString(day.flow_intensity ?? 0);
+                const backgroundColor = flowType
+                  ? FlowColors[flowType]
+                  : FlowColors.white;
 
-                  return (
-                    <View
-                      key={index}
-                      style={[styles.flowLogItem, { backgroundColor }]}
-                    >
-                      <Text style={styles.flowLogText}>{weekday}</Text>
-                      <Text style={styles.flowLogText}>{month}</Text>
-                      <Text style={styles.flowLogText}>{dayOfMonth}</Text>
-                    </View>
-                  );
-                })}
-              </>
+                return (
+                  <View
+                    key={day.date}
+                    style={[styles.flowLogItem, { backgroundColor }]}
+                  >
+                    <Text style={styles.flowLogText}>{weekday}</Text>
+                    <Text style={styles.flowLogText}>{month}</Text>
+                    <Text style={styles.flowLogText}>{dayOfMonth}</Text>
+                  </View>
+                );
+              })
             ) : (
               <View
                 style={[

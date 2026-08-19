@@ -7,7 +7,7 @@ import {
   Divider,
   useTheme,
 } from "react-native-paper";
-import { CyclePhaseDefinition } from "@/constants/CyclePhases";
+import type { CyclePhaseDefinition } from "@/constants/CyclePhases";
 
 const handleOpenUrl = (url: string) => {
   Linking.openURL(url);
@@ -59,9 +59,9 @@ export default function PhaseInfoModal({
               Common Symptoms
             </Text>
             <View style={styles.symptomsList}>
-              {phase.commonSymptoms.map((symptom, index) => (
+              {phase.commonSymptoms.map((symptom) => (
                 <Text
-                  key={index}
+                  key={symptom}
                   variant="bodyMedium"
                   style={[
                     styles.listItem,
@@ -94,9 +94,9 @@ export default function PhaseInfoModal({
               Wellness Tips
             </Text>
             <View style={styles.tipsList}>
-              {phase.wellnessTips.map((tip, index) => (
+              {phase.wellnessTips.map((tip) => (
                 <Text
-                  key={index}
+                  key={tip}
                   variant="bodyMedium"
                   style={[
                     styles.listItem,

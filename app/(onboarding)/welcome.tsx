@@ -1,4 +1,3 @@
-import React from "react";
 import { Pressable, Text, View } from "react-native";
 import { router } from "expo-router";
 import { useTheme } from "react-native-paper";

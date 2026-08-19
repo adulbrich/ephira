@@ -1,7 +1,7 @@
 import { View } from "react-native";
 import { Button, List, Text, useTheme } from "react-native-paper";
 import { useThemeColor } from "@/stores/calendar-storage";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { ThemedView } from "@/components/ThemedView";
 import { insertSetting, getSetting } from "@/db/database";
 import { themeButtonColors } from "@/constants/Colors";
@@ -13,7 +13,7 @@ export default function ThemeSelector() {
   useEffect(() => {
     async function fetchThemeColor() {
       const savedTheme = await getSetting("theme");
-      if (savedTheme && savedTheme.value) {
+      if (savedTheme?.value) {
         setThemeColor(savedTheme.value);
       }
     }

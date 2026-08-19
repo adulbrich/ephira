@@ -14,7 +14,7 @@ export const getDatabase = () => {
   return expoDb;
 };
 
-let db = drizzle(getDatabase(), { schema });
+const db = drizzle(getDatabase(), { schema });
 
 export const getDrizzleDatabase = () => {
   return db;

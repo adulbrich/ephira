@@ -11,11 +11,11 @@ import {
   Portal,
   IconButton,
   SegmentedButtons,
-  MD3Theme,
+  type MD3Theme,
   Button,
 } from "react-native-paper";
 import { StyleSheet, Dimensions } from "react-native";
-import { ExportData as ExportDataInterface } from "@/constants/Interfaces";
+import type { ExportData as ExportDataInterface } from "@/constants/Interfaces";
 import { exportPDF } from "@/components/settings/PdfBuilder";
 
 const exportDescriptions: Record<string, string> = {
@@ -140,10 +140,11 @@ function ExportDataModal({ onDismiss }: { onDismiss: () => void }) {
     }
 
     switch (format) {
-      case "csv":
+      case "csv": {
         const csvString = formatJsonDataToCsv(exportData);
         await exportCsvOrJson(csvString, "csv");
         break;
+      }
       case "pdf":
         await exportPDF(exportData.dailyData);
         break;
@@ -222,7 +223,7 @@ export default function ExportData() {
   );
 }
 
-const makeStyles = (theme: MD3Theme, width: number, height: number) => {
+const makeStyles = (theme: MD3Theme, _width: number, height: number) => {
   return StyleSheet.create({
     modal: {
       justifyContent: "flex-start",

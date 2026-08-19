@@ -1,7 +1,7 @@
 import * as Notifications from "expo-notifications";
-import { PredictedDate } from "@/constants/Interfaces";
+import type { PredictedDate } from "@/constants/Interfaces";
 import {
-  NotificationSettings,
+  type NotificationSettings,
   NotificationTypes,
   getNotificationTemplate,
   DEFAULT_NOTIFICATION_SETTINGS,
@@ -22,7 +22,7 @@ class NotificationServiceClass {
         SettingsKeys.notificationSettings,
       );
 
-      if (!settingsRecord || !settingsRecord.value) {
+      if (!settingsRecord?.value) {
         return DEFAULT_NOTIFICATION_SETTINGS;
       }
 
@@ -135,7 +135,7 @@ class NotificationServiceClass {
     settings: NotificationSettings,
   ): Promise<void> {
     try {
-      const predictedDate = new Date(prediction.date + "T00:00:00");
+      const predictedDate = new Date(`${prediction.date}T00:00:00`);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -252,7 +252,7 @@ class NotificationServiceClass {
       const firstDays = this.getFirstDaysOfCycles(predictions);
 
       for (const prediction of firstDays) {
-        const predictedDate = new Date(prediction.date + "T00:00:00");
+        const predictedDate = new Date(`${prediction.date}T00:00:00`);
         const daysSincePrediction = Math.floor(
           (today.getTime() - predictedDate.getTime()) / (1000 * 60 * 60 * 24),
         );

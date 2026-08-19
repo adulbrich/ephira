@@ -12,7 +12,7 @@ import {
 import { Calendar } from "react-native-calendars";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { SettingsKeys } from "@/constants/Settings";
-import { useTheme, MD3Theme, Divider, Text } from "react-native-paper";
+import { useTheme, type MD3Theme, Divider, Text } from "react-native-paper";
 import { useThemeColor } from "@/stores/calendar-storage";
 import {
   usePregnancySelectedDate,

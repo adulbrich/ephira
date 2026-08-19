@@ -9,7 +9,7 @@ import Svg, {
   Stop,
 } from "react-native-svg";
 import React, { useEffect, useRef, useMemo } from "react";
-import { FlowColors, FlowType } from "@/constants/Colors";
+import { FlowColors, type FlowType } from "@/constants/Colors";
 import { useTheme } from "react-native-paper";
 import { useData, useFlowData } from "@/stores/calendar-storage";
 import { useFocusEffect } from "@react-navigation/native";
@@ -140,9 +140,10 @@ export default function FlowChart() {
     }
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the filter closure is rebuilt every render, so keying on it would loop
   useEffect(() => {
     filterFlowDataForCurrentMonth(flowData);
-  }, [flowData]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [flowData]);
 
   // ===== Gradient + Progress Logic =====
   const flowDays = flowDataForCurrentMonth.length || 0;
@@ -171,8 +172,8 @@ export default function FlowChart() {
 
     // Sort by date to get chronological order
     const sortedData = [...flowDataForCurrentMonth].sort((a, b) => {
-      const dateA = new Date(a.date + "T00:00:00Z").getTime();
-      const dateB = new Date(b.date + "T00:00:00Z").getTime();
+      const dateA = new Date(`${a.date}T00:00:00Z`).getTime();
+      const dateB = new Date(`${b.date}T00:00:00Z`).getTime();
       return dateA - dateB;
     });
 
@@ -221,7 +222,7 @@ export default function FlowChart() {
       stops = flowStatesInOrder.map((flowType, index) => {
         const offset = (index / (flowStatesInOrder.length - 1)) * maxOffset;
         const color = FlowColors[flowType];
-        return <Stop key={index} offset={`${offset}%`} stopColor={color} />;
+        return <Stop key={flowType} offset={`${offset}%`} stopColor={color} />;
       });
     }
 

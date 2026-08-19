@@ -1,4 +1,4 @@
-import { MD3LightTheme, MD3DarkTheme, MD3Theme } from "react-native-paper";
+import { MD3LightTheme, MD3DarkTheme, type MD3Theme } from "react-native-paper";
 import blueTheme from "@/constants/themes/blue.json";
 import brownTheme from "@/constants/themes/brown.json";
 import greenTheme from "@/constants/themes/green.json";

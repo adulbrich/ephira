@@ -1,4 +1,4 @@
-import { CYCLE_PHASES, CyclePhaseId } from "../CyclePhases";
+import { CYCLE_PHASES, type CyclePhaseId } from "../CyclePhases";
 
 describe("CyclePhases - Gradient Colors", () => {
   describe("Gradient Color Format Validation", () => {
@@ -8,7 +8,7 @@ describe("CyclePhases - Gradient Colors", () => {
         expect(Array.isArray(phase.gradientColors)).toBe(true);
         expect(phase.gradientColors.length).toBe(3);
 
-        phase.gradientColors.forEach((color, index) => {
+        phase.gradientColors.forEach((color, _index) => {
           // Check if it's a valid hex color
           expect(color).toMatch(/^#[0-9A-Fa-f]{6}$/);
           expect(typeof color).toBe("string");

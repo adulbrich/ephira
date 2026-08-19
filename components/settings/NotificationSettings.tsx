@@ -12,7 +12,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useState, useEffect } from "react";
 import {
-  NotificationSettings as NotificationSettingsType,
+  type NotificationSettings as NotificationSettingsType,
   DEFAULT_NOTIFICATION_SETTINGS,
 } from "@/constants/Notifications";
 import { NotificationService } from "@/services/notificationService";
@@ -37,16 +37,16 @@ export default function NotificationSettings() {
   const [showTimePicker, setShowTimePicker] = useState(false);
 
   // Load settings on mount
+  // biome-ignore lint/correctness/useExhaustiveDependencies: on mount only.
   useEffect(() => {
     loadSettings();
     checkPermissionStatus();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Update scheduled notification count when settings change
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reacts to the setting changing, not to the callback's identity
   useEffect(() => {
     updateScheduledCount();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.enabled]);
 
   const loadSettings = async () => {

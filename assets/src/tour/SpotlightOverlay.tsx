@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dimensions, Modal, Pressable, Text, View } from "react-native";
 import { useTour } from "./TourContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -103,21 +103,16 @@ export function SpotlightOverlay() {
       <View style={{ flex: 1 }}>
         {overlayParts && (
           <>
-            {[
-              overlayParts.top,
-              overlayParts.left,
-              overlayParts.right,
-              overlayParts.bottom,
-            ].map((p, i) => (
+            {(["top", "left", "right", "bottom"] as const).map((side) => (
               <Pressable
-                key={i}
+                key={side}
                 onPress={next}
                 style={[
                   {
                     position: "absolute",
                     backgroundColor: "rgba(0,0,0,0.65)",
                   },
-                  p,
+                  overlayParts[side],
                 ]}
               />
             ))}

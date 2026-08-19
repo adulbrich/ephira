@@ -29,11 +29,11 @@ export default function TipsCard({
 
         <View style={styles.tipsContainer}>
           {tips.map((tip, index) => (
-            <View key={index} style={styles.tipRow}>
+            <View key={tip} style={styles.tipRow}>
               <View
                 style={[
                   styles.tipNumber,
-                  { backgroundColor: phaseColor + "20" },
+                  { backgroundColor: `${phaseColor}20` },
                 ]}
               >
                 <Text

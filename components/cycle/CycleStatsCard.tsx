@@ -1,6 +1,6 @@
 import { View, StyleSheet } from "react-native";
 import { Card, Text, useTheme } from "react-native-paper";
-import { CycleStats } from "@/constants/Interfaces";
+import type { CycleStats } from "@/constants/Interfaces";
 
 interface CycleStatsCardProps {
   stats: CycleStats;
@@ -119,7 +119,7 @@ export default function CycleStatsCard({ stats }: CycleStatsCardProps) {
         <View
           style={[
             styles.regularityBadge,
-            { backgroundColor: regularityColor + "20" },
+            { backgroundColor: `${regularityColor}20` },
           ]}
         >
           <View

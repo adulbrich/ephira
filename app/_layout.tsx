@@ -13,7 +13,7 @@ import {
   useColorScheme,
   View,
   AppState,
-  AppStateStatus,
+  type AppStateStatus,
   ActivityIndicator,
   Alert,
 } from "react-native";
@@ -64,7 +64,7 @@ export default function RootLayout() {
   useEffect(() => {
     async function fetchThemeColor() {
       const savedTheme = await getSetting("theme");
-      if (savedTheme && savedTheme.value) {
+      if (savedTheme?.value) {
         setThemeColor(savedTheme.value);
       } else {
         setThemeColor("purple");
@@ -182,7 +182,7 @@ export default function RootLayout() {
       const isDatabaseSetup = await getSetting(
         SettingsKeys.databaseInitialSetup,
       );
-      if (!isDatabaseSetup || isDatabaseSetup.value !== "0000") {
+      if (isDatabaseSetup?.value !== "0000") {
         await setupEntryTypes();
         await insertSetting(SettingsKeys.databaseInitialSetup, "0000");
       }

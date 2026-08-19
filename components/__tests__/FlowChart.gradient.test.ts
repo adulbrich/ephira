@@ -1,4 +1,4 @@
-import { FlowColors, FlowType } from "@/constants/Colors";
+import { FlowColors, type FlowType } from "@/constants/Colors";
 import { FLOW_TAIL_COLOR, getFlowTypeString } from "@/constants/Flow";
 
 /**
@@ -22,8 +22,8 @@ function generateGradientStops(flowDataForCurrentMonth: any[]): {
 
   // Sort by date to get chronological order
   const sortedData = [...flowDataForCurrentMonth].sort((a, b) => {
-    const dateA = new Date(a.date + "T00:00:00Z").getTime();
-    const dateB = new Date(b.date + "T00:00:00Z").getTime();
+    const dateA = new Date(`${a.date}T00:00:00Z`).getTime();
+    const dateB = new Date(`${b.date}T00:00:00Z`).getTime();
     return dateA - dateB;
   });
 

@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { Platform } from "react-native";
 import {
   DateTimePickerAndroid,
-  DateTimePickerEvent,
+  type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 import { getSetting, updateSetting } from "@/db/database";
 import { SettingsKeys } from "@/constants/Settings";
@@ -91,7 +91,7 @@ export function usePregnancySetup({
   );
 
   const hydrateFromSettings = useCallback(
-    async (hasStartDate: boolean) => {
+    async (_hasStartDate: boolean) => {
       const offsetSetting = await getSetting(
         SettingsKeys.pregnancyGestationOffsetDays,
       );

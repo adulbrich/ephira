@@ -21,7 +21,7 @@ import { SettingsKeys } from "@/constants/Settings";
 import { getDrizzleDatabase } from "@/db/operations/setup";
 import * as schema from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { ExportData } from "@/constants/Interfaces";
+import type { ExportData } from "@/constants/Interfaces";
 
 const db = getDrizzleDatabase();
 
@@ -201,7 +201,7 @@ export const setupEntryTypes = async () => {
 
   // update calendar filters
   const storedFilters = await getSetting(SettingsKeys.calendarFilters);
-  let newFilters: string[] = [];
+  const newFilters: string[] = [];
 
   if (storedFilters?.value) {
     const currentFilters = JSON.parse(storedFilters.value); // Parse the stored string

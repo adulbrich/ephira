@@ -83,6 +83,7 @@ export default function DayView() {
   const loaded = useRef(false);
 
   // Open a day: one load, and the saver's baseline comes from what was read.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the store setters and the saver are stable; re-running on their identity would reload the day on every render
   useEffect(() => {
     let stale = false;
     loaded.current = false;
@@ -111,11 +112,13 @@ export default function DayView() {
       stale = true;
       saver.flush();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date, databaseChange]);
 
   // Auto-save. The debounce, the in-flight guard and the two same-date guards
   // are the saver's, not this component's.
+  // `state` and `lastSaved` are read when a save lands, not what should
+  // trigger one. Including them would schedule a save on every accordion tap.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: read at save time, not a trigger
   useEffect(() => {
     if (!date || !loaded.current) return;
 
@@ -136,7 +139,6 @@ export default function DayView() {
     });
     // `state` and `lastSaved` are read when the save lands, not what triggers
     // one; including them would schedule a save on every accordion tap.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [day, date]);
 
   return (
@@ -148,7 +150,7 @@ export default function DayView() {
             month: "long",
             day: "numeric",
             year: "numeric",
-          }).format(new Date(date + "T00:00:00"))}
+          }).format(new Date(`${date}T00:00:00`))}
         </Text>
       </View>
       <View>

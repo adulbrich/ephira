@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { View, StyleSheet } from "react-native";
 import { Card, Text, Button, Chip, useTheme } from "react-native-paper";
-import { CyclePhaseDefinition } from "@/constants/CyclePhases";
+import type { CyclePhaseDefinition } from "@/constants/CyclePhases";
 import PhaseInfoModal from "./PhaseInfoModal";
 
 interface PhaseCardProps {
@@ -88,9 +88,9 @@ export default function PhaseCard({
           </Text>
 
           <View style={styles.symptomsRow}>
-            {previewSymptoms.map((symptom, index) => (
+            {previewSymptoms.map((symptom) => (
               <Chip
-                key={index}
+                key={symptom}
                 compact
                 mode="flat"
                 style={[

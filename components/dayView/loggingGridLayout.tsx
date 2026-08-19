@@ -1,4 +1,4 @@
-import { StyleSheet, useWindowDimensions, ViewStyle } from "react-native";
+import { StyleSheet, useWindowDimensions, type ViewStyle } from "react-native";
 
 /** Horizontal padding for logging chip grids (matches prior screens). */
 export const LOGGING_GRID_PADDING_H = 16;

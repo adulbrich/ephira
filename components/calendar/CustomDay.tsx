@@ -1,4 +1,3 @@
-import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { useTheme } from "react-native-paper";
 import type { DateData } from "react-native-calendars";
@@ -97,6 +96,7 @@ export default function CustomDay({
       <View style={styles.periodsContainer}>
         {periods.map((period: PeriodData, index: number) => (
           <View
+            // biome-ignore lint/suspicious/noArrayIndexKey: periods are positional drawing instructions rebuilt per render, with no identity of their own
             key={index}
             style={[
               styles.period,

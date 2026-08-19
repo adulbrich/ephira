@@ -1,6 +1,6 @@
 import { getAllDays } from "@/db/database";
 import { savePredictions } from "@/db/operations/predictionSnapshots";
-import { DayData, PredictedDate } from "@/constants/Interfaces";
+import type { DayData, PredictedDate } from "@/constants/Interfaces";
 import { generatePredictions } from "@/services/cyclePredictionLogic";
 import { NotificationService } from "@/services/notificationService";
 
