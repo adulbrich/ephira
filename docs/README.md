@@ -24,11 +24,17 @@ Inside of your Astro project, you'll see the following folders and files:
 │   │   └── Footer.astro
 │   ├── layouts/
 │   │   └── Layout.astro
-│   └── pages/
-│       ├── index.astro
-│       └── privacy.astro
+│   ├── pages/
+│   │   ├── contact.astro
+│   │   ├── index.astro
+│   │   └── privacy.astro
+│   └── styles/
+│       └── global.css
 └── package.json
 ```
+
+Requires Node 22.12 or newer, which `engines` in `package.json` states so that
+Vercel picks a runtime that can build it.
 
 To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
 
@@ -37,6 +43,11 @@ In our case, the `Layout.astro` file is imported in both `index.astro` and `priv
 The `Layout.astro` imports the `Header.astro` and `Footer.astro`, and defines page meta attributes (title, description), favicon, etc.
 
 We use the `prose` tailwindcss typography class in `privacy.astro` to make it look nicer to read without applying much styling.
+
+`global.css` is Tailwind's entry point and `Layout.astro` imports it. Tailwind 4
+dropped the Astro integration in favour of a Vite plugin, which does not inject
+the stylesheet for you: remove that import and every page still builds and still
+deploys, with no styles at all.
 
 ## 🧞 Commands
 
