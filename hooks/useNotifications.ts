@@ -19,7 +19,12 @@ Notifications.setNotificationHandler({
 export interface ScheduleNotificationConfig {
   title: string;
   body: string;
-  data?: Record<string, any>;
+  /**
+   * Whatever the caller wants handed back when the notification is tapped.
+   * `unknown`, not `any`: nothing here reads it, and a reader that starts to
+   * should be made to say what it expects.
+   */
+  data?: Record<string, unknown>;
   trigger: Date | null; // null for immediate notification
   sound?: boolean;
 }

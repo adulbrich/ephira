@@ -5,7 +5,17 @@ import { FLOW_TAIL_COLOR, getFlowTypeString } from "@/constants/Flow";
  * Test helper: Extract gradient logic from FlowChart component
  * This mirrors the gradient generation logic in FlowChart.tsx
  */
-function generateGradientStops(flowDataForCurrentMonth: any[]): {
+/**
+ * Only the two fields the gradient reads, and `flow_intensity` as nullable.
+ *
+ * `DayData` declares it `number`, which is not true: the `days.flow_intensity`
+ * column is nullable, and the cases below deliberately pass `undefined` and
+ * `null` because the production code handles them. `DayData[]` here would
+ * reject the tests that matter most.
+ */
+type FlowDay = { date: string; flow_intensity?: number | null };
+
+function generateGradientStops(flowDataForCurrentMonth: FlowDay[]): {
   stops: { offset: string; color: string }[];
   flowStatesInOrder: FlowType[];
 } {

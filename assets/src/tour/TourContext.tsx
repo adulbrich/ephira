@@ -8,10 +8,11 @@ import {
   useState,
 } from "react";
 import { router } from "expo-router";
+import type { View } from "react-native";
 import type { TourStep } from "./types";
 import { setHasSeenWalkthrough } from "../onboarding/onboarding-storage";
 
-type AnchorRef = React.RefObject<any>;
+type AnchorRef = React.RefObject<View | null>;
 
 type TourState = {
   isActive: boolean;
@@ -69,7 +70,7 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
 
       const step = steps[index];
       // Navigate first so the anchor actually exists in the UI tree.
-      router.replace(step.route as any);
+      router.replace(step.route);
 
       // Give the UI a moment to render before the overlay measures anchors.
       await new Promise((r) => setTimeout(r, 350));

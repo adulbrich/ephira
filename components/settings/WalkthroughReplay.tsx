@@ -19,7 +19,7 @@ export default function WalkthroughReplay() {
           <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
             <Button
               mode="contained"
-              onPress={() => router.push("/(onboarding)/tour" as any)}
+              onPress={() => router.push("/(onboarding)/tour")}
             >
               See App Walkthrough
             </Button>

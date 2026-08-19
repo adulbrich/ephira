@@ -6,7 +6,7 @@ export default function NameScreen() {
   const theme = useTheme();
 
   function onContinue() {
-    router.push({ pathname: "/(onboarding)/tour" as any });
+    router.push({ pathname: "/(onboarding)/tour" });
   }
 
   return (

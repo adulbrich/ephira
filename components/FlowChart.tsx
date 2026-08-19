@@ -10,6 +10,7 @@ import Svg, {
 } from "react-native-svg";
 import React, { useEffect, useRef, useMemo } from "react";
 import { FlowColors, type FlowType } from "@/constants/Colors";
+import type { DayData } from "@/constants/Interfaces";
 import { useTheme } from "react-native-paper";
 import { useData, useFlowData } from "@/stores/calendar-storage";
 import { useFocusEffect } from "@react-navigation/native";
@@ -120,7 +121,7 @@ export default function FlowChart() {
     }, []),
   );
 
-  const filterFlowDataForCurrentMonth = (flowData: any[]) => {
+  const filterFlowDataForCurrentMonth = (flowData: DayData[]) => {
     if (flowData.length === 0) {
       setFlowDataForCurrentMonth([]);
     } else {

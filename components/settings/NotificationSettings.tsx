@@ -17,7 +17,9 @@ import {
 } from "@/constants/Notifications";
 import { NotificationService } from "@/services/notificationService";
 import { usePredictedCycle } from "@/stores/calendar-storage";
-import DateTimePicker from "@react-native-community/datetimepicker";
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 
 export default function NotificationSettings() {
   const theme = useTheme();
@@ -103,7 +105,10 @@ export default function NotificationSettings() {
     await saveSettings(newSettings);
   };
 
-  const handleTimeChange = async (event: any, selectedDate?: Date) => {
+  const handleTimeChange = async (
+    event: DateTimePickerEvent,
+    selectedDate?: Date,
+  ) => {
     setShowTimePicker(false);
 
     if (event.type === "set" && selectedDate) {
