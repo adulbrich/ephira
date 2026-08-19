@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import {
-  Accordion,
   DayData,
   SelectedDateStore,
   LoadData,
@@ -36,13 +35,6 @@ export const useData = create<LoadData>((set) => ({
   setShow: (show: boolean) => {
     set(() => ({ show: show }));
   },
-}));
-
-const initialString = null;
-
-export const useAccordion = create<Accordion>((set) => ({
-  state: initialString,
-  setExpandedAccordion: (data: string | null) => set(() => ({ state: data })),
 }));
 
 export const useFlowData = create<FlowDataState>((set) => ({

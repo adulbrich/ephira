@@ -20,6 +20,7 @@ import {
   loggingAccordionTitleStyles,
   loggingGridStyles,
 } from "@/components/dayView/loggingGridLayout";
+import { Section } from "@/constants/Sections";
 
 const APPOINTMENT_TYPES = ["OB Visit", "Ultrasound", "Lab Work", "Other"];
 
@@ -30,8 +31,8 @@ export default function AppointmentsAccordion({
   appointments,
   setAppointments,
 }: {
-  state: string | null;
-  setExpandedAccordion: (accordion: string | null) => void;
+  state: Section | null;
+  setExpandedAccordion: (section: Section | null) => void;
   date: string;
   appointments: PregnancyAppointment[];
   setAppointments: (appointments: PregnancyAppointment[]) => void;
@@ -78,9 +79,11 @@ export default function AppointmentsAccordion({
           </Text>
         </View>
       }
-      expanded={state === "appointments"}
+      expanded={state === Section.Appointments}
       onPress={() =>
-        setExpandedAccordion(state === "appointments" ? null : "appointments")
+        setExpandedAccordion(
+          state === Section.Appointments ? null : Section.Appointments,
+        )
       }
       left={(props) => <List.Icon {...props} icon="calendar-clock" />}
     >

@@ -2,10 +2,11 @@ import { useCallback, useState, useEffect, useRef } from "react";
 import { StyleSheet, View } from "react-native";
 import { List, Text, useTheme, Divider } from "react-native-paper";
 import {
-  useAccordion,
   useSelectedDate,
   useDatabaseChangeNotifier,
 } from "@/stores/calendar-storage";
+import { Section } from "@/constants/Sections";
+import { useCatalogue } from "@/hooks/useCatalogue";
 import FlowAccordion from "@/components/dayView/FlowAccordion";
 import MedicationsAccordion from "./MedicationsAccordion";
 import BirthControlAccordion from "./BirthControlAccordion";
@@ -27,7 +28,10 @@ import {
 
 export default function DayView() {
   const theme = useTheme();
-  const { state, setExpandedAccordion } = useAccordion();
+  // Which Section is expanded is this screen's business. It used to be a
+  // store, which doubled as the Catalogue's cache-invalidation signal.
+  const [state, setExpandedAccordion] = useState<Section | null>(null);
+  const catalogue = useCatalogue();
   const { date } = useSelectedDate();
   const { databaseChange } = useDatabaseChangeNotifier();
 
@@ -156,6 +160,7 @@ export default function DayView() {
           <BirthControlAccordion
             state={state}
             setExpandedAccordion={setExpandedAccordion}
+            birthControlOptions={catalogue.birthControl}
             birthControl={birthControlIn(day)}
             setBirthControl={setBirthControl}
           />
@@ -170,6 +175,7 @@ export default function DayView() {
           <SymptomsAccordion
             state={state}
             setExpandedAccordion={setExpandedAccordion}
+            symptomOptions={catalogue.symptoms}
             selectedSymptoms={day.symptoms}
             setSelectedSymptoms={(symptoms) => edit({ symptoms })}
           />
@@ -177,6 +183,7 @@ export default function DayView() {
           <MoodsAccordion
             state={state}
             setExpandedAccordion={setExpandedAccordion}
+            moodOptions={catalogue.moods}
             selectedMoods={day.moods}
             setSelectedMoods={(moods) => edit({ moods })}
           />
@@ -184,6 +191,7 @@ export default function DayView() {
           <MedicationsAccordion
             state={state}
             setExpandedAccordion={setExpandedAccordion}
+            medicationOptions={catalogue.medications}
             selectedMedications={medicationsExcludingBirthControl(day)}
             setSelectedMedications={setMedications}
           />

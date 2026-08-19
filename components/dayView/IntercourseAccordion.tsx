@@ -1,6 +1,7 @@
 import { List, Text, Switch } from "react-native-paper";
 import { View } from "react-native";
 import { loggingAccordionTitleStyles } from "@/components/dayView/loggingGridLayout";
+import { Section } from "@/constants/Sections";
 
 export default function IntercourseAccordion({
   state,
@@ -8,8 +9,8 @@ export default function IntercourseAccordion({
   intercourse,
   setIntercourse,
 }: {
-  state: string | null;
-  setExpandedAccordion: (accordion: string | null) => void;
+  state: Section | null;
+  setExpandedAccordion: (section: Section | null) => void;
   intercourse: boolean;
   setIntercourse: (value: boolean) => void;
 }) {
@@ -24,9 +25,11 @@ export default function IntercourseAccordion({
           </Text>
         </View>
       }
-      expanded={state === "intercourse"}
+      expanded={state === Section.Intercourse}
       onPress={() =>
-        setExpandedAccordion(state === "intercourse" ? null : "intercourse")
+        setExpandedAccordion(
+          state === Section.Intercourse ? null : Section.Intercourse,
+        )
       }
       left={(props) => <List.Icon {...props} icon="heart" />}
     >

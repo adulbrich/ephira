@@ -3,27 +3,26 @@ import {
   medicationsExcludingBirthControl,
   type LoggedDay,
 } from "@/db/loggedDay";
+import { Section } from "@/constants/Sections";
 
 /**
  * Which Section a save should be attributed to, as a label for the
  * "<Section> Saved!" message.
  *
- * Extracted from the switch inside DayView's onSave so that the agreement
- * between what the accordions send and what this reads is testable. It was not
- * testable before, and three of the seven cases had never fired: the
- * accordions send "symptoms", "medications" and "notes" while the switch
- * matched "symptom", "medication" and "note". Those saves fell through to the
- * fixed-priority fallback, which can name a Section the user did not touch.
+ * Three of the seven cases here used to be dead: the accordions said
+ * "symptoms", "medications" and "notes" while this switch said "symptom",
+ * "medication" and "note", and both sides typechecked because the contract was
+ * `string | null`. Those saves fell through to the fixed-priority fallback,
+ * which can name a Section the user did not touch.
  *
- * The section strings are still bare strings here, which is the underlying
- * weakness. #184 replaces them with a Section enumeration so the disagreement
- * stops compiling rather than being caught by this test.
+ * Both sides now name the same `Section`, so that disagreement no longer
+ * compiles.
  */
 const sameNames = (a: string[], b: string[]) =>
   JSON.stringify(a) === JSON.stringify(b);
 
 export function savedSectionLabel(
-  expandedSection: string | null,
+  expandedSection: Section | null,
   current: LoggedDay,
   lastSaved: LoggedDay | null,
 ): string | null {
@@ -31,19 +30,19 @@ export function savedSectionLabel(
   const currentBirthControl = birthControlIn(current)?.name ?? null;
 
   switch (expandedSection) {
-    case "flow":
+    case Section.Flow:
       return current.flow !== 0 ? "Flow" : null;
-    case "symptoms":
+    case Section.Symptoms:
       return current.symptoms.length > 0 ? "Symptoms" : null;
-    case "mood":
+    case Section.Moods:
       return current.moods.length > 0 ? "Moods" : null;
-    case "medications":
+    case Section.Medications:
       return currentMedications.length > 0 ? "Medications" : null;
-    case "birthControl":
+    case Section.BirthControl:
       return currentBirthControl ? "Birth Control" : null;
-    case "notes":
+    case Section.Notes:
       return current.notes.trim() !== "" ? "Notes" : null;
-    case "intercourse":
+    case Section.Intercourse:
       // Absence is itself a value the user chose here, so unlike the others
       // there is no "empty" case to stay quiet about.
       return "Intercourse";

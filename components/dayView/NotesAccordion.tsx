@@ -1,6 +1,7 @@
 import { List, TextInput, Text } from "react-native-paper";
 import { View } from "react-native";
 import { loggingAccordionTitleStyles } from "@/components/dayView/loggingGridLayout";
+import { Section } from "@/constants/Sections";
 
 export default function NotesAccordion({
   state,
@@ -8,8 +9,8 @@ export default function NotesAccordion({
   notes,
   setNotes,
 }: {
-  state: string | null;
-  setExpandedAccordion: (accordion: string | null) => void;
+  state: Section | null;
+  setExpandedAccordion: (section: Section | null) => void;
   notes: string | undefined;
   setNotes: (notes: string) => void;
 }) {
@@ -20,8 +21,10 @@ export default function NotesAccordion({
           <Text style={loggingAccordionTitleStyles.label}>Notes</Text>
         </View>
       }
-      expanded={state === "notes"}
-      onPress={() => setExpandedAccordion(state === "notes" ? null : "notes")}
+      expanded={state === Section.Notes}
+      onPress={() =>
+        setExpandedAccordion(state === Section.Notes ? null : Section.Notes)
+      }
       left={(props) => <List.Icon {...props} icon="note" />}
     >
       <View style={{ padding: 16 }}>

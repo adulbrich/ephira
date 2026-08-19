@@ -1,25 +1,26 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { View, Modal, Platform } from "react-native";
 import { List, Text, Button, TextInput, useTheme } from "react-native-paper";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { getAllVisibleMedications } from "@/db/database";
 import SingleChipSelection from "./SingleChipSelection";
 import { loggingAccordionTitleStyles } from "@/components/dayView/loggingGridLayout";
 import type { LoggedMedication } from "@/db/loggedDay";
+import { Section } from "@/constants/Sections";
 
 export default function BirthControlAccordion({
   state,
   setExpandedAccordion,
+  birthControlOptions,
   birthControl,
   setBirthControl,
 }: {
-  state: string | null;
-  setExpandedAccordion: (accordion: string | null) => void;
+  state: Section | null;
+  setExpandedAccordion: (section: Section | null) => void;
+  birthControlOptions: string[];
   birthControl: LoggedMedication | null;
   setBirthControl: (birthControl: LoggedMedication | null) => void;
 }) {
   const theme = useTheme();
-  const [birthControlOptions, setBirthControlOptions] = useState<string[]>([]);
 
   // The picker's own state. It has exactly one reader, this component, so it
   // was never app state; it was in a store because everything else was.
@@ -49,18 +50,6 @@ export default function BirthControlAccordion({
     setBirthControl(birthControl ? { ...birthControl, timeTaken: time } : null);
   const setBirthControlNotes = (notes: string) =>
     setBirthControl(birthControl ? { ...birthControl, notes } : null);
-
-  useEffect(() => {
-    const fetchMedications = async () => {
-      const medications = await getAllVisibleMedications();
-      setBirthControlOptions(
-        medications
-          .filter((medication) => medication.type === "birth control")
-          .map((medication) => medication.name),
-      );
-    };
-    fetchMedications();
-  }, [state]);
 
   const handleTimeChange = (event: any, selectedTime?: Date) => {
     if (Platform.OS === "android") {
@@ -234,9 +223,11 @@ export default function BirthControlAccordion({
           </Text>
         </View>
       }
-      expanded={state === "birthControl"}
+      expanded={state === Section.BirthControl}
       onPress={() =>
-        setExpandedAccordion(state === "birthControl" ? null : "birthControl")
+        setExpandedAccordion(
+          state === Section.BirthControl ? null : Section.BirthControl,
+        )
       }
       left={(props) => <List.Icon {...props} icon="shield-check" />}
     >

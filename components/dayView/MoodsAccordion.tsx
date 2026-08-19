@@ -1,32 +1,25 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { View } from "react-native";
 import { List, Text, Button } from "react-native-paper";
-import { getAllVisibleMoods } from "@/db/database";
 import ChipSelection from "./ChipSelection";
 import CustomEntries from "@/components/settings/CustomEntries";
 import { loggingAccordionTitleStyles } from "@/components/dayView/loggingGridLayout";
+import { Section } from "@/constants/Sections";
 
 export default function MoodsAccordion({
   state,
   setExpandedAccordion,
+  moodOptions,
   selectedMoods,
   setSelectedMoods,
 }: {
-  state: string | null;
-  setExpandedAccordion: (accordion: string | null) => void;
+  state: Section | null;
+  setExpandedAccordion: (section: Section | null) => void;
+  moodOptions: string[];
   selectedMoods: string[];
   setSelectedMoods: (moods: string[]) => void;
 }) {
-  const [moodOptions, setMoodOptions] = useState<string[]>([]);
   const [customEntriesVisible, setCustomEntriesVisible] = useState(false);
-
-  useEffect(() => {
-    const fetchMoods = async () => {
-      const moods = await getAllVisibleMoods();
-      setMoodOptions(moods.map((mood) => mood.name));
-    };
-    fetchMoods();
-  }, [state, customEntriesVisible]);
 
   const selectedVisibleMoods = selectedMoods.filter((mood) =>
     moodOptions.includes(mood),
@@ -48,8 +41,10 @@ export default function MoodsAccordion({
             </Text>
           </View>
         }
-        expanded={state === "mood"}
-        onPress={() => setExpandedAccordion(state === "mood" ? null : "mood")}
+        expanded={state === Section.Moods}
+        onPress={() =>
+          setExpandedAccordion(state === Section.Moods ? null : Section.Moods)
+        }
         left={(props) => <List.Icon {...props} icon="emoticon" />}
       >
         <ChipSelection
@@ -82,8 +77,7 @@ export default function MoodsAccordion({
       {customEntriesVisible && (
         <CustomEntries
           modalVisibleInitially={true}
-          // automatically opens to the "Moods" section (id=2)
-          initialExpandedAccordion="2"
+          initialExpandedCatalogue="mood"
           onModalClose={() => setCustomEntriesVisible(false)}
         />
       )}

@@ -1,32 +1,25 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { View } from "react-native";
 import { List, Text, Button } from "react-native-paper";
 import ChipSelection from "./ChipSelection";
-import { getAllVisibleSymptoms } from "@/db/database";
 import CustomEntries from "@/components/settings/CustomEntries";
 import { loggingAccordionTitleStyles } from "@/components/dayView/loggingGridLayout";
+import { Section } from "@/constants/Sections";
 
 export default function SymptomsAccordion({
   state,
   setExpandedAccordion,
+  symptomOptions,
   selectedSymptoms,
   setSelectedSymptoms,
 }: {
-  state: string | null;
-  setExpandedAccordion: (accordion: string | null) => void;
+  state: Section | null;
+  setExpandedAccordion: (section: Section | null) => void;
+  symptomOptions: string[];
   selectedSymptoms: string[];
   setSelectedSymptoms: (symptoms: string[]) => void;
 }) {
-  const [symptomOptions, setSymptomOptions] = useState<string[]>([]);
   const [customEntriesVisible, setCustomEntriesVisible] = useState(false);
-
-  useEffect(() => {
-    const fetchSymptoms = async () => {
-      const symptoms = await getAllVisibleSymptoms();
-      setSymptomOptions(symptoms.map((symptom) => symptom.name));
-    };
-    fetchSymptoms();
-  }, [state, customEntriesVisible]);
 
   const selectedVisibleSymptoms = selectedSymptoms.filter((symptom) =>
     symptomOptions.includes(symptom),
@@ -48,9 +41,11 @@ export default function SymptomsAccordion({
             </Text>
           </View>
         }
-        expanded={state === "symptoms"}
+        expanded={state === Section.Symptoms}
         onPress={() =>
-          setExpandedAccordion(state === "symptoms" ? null : "symptoms")
+          setExpandedAccordion(
+            state === Section.Symptoms ? null : Section.Symptoms,
+          )
         }
         left={(props) => <List.Icon {...props} icon="alert-decagram" />}
       >
@@ -84,7 +79,7 @@ export default function SymptomsAccordion({
       {customEntriesVisible && (
         <CustomEntries
           modalVisibleInitially={true}
-          initialExpandedAccordion="1"
+          initialExpandedCatalogue="symptom"
           onModalClose={() => setCustomEntriesVisible(false)}
         />
       )}
