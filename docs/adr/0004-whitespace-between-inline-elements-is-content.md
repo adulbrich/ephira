@@ -30,7 +30,7 @@ Separately, `privacy.astro` had `<ul>` nested inside `<p>` in two places, which 
 
 ## Rationale
 
-The failure mode is what makes this worth writing down rather than just fixing. A word-joining bug survives every gate this repo has or could cheaply add. It is invisible to the build, invisible to a CSS diff, and below the threshold of any sane screenshot comparison. It is only visible in the rendered text.
+The failure mode is what makes this worth writing down rather than just fixing. A word-joining bug survives every gate this repo has or could cheaply add. It is invisible to the build and invisible to a CSS diff, because no property on any element changes. It is only visible in the rendered text.
 
 `"jsx"` is a reasonable default for sites whose pages are components. It is the wrong default for prose.
 
