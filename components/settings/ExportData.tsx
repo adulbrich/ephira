@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { getAllDataAsJson } from "@/db/database";
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import { ThemedView } from "@/components/ThemedView";
 import {
@@ -30,10 +30,10 @@ async function exportCsvOrJson(data: string, fileType: string) {
   const UTI =
     fileType === "csv" ? "public.comma-separated-values-text" : "public.json";
   try {
-    const fileUri = FileSystem.cacheDirectory + fileName; //"import/namespace": "off"
+    const fileUri = FileSystem.cacheDirectory + fileName;
 
     await FileSystem.writeAsStringAsync(fileUri, data, {
-      encoding: FileSystem.EncodingType.UTF8, //"import/namespace": "off"
+      encoding: FileSystem.EncodingType.UTF8,
     });
 
     if (!(await Sharing.isAvailableAsync())) {
