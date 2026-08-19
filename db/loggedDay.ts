@@ -186,11 +186,18 @@ async function catalogueIdsByName(
  *
  * Reconcile, not insert: names no longer selected have their entries removed,
  * and per-entry detail is updated in place.
+ *
+ * `checkedOn` is today, which is not `day.date` — a user can log a day in the
+ * past. It reaches the prediction accuracy check that every flow write fires.
  */
-export async function saveLoggedDay(day: LoggedDay): Promise<void> {
+export async function saveLoggedDay(
+  day: LoggedDay,
+  checkedOn: Date,
+): Promise<void> {
   await insertDay(
     day.date,
     day.flow,
+    checkedOn,
     day.notes,
     day.isCycleStart,
     day.isCycleEnd,
@@ -389,9 +396,18 @@ export const DEFAULT_SAVE_DELAY_MS = 100;
  * same pending write immediately, under the same four rules, which is what
  * closing a day needs.
  */
-export function createLoggedDaySaver(
-  options: { delayMs?: number } = {},
-): LoggedDaySaver {
+export function createLoggedDaySaver(options: {
+  /**
+   * Reads the clock at write time, for the prediction accuracy check.
+   *
+   * Required and injected rather than defaulted, so the clock is read at the
+   * app's edge and a test can pin it. A saver outlives any single write, so
+   * it needs a function rather than a value.
+   */
+  now: () => Date;
+  delayMs?: number;
+}): LoggedDaySaver {
+  const { now } = options;
   const delayMs = options.delayMs ?? DEFAULT_SAVE_DELAY_MS;
 
   let baseline: LoggedDay | null = null;
@@ -436,7 +452,7 @@ export function createLoggedDaySaver(
 
     inFlight = true;
     try {
-      await saveLoggedDay(day);
+      await saveLoggedDay(day, now());
       if (baseline?.date === day.date) baseline = day;
       return settle({ status: "saved", day });
     } catch (error) {

@@ -33,10 +33,10 @@ const stored = () =>
 /** Two clean cycles, enough for a prediction. */
 async function logTwoCycles() {
   for (const date of ["2026-01-01", "2026-01-02", "2026-01-03", "2026-01-04"]) {
-    await insertDay(date, 3);
+    await insertDay(date, 3, REFERENCE_DAY);
   }
   for (const date of ["2026-01-29", "2026-01-30", "2026-01-31", "2026-02-01"]) {
-    await insertDay(date, 3);
+    await insertDay(date, 3, REFERENCE_DAY);
   }
 }
 
@@ -52,7 +52,7 @@ describe("refreshPredictions", () => {
   });
 
   it("predicts nothing from a single incomplete cycle", async () => {
-    await insertDay("2026-03-01", 2);
+    await insertDay("2026-03-01", 2, new Date(2026, 0, 1));
 
     expect(await refreshPredictions(REFERENCE_DAY)).toEqual([]);
   });
