@@ -16,7 +16,7 @@ import {
   DEFAULT_NOTIFICATION_SETTINGS,
 } from "@/constants/Notifications";
 import { NotificationService } from "@/services/notificationService";
-import { usePredictedCycle } from "@/assets/src/calendar-storage";
+import { usePredictedCycle } from "@/stores/calendar-storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
 export default function NotificationSettings() {

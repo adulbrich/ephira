@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
 import {
-  getDay,
   getAllVisibleSymptoms,
   getAllVisibleMoods,
   getAllVisibleMedications,
@@ -10,7 +9,7 @@ import {
   usePredictedCycle,
   useSelectedDate,
   usePredictionChoice,
-} from "@/assets/src/calendar-storage";
+} from "@/stores/calendar-storage";
 import {
   FlowColors,
   CyclePredictionColor,
@@ -328,7 +327,10 @@ export function useMarkedDates(calendarFilters?: string[]) {
   );
 
   // access state management
-  const { date, setDate, setFlow, setId } = useSelectedDate();
+  // Read-only with respect to selected-day state. This hook used to write
+  // setFlow and setId, and to call setDate with the value it had just read,
+  // which fanned a re-render out to every reader for no state change.
+  const { date } = useSelectedDate();
 
   const { setPredictedCycle } = usePredictedCycle();
   const { predictionChoice } = usePredictionChoice();
@@ -353,7 +355,6 @@ export function useMarkedDates(calendarFilters?: string[]) {
           });
           return updated;
         });
-        setDate(date);
         return;
       }
 
@@ -411,15 +412,12 @@ export function useMarkedDates(calendarFilters?: string[]) {
       } else {
         setMarkedDates({ ...newMarkedDates });
       }
-
-      setDate(date);
     }
 
     refreshCalendar(filteredData as DayData[]);
   }, [
     filteredData,
     date,
-    setDate,
     calendarFilters,
     predictionChoice,
     referenceDay,
@@ -430,37 +428,28 @@ export function useMarkedDates(calendarFilters?: string[]) {
   useEffect(() => {
     if (!date) return;
 
-    async function fetchData() {
-      const day = await getDay(date);
+    // Only the highlight. The selected day's contents are loaded by the day
+    // view, which is the one thing that displays them.
+    setMarkedDates((prev) => {
+      const updated = { ...prev };
 
-      //set other values of selecteDateState (if they exist)
-      setFlow(day?.flow_intensity ? day.flow_intensity : 0);
-      setId(day?.id ? day.id : 0);
-
-      // reset old selected date
-      setMarkedDates((prev) => {
-        const updated = { ...prev };
-
-        // set every date to selected = false
-        Object.keys(updated).forEach((date) => {
-          updated[date] = {
-            ...updated[date],
-            selected: false,
-          };
-        });
-
-        // update selected date to selected = true
+      // set every date to selected = false
+      Object.keys(updated).forEach((date) => {
         updated[date] = {
           ...updated[date],
-          selected: true,
+          selected: false,
         };
-
-        return updated;
       });
-    }
 
-    fetchData();
-  }, [date, setFlow, setId, today]);
+      // update selected date to selected = true
+      updated[date] = {
+        ...updated[date],
+        selected: true,
+      };
+
+      return updated;
+    });
+  }, [date, today]);
 
   return { loading, markedDates };
 }

@@ -4,7 +4,7 @@ import * as schema from "@/db/schema";
 import { eq } from "drizzle-orm";
 import type { DayData } from "@/constants/Interfaces";
 import { useEffect, useState } from "react";
-import { useDatabaseChangeNotifier } from "@/assets/src/calendar-storage";
+import { useDatabaseChangeNotifier } from "@/stores/calendar-storage";
 
 function formatSQLData(data: any) {
   const formattedData = data.reduce((acc: any, row: any) => {

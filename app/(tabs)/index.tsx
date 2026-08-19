@@ -6,7 +6,7 @@ import {
   useData,
   useDatabaseChangeNotifier,
   usePredictedCycle,
-} from "@/assets/src/calendar-storage";
+} from "@/stores/calendar-storage";
 import { getFlowTypeString } from "@/constants/Flow";
 import { useTheme, Text, Button } from "react-native-paper";
 import FadeInView from "@/components/animations/FadeInView";

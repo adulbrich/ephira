@@ -4,32 +4,51 @@ import { List, Text, Button, TextInput, useTheme } from "react-native-paper";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { getAllVisibleMedications } from "@/db/database";
 import SingleChipSelection from "./SingleChipSelection";
-import {
-  useBirthControlNotes,
-  useTimeTaken,
-  useTimePickerState,
-  useTempSelectedTime,
-} from "@/assets/src/calendar-storage";
 import { loggingAccordionTitleStyles } from "@/components/dayView/loggingGridLayout";
+import type { LoggedMedication } from "@/db/loggedDay";
 
 export default function BirthControlAccordion({
   state,
   setExpandedAccordion,
-  selectedBirthControl,
-  setSelectedBirthControl,
+  birthControl,
+  setBirthControl,
 }: {
   state: string | null;
   setExpandedAccordion: (accordion: string | null) => void;
-  selectedBirthControl: string | null;
-  setSelectedBirthControl: (birthControl: string | null) => void;
+  birthControl: LoggedMedication | null;
+  setBirthControl: (birthControl: LoggedMedication | null) => void;
 }) {
   const theme = useTheme();
   const [birthControlOptions, setBirthControlOptions] = useState<string[]>([]);
 
-  const { showTimePicker, setShowTimePicker } = useTimePickerState();
-  const { tempSelectedTime, setTempSelectedTime } = useTempSelectedTime();
-  const { timeTaken, setTimeTaken } = useTimeTaken();
-  const { birthControlNotes, setBirthControlNotes } = useBirthControlNotes();
+  // The picker's own state. It has exactly one reader, this component, so it
+  // was never app state; it was in a store because everything else was.
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [tempSelectedTime, setTempSelectedTime] = useState<Date | null>(null);
+
+  const selectedBirthControl = birthControl?.name ?? null;
+  const timeTaken = birthControl?.timeTaken ?? "";
+  const birthControlNotes = birthControl?.notes ?? "";
+
+  /** Only the Pill carries a time taken, so choosing anything else drops it. */
+  const setSelectedBirthControl = (name: string | null) => {
+    if (!name) return setBirthControl(null);
+
+    const keepsTimeTaken = name === "Pill";
+    if (!keepsTimeTaken) setShowTimePicker(false);
+
+    setBirthControl({
+      name,
+      ...(keepsTimeTaken && birthControl?.timeTaken
+        ? { timeTaken: birthControl.timeTaken }
+        : {}),
+      ...(birthControl?.notes ? { notes: birthControl.notes } : {}),
+    });
+  };
+  const setTimeTaken = (time: string) =>
+    setBirthControl(birthControl ? { ...birthControl, timeTaken: time } : null);
+  const setBirthControlNotes = (notes: string) =>
+    setBirthControl(birthControl ? { ...birthControl, notes } : null);
 
   useEffect(() => {
     const fetchMedications = async () => {
@@ -42,13 +61,6 @@ export default function BirthControlAccordion({
     };
     fetchMedications();
   }, [state]);
-
-  useEffect(() => {
-    if (selectedBirthControl !== "Pill") {
-      setTimeTaken("");
-      setShowTimePicker(false);
-    }
-  }, [selectedBirthControl, setTimeTaken, setShowTimePicker]);
 
   const handleTimeChange = (event: any, selectedTime?: Date) => {
     if (Platform.OS === "android") {

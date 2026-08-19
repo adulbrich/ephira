@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useContractionTimerStore } from "@/assets/src/pregnancy-storage";
+import { useContractionTimerStore } from "@/stores/pregnancy-storage";
 import { formatDuration } from "@/utils/formatDuration";
 
 const TICK_MS = 1000;

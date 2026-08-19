@@ -4,7 +4,7 @@ import { getDrizzleDatabase } from "@/db/database";
 import * as schema from "@/db/schema";
 import type { MarkedDates } from "@/constants/Interfaces";
 import { AppointmentColor, SpecialtyFilterColor } from "@/constants/Colors";
-import { usePregnancySelectedDate } from "@/assets/src/pregnancy-storage";
+import { usePregnancySelectedDate } from "@/stores/pregnancy-storage";
 
 const db = getDrizzleDatabase();
 

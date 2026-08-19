@@ -28,7 +28,7 @@ import {
   useAccordion,
   useCalendarFilters,
   useDatabaseChangeNotifier,
-} from "@/assets/src/calendar-storage";
+} from "@/stores/calendar-storage";
 
 interface Symptom {
   id: number;

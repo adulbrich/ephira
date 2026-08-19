@@ -38,7 +38,7 @@ import {
 import DatabaseMigrationError from "@/components/DatabaseMigrationError";
 import PasswordAuthenticationView from "@/components/PasswordAuthenticationView";
 import { getTheme } from "@/components/ThemeHandler";
-import { useThemeColor, useTrackingMode } from "@/assets/src/calendar-storage";
+import { useThemeColor, useTrackingMode } from "@/stores/calendar-storage";
 import * as Notifications from "expo-notifications";
 import { NotificationTypes } from "@/constants/Notifications";
 

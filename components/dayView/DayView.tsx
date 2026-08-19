@@ -1,18 +1,11 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import { StyleSheet, View } from "react-native";
 import { List, Text, useTheme, Divider } from "react-native-paper";
 import {
   useAccordion,
-  useMoods,
   useSelectedDate,
-  useSymptoms,
-  useMedications,
-  useBirthControl,
-  useBirthControlNotes,
-  useTimeTaken,
   useDatabaseChangeNotifier,
-  useIntercourse,
-} from "@/assets/src/calendar-storage";
+} from "@/stores/calendar-storage";
 import FlowAccordion from "@/components/dayView/FlowAccordion";
 import MedicationsAccordion from "./MedicationsAccordion";
 import BirthControlAccordion from "./BirthControlAccordion";
@@ -29,104 +22,75 @@ import {
   loadLoggedDay,
   medicationsExcludingBirthControl,
   type LoggedDay,
+  type LoggedMedication,
 } from "@/db/loggedDay";
 
 export default function DayView() {
   const theme = useTheme();
   const { state, setExpandedAccordion } = useAccordion();
-  const { selectedMoods, setSelectedMoods } = useMoods();
-  const {
-    date,
-    flow_intensity,
-    notes,
-    setFlow,
-    setNotes,
-    is_cycle_start,
-    setCycleStart,
-    is_cycle_end,
-    setCycleEnd,
-  } = useSelectedDate();
-  const { selectedSymptoms, setSelectedSymptoms } = useSymptoms();
-  const { selectedMedications, setSelectedMedications } = useMedications();
-  const { selectedBirthControl, setSelectedBirthControl } = useBirthControl();
-  const { birthControlNotes, setBirthControlNotes } = useBirthControlNotes();
-  const { timeTaken, setTimeTaken } = useTimeTaken();
+  const { date } = useSelectedDate();
   const { databaseChange } = useDatabaseChangeNotifier();
-  const { intercourse, setIntercourse } = useIntercourse();
+
+  // The selected day's contents are this screen's, not the app's. They were
+  // global only so accordions and fetch hooks could talk past each other,
+  // which db/loggedDay.ts absorbed.
+  const [day, setDay] = useState<LoggedDay>(() => emptyLoggedDay(date));
+
+  const edit = useCallback(
+    (change: Partial<LoggedDay>) =>
+      setDay((current) => ({ ...current, ...change })),
+    [],
+  );
+
+  /** Medications and birth control share one list, so both writers rebuild it. */
+  const setMedications = useCallback(
+    (names: string[]) =>
+      setDay((current) => {
+        const birthControl = birthControlIn(current);
+        return {
+          ...current,
+          medications: [
+            ...names.map((name) => ({ name })),
+            ...(birthControl ? [birthControl] : []),
+          ],
+        };
+      }),
+    [],
+  );
+
+  const setBirthControl = useCallback(
+    (birthControl: LoggedMedication | null) =>
+      setDay((current) => ({
+        ...current,
+        medications: [
+          ...medicationsExcludingBirthControl(current).map((name) => ({
+            name,
+          })),
+          ...(birthControl ? [birthControl] : []),
+        ],
+      })),
+    [],
+  );
 
   const [saveMessageVisible, setSaveMessageVisible] = useState(false);
   const [saveMessageContent, setSaveMessageContent] = useState<string[]>([]);
 
   // Everything about when and how a day is written lives in db/loggedDay.ts.
-  // What is left here is turning store state into a snapshot and back.
   const saver = useRef(createLoggedDaySaver()).current;
   const [lastSaved, setLastSaved] = useState<LoggedDay | null>(null);
   const loaded = useRef(false);
-
-  const snapshot: LoggedDay = useMemo(() => {
-    const birthControl = selectedBirthControl
-      ? [
-          {
-            name: selectedBirthControl,
-            timeTaken: timeTaken,
-            notes: birthControlNotes,
-          },
-        ]
-      : [];
-
-    return {
-      date,
-      flow: flow_intensity ?? 0,
-      notes: notes ?? "",
-      isCycleStart: is_cycle_start ?? false,
-      isCycleEnd: is_cycle_end ?? false,
-      intercourse: intercourse ?? false,
-      symptoms: selectedSymptoms,
-      moods: selectedMoods,
-      medications: [
-        ...selectedMedications.map((name) => ({ name })),
-        ...birthControl,
-      ],
-    };
-  }, [
-    date,
-    flow_intensity,
-    notes,
-    is_cycle_start,
-    is_cycle_end,
-    intercourse,
-    selectedSymptoms,
-    selectedMoods,
-    selectedMedications,
-    selectedBirthControl,
-    birthControlNotes,
-    timeTaken,
-  ]);
 
   // Open a day: one load, and the saver's baseline comes from what was read.
   useEffect(() => {
     let stale = false;
     loaded.current = false;
 
-    loadLoggedDay(date).then((day) => {
+    loadLoggedDay(date).then((loadedDay) => {
       if (stale) return;
 
-      setFlow(day.flow);
-      setNotes(day.notes);
-      setCycleStart(day.isCycleStart);
-      setCycleEnd(day.isCycleEnd);
-      setIntercourse(day.intercourse);
-      setSelectedSymptoms(day.symptoms);
-      setSelectedMoods(day.moods);
-      setSelectedMedications(medicationsExcludingBirthControl(day));
-
-      const birthControl = birthControlIn(day);
-      setSelectedBirthControl(birthControl?.name ?? null);
-      setBirthControlNotes(birthControl?.notes ?? "");
-      setTimeTaken(birthControl?.timeTaken ?? "");
-
-      saver.reset(day);
-      setLastSaved(day);
+      setDay(loadedDay);
+      saver.reset(loadedDay);
+      setLastSaved(loadedDay);
       loaded.current = true;
     });
 
@@ -146,7 +110,7 @@ export default function DayView() {
 
     const previous = lastSaved ?? emptyLoggedDay(date);
 
-    saver.schedule(snapshot).then((outcome) => {
+    saver.schedule(day).then((outcome) => {
       if (outcome.status === "saved") {
         setLastSaved(outcome.day);
         const section = savedSectionLabel(state, outcome.day, previous);
@@ -162,7 +126,7 @@ export default function DayView() {
     // `state` and `lastSaved` are read when the save lands, not what triggers
     // one; including them would schedule a save on every accordion tap.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [snapshot, date]);
+  }, [day, date]);
 
   return (
     <View style={{ backgroundColor: theme.colors.background }}>
@@ -181,54 +145,54 @@ export default function DayView() {
           <FlowAccordion
             state={state}
             setExpandedAccordion={setExpandedAccordion}
-            flow_intensity={flow_intensity}
-            setFlow={setFlow}
-            is_cycle_start={is_cycle_start}
-            setCycleStart={setCycleStart}
-            is_cycle_end={is_cycle_end}
-            setCycleEnd={setCycleEnd}
+            flow_intensity={day.flow}
+            setFlow={(flow) => edit({ flow })}
+            is_cycle_start={day.isCycleStart}
+            setCycleStart={(isCycleStart) => edit({ isCycleStart })}
+            is_cycle_end={day.isCycleEnd}
+            setCycleEnd={(isCycleEnd) => edit({ isCycleEnd })}
           />
           <Divider />
           <BirthControlAccordion
             state={state}
             setExpandedAccordion={setExpandedAccordion}
-            selectedBirthControl={selectedBirthControl}
-            setSelectedBirthControl={setSelectedBirthControl}
+            birthControl={birthControlIn(day)}
+            setBirthControl={setBirthControl}
           />
           <Divider />
           <IntercourseAccordion
             state={state}
             setExpandedAccordion={setExpandedAccordion}
-            intercourse={intercourse}
-            setIntercourse={setIntercourse}
+            intercourse={day.intercourse}
+            setIntercourse={(intercourse) => edit({ intercourse })}
           />
           <Divider />
           <SymptomsAccordion
             state={state}
             setExpandedAccordion={setExpandedAccordion}
-            selectedSymptoms={selectedSymptoms}
-            setSelectedSymptoms={setSelectedSymptoms}
+            selectedSymptoms={day.symptoms}
+            setSelectedSymptoms={(symptoms) => edit({ symptoms })}
           />
           <Divider />
           <MoodsAccordion
             state={state}
             setExpandedAccordion={setExpandedAccordion}
-            selectedMoods={selectedMoods}
-            setSelectedMoods={setSelectedMoods}
+            selectedMoods={day.moods}
+            setSelectedMoods={(moods) => edit({ moods })}
           />
           <Divider />
           <MedicationsAccordion
             state={state}
             setExpandedAccordion={setExpandedAccordion}
-            selectedMedications={selectedMedications}
-            setSelectedMedications={setSelectedMedications}
+            selectedMedications={medicationsExcludingBirthControl(day)}
+            setSelectedMedications={setMedications}
           />
           <Divider />
           <NotesAccordion
             state={state}
             setExpandedAccordion={setExpandedAccordion}
-            notes={notes}
-            setNotes={setNotes}
+            notes={day.notes}
+            setNotes={(notes) => edit({ notes })}
           />
         </List.Section>
       </View>

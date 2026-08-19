@@ -12,7 +12,7 @@ import {
   usePredictionChoice,
   usePredictedCycle,
   useCalendarFilters,
-} from "@/assets/src/calendar-storage";
+} from "@/stores/calendar-storage";
 import { refreshPredictions } from "@/services/cyclePredictions";
 import { startOfLocalDay } from "@/utils/dates";
 import { useState, useEffect } from "react";

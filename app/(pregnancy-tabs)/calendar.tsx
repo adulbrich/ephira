@@ -13,11 +13,11 @@ import { Calendar } from "react-native-calendars";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { SettingsKeys } from "@/constants/Settings";
 import { useTheme, MD3Theme, Divider, Text } from "react-native-paper";
-import { useThemeColor } from "@/assets/src/calendar-storage";
+import { useThemeColor } from "@/stores/calendar-storage";
 import {
   usePregnancySelectedDate,
   usePregnancyCalendarFilters,
-} from "@/assets/src/pregnancy-storage";
+} from "@/stores/pregnancy-storage";
 import { getSetting, insertSetting } from "@/db/database";
 import CalendarHeader from "@/components/calendar/CalendarHeader";
 import CustomDay from "@/components/calendar/CustomDay";

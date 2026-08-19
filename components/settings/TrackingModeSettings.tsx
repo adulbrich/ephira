@@ -4,7 +4,7 @@ import { List, Text, useTheme } from "react-native-paper";
 import { useRouter } from "expo-router";
 import { getSetting, updateSetting } from "@/db/database";
 import { SettingsKeys, TRACKING_MODES } from "@/constants/Settings";
-import { useTrackingMode } from "@/assets/src/calendar-storage";
+import { useTrackingMode } from "@/stores/calendar-storage";
 
 export default function TrackingModeSettings() {
   const theme = useTheme();

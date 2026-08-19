@@ -20,7 +20,7 @@ import {
   useCalendarFilters,
   useThemeColor,
   usePredictionChoice,
-} from "@/assets/src/calendar-storage";
+} from "@/stores/calendar-storage";
 import { getSetting, insertSetting } from "@/db/database";
 import CalendarHeader from "@/components/calendar/CalendarHeader";
 import CustomDay from "@/components/calendar/CustomDay";

@@ -11,7 +11,7 @@ import Svg, {
 import React, { useEffect, useRef, useMemo } from "react";
 import { FlowColors, FlowType } from "@/constants/Colors";
 import { useTheme } from "react-native-paper";
-import { useData, useFlowData } from "@/assets/src/calendar-storage";
+import { useData, useFlowData } from "@/stores/calendar-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { useFetchFlowData } from "@/hooks/useFetchFlowData";
 import {
