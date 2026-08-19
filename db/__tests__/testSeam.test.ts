@@ -56,7 +56,7 @@ describe("the test seam", () => {
   });
 
   it("runs a real db/operations write and read", async () => {
-    await insertDay("2026-03-01", 3);
+    await insertDay("2026-03-01", 3, new Date(2026, 0, 1));
 
     const day = await getDay("2026-03-01");
 

@@ -47,7 +47,7 @@ export async function quickLogBirthControlForToday(name: string) {
   // make sure the day exists
   let day = await getDay(date);
   if (!day) {
-    await insertDay(date, 0, undefined, false, false);
+    await insertDay(date, 0, new Date(), undefined, false, false);
     day = await getDay(date);
   }
   if (!day?.id) throw new Error("Could not ensure today's day row");

@@ -82,11 +82,15 @@ export const savePredictions = async (
 };
 
 /**
- * Check predictions against actual data and update accuracy
+ * Check predictions against actual data and update accuracy.
+ *
+ * `checkedOn` is the day the outcome became known, and is a parameter rather
+ * than a clock read. It was the last hidden input in this path.
  */
 export const checkPredictionAccuracy = async (
   date: string,
   hadFlow: boolean,
+  checkedOn: Date,
 ) => {
   // Find all unchecked predictions for this date
   const predictions = await db
@@ -105,7 +109,7 @@ export const checkPredictionAccuracy = async (
       .update(predictionSnapshots)
       .set({
         actual_had_flow: hadFlow,
-        checked_date: formatAsISODate(new Date()),
+        checked_date: formatAsISODate(checkedOn),
       })
       .where(
         and(
