@@ -38,7 +38,16 @@ import {
 import DatabaseMigrationError from "@/components/DatabaseMigrationError";
 import PasswordAuthenticationView from "@/components/PasswordAuthenticationView";
 import { getTheme } from "@/components/ThemeHandler";
-import { useThemeColor, useTrackingMode } from "@/stores/calendar-storage";
+import {
+  useCalendarFilters,
+  usePredictionChoice,
+  useThemeColor,
+  useTrackingMode,
+} from "@/stores/calendar-storage";
+import {
+  loadCalendarFilters,
+  loadCyclePredictionChoice,
+} from "@/db/preferences";
 import * as Notifications from "expo-notifications";
 import { NotificationTypes } from "@/constants/Notifications";
 
@@ -49,6 +58,8 @@ export default function RootLayout() {
   const isDarkMode = systemTheme === "dark";
   const { themeColor, setThemeColor } = useThemeColor();
   const { setTrackingMode } = useTrackingMode();
+  const { setPredictionChoice } = usePredictionChoice();
+  const { setSelectedFilters } = useCalendarFilters();
 
   useEffect(() => {
     async function fetchThemeColor() {
@@ -69,6 +80,18 @@ export default function RootLayout() {
     }
     fetchTrackingMode();
   }, [setTrackingMode]);
+
+  // Durable preferences hydrate in the shell, not on the screen that happens
+  // to need them first. These were loaded by the Calendar tab, so any screen
+  // reached before it read a store still holding its initial value: the Cycle
+  // tab told users predictions were off when their setting said on.
+  useEffect(() => {
+    loadCyclePredictionChoice().then(setPredictionChoice);
+  }, [setPredictionChoice]);
+
+  useEffect(() => {
+    loadCalendarFilters().then(setSelectedFilters);
+  }, [setSelectedFilters]);
 
   const finalSelectedColor = themeColor as
     | "blue"
