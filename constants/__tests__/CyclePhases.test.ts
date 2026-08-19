@@ -110,3 +110,21 @@ describe("CyclePhases - Gradient Colors", () => {
     });
   });
 });
+
+describe("CyclePhases - Identity", () => {
+  // Ported from app/(tabs)/__tests__/index.test.tsx, which observed these
+  // names only through a rendered "You're in your <name> phase" string, and
+  // mocked four modules to get there.
+  it("names every phase", () => {
+    expect(CYCLE_PHASES.menstrual.name).toBe("Menstrual");
+    expect(CYCLE_PHASES.follicular.name).toBe("Follicular");
+    expect(CYCLE_PHASES.ovulation.name).toBe("Ovulation");
+    expect(CYCLE_PHASES.luteal.name).toBe("Luteal");
+  });
+
+  it("keys each phase by its own id", () => {
+    (Object.keys(CYCLE_PHASES) as CyclePhaseId[]).forEach((id) => {
+      expect(CYCLE_PHASES[id].id).toBe(id);
+    });
+  });
+});

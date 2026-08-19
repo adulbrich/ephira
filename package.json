@@ -8,12 +8,17 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "test": "jest --watchAll",
+    "test": "jest",
     "lint": "expo lint",
-    "format": "prettier --write . && eslint --fix ."
+    "format": "prettier --write . && eslint --fix .",
+    "test:watch": "jest --watchAll",
+    "typecheck": "tsc --noEmit"
   },
   "jest": {
-    "preset": "jest-expo"
+    "preset": "jest-expo",
+    "testMatch": [
+      "**/?(*.)+(spec|test).[jt]s?(x)"
+    ]
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -62,10 +67,12 @@
   "devDependencies": {
     "@babel/core": "^7.29.0",
     "@testing-library/react-native": "^12.4.3",
+    "@types/better-sqlite3": "^9.6.0",
     "@types/jest": "29.5.14",
     "@types/react": "19.1.10",
     "@types/react-test-renderer": "^19.1.0",
     "baseline-browser-mapping": "^2.9.19",
+    "better-sqlite3": "^13.0.3",
     "drizzle-kit": "^0.31.8",
     "eslint": "^9.39.2",
     "eslint-config-expo": "~10.0.0",
