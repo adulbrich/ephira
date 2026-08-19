@@ -172,9 +172,17 @@ export async function deleteAllDataInDatabase() {
 // symptoms, moods, and medications into the database and adjust calendar filters
 // to the new format if needed
 export const setupEntryTypes = async () => {
-  // delete old formats if neeed
+  // Delete old formats if needed. Children before parents: symptom_entries,
+  // mood_entries and medication_entries reference these rows, and clearing the
+  // catalogue without them leaves entries pointing at ids that no longer
+  // exist. On device foreign keys are off, so that failure is silent and the
+  // user's history simply stops joining. deleteAllDataInDatabase above has
+  // always had this order; this function did not.
+  await deleteAllSymptomEntries();
   await deleteAllSymptoms();
+  await deleteAllMoodEntries();
   await deleteAllMoods();
+  await deleteAllMedicationEntries();
   await deleteAllMedications();
 
   // insert all entry types

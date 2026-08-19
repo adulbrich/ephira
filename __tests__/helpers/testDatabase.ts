@@ -39,21 +39,22 @@ type Journal = { entries: { idx: number; tag: string }[] };
  * not exist under jest. Reading the same files from disk keeps the tests on
  * exactly the DDL the device runs.
  */
+function runMigrationFile(connection: BetterSqlite3.Database, tag: string) {
+  const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, `${tag}.sql`), "utf8");
+
+  for (const statement of sql.split("--> statement-breakpoint")) {
+    const trimmed = statement.trim();
+    if (trimmed.length > 0) connection.exec(trimmed);
+  }
+}
+
 function applyMigrations(connection: BetterSqlite3.Database) {
   const journal: Journal = JSON.parse(
     fs.readFileSync(path.join(MIGRATIONS_DIR, "meta", "_journal.json"), "utf8"),
   );
 
   for (const entry of [...journal.entries].sort((a, b) => a.idx - b.idx)) {
-    const sql = fs.readFileSync(
-      path.join(MIGRATIONS_DIR, `${entry.tag}.sql`),
-      "utf8",
-    );
-
-    for (const statement of sql.split("--> statement-breakpoint")) {
-      const trimmed = statement.trim();
-      if (trimmed.length > 0) connection.exec(trimmed);
-    }
+    runMigrationFile(connection, entry.tag);
   }
 }
 
@@ -104,4 +105,31 @@ export function resetTestDatabase() {
     .get();
   if (hasSequence) db.exec("DELETE FROM sqlite_sequence");
   db.pragma("foreign_keys = ON");
+}
+
+/**
+ * Runs one migration again, by tag, against the open database. Data migrations
+ * are only observable if something is in the tables when they run, and the
+ * schema is already at head here, so a test seeds the state the migration is
+ * meant to repair and then replays just that file.
+ */
+export function applyMigration(tag: string) {
+  runMigrationFile(open().connection, tag);
+}
+
+/**
+ * Runs `write` with foreign keys off, then turns them back on.
+ *
+ * Only for setting up the state a device gets into: the app ships no PRAGMA,
+ * so on device foreign keys are off and rows that violate them can and do
+ * exist. Do not reach for this to make an assertion pass.
+ */
+export function withForeignKeysOff(write: () => void) {
+  const { connection: db } = open();
+  db.pragma("foreign_keys = OFF");
+  try {
+    write();
+  } finally {
+    db.pragma("foreign_keys = ON");
+  }
 }
