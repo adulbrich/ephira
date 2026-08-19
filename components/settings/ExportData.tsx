@@ -90,14 +90,12 @@ function formatJsonDataToCsv(exportData: ExportDataInterface) {
       row.push(entry.moods.includes(mood) ? "x" : "");
     }
     for (const medication of headers.medications) {
-      const medValue = entry.medications.find(
-        (m: any) => m.name === medication,
-      );
+      const medValue = entry.medications.find((m) => m.name === medication);
       row.push(medValue ? "x" : "");
     }
     for (const birthControl of headers.birth_control) {
       const bcValue = entry.birth_control.find(
-        (bc: any) => bc.name === birthControl,
+        (bc) => bc.name === birthControl,
       );
 
       if (bcValue) {

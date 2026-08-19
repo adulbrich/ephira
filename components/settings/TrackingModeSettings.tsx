@@ -44,9 +44,9 @@ export default function TrackingModeSettings() {
             setLocalMode(targetMode);
             setTrackingMode(targetMode);
             if (targetMode === TRACKING_MODES.PREGNANCY) {
-              router.replace("/(pregnancy-tabs)" as any);
+              router.replace("/(pregnancy-tabs)");
             } else {
-              router.replace("/(tabs)" as any);
+              router.replace("/(tabs)");
             }
           },
         },

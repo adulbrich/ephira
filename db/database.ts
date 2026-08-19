@@ -112,7 +112,7 @@ export async function getAllDataAsJson() {
         entry.medication_name &&
         entry.medication_type !== "birth control" &&
         !exportData.dailyData[entry.date].medications.some(
-          (med: any) => med.name === entry.medication_name,
+          (med) => med.name === entry.medication_name,
         )
       ) {
         exportData.dailyData[entry.date].medications.push({
@@ -130,7 +130,7 @@ export async function getAllDataAsJson() {
         entry.medication_name &&
         entry.medication_type === "birth control" &&
         !exportData.dailyData[entry.date].birth_control.some(
-          (bc: any) => bc.name === entry.medication_name,
+          (bc) => bc.name === entry.medication_name,
         )
       ) {
         exportData.dailyData[entry.date].birth_control.push({

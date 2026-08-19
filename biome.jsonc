@@ -37,11 +37,12 @@
     "rules": {
       "preset": "recommended",
       "suspicious": {
-        // Off for enforcement parity: ESLint never had
-        // @typescript-eslint/no-explicit-any on either, so leaving it off
-        // changes nothing about what this repo enforces. 25 sites across 16
-        // files; burning them down is real typing work with its own issue.
-        "noExplicitAny": "off"
+        // On since #228 burned down all 25 sites. Two of them were hiding
+        // real defects rather than being merely lazy: nine `as any` route
+        // casts were silencing a stale generated `.expo/types/router.d.ts`
+        // and disabling route checking to do it, and `DayData` was declaring
+        // four nullable columns non-null.
+        "noExplicitAny": "error"
       },
       "correctness": {
         // reportUnnecessaryDependencies is off deliberately. `databaseChange`

@@ -9,15 +9,15 @@ export default function Index() {
     (async () => {
       const seen = await getHasSeenWalkthrough();
       if (!seen) {
-        router.replace("/(onboarding)/welcome" as any);
+        router.replace("/(onboarding)/welcome");
         return;
       }
       const modeSetting = await getSetting(SettingsKeys.trackingMode);
       const mode = modeSetting?.value ?? TRACKING_MODES.CYCLE;
       if (mode === TRACKING_MODES.PREGNANCY) {
-        router.replace("/(pregnancy-tabs)" as any);
+        router.replace("/(pregnancy-tabs)");
       } else {
-        router.replace("/(tabs)" as any);
+        router.replace("/(tabs)");
       }
     })();
   }, []);

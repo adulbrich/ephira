@@ -1,6 +1,6 @@
 import type React from "react";
 import { useEffect, useRef } from "react";
-import { View } from "react-native";
+import { type StyleProp, View, type ViewStyle } from "react-native";
 import { useTour } from "./TourContext";
 
 export function TourAnchor({
@@ -10,7 +10,7 @@ export function TourAnchor({
 }: {
   id: string;
   children: React.ReactNode;
-  style?: any;
+  style?: StyleProp<ViewStyle>;
 }) {
   const ref = useRef<View>(null);
   const { registerAnchor } = useTour();

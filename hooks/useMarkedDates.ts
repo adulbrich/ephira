@@ -199,8 +199,14 @@ async function markedDatesBuilder(filters: string[], data: DayData[]) {
     if (filters.some((filter) => filter === "Flow")) {
       const { isStartingDay, isEndingDay } = getStartingAndEndingDay(
         day.date,
-        data[index - 1]?.flow_intensity > 0 ? data[index - 1]?.date : undefined,
-        data[index + 1]?.flow_intensity > 0 ? data[index + 1]?.date : undefined,
+        // `?? 0` because flow_intensity is a nullable column. The type used
+        // to say otherwise; the code below already defended against it.
+        (data[index - 1]?.flow_intensity ?? 0) > 0
+          ? data[index - 1]?.date
+          : undefined,
+        (data[index + 1]?.flow_intensity ?? 0) > 0
+          ? data[index + 1]?.date
+          : undefined,
       );
       if (!markedDates[day.date])
         markedDates[day.date] = { selected: false, periods: [] };

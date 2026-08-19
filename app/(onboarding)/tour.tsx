@@ -40,7 +40,7 @@ export default function TourStart() {
       ];
 
       // Go to the first route, then start the tour overlay.
-      router.replace(steps[0].route as any);
+      router.replace(steps[0].route);
       start(steps);
     })();
   }, [start]);

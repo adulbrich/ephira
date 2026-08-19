@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
+import type React from "react";
 import { Dimensions, Modal, Pressable, Text, View } from "react-native";
 import { useTour } from "./TourContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Rect = { x: number; y: number; width: number; height: number };
 
-function measure(ref: any): Promise<Rect | null> {
+function measure(
+  ref: React.RefObject<View | null> | undefined,
+): Promise<Rect | null> {
   return new Promise((resolve) => {
     if (!ref?.current?.measureInWindow) return resolve(null);
     ref.current.measureInWindow(

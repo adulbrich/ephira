@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { View, Modal, Platform } from "react-native";
 import { List, Text, Button, TextInput, useTheme } from "react-native-paper";
-import DateTimePicker from "@react-native-community/datetimepicker";
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 import SingleChipSelection from "./SingleChipSelection";
 import { loggingAccordionTitleStyles } from "@/components/dayView/loggingGridLayout";
 import type { LoggedMedication } from "@/db/loggedDay";
@@ -51,7 +53,10 @@ export default function BirthControlAccordion({
   const setBirthControlNotes = (notes: string) =>
     setBirthControl(birthControl ? { ...birthControl, notes } : null);
 
-  const handleTimeChange = (event: any, selectedTime?: Date) => {
+  const handleTimeChange = (
+    event: DateTimePickerEvent,
+    selectedTime?: Date,
+  ) => {
     if (Platform.OS === "android") {
       if (event.type === "set" && selectedTime) {
         setTempSelectedTime(selectedTime);
