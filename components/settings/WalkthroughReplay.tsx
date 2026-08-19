@@ -1,7 +1,7 @@
 import { List, Button } from "react-native-paper";
 import { ThemedView } from "@/components/ThemedView";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import { View } from "react-native";
 
 export default function WalkthroughReplay() {

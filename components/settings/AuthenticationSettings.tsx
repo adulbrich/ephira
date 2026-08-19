@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { View, Alert, Platform, Keyboard } from "react-native";
 import {
   Text,

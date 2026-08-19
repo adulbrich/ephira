@@ -1,0 +1,60 @@
+// Formatting and linting. Pinned: a Biome release that changes a formatting
+// default would produce exactly the churn this migration avoided.
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.9/schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": {
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!drizzle",
+      "!docs",
+      "!dist",
+      "!.expo",
+      "!android",
+      "!ios",
+      "!credentials"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 80
+  },
+  "javascript": {
+    "formatter": { "quoteStyle": "double", "trailingCommas": "all" },
+    "globals": [
+      "__DEV__",
+      "ErrorUtils",
+      "HermesInternal",
+      "nativeFabricUIManager"
+    ]
+  },
+  "linter": {
+    "enabled": true,
+    "domains": { "react": "recommended" },
+    "rules": {
+      "preset": "recommended",
+      "suspicious": {
+        // Off for enforcement parity: ESLint never had
+        // @typescript-eslint/no-explicit-any on either, so leaving it off
+        // changes nothing about what this repo enforces. 25 sites across 16
+        // files; burning them down is real typing work with its own issue.
+        "noExplicitAny": "off"
+      },
+      "correctness": {
+        // reportUnnecessaryDependencies is off deliberately. `databaseChange`
+        // is a store signal bumped on every write and listed in effect deps
+        // purely to invalidate; it is never read in the body, which is the
+        // point. Biome calls it unnecessary in four screens and offers an
+        // autofix that deletes it, which would silently kill refresh-on-write.
+        "useExhaustiveDependencies": {
+          "level": "error",
+          "options": { "reportUnnecessaryDependencies": false }
+        }
+      }
+    }
+  },
+  "assist": { "actions": { "source": { "organizeImports": "off" } } }
+}

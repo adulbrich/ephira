@@ -1,6 +1,3 @@
-// This is a shim for web and Android where the tab bar is generally opaque.
-// tabbarbackground.tsx
-import React from "react";
 import { View, StyleSheet } from "react-native";
 import { useTheme } from "react-native-paper";
 

@@ -4,7 +4,7 @@
  * Used by useFetchCycleData; designed for testability with no DB dependency.
  */
 
-import {
+import type {
   CurrentCycleState,
   CycleStats,
   DayData,
@@ -12,7 +12,7 @@ import {
 } from "@/constants/Interfaces";
 import { CYCLE_PREDICTION_CONSTANTS } from "@/constants/CyclePrediction";
 import {
-  CyclePhaseId,
+  type CyclePhaseId,
   getAdjustedPhaseBoundaries,
 } from "@/constants/CyclePhases";
 import { differenceInDays, formatAsISODate, parseISODate } from "@/utils/dates";
@@ -36,8 +36,8 @@ export interface GeneratePredictionsOptions {
  * Uses date comparison to avoid DST/timezone issues.
  */
 export function areConsecutive(date1: string, date2: string): boolean {
-  const d1 = new Date(date1 + "T00:00:00");
-  const d2 = new Date(date2 + "T00:00:00");
+  const d1 = new Date(`${date1}T00:00:00`);
+  const d2 = new Date(`${date2}T00:00:00`);
   const utcDate1 = Date.UTC(d1.getFullYear(), d1.getMonth(), d1.getDate());
   const utcDate2 = Date.UTC(d2.getFullYear(), d2.getMonth(), d2.getDate());
   const diffDays = Math.abs((utcDate2 - utcDate1) / (1000 * 60 * 60 * 24));
@@ -68,7 +68,7 @@ export function groupFlowIntoCycles(flowData: DayData[]): GroupedCycle[] {
       isNewCycleStart ||
       isPreviousCycleEnd ||
       !lastDate ||
-      !areConsecutive(lastDate!, data.date);
+      !areConsecutive(lastDate, data.date);
 
     if (lastDate && !shouldStartNewCycle) {
       const lastGroup = grouped[grouped.length - 1];
@@ -150,7 +150,7 @@ export function calculateConfidence(
   const average =
     cycleLengths.reduce((acc, len) => acc + len, 0) / cycleLengths.length;
   const variance =
-    cycleLengths.reduce((acc, len) => acc + Math.pow(len - average, 2), 0) /
+    cycleLengths.reduce((acc, len) => acc + (len - average) ** 2, 0) /
     cycleLengths.length;
   const stdDev = Math.sqrt(variance);
 
@@ -169,7 +169,7 @@ export function calculateConfidence(
     (c) => c.dates.length >= CYCLE_PREDICTION_CONSTANTS.MIN_CONSECUTIVE_DAYS,
   );
   const lastCycle = validCycles[validCycles.length - 1];
-  const lastEnd = new Date(lastCycle.endDate + "T00:00:00");
+  const lastEnd = new Date(`${lastCycle.endDate}T00:00:00`);
   const daysSinceLast = Math.floor(
     (referenceDate.getTime() - lastEnd.getTime()) / (1000 * 60 * 60 * 24),
   );
@@ -218,8 +218,8 @@ export function generatePredictions(
 
   const cycleLengths: number[] = [];
   for (let i = 1; i < validCycles.length; i++) {
-    const prev = new Date(validCycles[i - 1].startDate + "T00:00:00");
-    const curr = new Date(validCycles[i].startDate + "T00:00:00");
+    const prev = new Date(`${validCycles[i - 1].startDate}T00:00:00`);
+    const curr = new Date(`${validCycles[i].startDate}T00:00:00`);
     const diffDays = Math.round(
       (curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24),
     );
@@ -238,7 +238,7 @@ export function generatePredictions(
   );
 
   const predictedDates: PredictedDate[] = [];
-  const lastCycleStart = new Date(lastCycle.startDate + "T00:00:00");
+  const lastCycleStart = new Date(`${lastCycle.startDate}T00:00:00`);
   const cycleDuration = lastCycle.dates.length;
 
   for (let cycleNum = 1; cycleNum <= maxCycles; cycleNum++) {
@@ -304,7 +304,7 @@ export function calculateCycleVariation(cycles: GroupedCycle[]): number {
 
   const average = lengths.reduce((a, b) => a + b, 0) / lengths.length;
   const variance =
-    lengths.reduce((sum, length) => sum + Math.pow(length - average, 2), 0) /
+    lengths.reduce((sum, length) => sum + (length - average) ** 2, 0) /
     lengths.length;
   return Math.round(Math.sqrt(variance) * 10) / 10;
 }

@@ -1,4 +1,4 @@
-import { FlowType } from "@/constants/Colors";
+import type { FlowType } from "@/constants/Colors";
 export const MAX_FLOW_LENGTH = 7;
 export const FLOW_TAIL_PERCENT = 0.08;
 export const FLOW_TAIL_COLOR = "#c6a4dbff";

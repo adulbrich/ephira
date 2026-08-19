@@ -1,6 +1,6 @@
 import { View, StyleSheet } from "react-native";
 import { Card, Text } from "react-native-paper";
-import { CyclePhaseDefinition } from "@/constants/CyclePhases";
+import type { CyclePhaseDefinition } from "@/constants/CyclePhases";
 
 interface StatusCardProps {
   phase: CyclePhaseDefinition;

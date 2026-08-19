@@ -1,4 +1,3 @@
-import React from "react";
 import { View, StyleSheet } from "react-native";
 import { Portal, Snackbar as RnpSnackbar } from "react-native-paper";
 

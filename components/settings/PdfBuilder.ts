@@ -1,4 +1,10 @@
-import { PDFDocument, StandardFonts, rgb, PDFPage, PDFFont } from "pdf-lib";
+import {
+  PDFDocument,
+  StandardFonts,
+  rgb,
+  type PDFPage,
+  type PDFFont,
+} from "pdf-lib";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import type { ExportData } from "../../constants/Interfaces";
@@ -35,7 +41,7 @@ function wrapText(text: string, maxChars: number): string[] {
   let line = "";
 
   for (let word of words) {
-    if ((line + " " + word).trim().length <= maxChars) {
+    if (`${line} ${word}`.trim().length <= maxChars) {
       line += (line ? " " : "") + word;
     } else {
       if (line) wrapped.push(line);
@@ -116,7 +122,7 @@ export async function exportPDF(dailyData: ExportData["dailyData"]) {
     const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
     let page = pdfDoc.addPage();
-    let { width, height } = page.getSize();
+    const { width, height } = page.getSize();
     let y = height - margin;
     let pageNum = 1;
 
@@ -257,7 +263,7 @@ export async function exportPDF(dailyData: ExportData["dailyData"]) {
         // check if we need to add a new page, if so, add page and headers
         if (y - rowHeight < margin + lineHeight) {
           addPage();
-          drawMonthLabel(monthLabel + " (continued)");
+          drawMonthLabel(`${monthLabel} (continued)`);
           drawColumnHeaders();
         }
 

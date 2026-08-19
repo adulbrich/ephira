@@ -17,7 +17,7 @@ import {
   Portal,
   IconButton,
   TextInput,
-  MD3Theme,
+  type MD3Theme,
   Dialog,
   Button,
 } from "react-native-paper";
@@ -450,7 +450,7 @@ export default function CustomEntries({
   );
 }
 
-const makeStyles = (theme: MD3Theme, width: number, height: number) => {
+const makeStyles = (theme: MD3Theme, _width: number, height: number) => {
   return StyleSheet.create({
     modal: {
       justifyContent: "flex-start",

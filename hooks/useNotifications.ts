@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
-import { NotificationType } from "@/constants/Notifications";
+import type { NotificationType } from "@/constants/Notifications";
 
 /**
  * Configure how notifications are handled when app is in foreground
@@ -30,6 +30,7 @@ export const useNotifications = () => {
   >("undetermined");
 
   // Check permission status on mount
+  // biome-ignore lint/correctness/useExhaustiveDependencies: on mount only.
   useEffect(() => {
     checkPermissionStatus();
   }, []);

@@ -87,7 +87,7 @@ export default function CatalogueAccordion({
             </Text>
             <Text style={loggingAccordionTitleStyles.value}>
               |{"      "}
-              {visibleSelection(options, selected).length + " Selected"}
+              {`${visibleSelection(options, selected).length} Selected`}
             </Text>
           </View>
         }

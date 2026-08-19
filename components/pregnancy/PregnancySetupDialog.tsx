@@ -1,6 +1,6 @@
 import { Platform, StyleSheet, View } from "react-native";
 import DateTimePicker, {
-  DateTimePickerEvent,
+  type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 import {
   Button,

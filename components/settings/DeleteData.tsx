@@ -9,7 +9,7 @@ import {
   Modal,
   Portal,
   IconButton,
-  MD3Theme,
+  type MD3Theme,
   TextInput,
   Button,
 } from "react-native-paper";
@@ -110,7 +110,7 @@ export default function DeleteData() {
   );
 }
 
-const makeStyles = (theme: MD3Theme, width: number, height: number) => {
+const makeStyles = (theme: MD3Theme, _width: number, height: number) => {
   return StyleSheet.create({
     modal: {
       justifyContent: "flex-start",

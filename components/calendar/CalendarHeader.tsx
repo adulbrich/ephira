@@ -1,4 +1,4 @@
-import { useTheme, MD3Theme, IconButton } from "react-native-paper";
+import { useTheme, type MD3Theme, IconButton } from "react-native-paper";
 import { View, Text, StyleSheet } from "react-native";
 import CalendarFilterDialog from "@/components/calendar/CalendarFilterDialog";
 import { useState } from "react";

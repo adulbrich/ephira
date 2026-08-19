@@ -1,6 +1,6 @@
 import { getAllDays } from "@/db/database";
 import { useData } from "@/stores/calendar-storage";
-import { DayData } from "@/constants/Interfaces";
+import type { DayData } from "@/constants/Interfaces";
 
 export function useFetchFlowData() {
   const { setData } = useData();

@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Platform } from "react-native";
 import * as SplashScreen from "expo-splash-screen";
 import { getDrizzleDatabase } from "@/db/database";
@@ -14,7 +14,7 @@ export default function PregnancyTabLayout() {
 
   useEffect(() => {
     async function prepare() {
-      let db;
+      let db: ReturnType<typeof getDrizzleDatabase> | undefined;
       let attempts = 0;
 
       while (!db && attempts < 10) {

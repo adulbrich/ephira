@@ -13,7 +13,7 @@ import {
 import { Calendar } from "react-native-calendars";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import DayView from "@/components/dayView/DayView";
-import { useTheme, MD3Theme, Divider, Text } from "react-native-paper";
+import { useTheme, type MD3Theme, Divider, Text } from "react-native-paper";
 import {
   useSelectedDate,
   useCalendarFilters,
@@ -128,7 +128,7 @@ export default function FlowCalendar() {
                   />
                   <Divider />
                   <View style={styles.legendContainer}>
-                    {selectedFilters.map((filter, index) => (
+                    {selectedFilters.map((filter, _index) => (
                       <View
                         key={filter}
                         style={{
