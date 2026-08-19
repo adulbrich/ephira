@@ -1,7 +1,16 @@
 import {
+  deleteMedication,
+  deleteMood,
+  deleteSymptom,
   getAllVisibleMedications,
   getAllVisibleMoods,
   getAllVisibleSymptoms,
+  insertMedication,
+  insertMood,
+  insertSymptom,
+  updateMedication,
+  updateMood,
+  updateSymptom,
 } from "@/db/database";
 
 /** The four things settings can add to, hide from, or delete. */
@@ -75,4 +84,85 @@ export function invalidateCatalogue() {
 export function onCatalogueInvalidated(listener: () => void): () => void {
   listeners.add(listener);
   return () => listeners.delete(listener);
+}
+
+/**
+ * Which table a Catalogue kind means, in one place.
+ *
+ * Both settings screens carried their own four-way switch over these strings.
+ * The switches did different things, but they encoded the same knowledge:
+ * that a medication and a birth control are the same table distinguished by
+ * `type`, and that the other two are tables of their own.
+ */
+const WRITERS: Record<
+  CatalogueKind,
+  {
+    add: (name: string) => Promise<void>;
+    remove: (name: string) => Promise<void>;
+    setVisible: (name: string, visible: boolean) => Promise<void>;
+  }
+> = {
+  symptom: {
+    add: async (name) => {
+      await insertSymptom(name, true);
+    },
+    remove: async (name) => {
+      await deleteSymptom(name);
+    },
+    setVisible: async (name, visible) => {
+      await updateSymptom(name, visible);
+    },
+  },
+  mood: {
+    add: async (name) => {
+      await insertMood(name, true);
+    },
+    remove: async (name) => {
+      await deleteMood(name);
+    },
+    setVisible: async (name, visible) => {
+      await updateMood(name, visible);
+    },
+  },
+  medication: {
+    add: async (name) => {
+      await insertMedication(name, true, "medication");
+    },
+    remove: async (name) => {
+      await deleteMedication(name);
+    },
+    setVisible: async (name, visible) => {
+      await updateMedication(name, visible, "medication");
+    },
+  },
+  "birth control": {
+    add: async (name) => {
+      await insertMedication(name, true, BIRTH_CONTROL_TYPE);
+    },
+    remove: async (name) => {
+      await deleteMedication(name);
+    },
+    setVisible: async (name, visible) => {
+      await updateMedication(name, visible, BIRTH_CONTROL_TYPE);
+    },
+  },
+};
+
+export async function addCatalogueItem(kind: CatalogueKind, name: string) {
+  await WRITERS[kind].add(name);
+  invalidateCatalogue();
+}
+
+export async function removeCatalogueItem(kind: CatalogueKind, name: string) {
+  await WRITERS[kind].remove(name);
+  invalidateCatalogue();
+}
+
+export async function setCatalogueItemVisible(
+  kind: CatalogueKind,
+  name: string,
+  visible: boolean,
+) {
+  await WRITERS[kind].setVisible(name, visible);
+  invalidateCatalogue();
 }

@@ -8,10 +8,8 @@ import {
 import { Section } from "@/constants/Sections";
 import { useCatalogue } from "@/hooks/useCatalogue";
 import FlowAccordion from "@/components/dayView/FlowAccordion";
-import MedicationsAccordion from "./MedicationsAccordion";
 import BirthControlAccordion from "./BirthControlAccordion";
-import SymptomsAccordion from "./SymptomsAccordion";
-import MoodsAccordion from "./MoodsAccordion";
+import CatalogueAccordion from "./CatalogueAccordion";
 import NotesAccordion from "./NotesAccordion";
 import IntercourseAccordion from "./IntercourseAccordion";
 import Snackbar from "@/components/ui/Snackbar";
@@ -172,28 +170,31 @@ export default function DayView() {
             setIntercourse={(intercourse) => edit({ intercourse })}
           />
           <Divider />
-          <SymptomsAccordion
+          <CatalogueAccordion
+            section={Section.Symptoms}
             state={state}
             setExpandedAccordion={setExpandedAccordion}
-            symptomOptions={catalogue.symptoms}
-            selectedSymptoms={day.symptoms}
-            setSelectedSymptoms={(symptoms) => edit({ symptoms })}
+            options={catalogue.symptoms}
+            selected={day.symptoms}
+            setSelected={(symptoms) => edit({ symptoms })}
           />
           <Divider />
-          <MoodsAccordion
+          <CatalogueAccordion
+            section={Section.Moods}
             state={state}
             setExpandedAccordion={setExpandedAccordion}
-            moodOptions={catalogue.moods}
-            selectedMoods={day.moods}
-            setSelectedMoods={(moods) => edit({ moods })}
+            options={catalogue.moods}
+            selected={day.moods}
+            setSelected={(moods) => edit({ moods })}
           />
           <Divider />
-          <MedicationsAccordion
+          <CatalogueAccordion
+            section={Section.Medications}
             state={state}
             setExpandedAccordion={setExpandedAccordion}
-            medicationOptions={catalogue.medications}
-            selectedMedications={medicationsExcludingBirthControl(day)}
-            setSelectedMedications={setMedications}
+            options={catalogue.medications}
+            selected={medicationsExcludingBirthControl(day)}
+            setSelected={setMedications}
           />
           <Divider />
           <NotesAccordion

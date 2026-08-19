@@ -14,8 +14,7 @@ import { Section } from "@/constants/Sections";
 import { useCatalogue } from "@/hooks/useCatalogue";
 import KicksAccordion from "./KicksAccordion";
 import AppointmentsAccordion from "./AppointmentsAccordion";
-import SymptomsAccordion from "@/components/dayView/SymptomsAccordion";
-import MoodsAccordion from "@/components/dayView/MoodsAccordion";
+import CatalogueAccordion from "@/components/dayView/CatalogueAccordion";
 import NotesAccordion from "@/components/dayView/NotesAccordion";
 import Snackbar from "@/components/ui/Snackbar";
 
@@ -139,20 +138,22 @@ export default function PregnancyDayView() {
             setKicks={setKicks}
           />
           <Divider />
-          <SymptomsAccordion
+          <CatalogueAccordion
+            section={Section.Symptoms}
             state={state}
             setExpandedAccordion={setExpandedAccordion}
-            symptomOptions={catalogue.symptoms}
-            selectedSymptoms={symptoms}
-            setSelectedSymptoms={setSymptoms}
+            options={catalogue.symptoms}
+            selected={symptoms}
+            setSelected={setSymptoms}
           />
           <Divider />
-          <MoodsAccordion
+          <CatalogueAccordion
+            section={Section.Moods}
             state={state}
             setExpandedAccordion={setExpandedAccordion}
-            moodOptions={catalogue.moods}
-            selectedMoods={moods}
-            setSelectedMoods={setMoods}
+            options={catalogue.moods}
+            selected={moods}
+            setSelected={setMoods}
           />
           <Divider />
           <NotesAccordion

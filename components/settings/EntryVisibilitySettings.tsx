@@ -3,9 +3,6 @@ import {
   getAllSymptoms,
   getAllMoods,
   getAllMedications,
-  updateSymptom,
-  updateMood,
-  updateMedication,
   updateSetting,
 } from "@/db/database";
 import { SettingsKeys } from "@/constants/Settings";
@@ -28,7 +25,11 @@ import {
   useCalendarFilters,
   useDatabaseChangeNotifier,
 } from "@/stores/calendar-storage";
-import { invalidateCatalogue } from "@/db/catalogue";
+import {
+  invalidateCatalogue,
+  setCatalogueItemVisible,
+  type CatalogueKind,
+} from "@/db/catalogue";
 
 interface Symptom {
   id: number;
@@ -173,54 +174,38 @@ function CalendarEntriesModal({ onDismiss }: { onDismiss: () => void }) {
     fetchMedications();
   }, []);
 
+  /** This screen's own copy of each list. Display state, not the Catalogue. */
+  const listFor = (kind: string) =>
+    ({
+      symptom: { get: () => symptoms, set: setSymptoms },
+      mood: { get: () => moods, set: setMoods },
+      medication: { get: () => medications, set: setMedications },
+      "birth control": { get: () => birthControl, set: setBirthControl },
+    })[kind] ?? {
+      get: () => [] as { id: number; name: string; visible: boolean }[],
+      set: () => {},
+    };
+
   const onToggleSwitch = (
     entryType: string,
     entry: Symptom | Mood | Medication,
   ) => {
-    switch (entryType) {
-      case "symptom":
-        updateSymptom(entry.name, !entry.visible);
-        setSymptoms(
-          symptoms.map((symptom) =>
-            symptom.id === entry.id
-              ? { ...symptom, visible: !symptom.visible }
-              : symptom,
-          ),
-        );
-        break;
-      case "mood":
-        updateMood(entry.name, !entry.visible);
-        setMoods(
-          moods.map((mood) =>
-            mood.id === entry.id ? { ...mood, visible: !mood.visible } : mood,
-          ),
-        );
-        break;
-      case "medication":
-        if ("type" in entry) {
-          updateMedication(entry.name, !entry.visible, entry.type);
-          setMedications(
-            medications.map((medication) =>
-              medication.id === entry.id
-                ? { ...medication, visible: !medication.visible }
-                : medication,
-            ),
-          );
-        }
-        break;
-      case "birth control":
-        if ("type" in entry) {
-          updateMedication(entry.name, !entry.visible, entry.type);
-          setBirthControl(
-            birthControl.map((medication) =>
-              medication.id === entry.id
-                ? { ...medication, visible: !medication.visible }
-                : medication,
-            ),
-          );
-        }
-        break;
-    }
+    // Which table a kind means lives in db/catalogue.ts. What is left here is
+    // this screen's own list, which is display state.
+    setCatalogueItemVisible(
+      entryType as CatalogueKind,
+      entry.name,
+      !entry.visible,
+    );
+
+    const list = listFor(entryType);
+    list.set(
+      list
+        .get()
+        .map((item) =>
+          item.id === entry.id ? { ...item, visible: !item.visible } : item,
+        ),
+    );
 
     // check if entry is in calendar filters and remove if needed
     if (selectedFilters.includes(entry.name) && entry.visible) {
