@@ -9,13 +9,23 @@ This document provides an overview of the project structure and key components o
 ├── app/                      # Holds the app entry point, screens, and navigation
 ├── assets/                   # Images, fonts, videos, icons, etc.
 ├── components/               # Components grouped by feature/screen/usage
-├── constants/                # App-wide constants (colors, fonts, etc.)
-├── constants/                # Constants (colors, TS interfaces, etc.)
+├── constants/                # App-wide constants (colors, TS interfaces, etc.)
 ├── db/                       # Drizzle database schema and operations
-├── docs/                     # Astro web page
+├── docs/                     # Two things: the Astro web page, and the documentation root
 ├── drizzle/                  # auto-generated Drizzle ORM files
 └── hooks/                    # Custom React hooks
 ```
+
+### `docs/` is both the marketing site and the documentation root
+
+Two unrelated things share that directory, and the name says only one of them. Which half something belongs to:
+
+- **The Astro site that publishes to the web**: `docs/astro.config.mjs`, `docs/src/`, `docs/public/`, `docs/tailwind.config.mjs`, `docs/dist/`, and its own `package.json` and `node_modules/`. Astro builds only `docs/src/pages` and `docs/public`, so the markdown below is invisible to it.
+- **The repo's documentation root**: `docs/adr/`, `docs/agents/`, `docs/plans/`, `docs/CYCLE_PREDICTION_FALLBACK_LOGIC.md` and `docs/CYCLE_PREDICTION_TEST_PLAN.md`.
+
+**An architecture decision record goes in `docs/adr/`**, numbered in sequence (`0003-...`) and following the format of the two already there. Write one when you make a decision a future reader would otherwise re-litigate. Implementation plans go in `docs/plans/`, and the instructions the agent skills read go in `docs/agents/`.
+
+Documentation never goes under `docs/src/`. That is the website.
 
 ## Key Components
 
