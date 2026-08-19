@@ -1,3 +1,4 @@
+import { eq } from "drizzle-orm";
 import {
   birthControlIn,
   createLoggedDaySaver,
@@ -18,7 +19,9 @@ import {
 } from "@/db/schema";
 import {
   getTestDatabase,
+  recordQueries,
   resetTestDatabase,
+  withForeignKeysOff,
 } from "@/__tests__/helpers/testDatabase";
 
 jest.mock("@/db/operations/setup", () =>
@@ -208,6 +211,47 @@ describe("loadLoggedDay", () => {
     );
 
     expect((await loadLoggedDay(DATE)).symptoms).toEqual(["Cramps"]);
+  });
+
+  it("issues one query", async () => {
+    await saveLoggedDay(
+      aDay({
+        symptoms: ["Cramps"],
+        moods: ["Calm"],
+        medications: [{ name: "Pill", timeTaken: "08:00" }],
+      }),
+      CHECKED_ON,
+    );
+
+    const { queries } = await recordQueries(() => loadLoggedDay(DATE));
+
+    // The only assertion in this file about how the work is done rather than
+    // what comes back. #202 got this from seven-plus down to four and said so;
+    // nothing else here would notice it going back up.
+    expect(queries).toHaveLength(1);
+  });
+
+  it("skips an entry whose catalogue item is gone", async () => {
+    // Device state, not a contrived one. The app ships no PRAGMA, so foreign
+    // keys are off in production and an entry can outlive the Symptom it
+    // points at — that is what drizzle/0004 was written to clean up. This
+    // reproduces it rather than asserting the constraint the device lacks.
+    await saveLoggedDay(
+      aDay({ symptoms: ["Cramps"], moods: ["Calm"] }),
+      CHECKED_ON,
+    );
+
+    withForeignKeysOff(() => {
+      getTestDatabase()
+        .delete(symptoms)
+        .where(eq(symptoms.name, "Cramps"))
+        .run();
+    });
+
+    const loaded = await loadLoggedDay(DATE);
+
+    expect(loaded.symptoms).toEqual([]);
+    expect(loaded.moods).toEqual(["Calm"]);
   });
 });
 

@@ -1,3 +1,4 @@
+import { relations } from "drizzle-orm";
 import {
   sqliteTable,
   text,
@@ -119,6 +120,67 @@ export const pregnancyAppointments = sqliteTable("pregnancy_appointments", {
   type: text(), // "OB Visit", "Ultrasound", "Lab Work", "Other"
   notes: text(),
 });
+
+/**
+ * The foreign keys above say a column points somewhere. These say what the
+ * shape of the data is, which is what `db.query.…({ with })` needs in order to
+ * load a Day and its entries in one statement instead of four.
+ *
+ * Declared here rather than beside each query because both drizzle handles —
+ * `db/operations/setup.ts` on device and `__tests__/helpers/testDatabase.ts`
+ * under jest — build themselves from `import * as schema`. Exporting them from
+ * this module is what makes the two agree without either knowing about the
+ * other.
+ *
+ * Note what these do NOT do: the app ships no `PRAGMA foreign_keys`, so on
+ * device the constraints are off and an entry can outlive the catalogue row it
+ * names. A relation is a description, not an enforcement. Readers have to cope
+ * with the `one(...)` side being absent.
+ */
+export const daysRelations = relations(days, ({ many }) => ({
+  moodEntries: many(moodEntries),
+  symptomEntries: many(symptomEntries),
+  medicationEntries: many(medicationEntries),
+}));
+
+export const moodEntriesRelations = relations(moodEntries, ({ one }) => ({
+  day: one(days, { fields: [moodEntries.day_id], references: [days.id] }),
+  mood: one(moods, { fields: [moodEntries.mood_id], references: [moods.id] }),
+}));
+
+export const symptomEntriesRelations = relations(symptomEntries, ({ one }) => ({
+  day: one(days, { fields: [symptomEntries.day_id], references: [days.id] }),
+  symptom: one(symptoms, {
+    fields: [symptomEntries.symptom_id],
+    references: [symptoms.id],
+  }),
+}));
+
+export const medicationEntriesRelations = relations(
+  medicationEntries,
+  ({ one }) => ({
+    day: one(days, {
+      fields: [medicationEntries.day_id],
+      references: [days.id],
+    }),
+    medication: one(medications, {
+      fields: [medicationEntries.medication_id],
+      references: [medications.id],
+    }),
+  }),
+);
+
+export const moodsRelations = relations(moods, ({ many }) => ({
+  entries: many(moodEntries),
+}));
+
+export const symptomsRelations = relations(symptoms, ({ many }) => ({
+  entries: many(symptomEntries),
+}));
+
+export const medicationsRelations = relations(medications, ({ many }) => ({
+  entries: many(medicationEntries),
+}));
 
 export type Settings = typeof settings.$inferSelect;
 export type Day = typeof days.$inferSelect;

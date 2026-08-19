@@ -61,6 +61,14 @@ function applyMigrations(connection: BetterSqlite3.Database) {
 let connection: BetterSqlite3.Database | undefined;
 let database: BetterSQLite3Database<typeof schema> | undefined;
 
+/**
+ * Collects the SQL drizzle issues, while `recordQueries` is running.
+ *
+ * `undefined` the rest of the time, so the logger costs nothing and no test
+ * can accidentally read another test's statements.
+ */
+let recording: string[] | undefined;
+
 function open() {
   if (!connection || !database) {
     connection = new BetterSqlite3(":memory:");
@@ -69,7 +77,10 @@ function open() {
     // device swallows into orphaned rows fail loudly here.
     connection.pragma("foreign_keys = ON");
     applyMigrations(connection);
-    database = drizzle(connection, { schema });
+    database = drizzle(connection, {
+      schema,
+      logger: { logQuery: (query) => recording?.push(query) },
+    });
   }
   return { connection, database };
 }
@@ -131,5 +142,27 @@ export function withForeignKeysOff(write: () => void) {
     write();
   } finally {
     db.pragma("foreign_keys = ON");
+  }
+}
+
+/**
+ * Runs `work` and returns every SQL statement drizzle issued for it.
+ *
+ * For assertions about query *count*, which is otherwise unpinnable: a
+ * refactor can quietly reintroduce a per-entry lookup and every behavioural
+ * test still passes. Counting is the only thing that notices.
+ *
+ * Only sees statements that go through drizzle. Raw `connection.prepare` calls
+ * in this helper do not appear, which is what you want.
+ */
+export async function recordQueries<T>(
+  work: () => Promise<T>,
+): Promise<{ result: T; queries: string[] }> {
+  recording = [];
+  try {
+    const result = await work();
+    return { result, queries: [...recording] };
+  } finally {
+    recording = undefined;
   }
 }
