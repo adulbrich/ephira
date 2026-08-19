@@ -1,8 +1,15 @@
 name: Checks
 on:
+  # No `branches:` filter. That key filters on the PR's *base*, so a pull
+  # request stacked on another feature branch ran none of these checks and
+  # still reported green, because the Vercel checks do run. Green meaning
+  # "nothing was checked" is worse than red.
+  #
+  # `edited` is in the list because changing a PR's base fires that event and
+  # nothing else; without it, retargeting a PR to fix the above does not
+  # produce a run.
   pull_request:
-    branches:
-      - main
+    types: [opened, synchronize, reopened, edited]
 
 jobs:
   checks:
