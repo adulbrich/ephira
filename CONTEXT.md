@@ -26,7 +26,7 @@ This file is maintained lazily: terms are added when a design decision actually 
 
 **Tracking Mode**: which of the two experiences the app is presenting, cycle or pregnancy. Durably a setting; expressed at runtime as which route group is mounted.
 
-**Gestational Age**: the derived view of a pregnancy: given a stored start date, an offset and a reference day, it yields the pregnancy day, week, day within the week, trimester, due date and progress. Derived, never stored. The inverse mapping, from each setup answer back to a start date and offset, belongs to the same module.
+**Gestational Age**: the derived view of a pregnancy: given a stored start date, an offset and a reference day, it yields the pregnancy day, week, day within the week, trimester, due date and progress. Derived, never stored. The inverse mapping, from each setup answer back to a start date and offset, belongs to the same module. The week is not capped at 40, because a pregnancy can run past its due date; accessors that need a bounded week, such as baby size and week content, clamp for themselves. Progress and days remaining are bounded, since neither means anything past full term.
 
 ## Terms we avoid
 
