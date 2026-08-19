@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   getDay,
   getAllVisibleSymptoms,
@@ -22,7 +22,8 @@ import { anySymptomOption } from "@/constants/Symptoms";
 import { anyMoodOption } from "@/constants/Moods";
 import { anyMedicationOption } from "@/constants/Medications";
 import { anyBirthControlOption } from "@/constants/BirthControlTypes";
-import { useFetchCycleData } from "./useFetchCycleData";
+import { refreshPredictions } from "@/services/cyclePredictions";
+import { startOfLocalDay } from "@/utils/dates";
 
 function getStartingAndEndingDay(
   day: string,
@@ -331,9 +332,9 @@ export function useMarkedDates(calendarFilters?: string[]) {
 
   const { setPredictedCycle } = usePredictedCycle();
   const { predictionChoice } = usePredictionChoice();
-  const { fetchCycleData } = useFetchCycleData(setPredictedCycle);
-  const fetchCycleDataRef = useRef(fetchCycleData);
-  fetchCycleDataRef.current = fetchCycleData;
+  // refreshPredictions is a plain function, so there is no changing callback
+  // identity to hold in a ref the way the hook it replaced needed.
+  const referenceDay = useMemo(() => startOfLocalDay(), []);
 
   // get date in local time
   const day = new Date();
@@ -365,7 +366,8 @@ export function useMarkedDates(calendarFilters?: string[]) {
         calendarFilters?.includes("Cycle Prediction") &&
         predictionChoice === true
       ) {
-        const newPredictedDates = await fetchCycleDataRef.current();
+        const newPredictedDates = await refreshPredictions(referenceDay);
+        setPredictedCycle(newPredictedDates);
         const newPredictedMarkedDates: MarkedDates = {};
 
         const sortedPredictions = [...newPredictedDates].sort((a, b) =>
@@ -414,7 +416,15 @@ export function useMarkedDates(calendarFilters?: string[]) {
     }
 
     refreshCalendar(filteredData as DayData[]);
-  }, [filteredData, date, setDate, calendarFilters, predictionChoice]);
+  }, [
+    filteredData,
+    date,
+    setDate,
+    calendarFilters,
+    predictionChoice,
+    referenceDay,
+    setPredictedCycle,
+  ]);
 
   // get data for selected date on calendar (when user presses a different day)
   useEffect(() => {

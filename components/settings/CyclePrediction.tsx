@@ -13,8 +13,9 @@ import {
   usePredictedCycle,
   useCalendarFilters,
 } from "@/assets/src/calendar-storage";
-import { useFetchCycleData } from "@/hooks/useFetchCycleData";
-import { useRef, useState, useEffect } from "react";
+import { refreshPredictions } from "@/services/cyclePredictions";
+import { startOfLocalDay } from "@/utils/dates";
+import { useState, useEffect } from "react";
 import { SettingsKeys } from "@/constants/Settings";
 import {
   insertSetting,
@@ -34,10 +35,7 @@ export default function CyclePredictions() {
   const theme = useTheme();
   const { predictionChoice, setPredictionChoice } = usePredictionChoice();
   const { setPredictedCycle } = usePredictedCycle();
-  const { fetchCycleData } = useFetchCycleData(setPredictedCycle);
   const { setSelectedFilters, selectedFilters } = useCalendarFilters();
-  const fetchCycleDataRef = useRef(fetchCycleData);
-  fetchCycleDataRef.current = fetchCycleData;
 
   const [dataStatus, setDataStatus] = useState<{
     cycleCount: number;
@@ -148,7 +146,7 @@ export default function CyclePredictions() {
         setPredictedCycle([]);
       } else if (dataStatus.hasEnoughData) {
         // Fetch prediction data when enabled and has enough data
-        await fetchCycleDataRef.current();
+        setPredictedCycle(await refreshPredictions(startOfLocalDay()));
       }
     };
 
@@ -164,7 +162,7 @@ export default function CyclePredictions() {
       if (!selectedFilters.includes("Cycle Prediction")) {
         setSelectedFilters([...selectedFilters, "Cycle Prediction"]);
       }
-      await fetchCycleDataRef.current();
+      setPredictedCycle(await refreshPredictions(startOfLocalDay()));
     } else {
       // If disabling cycle predictions, remove the filter
       const updatedFilters = selectedFilters.filter(

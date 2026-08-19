@@ -21,7 +21,7 @@ import { useCyclePhase } from "@/hooks/useCyclePhase";
 import { startOfLocalDay } from "@/utils/dates";
 import { CYCLE_PHASES } from "@/constants/CyclePhases";
 import { useRouter } from "expo-router";
-import { useFetchCycleData } from "@/hooks/useFetchCycleData";
+import { refreshPredictions } from "@/services/cyclePredictions";
 import { LinearGradient } from "expo-linear-gradient";
 
 import { TourAnchor } from "@/assets/src/tour/TourAnchor";
@@ -35,7 +35,6 @@ export default function HomeScreen() {
   const [loggedToday, setLoggedToday] = useState<string | null>(null);
   const { setDatabaseChange, databaseChange } = useDatabaseChangeNotifier();
   const { predictedCycle, setPredictedCycle } = usePredictedCycle();
-  const { fetchCycleData } = useFetchCycleData(setPredictedCycle);
   const today = useMemo(() => startOfLocalDay(), []);
   const { cycleState, loading: cycleLoading } = useCyclePhase(
     flowData,
@@ -43,10 +42,13 @@ export default function HomeScreen() {
     today,
   );
 
-  // Load cycle data on mount and when database changes
+  // Load cycle data on mount and when database changes. Safe to re-run:
+  // refreshPredictions reconciles rather than inserting.
   useEffect(() => {
-    fetchCycleData();
-  }, [databaseChange, fetchCycleData]);
+    refreshPredictions(today)
+      .then(setPredictedCycle)
+      .catch(() => setPredictedCycle([]));
+  }, [databaseChange, today, setPredictedCycle]);
 
   // Load active BC type and today's log status
   useEffect(() => {

@@ -1,6 +1,7 @@
 import { getDrizzleDatabase } from "@/db/operations/setup";
 import { predictionSnapshots } from "@/db/schema";
 import { eq, and, isNull, desc } from "drizzle-orm";
+import { formatAsISODate } from "@/utils/dates";
 
 const db = getDrizzleDatabase();
 
@@ -15,15 +16,16 @@ const db = getDrizzleDatabase();
  * been measured, because rewriting a measured outcome would change what the
  * accuracy metric is measuring.
  *
- * `predictionMadeDate` is a parameter rather than a clock read. Callers pass
- * the same reference date they hand to `generatePredictions`, and it is
- * formatted with `toISOString` to match how that module writes date strings.
+ * `predictionMadeDate` is a parameter rather than a clock read, and is
+ * formatted in local time. Formatting it with toISOString stamped yesterday
+ * for every user east of UTC, because a local midnight is the previous day in
+ * UTC there.
  */
 export const savePredictions = async (
   predictions: { date: string; confidence: number }[],
   predictionMadeDate: Date,
 ) => {
-  const madeOn = predictionMadeDate.toISOString().split("T")[0];
+  const madeOn = formatAsISODate(predictionMadeDate);
 
   const existing = await db
     .select()
@@ -103,7 +105,7 @@ export const checkPredictionAccuracy = async (
       .update(predictionSnapshots)
       .set({
         actual_had_flow: hadFlow,
-        checked_date: new Date().toISOString().split("T")[0],
+        checked_date: formatAsISODate(new Date()),
       })
       .where(
         and(
