@@ -26,6 +26,7 @@ jest.mock("@/db/operations/setup", () =>
 );
 
 const DATE = "2026-04-01";
+const OTHER_DATE = "2026-04-02";
 
 const aDay = (overrides: Partial<LoggedDay> = {}): LoggedDay => ({
   ...emptyLoggedDay(DATE),
@@ -321,6 +322,64 @@ describe("the saver's timing rules", () => {
     await settle();
 
     expect((await pending).status).toBe("superseded");
+    expect(await getDay(DATE)).toBeUndefined();
+  });
+
+  it("writes a pending edit when the day changes rather than dropping it", async () => {
+    // The report: select a flow, tap another day inside the 100ms debounce,
+    // and the flow was silently discarded (#162). The user's edit was to the
+    // old day, and writing the old snapshot to the old date is correct.
+    const saver = createLoggedDaySaver();
+    saver.reset(emptyLoggedDay(DATE));
+
+    const pending = saver.schedule(aDay({ flow: 3 }));
+    const flushed = await saver.flush();
+
+    expect(flushed.status).toBe("saved");
+    expect((await pending).status).toBe("saved");
+    expect((await getDay(DATE))?.flow_intensity).toBe(3);
+  });
+
+  it("keeps the flushed write on the old day when the new day's load lands first", async () => {
+    // DayView flushes in the load effect's cleanup, so the flush starts before
+    // loadLoggedDay resolves and calls reset for the new day. The flushed
+    // write must still land on the day it was made against.
+    const saver = createLoggedDaySaver();
+    saver.reset(emptyLoggedDay(DATE));
+
+    const pending = saver.schedule(aDay({ flow: 3 }));
+    const flushed = saver.flush();
+    saver.reset(emptyLoggedDay(OTHER_DATE));
+
+    expect((await flushed).status).toBe("saved");
+    expect((await pending).status).toBe("saved");
+    expect((await getDay(DATE))?.flow_intensity).toBe(3);
+    expect(await getDay(OTHER_DATE)).toBeUndefined();
+  });
+
+  it("does not move the baseline onto a day that is no longer open", async () => {
+    // The flush settled after reset, so the new day's baseline is the new
+    // day's contents and an edit to it is still detected as a change.
+    const saver = createLoggedDaySaver();
+    saver.reset(emptyLoggedDay(DATE));
+
+    saver.schedule(aDay({ flow: 3 }));
+    const flushed = saver.flush();
+    saver.reset(emptyLoggedDay(OTHER_DATE));
+    await flushed;
+
+    const next = saver.schedule(aDay({ date: OTHER_DATE, flow: 1 }));
+    await settle();
+
+    expect((await next).status).toBe("saved");
+    expect((await getDay(OTHER_DATE))?.flow_intensity).toBe(1);
+  });
+
+  it("has nothing to flush when no write is pending", async () => {
+    const saver = createLoggedDaySaver();
+    saver.reset(emptyLoggedDay(DATE));
+
+    expect((await saver.flush()).status).toBe("unchanged");
     expect(await getDay(DATE)).toBeUndefined();
   });
 

@@ -352,6 +352,16 @@ export type LoggedDaySaver = {
   reset(day: LoggedDay): void;
   /** Debounced and guarded. Resolves with what actually happened. */
   schedule(day: LoggedDay): Promise<SaveOutcome>;
+  /**
+   * Writes a pending edit now instead of waiting out the debounce.
+   *
+   * This is what a day change wants. The edit was made against the day that
+   * is closing, so writing it to that day is right; cancelling would drop it,
+   * which is what made a flow selected and abandoned inside 100ms vanish.
+   * Resolves `unchanged` when there was nothing pending.
+   */
+  flush(): Promise<SaveOutcome>;
+  /** Discards a pending edit. For teardown that should not write. */
   cancel(): void;
 };
 
@@ -371,6 +381,10 @@ export const DEFAULT_SAVE_DELAY_MS = 100;
  *   day's contents against the new day.
  * - **Right day, after.** The baseline only moves forward if the open day is
  *   still the one that was saved.
+ *
+ * The debounce elapsing is not the only reason to write. `flush` runs the
+ * same pending write immediately, under the same four rules, which is what
+ * closing a day needs.
  */
 export function createLoggedDaySaver(
   options: { delayMs?: number } = {},
@@ -379,21 +393,64 @@ export function createLoggedDaySaver(
 
   let baseline: LoggedDay | null = null;
   let timer: ReturnType<typeof setTimeout> | null = null;
-  let supersede: ((outcome: SaveOutcome) => void) | null = null;
+  let pending: {
+    day: LoggedDay;
+    resolve: (outcome: SaveOutcome) => void;
+  } | null = null;
   let inFlight = false;
 
-  const clearPending = (outcome: SaveOutcome) => {
+  const takePending = () => {
     if (timer) clearTimeout(timer);
     timer = null;
-    const resolvePending = supersede;
-    supersede = null;
-    resolvePending?.(outcome);
+    const taken = pending;
+    pending = null;
+    return taken;
+  };
+
+  const clearPending = (outcome: SaveOutcome) => {
+    takePending()?.resolve(outcome);
+  };
+
+  /**
+   * The write itself, whether the debounce elapsed or a flush asked for it
+   * now. Resolves whoever called `schedule` and returns the same outcome to
+   * whoever asked for the flush.
+   */
+  const runPending = async (): Promise<SaveOutcome> => {
+    const taken = takePending();
+    if (!taken) return { status: "unchanged" };
+
+    const { day, resolve } = taken;
+    const settle = (outcome: SaveOutcome) => {
+      resolve(outcome);
+      return outcome;
+    };
+
+    if (inFlight) return settle({ status: "superseded" });
+    if (baseline && baseline.date !== day.date) {
+      return settle({ status: "wrong-day" });
+    }
+
+    inFlight = true;
+    try {
+      await saveLoggedDay(day);
+      if (baseline?.date === day.date) baseline = day;
+      return settle({ status: "saved", day });
+    } catch (error) {
+      return settle({ status: "failed", error });
+    } finally {
+      inFlight = false;
+    }
   };
 
   return {
     reset(day) {
       clearPending({ status: "superseded" });
       baseline = day;
+    },
+
+    flush() {
+      return runPending();
     },
 
     cancel() {
@@ -411,26 +468,9 @@ export function createLoggedDaySaver(
       clearPending({ status: "superseded" });
 
       return new Promise<SaveOutcome>((resolve) => {
-        supersede = resolve;
-        timer = setTimeout(async () => {
-          timer = null;
-          supersede = null;
-
-          if (inFlight) return resolve({ status: "superseded" });
-          if (baseline && baseline.date !== day.date) {
-            return resolve({ status: "wrong-day" });
-          }
-
-          inFlight = true;
-          try {
-            await saveLoggedDay(day);
-            if (baseline?.date === day.date) baseline = day;
-            resolve({ status: "saved", day });
-          } catch (error) {
-            resolve({ status: "failed", error });
-          } finally {
-            inFlight = false;
-          }
+        pending = { day, resolve };
+        timer = setTimeout(() => {
+          void runPending();
         }, delayMs);
       });
     },

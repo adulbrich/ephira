@@ -98,9 +98,18 @@ export default function DayView() {
 
     setExpandedAccordion(null);
 
+    // Flush, not cancel. The pending edit was made against the day that is
+    // closing, so it belongs to that day. Cancelling here is what dropped a
+    // flow selected less than the debounce before tapping another date (#162).
+    //
+    // This cleanup runs before the new date's effect, so the flush starts
+    // while the saver's baseline is still the old day and its wrong-day guard
+    // passes. The new day's reset lands later, once its loadLoggedDay
+    // resolves, and the saver declines to move a baseline onto a day it did
+    // not save. Inverting that order reintroduces the bug as a wrong-day.
     return () => {
       stale = true;
-      saver.cancel();
+      saver.flush();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date, databaseChange]);
