@@ -5,22 +5,78 @@ import { eq, and, isNull, desc } from "drizzle-orm";
 const db = getDrizzleDatabase();
 
 /**
- * Save a batch of predictions to the database
+ * Reconciles a generated set of predictions against what is already stored for
+ * the same day, so that running it twice changes nothing.
+ *
+ * `prediction_snapshots` exists to hold a time series: what was predicted, and
+ * when. Re-running on the same day is not new information, so it updates the
+ * existing generation in place; a new day writes a new one. Predictions the
+ * same day no longer forecasts are retracted, unless their outcome has already
+ * been measured, because rewriting a measured outcome would change what the
+ * accuracy metric is measuring.
+ *
+ * `predictionMadeDate` is a parameter rather than a clock read. Callers pass
+ * the same reference date they hand to `generatePredictions`, and it is
+ * formatted with `toISOString` to match how that module writes date strings.
  */
 export const savePredictions = async (
   predictions: { date: string; confidence: number }[],
+  predictionMadeDate: Date,
 ) => {
-  const predictionMadeDate = new Date().toISOString().split("T")[0];
+  const madeOn = predictionMadeDate.toISOString().split("T")[0];
 
-  const values = predictions.map((pred) => ({
-    prediction_made_date: predictionMadeDate,
-    predicted_date: pred.date,
-    confidence: pred.confidence,
-    actual_had_flow: null,
-    checked_date: null,
-  }));
+  const existing = await db
+    .select()
+    .from(predictionSnapshots)
+    .where(eq(predictionSnapshots.prediction_made_date, madeOn));
 
-  await db.insert(predictionSnapshots).values(values);
+  const forecast = new Map(predictions.map((p) => [p.date, p.confidence]));
+
+  // Newest row per predicted date is the one kept. Older ones are duplicates
+  // left by the unconditional insert this function replaces.
+  const kept = new Map<string, (typeof existing)[number]>();
+  const superseded: typeof existing = [];
+  for (const row of existing) {
+    const held = kept.get(row.predicted_date);
+    if (!held) {
+      kept.set(row.predicted_date, row);
+    } else if (row.id > held.id) {
+      kept.set(row.predicted_date, row);
+      superseded.push(held);
+    } else {
+      superseded.push(row);
+    }
+  }
+
+  for (const [predictedDate, confidence] of forecast) {
+    const row = kept.get(predictedDate);
+
+    if (!row) {
+      await db.insert(predictionSnapshots).values({
+        prediction_made_date: madeOn,
+        predicted_date: predictedDate,
+        confidence,
+        actual_had_flow: null,
+        checked_date: null,
+      });
+    } else if (row.confidence !== confidence) {
+      await db
+        .update(predictionSnapshots)
+        .set({ confidence })
+        .where(eq(predictionSnapshots.id, row.id));
+    }
+  }
+
+  const retracted = [...kept.values()].filter(
+    (row) => !forecast.has(row.predicted_date),
+  );
+
+  for (const row of [...superseded, ...retracted]) {
+    if (row.actual_had_flow !== null) continue;
+    await db
+      .delete(predictionSnapshots)
+      .where(eq(predictionSnapshots.id, row.id));
+  }
 };
 
 /**
