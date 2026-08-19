@@ -16,7 +16,7 @@ This file is maintained lazily: terms are added when a design decision actually 
 
 **Entry**: a single recorded selection joining a Day to a Catalogue item: `mood_entries`, `symptom_entries`, `medication_entries`. An Entry may carry its own detail, such as a Medication's `time_taken`.
 
-**Cycle**: a run of consecutive Days with flow, bounded either by the `is_cycle_start` / `is_cycle_end` markers the user sets or by gaps between logged flow. There is exactly one definition of how flow groups into Cycles, and it lives in `services/cyclePredictionLogic.ts`.
+**Cycle**: a run of consecutive Days with flow, bounded either by the `is_cycle_start` / `is_cycle_end` markers the user sets or by gaps between logged flow. There is exactly one definition of how flow groups into Cycles, and it lives in `services/cyclePredictionLogic.ts`. Days with no flow are not part of a Cycle and do not bridge two of them. A Cycle counts towards prediction only once it reaches `MIN_CONSECUTIVE_DAYS`, and that same count is what gates predictions everywhere they are gated.
 
 **Prediction**: a forecast of a future Day with flow, carrying a confidence. Predictions are derived, never authored.
 

@@ -27,11 +27,10 @@ import type {
   NotSurePath,
   SetupMethod,
 } from "@/components/pregnancy/pregnancySetupTypes";
+import { addDays, startOfLocalDay } from "@/utils/dates";
 import {
-  addDays,
   anchorFromSetupAnswer,
   gestationalAge,
-  startOfLocalDay,
   type SetupAnswer,
 } from "@/utils/pregnancyDates";
 

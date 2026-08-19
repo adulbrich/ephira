@@ -18,6 +18,9 @@ export const CYCLE_PREDICTION_CONSTANTS = {
   /** Minimum consecutive flow days to consider it a valid cycle */
   MIN_CONSECUTIVE_DAYS: 3,
 
+  /** Standard deviation, in days, at or below which a cycle reads as regular */
+  REGULAR_VARIATION_DAYS: 3,
+
   /** Number of months to predict ahead */
   PREDICTION_MONTHS_AHEAD: 3,
 

@@ -14,7 +14,7 @@ import {
   MAX_DAY_IN_WEEK_INPUT,
   MAX_PREGNANCY_WEEK_INPUT,
 } from "@/constants/Pregnancy";
-import { formatAsISODate } from "@/utils/pregnancyDates";
+import { formatAsISODate } from "@/utils/dates";
 import type {
   DateFieldKey,
   NotSurePath,

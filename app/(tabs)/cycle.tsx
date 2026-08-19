@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import {
   StyleSheet,
   View,
@@ -15,6 +15,7 @@ import PhaseCard from "@/components/cycle/PhaseCard";
 import CycleStatsCard from "@/components/cycle/CycleStatsCard";
 import TipsCard from "@/components/cycle/TipsCard";
 import { useCyclePhase } from "@/hooks/useCyclePhase";
+import { startOfLocalDay } from "@/utils/dates";
 import {
   useData,
   usePredictedCycle,
@@ -116,9 +117,11 @@ export default function Cycle() {
   const { databaseChange } = useDatabaseChangeNotifier();
   const { predictionChoice } = usePredictionChoice();
   const { fetchCycleData } = useFetchCycleData(setPredictedCycle);
+  const today = useMemo(() => startOfLocalDay(), []);
   const { cycleState, stats, loading, refresh } = useCyclePhase(
     flowData,
     predictedCycle,
+    today,
   );
 
   // Load cycle data on mount and when database changes

@@ -148,8 +148,9 @@ describe("calculateConfidence", () => {
     },
   ];
   it("returns 30 when cycleLengths.length < 2", () => {
-    expect(calculateConfidence(twoCycles, [])).toBe(30);
-    expect(calculateConfidence(twoCycles, [28])).toBe(30);
+    const referenceDate = new Date("2025-02-01");
+    expect(calculateConfidence(twoCycles, [], referenceDate)).toBe(30);
+    expect(calculateConfidence(twoCycles, [28], referenceDate)).toBe(30);
   });
   it("returns value in 0-100 when cycleLengths.length >= 2", () => {
     const c = calculateConfidence(twoCycles, [28, 28], new Date("2025-02-01"));

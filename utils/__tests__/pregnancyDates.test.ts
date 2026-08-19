@@ -3,10 +3,9 @@ import {
   FULL_TERM_DAYS,
   CONCEPTION_TO_CURRENT_DAY_OFFSET,
 } from "@/constants/Pregnancy";
+import { formatAsISODate } from "@/utils/dates";
 import {
   anchorFromSetupAnswer,
-  differenceInDays,
-  formatAsISODate,
   gestationalAge,
   type SetupAnswer,
 } from "@/utils/pregnancyDates";
@@ -15,23 +14,6 @@ const day = (iso: string) => {
   const [year, month, date] = iso.split("-").map(Number);
   return new Date(year, month - 1, date);
 };
-
-describe("differenceInDays", () => {
-  it("counts calendar days", () => {
-    expect(differenceInDays(day("2026-03-01"), day("2026-03-08"))).toBe(7);
-  });
-
-  it("is not thrown off by a daylight saving transition", () => {
-    // Raw millisecond division floors this to 83 in any timezone that springs
-    // forward in March, which is most of the ones users are in.
-    expect(differenceInDays(day("2026-03-01"), day("2026-05-24"))).toBe(84);
-    expect(differenceInDays(day("2026-11-01"), day("2026-11-30"))).toBe(29);
-  });
-
-  it("goes negative in the other direction", () => {
-    expect(differenceInDays(day("2026-03-08"), day("2026-03-01"))).toBe(-7);
-  });
-});
 
 describe("gestationalAge", () => {
   it("counts the pregnancy day from the start date plus the offset", () => {
