@@ -26,6 +26,7 @@ import { AppointmentColor, SpecialtyFilterColor } from "@/constants/Colors";
 import FadeInView from "@/components/animations/FadeInView";
 import { useFocusEffect } from "expo-router";
 import PregnancyDayView from "@/components/pregnancyDayView/PregnancyDayView";
+import { formatAsISODate } from "@/utils/dates";
 
 const DEFAULT_FILTERS = ["Appointments", "Symptoms"];
 
@@ -39,10 +40,7 @@ export default function PregnancyCalendar() {
   const theme = useTheme();
   const styles = makeStyles({ theme });
 
-  const day = new Date();
-  const offset = day.getTimezoneOffset();
-  const localDate = new Date(day.getTime() - offset * 60 * 1000);
-  const today = localDate.toISOString().split("T")[0];
+  const today = formatAsISODate(new Date());
 
   const { themeColor } = useThemeColor();
   const themeKey = `${theme.dark ? "dark" : "light"}-${themeColor}`;

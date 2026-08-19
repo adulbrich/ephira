@@ -32,6 +32,7 @@ import {
   anyBirthControlOption,
 } from "@/constants/BirthControlTypes";
 import { useFocusEffect } from "expo-router";
+import { formatAsISODate } from "@/utils/dates";
 
 export default function FlowCalendar() {
   const [key, setKey] = useState<string>("");
@@ -47,11 +48,7 @@ export default function FlowCalendar() {
   const theme = useTheme();
   const styles = makeStyles({ theme });
 
-  // get date in local time
-  const day = new Date();
-  const offset = day.getTimezoneOffset();
-  const localDate = new Date(day.getTime() - offset * 60 * 1000);
-  const today = localDate.toISOString().split("T")[0];
+  const today = formatAsISODate(new Date());
 
   const dismissKeyboard = () => {
     Keyboard.dismiss();
