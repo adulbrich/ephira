@@ -23,6 +23,40 @@ export const CATALOGUE_KINDS = [
 
 export type CatalogueKind = (typeof CATALOGUE_KINDS)[number];
 
+/** What each kind is called in settings, where all four are shown at once. */
+export const CATALOGUE_KIND_TITLES: Record<CatalogueKind, string> = {
+  symptom: "Symptoms",
+  mood: "Moods",
+  medication: "Medications",
+  "birth control": "Birth Control",
+};
+
+/** One list per kind. What a settings screen holds while it is open. */
+export type CatalogueLists<Item> = Record<CatalogueKind, Item[]>;
+
+export const emptyCatalogueLists = <Item>(): CatalogueLists<Item> => ({
+  symptom: [],
+  mood: [],
+  medication: [],
+  "birth control": [],
+});
+
+/**
+ * Whether a name is already in use, the way a user would judge it.
+ *
+ * Spacing, underscores and capitalisation are not differences: "Hot flashes",
+ * "hot_flashes" and "HOTFLASHES" are one thing to whoever typed them, and the
+ * accordions would show them as three indistinguishable rows.
+ *
+ * `existing` is every name across all four kinds, not just the one being added
+ * to. The kinds are four lists on screen and one namespace to the user.
+ */
+export function catalogueNameTaken(name: string, existing: string[]): boolean {
+  const squash = (value: string) => value.replace(/[_\s]/g, "").toLowerCase();
+  const squashed = squash(name);
+  return existing.some((other) => squash(other) === squashed);
+}
+
 /**
  * What the user can choose from while logging. See CONTEXT.md, Catalogue.
  *

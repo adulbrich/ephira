@@ -1,6 +1,8 @@
 import {
   addCatalogueItem,
+  CATALOGUE_KIND_TITLES,
   CATALOGUE_KINDS,
+  catalogueNameTaken,
   invalidateCatalogue,
   loadCatalogue,
   onCatalogueInvalidated,
@@ -188,5 +190,61 @@ describe("editing the catalogue", () => {
 
     expect(catalogue.birthControl).not.toContain("Patch");
     expect(catalogue.medications).not.toContain("Patch");
+  });
+});
+
+describe("catalogueNameTaken", () => {
+  const existing = ["Cramps", "Hot flashes", "mini_pill"];
+
+  it("is false for a name nothing else uses", () => {
+    expect(catalogueNameTaken("Nausea", existing)).toBe(false);
+  });
+
+  it("is true for an exact match", () => {
+    expect(catalogueNameTaken("Cramps", existing)).toBe(true);
+  });
+
+  it("ignores case", () => {
+    expect(catalogueNameTaken("cRaMpS", existing)).toBe(true);
+  });
+
+  it("ignores spaces and underscores", () => {
+    // "Hot flashes" and "hot_flashes" are the same thing to a user typing it
+    // in, and the catalogue is one flat list of names, so letting both in
+    // makes two entries that look identical in every accordion.
+    expect(catalogueNameTaken("hot_flashes", existing)).toBe(true);
+    expect(catalogueNameTaken("Mini Pill", existing)).toBe(true);
+  });
+
+  it("compares against every kind, not just the one being added to", () => {
+    // The four kinds are four lists in the UI but one namespace to the user.
+    expect(catalogueNameTaken("cramps", ["Calm", "Cramps"])).toBe(true);
+  });
+
+  it("is false against nothing", () => {
+    expect(catalogueNameTaken("Nausea", [])).toBe(false);
+  });
+});
+
+describe("the four kinds, as settings shows them", () => {
+  it("is an order both settings screens now render from", () => {
+    // CustomEntries and EntryVisibilitySettings used to spell out four
+    // accordions each. They map over this instead, so reordering it for some
+    // unrelated reason silently reorders both screens.
+    expect([...CATALOGUE_KINDS]).toEqual([
+      "symptom",
+      "mood",
+      "medication",
+      "birth control",
+    ]);
+  });
+
+  it("names every kind", () => {
+    expect(CATALOGUE_KINDS.map((kind) => CATALOGUE_KIND_TITLES[kind])).toEqual([
+      "Symptoms",
+      "Moods",
+      "Medications",
+      "Birth Control",
+    ]);
   });
 });
