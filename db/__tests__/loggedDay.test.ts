@@ -441,6 +441,56 @@ describe("the saver's timing rules", () => {
     expect(await getDay(DATE)).toBeUndefined();
   });
 
+  it("corrects a revert that lands while the save is already running", async () => {
+    // Narrower than the debounce window #214 closed: the timer has fired and
+    // saveLoggedDay is midway through its queries, so there is no timer left
+    // to disarm. The write still has to converge on what the user last chose.
+    const saver = createLoggedDaySaver({ now: () => CHECKED_ON });
+    const baseline = { ...emptyLoggedDay(DATE), flow: 0 };
+    await saveLoggedDay(baseline, CHECKED_ON);
+    saver.reset(baseline);
+
+    const heavy = saver.schedule({ ...baseline, flow: 3 });
+    jest.advanceTimersByTime(100); // the write starts and suspends
+    const reverted = saver.schedule(baseline); // user backs out mid-write
+
+    await heavy; // the user's own write landed
+    await saver.settled(); // and then the day stopped changing
+
+    expect((await getDay(DATE))?.flow_intensity).toBe(0);
+    expect((await reverted).status).toBe("unchanged");
+  });
+
+  it("does not drop a different edit made while the save is running", async () => {
+    const saver = createLoggedDaySaver({ now: () => CHECKED_ON });
+    const baseline = { ...emptyLoggedDay(DATE), flow: 0 };
+    await saveLoggedDay(baseline, CHECKED_ON);
+    saver.reset(baseline);
+
+    const first = saver.schedule({ ...baseline, flow: 1 });
+    jest.advanceTimersByTime(100); // the write starts and suspends
+    saver.schedule({ ...baseline, flow: 4 }); // a second edit lands inside it
+
+    await first;
+    await saver.settled();
+
+    // The second edit's own debounce is still armed and never awaited: the
+    // convergence pass after the first write already wrote what it asked for.
+    expect((await getDay(DATE))?.flow_intensity).toBe(4);
+  });
+
+  it("writes once when nothing follows the save", async () => {
+    const saver = createLoggedDaySaver({ now: () => CHECKED_ON });
+    const baseline = { ...emptyLoggedDay(DATE), flow: 0 };
+    saver.reset(baseline);
+
+    const only = saver.schedule({ ...baseline, flow: 2 });
+    jest.advanceTimersByTime(100);
+
+    expect((await only).status).toBe("saved");
+    expect((await getDay(DATE))?.flow_intensity).toBe(2);
+  });
+
   it("reports a failure rather than throwing at the caller", async () => {
     const saver = createLoggedDaySaver({ now: () => CHECKED_ON });
     saver.reset(emptyLoggedDay(DATE));

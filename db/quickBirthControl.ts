@@ -7,15 +7,11 @@ import { getMedication } from "@/db/operations/medications";
 import { getSetting } from "@/db/operations/settings";
 import { SettingsKeys } from "@/constants/Settings";
 import { birthControlOptions } from "@/constants/BirthControlTypes";
+import { formatAsISODate } from "@/utils/dates";
 
 export const LONG_TERM_BC_TYPES = ["IUD", "Implant"];
 
-const todayISO = () => {
-  const day = new Date();
-  const offset = day.getTimezoneOffset();
-  const localDate = new Date(day.getTime() - offset * 60 * 1000);
-  return localDate.toISOString().slice(0, 10);
-};
+const todayISO = () => formatAsISODate(new Date());
 
 // get the user's configured BC type from settings, or null if none set
 export async function getActiveBirthControlType(): Promise<string | null> {
