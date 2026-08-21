@@ -13,6 +13,12 @@ on:
           - android
           - ios
 
+# Least privilege for GITHUB_TOKEN. This workflow authenticates to EAS with
+# EXPO_TOKEN and never calls the GitHub API: expo-github-action is only given
+# an Expo token here, and the build runs on EAS rather than in this job.
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
