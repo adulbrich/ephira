@@ -17,6 +17,7 @@ import { refreshPredictions } from "@/services/cyclePredictions";
 import { startOfLocalDay } from "@/utils/dates";
 import { useState, useEffect } from "react";
 import { SettingsKeys } from "@/constants/Settings";
+import { PREDICTION_FILTER, changeFilters } from "@/db/selectedFilters";
 import {
   insertSetting,
   getAllDays,
@@ -111,12 +112,14 @@ export default function CyclePredictions() {
             SettingsKeys.cyclePredictions,
             JSON.stringify(false),
           );
-          // Remove from filters if present
-          if (selectedFilters.includes("Cycle Prediction")) {
-            const updatedFilters = selectedFilters.filter(
-              (filter) => filter !== "Cycle Prediction",
+          // Remove from filters if present. This used to edit the store and
+          // never write the setting, so the filter came back on a cold start.
+          if (selectedFilters.includes(PREDICTION_FILTER)) {
+            setSelectedFilters(
+              await changeFilters(selectedFilters, {
+                remove: PREDICTION_FILTER,
+              }),
             );
-            setSelectedFilters(updatedFilters);
           }
         }
       } catch (error) {
@@ -158,17 +161,14 @@ export default function CyclePredictions() {
     setPredictionChoice(newPredictionChoice);
 
     if (newPredictionChoice) {
-      // If enabling cycle predictions, add filter back if not present and fetch data
-      if (!selectedFilters.includes("Cycle Prediction")) {
-        setSelectedFilters([...selectedFilters, "Cycle Prediction"]);
-      }
+      setSelectedFilters(
+        await changeFilters(selectedFilters, { add: PREDICTION_FILTER }),
+      );
       setPredictedCycle(await refreshPredictions(startOfLocalDay()));
     } else {
-      // If disabling cycle predictions, remove the filter
-      const updatedFilters = selectedFilters.filter(
-        (filter) => filter !== "Cycle Prediction",
+      setSelectedFilters(
+        await changeFilters(selectedFilters, { remove: PREDICTION_FILTER }),
       );
-      setSelectedFilters(updatedFilters);
     }
 
     await insertSetting(

@@ -10,9 +10,7 @@ import {
 } from "react-native-paper";
 import { ScrollView, View, Platform, StyleSheet } from "react-native";
 import { useState, useEffect } from "react";
-import { SettingsKeys } from "@/constants/Settings";
 import {
-  updateSetting,
   getAllVisibleSymptoms,
   getAllVisibleMoods,
   getAllVisibleMedications,
@@ -28,8 +26,8 @@ import { anyMoodOption } from "@/constants/Moods";
 import { anyMedicationOption } from "@/constants/Medications";
 import { anyBirthControlOption } from "@/constants/BirthControlTypes";
 import { CYCLE_PREDICTION_CONSTANTS } from "@/constants/CyclePrediction";
+import { PREDICTION_FILTER, changeFilters } from "@/db/selectedFilters";
 const flowOption = "Flow";
-const PredictionOption = "Cycle Prediction";
 const notesOption = "Notes";
 const StartEndOption = "Cycle Start/End";
 const intercourseOption = "Intercourse";
@@ -224,23 +222,13 @@ export default function CalendarFilterDialog({
   }, [databaseChange]);
 
   const applyFilter = async () => {
-    let updatedFilters = tempSelectedFilters;
-    // make flow the first filter if it's included and not the first filter
-    if (
-      tempSelectedFilters.includes(flowOption) &&
-      tempSelectedFilters[0] !== flowOption
-    ) {
-      updatedFilters = [
-        flowOption,
-        ...tempSelectedFilters.filter((f) => f !== flowOption),
-      ];
-    }
-
-    await updateSetting(
-      SettingsKeys.calendarFilters,
-      JSON.stringify(updatedFilters),
+    // Flow-first ordering used to be written out here, and only here, which is
+    // why the three other writers of this setting did not know it existed.
+    setSelectedFilters(
+      await changeFilters(tempSelectedFilters, {
+        replace: tempSelectedFilters,
+      }),
     );
-    setSelectedFilters(updatedFilters);
     setVisible(false);
   };
 
@@ -251,7 +239,7 @@ export default function CalendarFilterDialog({
     filter === intercourseOption ||
     filter === anyBirthControlOption ||
     birthControlOptions.includes(filter) ||
-    filter === PredictionOption ||
+    filter === PREDICTION_FILTER ||
     filter === flowOption;
 
   const barFilterCount = tempSelectedFilters.filter(
@@ -332,21 +320,23 @@ export default function CalendarFilterDialog({
                   );
                 }}
               />
-              {/* Add PredictionOption switch if predictionChoice is true AND user has enough cycle data */}
+              {/* Add PREDICTION_FILTER switch if predictionChoice is true AND user has enough cycle data */}
               {usePredictionChoice().predictionChoice === true &&
                 hasEnoughCycleData && (
                   <List.Item
                     style={styles.listItem}
-                    key={PredictionOption}
-                    title={PredictionOption}
+                    key={PREDICTION_FILTER}
+                    title={PREDICTION_FILTER}
                     right={() => {
                       const isSelected =
-                        tempSelectedFilters.includes(PredictionOption);
+                        tempSelectedFilters.includes(PREDICTION_FILTER);
                       return (
                         <Switch
-                          key={`${PredictionOption}-${isSelected}`}
+                          key={`${PREDICTION_FILTER}-${isSelected}`}
                           value={isSelected}
-                          onValueChange={() => onToggleSwitch(PredictionOption)}
+                          onValueChange={() =>
+                            onToggleSwitch(PREDICTION_FILTER)
+                          }
                           disabled={false}
                         />
                       );

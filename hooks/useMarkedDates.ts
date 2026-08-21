@@ -9,6 +9,7 @@ import { useCatalogue } from "@/hooks/useCatalogue";
 import { cycleMarkedDates } from "@/services/cycleMarkedDates";
 import { refreshPredictions } from "@/services/cyclePredictions";
 import { startOfLocalDay } from "@/utils/dates";
+import { PREDICTION_FILTER } from "@/db/selectedFilters";
 
 /**
  * Fetch, and hold state. The rules are in `services/cycleMarkedDates.ts`.
@@ -30,7 +31,7 @@ export function useMarkedDates(calendarFilters?: string[]) {
 
   const filters = useMemo(() => calendarFilters ?? [], [calendarFilters]);
   const wantsPredictions =
-    filters.includes("Cycle Prediction") && predictionChoice === true;
+    filters.includes(PREDICTION_FILTER) && predictionChoice === true;
 
   const [predictions, setPredictions] = useState<PredictedDate[]>([]);
 

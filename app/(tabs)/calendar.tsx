@@ -23,6 +23,7 @@ import {
 import CalendarHeader from "@/components/calendar/CalendarHeader";
 import CustomDay from "@/components/calendar/CustomDay";
 import { useMarkedDates } from "@/hooks/useMarkedDates";
+import { PREDICTION_FILTER } from "@/db/selectedFilters";
 import { CyclePredictionColor, SpecialtyFilterColor } from "@/constants/Colors";
 import FadeInView from "@/components/animations/FadeInView";
 import {
@@ -167,7 +168,7 @@ export default function FlowCalendar() {
                           >
                             ♥
                           </Text>
-                        ) : filter === "Cycle Prediction" ? (
+                        ) : filter === PREDICTION_FILTER ? (
                           <View
                             style={{
                               width: 16,
@@ -192,7 +193,7 @@ export default function FlowCalendar() {
                       </View>
                     ))}
                   </View>
-                  {selectedFilters.includes("Cycle Prediction") &&
+                  {selectedFilters.includes(PREDICTION_FILTER) &&
                     predictionChoice && (
                       <View
                         style={{
