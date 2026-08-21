@@ -286,7 +286,11 @@ function loggedMarkedDates(
     // notes
     const notesFilter = filters.includes("Notes");
     if (notesFilter) {
-      if (day.notes === "") {
+      // Blank is blank however it is stored. This tested `day.notes === ""`,
+      // and the column is nullable: insertDay writes `notes ?? null`, so a Day
+      // logged through db/quickBirthControl.ts got a note marker it never
+      // earned. services/pregnancyMarkedDates.ts already had this right.
+      if (!day.notes?.trim()) {
         markedDates[day.date].periods.push({
           color: "transparent",
         });
