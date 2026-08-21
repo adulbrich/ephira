@@ -1,4 +1,6 @@
 import { setupEntryTypes } from "@/db/database";
+import { getSetting, insertSetting } from "@/db/operations/settings";
+import { SettingsKeys } from "@/constants/Settings";
 import {
   days,
   medicationEntries,
@@ -16,6 +18,12 @@ import {
 jest.mock("@/db/operations/setup", () =>
   jest.requireActual("@/__tests__/helpers/testDatabase"),
 );
+
+/** What is actually on disk for the calendar filters. */
+async function storedFilters(): Promise<string[] | null> {
+  const stored = await getSetting(SettingsKeys.calendarFilters);
+  return stored?.value ? JSON.parse(stored.value) : null;
+}
 
 /**
  * Stands in for an upgrading user's database: a logged day with a mood, a
@@ -145,5 +153,51 @@ describe("setupEntryTypes on an already-populated database", () => {
         .all()
         .map((d) => d.date),
     ).toEqual(["2026-03-01"]);
+  });
+});
+
+describe("the legacy calendar filter conversion", () => {
+  // setupEntryTypes carries a one-time conversion from the old filter format,
+  // where a filter was an object with a `label`, to the plain strings used now.
+  it("converts filters still stored in the old object format", async () => {
+    await insertSetting(
+      SettingsKeys.calendarFilters,
+      JSON.stringify([{ label: "Flow" }, { label: "Notes" }]),
+    );
+
+    await setupEntryTypes();
+
+    expect(await storedFilters()).toEqual(["Flow", "Notes"]);
+  });
+
+  it("leaves filters already in the current format alone", async () => {
+    // This wiped them. Every entry is a string, so `filter.label` is undefined
+    // for all of them, the converted list came out empty, and it was written
+    // back over the real one. It only stayed hidden because the shell's
+    // hydration used to reject before anything was ever stored -- fixing that
+    // is what exposed it, and a new user's default filters were the first
+    // casualty.
+    await insertSetting(
+      SettingsKeys.calendarFilters,
+      JSON.stringify(["Flow", "Any Birth Control"]),
+    );
+
+    await setupEntryTypes();
+
+    expect(await storedFilters()).toEqual(["Flow", "Any Birth Control"]);
+  });
+
+  it("leaves an empty selection alone", async () => {
+    await insertSetting(SettingsKeys.calendarFilters, JSON.stringify([]));
+
+    await setupEntryTypes();
+
+    expect(await storedFilters()).toEqual([]);
+  });
+
+  it("writes nothing when no filters are stored", async () => {
+    await setupEntryTypes();
+
+    expect(await getSetting(SettingsKeys.calendarFilters)).toBeUndefined();
   });
 });

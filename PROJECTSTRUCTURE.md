@@ -114,19 +114,25 @@ owns the rules, which is what makes those rules testable without rendering.
 
 ## Setup
 
-Due to using Expo SQLite for the database, this project will only run on mobile devices or emulators.
+This project cannot run in [Expo Go](https://expo.dev/go). It uses config
+plugins that change the native projects -- `expo-sqlite` with SQLCipher,
+`expo-local-authentication`, `expo-notifications`, and the local
+`plugins/withAndroid16KBSupport.js` -- and Expo Go ships a fixed native runtime
+that has none of them. It needs a simulator, an emulator or a device.
 
 - Clone the repo
 - `npm install` (Node.js LTS recommended)
-- `npx expo start`
+- `npm run ios` or `npm run android`
 
-In the output, you'll find options to open the app in a:
+Those run `expo run:ios` / `expo run:android`, which generate the native
+projects with [`expo prebuild`](https://docs.expo.dev/workflow/prebuild/) and
+build a [development build](https://docs.expo.dev/develop/development-builds/introduction/).
+The first build is slow; later ones are incremental. `/ios` and `/android` are
+generated output and are gitignored -- edit `app.json` and `plugins/` instead,
+and prebuild rebuilds from them.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-  - If you get an error about the app not being able to connect or taking longer than it should, try running `npx expo start --tunnel` in the terminal and scanning the QR code again.
+Once a development build is installed, `npx expo start` is enough for
+JavaScript changes; you only need to rebuild when something native changes.
 
 This project uses [file-based routing](https://docs.expo.dev/router/introduction).
 
