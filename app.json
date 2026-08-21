@@ -2,7 +2,7 @@
   "expo": {
     "name": "ephira",
     "slug": "ephira",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "orientation": "portrait",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
@@ -78,7 +78,15 @@
         }
       ],
       "expo-web-browser",
-      "./plugins/withAndroid16KBSupport.js"
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
