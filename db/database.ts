@@ -199,23 +199,38 @@ export const setupEntryTypes = async () => {
     await insertMedication(birthControl, true, "birth control");
   }
 
-  // update calendar filters
+  // Convert calendar filters still stored in the old format, where a filter was
+  // an object with a `label` rather than the plain string used now.
+  //
+  // The conversion used to run against whatever was stored, not only against
+  // the old format. Every entry in a current list is a string, so `filter.label`
+  // was undefined for all of them, the converted list came out empty, and it
+  // was written back over the real one. It stayed hidden because the app shell
+  // read this setting before migrations had created the table, so the read
+  // rejected and nothing was ever stored for this to destroy.
   const storedFilters = await getSetting(SettingsKeys.calendarFilters);
-  const newFilters: string[] = [];
+  if (!storedFilters?.value) return;
 
-  if (storedFilters?.value) {
-    const currentFilters = JSON.parse(storedFilters.value); // Parse the stored string
-
-    for (const filter of currentFilters) {
-      if (filter.label) {
-        newFilters.push(filter.label);
-      }
-    }
-    await updateSetting(
-      SettingsKeys.calendarFilters,
-      JSON.stringify(newFilters),
-    );
+  let currentFilters: unknown;
+  try {
+    currentFilters = JSON.parse(storedFilters.value);
+  } catch {
+    return; // a corrupt preference is not this function's to repair
   }
+
+  if (!Array.isArray(currentFilters)) return;
+
+  const isLegacyFilter = (filter: unknown): filter is { label: string } =>
+    typeof filter === "object" &&
+    filter !== null &&
+    typeof (filter as { label?: unknown }).label === "string";
+
+  if (!currentFilters.some(isLegacyFilter)) return;
+
+  await updateSetting(
+    SettingsKeys.calendarFilters,
+    JSON.stringify(currentFilters.filter(isLegacyFilter).map((f) => f.label)),
+  );
 };
 
 export * from "@/db/operations/settings";
