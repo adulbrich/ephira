@@ -7,7 +7,7 @@ import Animated, {
   withTiming,
   Easing,
 } from "react-native-reanimated";
-import { useIsFocused } from "@react-navigation/native";
+import { useIsFocused } from "expo-router";
 import { useTheme } from "react-native-paper";
 
 interface FadeInViewProps extends ViewProps {

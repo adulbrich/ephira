@@ -13,7 +13,7 @@ import { FlowColors, type FlowType } from "@/constants/Colors";
 import type { DayData } from "@/constants/Interfaces";
 import { useTheme } from "react-native-paper";
 import { useData, useFlowData } from "@/stores/calendar-storage";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect } from "expo-router";
 import { useFetchFlowData } from "@/hooks/useFetchFlowData";
 import {
   getFlowTypeString,

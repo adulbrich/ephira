@@ -7,7 +7,9 @@ export default function TabBarBackground() {
   return (
     <View
       style={[
-        StyleSheet.absoluteFillObject,
+        // RN 0.85 removed StyleSheet.absoluteFillObject; absoluteFill is the
+        // registered equivalent and the only one that still exists.
+        StyleSheet.absoluteFill,
         { backgroundColor: theme.colors.background }, // Apply background color from theme
       ]}
     />

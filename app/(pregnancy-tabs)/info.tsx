@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect } from "expo-router";
 import { ThemedView } from "@/components/ThemedView";
 import FadeInView from "@/components/animations/FadeInView";
 import { Text, useTheme, Card } from "react-native-paper";
