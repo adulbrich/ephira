@@ -16,6 +16,7 @@ import {
 } from "react-native-paper";
 import { StyleSheet, Dimensions } from "react-native";
 import type { ExportData as ExportDataInterface } from "@/constants/Interfaces";
+import { toCsv } from "@/services/exportRows";
 import { exportPDF } from "@/components/settings/PdfBuilder";
 
 const exportDescriptions: Record<string, string> = {
@@ -51,76 +52,6 @@ async function exportCsvOrJson(data: string, fileType: string) {
   }
 }
 
-function formatJsonDataToCsv(exportData: ExportDataInterface) {
-  const { headers, dailyData } = exportData;
-  const headerRow: string[] = [...headers.base_header];
-  const csvRows: string[] = [];
-
-  // build header row
-  headers.symptoms.forEach((s: string) => {
-    headerRow.push(`symptom.${s}`);
-  });
-  headers.moods.forEach((m: string) => {
-    headerRow.push(`mood.${m}`);
-  });
-  headers.medications.forEach((m: string) => {
-    headerRow.push(`medication.${m}`);
-  });
-  headers.birth_control.forEach((bc: string) => {
-    headerRow.push(`birth_control.${bc}`);
-    headerRow.push(`birth_control.${bc}.notes`);
-  });
-  csvRows.push(headerRow.join(","));
-
-  // build data rows
-  for (const dayEntry of Object.entries(dailyData)) {
-    // dayEntry[0] is the date, dayEntry[1] is the entry object
-    const entry = dayEntry[1];
-
-    const row: string[] = [
-      entry.date,
-      String(entry.flow_intensity),
-      `"${entry.notes}"`,
-    ];
-
-    for (const symptom of headers.symptoms) {
-      row.push(entry.symptoms.includes(symptom) ? "x" : "");
-    }
-    for (const mood of headers.moods) {
-      row.push(entry.moods.includes(mood) ? "x" : "");
-    }
-    for (const medication of headers.medications) {
-      const medValue = entry.medications.find((m) => m.name === medication);
-      row.push(medValue ? "x" : "");
-    }
-    for (const birthControl of headers.birth_control) {
-      const bcValue = entry.birth_control.find(
-        (bc) => bc.name === birthControl,
-      );
-
-      if (bcValue) {
-        row.push("x");
-
-        let notes = "";
-        if (bcValue.time_taken) {
-          notes += `Time Taken: ${bcValue.time_taken}`;
-        }
-        if (bcValue.notes) {
-          notes += ` Notes: ${bcValue.notes}`;
-        }
-        // wrap the whole note in quotes to preserve potential user commas
-        row.push(`"${notes}"`);
-      } else {
-        row.push("", "");
-      }
-    }
-    csvRows.push(row.join(","));
-  }
-
-  const csvString = csvRows.join("\n");
-  return csvString;
-}
-
 function ExportDataModal({ onDismiss }: { onDismiss: () => void }) {
   const theme = useTheme();
   const { width, height } = Dimensions.get("window");
@@ -132,26 +63,33 @@ function ExportDataModal({ onDismiss }: { onDismiss: () => void }) {
   };
 
   const onExportData = async (format: string) => {
-    const exportData = await getAllDataAsJson();
-    if (!exportData) {
-      throw new Error("Failed to retrieve data for export.");
-    }
-
-    switch (format) {
-      case "csv": {
-        const csvString = formatJsonDataToCsv(exportData);
-        await exportCsvOrJson(csvString, "csv");
-        break;
+    try {
+      const exportData = await getAllDataAsJson();
+      if (!exportData) {
+        throw new Error("Failed to retrieve data for export.");
       }
-      case "pdf":
-        await exportPDF(exportData.dailyData);
-        break;
-      case "json":
-        await exportCsvOrJson(
-          JSON.stringify(exportData.dailyData, null, 2),
-          "json",
-        );
-        break;
+
+      switch (format) {
+        case "csv": {
+          await exportCsvOrJson(toCsv(exportData), "csv");
+          break;
+        }
+        case "pdf":
+          await exportPDF(exportData.dailyData);
+          break;
+        case "json":
+          await exportCsvOrJson(
+            JSON.stringify(exportData.dailyData, null, 2),
+            "json",
+          );
+          break;
+      }
+    } catch (error) {
+      // A PDF export used to fail silently: exportPDF caught everything into a
+      // console.error, so the share sheet simply never appeared and the user
+      // was told nothing.
+      console.error(`Error exporting ${format}:`, error);
+      alert("Something went wrong while exporting your data.");
     }
   };
 

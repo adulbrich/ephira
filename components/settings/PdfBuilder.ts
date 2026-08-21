@@ -8,6 +8,7 @@ import {
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import type { ExportData } from "../../constants/Interfaces";
+import { birthControlDetail, groupEntriesByMonth } from "@/services/exportRows";
 
 const fontSize = 10;
 const verticalPadding = 2;
@@ -18,21 +19,6 @@ const columnWidths = [50, 50, 110, 110, 120, 120];
 const tableWidth = columnWidths.reduce((a, b) => a + b, 0);
 const flowMap = ["", "Spotting", "Light", "Medium", "Heavy"];
 const lightGray = rgb(0.95, 0.95, 0.95);
-
-const MONTH_INDEX: Record<string, number> = {
-  January: 0,
-  February: 1,
-  March: 2,
-  April: 3,
-  May: 4,
-  June: 5,
-  July: 6,
-  August: 7,
-  September: 8,
-  October: 9,
-  November: 10,
-  December: 11,
-};
 
 // wrap text to fit within the specified number of characters
 function wrapText(text: string, maxChars: number): string[] {
@@ -101,7 +87,15 @@ function drawRowText(
   });
 }
 
-async function exportFinishedPdf(pdfDoc: PDFDocument) {
+/**
+ * Write the finished document and hand it to the share sheet.
+ *
+ * Separate from laying the pages out, so that producing the bytes and getting
+ * them off the device are two things rather than one. It rejects rather than
+ * logging: a failed export used to be indistinguishable from a successful one
+ * from the user's side.
+ */
+async function shareFinishedPdf(pdfDoc: PDFDocument) {
   const pdfBase64 = await pdfDoc.saveAsBase64();
   const pdfPath = `${FileSystem.documentDirectory}ephira.pdf`;
   await FileSystem.writeAsStringAsync(pdfPath, pdfBase64, {
@@ -191,38 +185,12 @@ export async function exportPDF(dailyData: ExportData["dailyData"]) {
       y -= 0.5;
     };
 
-    // group entries by month/year so we can sort them
-    const entriesGroupedByMonth: Record<string, ExportData["dailyData"]> = {};
-    for (const entry of Object.values(dailyData)) {
-      const dateObj = new Date(entry.date);
-      const monthKey = dateObj.toLocaleString("default", {
-        month: "long",
-        year: "numeric",
-      });
-
-      if (!entriesGroupedByMonth[monthKey]) {
-        entriesGroupedByMonth[monthKey] = {};
-      }
-
-      entriesGroupedByMonth[monthKey][entry.date] = entry;
-    }
-
-    const sortedMonthKeys = Object.keys(entriesGroupedByMonth).sort((a, b) => {
-      const [monthA, yearA] = a.split(" ");
-      const [monthB, yearB] = b.split(" ");
-
-      const timeA = Date.UTC(Number(yearA), MONTH_INDEX[monthA]);
-      const timeB = Date.UTC(Number(yearB), MONTH_INDEX[monthB]);
-
-      return timeB - timeA;
-    });
-
-    // months will be added to the PDF in reverse order, e.g. May 2025 -> March 2025
-    for (const monthLabel of sortedMonthKeys) {
-      const entries = Object.values(entriesGroupedByMonth[monthLabel]).sort(
-        (a, b) => a.date.localeCompare(b.date),
-      );
-
+    // months are added newest first, e.g. May 2025 -> March 2025. The grouping
+    // and the ordering are in services/exportRows.ts, keyed on the date rather
+    // than on a localised month name.
+    for (const { label: monthLabel, entries } of groupEntriesByMonth(
+      Object.values(dailyData),
+    )) {
       // add month header & column headers
       drawMonthLabel(monthLabel);
       drawColumnHeaders();
@@ -240,10 +208,8 @@ export async function exportPDF(dailyData: ExportData["dailyData"]) {
 
         const bcList = entry.birth_control
           .map((bc) => {
-            let str = "";
-            if (bc.time_taken) str += `Time: ${bc.time_taken}`;
-            if (bc.notes) str += `${str ? ", " : ""}Notes: ${bc.notes}`;
-            return `${bc.name}${str ? ` (${str})` : ""}`;
+            const detail = birthControlDetail(bc);
+            return `${bc.name}${detail ? ` (${detail})` : ""}`;
           })
           .join(", ");
 
@@ -286,8 +252,11 @@ export async function exportPDF(dailyData: ExportData["dailyData"]) {
     }
 
     drawPageNumber();
-    await exportFinishedPdf(pdfDoc);
+    await shareFinishedPdf(pdfDoc);
   } catch (err) {
     console.error("Failed to export PDF:", err);
+    // Rethrow: the caller shows the user something. Swallowing this made a
+    // failed export look exactly like a successful one.
+    throw err;
   }
 }
