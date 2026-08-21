@@ -8,19 +8,13 @@ import Svg, {
   LinearGradient,
   Stop,
 } from "react-native-svg";
-import React, { useEffect, useRef, useMemo } from "react";
-import { FlowColors, type FlowType } from "@/constants/Colors";
-import type { DayData } from "@/constants/Interfaces";
+import React, { useRef, useMemo } from "react";
 import { useTheme } from "react-native-paper";
-import { useData, useFlowData } from "@/stores/calendar-storage";
+import { useData } from "@/stores/calendar-storage";
 import { useFocusEffect } from "expo-router";
-import { useFetchFlowData } from "@/hooks/useFetchFlowData";
-import {
-  getFlowTypeString,
-  MAX_FLOW_LENGTH,
-  FLOW_TAIL_PERCENT,
-  FLOW_TAIL_COLOR,
-} from "@/constants/Flow";
+import { FLOW_TAIL_COLOR, FLOW_TAIL_PERCENT } from "@/constants/Flow";
+import { flowRing } from "@/services/flowRing";
+import { startOfLocalDay } from "@/utils/dates";
 import Animated, {
   Easing,
   useAnimatedProps,
@@ -35,8 +29,6 @@ const { height } = Dimensions.get("window");
 
 export default function FlowChart() {
   const { data: flowData } = useData();
-  const { fetchFlowData } = useFetchFlowData();
-  const { flowDataForCurrentMonth, setFlowDataForCurrentMonth } = useFlowData();
   const theme = useTheme();
 
   // Intial positioning for animated circle
@@ -48,18 +40,14 @@ export default function FlowChart() {
   const centerX = 50;
   const centerY = 50;
 
-  const startingPoint = 270; // This is the placement of the gap at the top of the flow chart
+  const _startingPoint = 270; // This is the placement of the gap at the top of the flow chart
 
-  const today = new Date();
-  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-  const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-  const numberOfDaysInMonth = lastDayOfMonth.getDate();
-
-  // Calculate "today" circle angle and position
-  const todayNumber = today.getDate();
-  let todayAngle =
-    8 + ((todayNumber - 1) * (352 - 8)) / (numberOfDaysInMonth - 1);
-  todayAngle = (todayAngle + startingPoint) % 360; // Shift based on start point and ensure it stays within 0-360°
+  // Everything the ring draws, from the Days and a reference day. The month
+  // window, the marker angle, the progress fraction and the gradient all used
+  // to be computed inline here, where only an SVG could observe them.
+  const today = useMemo(() => startOfLocalDay(), []);
+  const ring = useMemo(() => flowRing(flowData, today), [flowData, today]);
+  const todayAngle = ring.markerAngle;
 
   const triggerAnimation = () => {
     const targetAngle = todayAngle;
@@ -101,16 +89,13 @@ export default function FlowChart() {
   const todayMonthDayFormatted = `${todayFormatted.month} ${todayFormatted.day},`;
   const todayWeekdayFormattedWithComma = `${todayFormatted.weekday},`;
 
-  const fetchFlowDataRef = useRef(fetchFlowData);
   const positionRef = useRef(position);
   const triggerAnimationRef = useRef(triggerAnimation);
-  fetchFlowDataRef.current = fetchFlowData;
   positionRef.current = position;
   triggerAnimationRef.current = triggerAnimation;
 
   useFocusEffect(
     React.useCallback(() => {
-      fetchFlowDataRef.current();
       runOnJS(() => {
         positionRef.current.value = initialPosition.current;
       })();
@@ -121,34 +106,9 @@ export default function FlowChart() {
     }, []),
   );
 
-  const filterFlowDataForCurrentMonth = (flowData: DayData[]) => {
-    if (flowData.length === 0) {
-      setFlowDataForCurrentMonth([]);
-    } else {
-      const firstDayString = firstDayOfMonth.toISOString().split("T")[0];
-      const lastDayString = lastDayOfMonth.toISOString().split("T")[0];
-
-      const filteredData = flowData.filter((day) => {
-        const dayDateString = day.date.split("T")[0];
-        return (
-          dayDateString >= firstDayString &&
-          dayDateString <= lastDayString &&
-          day.flow_intensity &&
-          day.flow_intensity > 0 // Explicitly exclude "None" (0)
-        );
-      });
-      setFlowDataForCurrentMonth(filteredData);
-    }
-  };
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: the filter closure is rebuilt every render, so keying on it would loop
-  useEffect(() => {
-    filterFlowDataForCurrentMonth(flowData);
-  }, [flowData]);
-
   // ===== Gradient + Progress Logic =====
-  const flowDays = flowDataForCurrentMonth.length || 0;
-  const progress = Math.min(flowDays / MAX_FLOW_LENGTH, 1);
+  const flowDays = ring.flowDayCount;
+  const progress = ring.progress;
   const C = 2 * Math.PI * circleRadius;
 
   const visible = C * progress;
@@ -166,72 +126,20 @@ export default function FlowChart() {
     };
   });
 
-  // ===== Dynamic Gradient Based on Actual Flow States =====
-  // Get unique flow states in chronological order
-  const flowStatesInOrder = useMemo(() => {
-    if (flowDataForCurrentMonth.length === 0) return [];
-
-    // Sort by date to get chronological order
-    const sortedData = [...flowDataForCurrentMonth].sort((a, b) => {
-      const dateA = new Date(`${a.date}T00:00:00Z`).getTime();
-      const dateB = new Date(`${b.date}T00:00:00Z`).getTime();
-      return dateA - dateB;
-    });
-
-    // Extract unique flow types in order of first appearance
-    // Explicitly exclude "None" (flow_intensity 0) from gradient
-    const seen = new Set<FlowType>();
-    const uniqueFlowTypes: FlowType[] = [];
-
-    for (const data of sortedData) {
-      // Skip "None" (flow_intensity 0) - it should not affect the gradient
-      if (!data.flow_intensity || data.flow_intensity === 0) {
-        continue;
-      }
-      const flowType = getFlowTypeString(data.flow_intensity);
-      if (flowType && !seen.has(flowType)) {
-        seen.add(flowType);
-        uniqueFlowTypes.push(flowType);
-      }
-    }
-
-    return uniqueFlowTypes;
-  }, [flowDataForCurrentMonth]);
-
-  // Create gradient stops based on actual flow states
-  // Scale to 0-90% to leave room for tail fade at 95%
-  const gradientStops = useMemo((): React.ReactElement[] => {
-    const maxOffset = 90; // Leave room for tail fade
-
-    let stops: React.ReactElement[] = [];
-
-    if (flowStatesInOrder.length === 0) {
-      // Default gradient if no flow data
-      stops = [
-        <Stop key="0" offset="0%" stopColor={FlowColors.spotting} />,
-        <Stop key="1" offset={`${maxOffset}%`} stopColor={FlowColors.heavy} />,
-      ];
-    } else if (flowStatesInOrder.length === 1) {
-      // Single flow state - solid color
-      const color = FlowColors[flowStatesInOrder[0]];
-      stops = [
-        <Stop key="0" offset="0%" stopColor={color} />,
-        <Stop key="1" offset={`${maxOffset}%`} stopColor={color} />,
-      ];
-    } else {
-      // Multiple flow states - create gradient with proportional stops
-      stops = flowStatesInOrder.map((flowType, index) => {
-        const offset = (index / (flowStatesInOrder.length - 1)) * maxOffset;
-        const color = FlowColors[flowType];
-        return <Stop key={flowType} offset={`${offset}%`} stopColor={color} />;
-      });
-    }
-
-    // Add tail fade stop at 95% to create smooth transition to purple
-    stops.push(<Stop key="tail" offset="95%" stopColor={FLOW_TAIL_COLOR} />);
-
-    return stops;
-  }, [flowStatesInOrder]);
+  // The stops are a rule and live in services/flowRing.ts; turning them into
+  // <Stop> elements is drawing and lives here.
+  const gradientStops = useMemo(
+    (): React.ReactElement[] =>
+      ring.stops.map((stop, index) => (
+        <Stop
+          // biome-ignore lint/suspicious/noArrayIndexKey: stops are positional drawing instructions with no identity of their own
+          key={index}
+          offset={stop.offset}
+          stopColor={stop.color}
+        />
+      )),
+    [ring.stops],
+  );
 
   // =====================================
 
