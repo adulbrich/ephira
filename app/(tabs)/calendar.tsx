@@ -42,7 +42,7 @@ export default function FlowCalendar() {
   // can also be used like this
   // const selectedDate = useSelectedDate().date
 
-  const { loading, markedDates } = useMarkedDates(selectedFilters);
+  const { markedDates } = useMarkedDates(selectedFilters);
   const theme = useTheme();
   const styles = makeStyles({ theme });
 
@@ -110,7 +110,6 @@ export default function FlowCalendar() {
                     onDayPress={(day: { dateString: string }) =>
                       setDate(day.dateString)
                     }
-                    displayLoadingIndicator={loading}
                     theme={{
                       calendarBackground: theme.colors.background,
                       textSectionTitleColor: theme.colors.secondary,

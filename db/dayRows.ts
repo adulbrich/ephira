@@ -8,7 +8,7 @@ import type { Day } from "@/db/schema";
 type JoinedCatalogueItem = { day_id: number; id: number; name: string } | null;
 
 /**
- * One row of the three-way left join in `useLiveFilteredData`.
+ * One row of the three-way left join in `useLoggedDaysLive`.
  *
  * Written out rather than derived from the query, because the query lives in
  * the hook and this module is the thing being tested. The call site is what

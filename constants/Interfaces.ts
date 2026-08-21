@@ -29,7 +29,12 @@ export interface PeriodData {
 }
 
 export interface MarkedDate {
-  selected: boolean;
+  /**
+   * Optional, because it is not part of how a date should be drawn from what
+   * was logged. The calendar screen applies it at render, where the Selected
+   * Date and the theme colours it needs both live. See CONTEXT.md.
+   */
+  selected?: boolean;
   periods: PeriodData[];
   hasBirthControl?: boolean;
   hasIntercourse?: boolean;

@@ -1,342 +1,26 @@
-import { useState, useEffect, useMemo } from "react";
-import {
-  getAllVisibleSymptoms,
-  getAllVisibleMoods,
-  getAllVisibleMedications,
-} from "@/db/database";
-import type { DayData, MarkedDates } from "@/constants/Interfaces";
+import { useEffect, useMemo, useState } from "react";
+import type { MarkedDates, PredictedDate } from "@/constants/Interfaces";
 import {
   usePredictedCycle,
-  useSelectedDate,
   usePredictionChoice,
 } from "@/stores/calendar-storage";
-import {
-  FlowColors,
-  CyclePredictionColor,
-  SpecialtyFilterColor,
-} from "@/constants/Colors";
-import { getFlowTypeString } from "@/constants/Flow";
-import { useLiveFilteredData } from "@/hooks/useLiveFilteredData";
-import { anySymptomOption } from "@/constants/Symptoms";
-import { anyMoodOption } from "@/constants/Moods";
-import { anyMedicationOption } from "@/constants/Medications";
-import { anyBirthControlOption } from "@/constants/BirthControlTypes";
+import { useLoggedDaysLive } from "@/hooks/useLoggedDaysLive";
+import { useCatalogue } from "@/hooks/useCatalogue";
+import { cycleMarkedDates } from "@/services/cycleMarkedDates";
 import { refreshPredictions } from "@/services/cyclePredictions";
-import { startOfLocalDay, formatAsISODate } from "@/utils/dates";
-
-function getStartingAndEndingDay(
-  day: string,
-  prevDay: string | undefined,
-  nextDay: string | undefined,
-) {
-  const DAY_LENGTH = 24 * 60 * 60 * 1000;
-  const date = new Date(day);
-
-  const isStartingDay =
-    !prevDay || date.getTime() - new Date(prevDay).getTime() > DAY_LENGTH;
-
-  const isEndingDay =
-    !nextDay || new Date(nextDay).getTime() - date.getTime() > DAY_LENGTH;
-
-  return {
-    isStartingDay: isStartingDay,
-    isEndingDay: isEndingDay,
-  };
-}
+import { startOfLocalDay } from "@/utils/dates";
 
 /**
- * Apply opacity to a hex color string
- * @param hexColor - Color in #RRGGBB or #RRGGBBAA format
- * @param opacity - Opacity value from 0 to 1
- * @returns Color in rgba() format
+ * Fetch, and hold state. The rules are in `services/cycleMarkedDates.ts`.
+ *
+ * What used to be here was the whole cycle marking rule set, inside an async
+ * effect, unreachable by any test. This keeps only the three things that are
+ * genuinely bound to the app: the live query, the Catalogue subscription, and
+ * refreshing the forecast. Drawing is a pure derivation of those.
  */
-function applyOpacityToColor(hexColor: string, opacity: number): string {
-  // Remove # if present
-  const hex = hexColor.replace("#", "");
-
-  // Parse RGB values
-  let r: number, g: number, b: number;
-
-  if (hex.length === 6) {
-    r = parseInt(hex.substring(0, 2), 16);
-    g = parseInt(hex.substring(2, 4), 16);
-    b = parseInt(hex.substring(4, 6), 16);
-  } else if (hex.length === 8) {
-    // Already has alpha channel
-    r = parseInt(hex.substring(0, 2), 16);
-    g = parseInt(hex.substring(2, 4), 16);
-    b = parseInt(hex.substring(4, 6), 16);
-  } else {
-    // Invalid format, return original
-    return hexColor;
-  }
-
-  // Return rgba format
-  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-}
-
-function applyFilterToMarkedDates({
-  markedDates,
-  activeFilter,
-  day,
-  prevDay,
-  nextDay,
-  dayValues,
-  prevDayValues,
-  nextDayValues,
-  anyOption,
-}: {
-  markedDates: MarkedDates;
-  activeFilter: string;
-  day: DayData;
-  prevDay?: DayData;
-  nextDay?: DayData;
-  dayValues: string[];
-  prevDayValues: string[];
-  nextDayValues: string[];
-  anyOption: string;
-}) {
-  if (!markedDates[day.date])
-    markedDates[day.date] = { selected: false, periods: [] };
-
-  const isAny = activeFilter === anyOption;
-  const dayMatch = isAny
-    ? dayValues.length > 0
-    : dayValues.includes(activeFilter);
-
-  if (!dayMatch) {
-    markedDates[day.date].periods.push({ color: "transparent" });
-    return;
-  }
-
-  const prevMatch = isAny
-    ? prevDayValues.length > 0
-    : prevDayValues.includes(activeFilter);
-
-  const nextMatch = isAny
-    ? nextDayValues.length > 0
-    : nextDayValues.includes(activeFilter);
-
-  const { isStartingDay, isEndingDay } = getStartingAndEndingDay(
-    day.date,
-    prevMatch ? prevDay?.date : undefined,
-    nextMatch ? nextDay?.date : undefined,
-  );
-
-  markedDates[day.date].periods.push({
-    startingDay: isStartingDay,
-    endingDay: isEndingDay,
-    color: SpecialtyFilterColor,
-  });
-}
-
-async function markedDatesBuilder(filters: string[], data: DayData[]) {
-  const markedDates: MarkedDates = {};
-
-  // get all visible symptoms, moods, medications, and birth control options
-  const symptomOptions = await getAllVisibleSymptoms().then((symptoms) =>
-    symptoms.map((symptom) => symptom.name),
-  );
-  const moodOptions = await getAllVisibleMoods().then((moods) =>
-    moods.map((mood) => mood.name),
-  );
-  const medicationOptions = await getAllVisibleMedications().then(
-    (medications) =>
-      medications
-        .filter((medication) => medication.type !== "birth control")
-        .map((medication) => medication.name),
-  );
-  const birthControlOptions = await getAllVisibleMedications().then(
-    (medications) =>
-      medications
-        .filter((medication) => medication.type === "birth control")
-        .map((medication) => medication.name),
-  );
-
-  // Check if any birth control filter is enabled
-  const birthControlFiltersEnabled = filters.some(
-    (filter) =>
-      filter === anyBirthControlOption || birthControlOptions.includes(filter),
-  );
-
-  // Check if intercourse filter is enabled
-  const intercourseFilterEnabled = filters.includes("Intercourse");
-
-  data.forEach((day, index) => {
-    // Check if day has birth control logged (only show star if filter is enabled)
-    let hasBirthControl = false;
-    if (birthControlFiltersEnabled) {
-      const dayBirthControl =
-        day.medications?.filter((med) => birthControlOptions.includes(med)) ??
-        [];
-
-      // Check if "Any Birth Control" is selected or if a specific type matches
-      if (filters.includes(anyBirthControlOption)) {
-        hasBirthControl = dayBirthControl.length > 0;
-      } else {
-        // Check for specific birth control types
-        hasBirthControl = dayBirthControl.some((med) => filters.includes(med));
-      }
-    }
-
-    // Check if day has intercourse logged (only show heart if filter is enabled)
-    const hasIntercourse = intercourseFilterEnabled && day.intercourse === true;
-
-    // Initialize marked date entry if needed
-    if (!markedDates[day.date]) {
-      markedDates[day.date] = {
-        selected: false,
-        periods: [],
-        hasBirthControl,
-        hasIntercourse,
-      };
-    } else {
-      markedDates[day.date].hasBirthControl = hasBirthControl;
-      markedDates[day.date].hasIntercourse = hasIntercourse;
-    }
-
-    // flow
-    if (filters.some((filter) => filter === "Flow")) {
-      const { isStartingDay, isEndingDay } = getStartingAndEndingDay(
-        day.date,
-        // `?? 0` because flow_intensity is a nullable column. The type used
-        // to say otherwise; the code below already defended against it.
-        (data[index - 1]?.flow_intensity ?? 0) > 0
-          ? data[index - 1]?.date
-          : undefined,
-        (data[index + 1]?.flow_intensity ?? 0) > 0
-          ? data[index + 1]?.date
-          : undefined,
-      );
-      if (!markedDates[day.date])
-        markedDates[day.date] = { selected: false, periods: [] };
-      if (
-        day.flow_intensity === undefined ||
-        !day.flow_intensity ||
-        day.flow_intensity === 0
-      ) {
-        markedDates[day.date].periods.push({
-          color: "transparent",
-        });
-      } else {
-        const flowType = getFlowTypeString(day.flow_intensity);
-        markedDates[day.date].periods.push({
-          startingDay: isStartingDay,
-          endingDay: isEndingDay,
-          color: flowType ? FlowColors[flowType] : "transparent",
-        });
-      }
-    }
-
-    // notes
-    const notesFilter = filters.includes("Notes");
-    if (notesFilter) {
-      if (!markedDates[day.date])
-        markedDates[day.date] = { selected: false, periods: [] };
-
-      if (day.notes === "") {
-        markedDates[day.date].periods.push({
-          color: "transparent",
-        });
-      } else {
-        markedDates[day.date].periods.push({
-          startingDay: true,
-          endingDay: true,
-          color: SpecialtyFilterColor,
-        });
-      }
-    }
-
-    // Cycle Start/End
-    const startEndFilter = filters.includes("Cycle Start/End");
-    if (startEndFilter) {
-      if (!markedDates[day.date])
-        markedDates[day.date] = { selected: false, periods: [] };
-
-      if (day.is_cycle_start === false && day.is_cycle_end === false) {
-        markedDates[day.date].periods.push({
-          color: "transparent",
-        });
-      } else {
-        markedDates[day.date].periods.push({
-          startingDay: true,
-          endingDay: true,
-          color: SpecialtyFilterColor,
-        });
-      }
-    }
-
-    // symptoms
-    const symptomFilter = filters.find(
-      (f) => f === anySymptomOption || symptomOptions.includes(f),
-    );
-    if (symptomFilter) {
-      applyFilterToMarkedDates({
-        markedDates,
-        activeFilter: symptomFilter,
-        day,
-        prevDay: data[index - 1],
-        nextDay: data[index + 1],
-        dayValues: day.symptoms ?? [],
-        prevDayValues: data[index - 1]?.symptoms ?? [],
-        nextDayValues: data[index + 1]?.symptoms ?? [],
-        anyOption: anySymptomOption,
-      });
-    }
-
-    // moods
-    const moodFilter = filters.find(
-      (f) => f === anyMoodOption || moodOptions.includes(f),
-    );
-    if (moodFilter) {
-      applyFilterToMarkedDates({
-        markedDates,
-        activeFilter: moodFilter,
-        day,
-        prevDay: data[index - 1],
-        nextDay: data[index + 1],
-        dayValues: day.moods ?? [],
-        prevDayValues: data[index - 1]?.moods ?? [],
-        nextDayValues: data[index + 1]?.moods ?? [],
-        anyOption: anyMoodOption,
-      });
-    }
-
-    // medications
-    const medicationFilter = filters.find(
-      (f) => f === anyMedicationOption || medicationOptions.includes(f),
-    );
-    if (medicationFilter) {
-      applyFilterToMarkedDates({
-        markedDates,
-        activeFilter: medicationFilter,
-        day,
-        prevDay: data[index - 1],
-        nextDay: data[index + 1],
-        dayValues: day.medications ?? [],
-        prevDayValues: data[index - 1]?.medications ?? [],
-        nextDayValues: data[index + 1]?.medications ?? [],
-        anyOption: anyMedicationOption,
-      });
-    }
-
-    // birth control is handled via stars (hasBirthControl flag) instead of period lines
-  });
-
-  return markedDates;
-}
-
 export function useMarkedDates(calendarFilters?: string[]) {
-  const [markedDates, setMarkedDates] = useState<MarkedDates>({});
-  const { loading, filteredData } = useLiveFilteredData(
-    calendarFilters ? calendarFilters : [],
-  );
-
-  // access state management
-  // Read-only with respect to selected-day state. This hook used to write
-  // setFlow and setId, and to call setDate with the value it had just read,
-  // which fanned a re-render out to every reader for no state change.
-  const { date } = useSelectedDate();
+  const days = useLoggedDaysLive();
+  const catalogue = useCatalogue();
 
   const { setPredictedCycle } = usePredictedCycle();
   const { predictionChoice } = usePredictionChoice();
@@ -344,114 +28,45 @@ export function useMarkedDates(calendarFilters?: string[]) {
   // identity to hold in a ref the way the hook it replaced needed.
   const referenceDay = useMemo(() => startOfLocalDay(), []);
 
-  const today = formatAsISODate(new Date());
+  const filters = useMemo(() => calendarFilters ?? [], [calendarFilters]);
+  const wantsPredictions =
+    filters.includes("Cycle Prediction") && predictionChoice === true;
 
-  // useLiveQuery will automatically update the calendar when the db data changes
+  const [predictions, setPredictions] = useState<PredictedDate[]>([]);
+
+  // Forecasting is the one part of this that writes: refreshPredictions
+  // reconciles prediction_snapshots and reschedules notifications. It runs when
+  // the logged Days change, or when the choice to show Predictions does.
+  //
+  // The Selected Date is deliberately not a dependency. It used to be, and
+  // nothing in the effect read it, so every day tap fired a snapshot write and
+  // a notification reschedule.
   useEffect(() => {
-    async function refreshCalendar(allDays: DayData[]) {
-      if (!allDays || allDays.length === 0) {
-        setMarkedDates((prev) => {
-          const updated = { ...prev };
-          Object.keys(updated).forEach((date) => {
-            updated[date] = { ...updated[date], periods: [] };
-          });
-          return updated;
-        });
-        return;
-      }
-
-      const newMarkedDates = await markedDatesBuilder(
-        calendarFilters ?? [],
-        allDays,
-      );
-
-      if (
-        calendarFilters?.includes("Cycle Prediction") &&
-        predictionChoice === true
-      ) {
-        const newPredictedDates = await refreshPredictions(referenceDay);
-        setPredictedCycle(newPredictedDates);
-        const newPredictedMarkedDates: MarkedDates = {};
-
-        const sortedPredictions = [...newPredictedDates].sort((a, b) =>
-          a.date.localeCompare(b.date),
-        );
-
-        sortedPredictions.forEach((prediction, index) => {
-          const prevDate = sortedPredictions[index - 1]?.date;
-          const nextDate = sortedPredictions[index + 1]?.date;
-          const { isStartingDay, isEndingDay } = getStartingAndEndingDay(
-            prediction.date,
-            prevDate,
-            nextDate,
-          );
-
-          // Vary opacity by confidence but keep height consistent with flow bars
-          let opacity = 1.0;
-          if (prediction.confidence < 50) {
-            opacity = 0.4;
-          } else if (prediction.confidence < 80) {
-            opacity = 0.7;
-          }
-
-          const colorWithOpacity = applyOpacityToColor(
-            CyclePredictionColor,
-            opacity,
-          );
-
-          newPredictedMarkedDates[prediction.date] = {
-            selected: false,
-            periods: [
-              {
-                startingDay: isStartingDay,
-                endingDay: isEndingDay,
-                color: colorWithOpacity,
-              },
-            ],
-          };
-        });
-        setMarkedDates({ ...newPredictedMarkedDates, ...newMarkedDates });
-      } else {
-        setMarkedDates({ ...newMarkedDates });
-      }
+    if (!wantsPredictions) {
+      setPredictions([]);
+      return;
     }
 
-    refreshCalendar(filteredData as DayData[]);
-  }, [
-    filteredData,
-    date,
-    calendarFilters,
-    predictionChoice,
-    referenceDay,
-    setPredictedCycle,
-  ]);
-
-  // get data for selected date on calendar (when user presses a different day)
-  useEffect(() => {
-    if (!date) return;
-
-    // Only the highlight. The selected day's contents are loaded by the day
-    // view, which is the one thing that displays them.
-    setMarkedDates((prev) => {
-      const updated = { ...prev };
-
-      // set every date to selected = false
-      Object.keys(updated).forEach((date) => {
-        updated[date] = {
-          ...updated[date],
-          selected: false,
-        };
+    let stale = false;
+    refreshPredictions(referenceDay)
+      .then((next) => {
+        if (stale) return;
+        setPredictions(next);
+        setPredictedCycle(next);
+      })
+      .catch((error) => {
+        console.error("Error refreshing predictions:", error);
       });
 
-      // update selected date to selected = true
-      updated[date] = {
-        ...updated[date],
-        selected: true,
-      };
+    return () => {
+      stale = true;
+    };
+  }, [wantsPredictions, days, referenceDay, setPredictedCycle]);
 
-      return updated;
-    });
-  }, [date, today]);
+  const markedDates: MarkedDates = useMemo(
+    () => cycleMarkedDates({ days, filters, catalogue, predictions }),
+    [days, filters, catalogue, predictions],
+  );
 
-  return { loading, markedDates };
+  return { markedDates };
 }
