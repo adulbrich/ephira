@@ -28,25 +28,37 @@ export const DEFAULT_CALENDAR_FILTERS = ["Flow", "Any Birth Control"] as const;
  * A stored value that will not parse falls back to the default rather than
  * throwing. It is a corrupt preference, not a reason to fail a screen, and
  * the previous inline versions of this would have rejected inside an effect.
+ *
+ * So does a value that cannot be read at all. The caller is the app shell,
+ * which has no useful way to handle a rejection from a preference read.
  */
 async function loadJsonSetting<T>(
   key: string,
   fallback: T,
   isValid: (value: unknown) => value is T,
 ): Promise<T> {
-  const stored = await getSetting(key);
+  try {
+    const stored = await getSetting(key);
 
-  if (stored?.value !== undefined && stored?.value !== null) {
-    try {
-      const parsed: unknown = JSON.parse(stored.value);
-      if (isValid(parsed)) return parsed;
-    } catch {
-      // fall through to the default
+    if (stored?.value !== undefined && stored?.value !== null) {
+      try {
+        const parsed: unknown = JSON.parse(stored.value);
+        if (isValid(parsed)) return parsed;
+      } catch {
+        // fall through to the default
+      }
     }
-  }
 
-  await insertSetting(key, JSON.stringify(fallback));
-  return fallback;
+    await insertSetting(key, JSON.stringify(fallback));
+    return fallback;
+  } catch (error) {
+    // A preference that cannot be read is not a reason to leave a promise
+    // unhandled. These are called from the app shell, so a rejection surfaced
+    // as an uncaught error before anything had rendered. Same view this
+    // already took of a value that will not parse.
+    console.error(`Could not load the ${key} preference:`, error);
+    return fallback;
+  }
 }
 
 export function loadCyclePredictionChoice(): Promise<boolean> {

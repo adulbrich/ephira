@@ -4,6 +4,7 @@ import {
   loadCyclePredictionChoice,
 } from "@/db/preferences";
 import { getSetting, insertSetting } from "@/db/operations/settings";
+import * as settingsOperations from "@/db/operations/settings";
 import { SettingsKeys } from "@/constants/Settings";
 import { resetTestDatabase } from "@/__tests__/helpers/testDatabase";
 
@@ -78,5 +79,34 @@ describe("loadCalendarFilters", () => {
     await insertSetting(SettingsKeys.calendarFilters, "{not json");
 
     expect(await loadCalendarFilters()).toEqual([...DEFAULT_CALENDAR_FILTERS]);
+  });
+});
+
+describe("when the database cannot be read", () => {
+  // The app shell calls these before anything has rendered. A rejection there
+  // is an uncaught error with nowhere to go, which is what happened on a fresh
+  // install while the tables were still being created.
+  const failing = () => {
+    jest
+      .spyOn(settingsOperations, "getSetting")
+      .mockRejectedValue(new Error("no such table: settings"));
+  };
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it("falls back to the default calendar filters rather than rejecting", async () => {
+    failing();
+
+    await expect(loadCalendarFilters()).resolves.toEqual([
+      ...DEFAULT_CALENDAR_FILTERS,
+    ]);
+  });
+
+  it("falls back to the default prediction choice rather than rejecting", async () => {
+    failing();
+
+    await expect(loadCyclePredictionChoice()).resolves.toBe(true);
   });
 });

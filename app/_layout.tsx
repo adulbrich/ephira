@@ -61,7 +61,19 @@ export default function RootLayout() {
   const { setPredictionChoice } = usePredictionChoice();
   const { setSelectedFilters } = useCalendarFilters();
 
+  const expoDb = getDatabase();
+  const db = getDrizzleDatabase();
+  useDrizzleStudio(expoDb);
+  // Nothing below may read the database until this reports success. The tables
+  // do not exist before it, so on a fresh install every read here rejected --
+  // five unhandled rejections, and neither durable preference hydrated, so a
+  // new user got neither their default calendar filters nor a prediction
+  // choice on record.
+  const { success, error } = useMigrations(db, migrations);
+
   useEffect(() => {
+    if (!success) return;
+
     async function fetchThemeColor() {
       const savedTheme = await getSetting("theme");
       if (savedTheme?.value) {
@@ -71,27 +83,31 @@ export default function RootLayout() {
       }
     }
     fetchThemeColor();
-  }, [setThemeColor]);
+  }, [setThemeColor, success]);
 
   useEffect(() => {
+    if (!success) return;
+
     async function fetchTrackingMode() {
       const saved = await getSetting(SettingsKeys.trackingMode);
       setTrackingMode(saved?.value ?? TRACKING_MODES.CYCLE);
     }
     fetchTrackingMode();
-  }, [setTrackingMode]);
+  }, [setTrackingMode, success]);
 
   // Durable preferences hydrate in the shell, not on the screen that happens
   // to need them first. These were loaded by the Calendar tab, so any screen
   // reached before it read a store still holding its initial value: the Cycle
   // tab told users predictions were off when their setting said on.
   useEffect(() => {
+    if (!success) return;
     loadCyclePredictionChoice().then(setPredictionChoice);
-  }, [setPredictionChoice]);
+  }, [setPredictionChoice, success]);
 
   useEffect(() => {
+    if (!success) return;
     loadCalendarFilters().then(setSelectedFilters);
-  }, [setSelectedFilters]);
+  }, [setSelectedFilters, success]);
 
   const finalSelectedColor = themeColor as
     | "blue"
@@ -102,10 +118,6 @@ export default function RootLayout() {
     | "yellow";
   const theme = getTheme(finalSelectedColor, isDarkMode);
 
-  const expoDb = getDatabase();
-  const db = getDrizzleDatabase();
-  useDrizzleStudio(expoDb);
-  const { success, error } = useMigrations(db, migrations);
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
@@ -174,6 +186,10 @@ export default function RootLayout() {
   }, [checkAuthentication]);
 
   useEffect(() => {
+    // The gate used to sit around checkAuthentication only, so the seeding
+    // above it ran on every mount whether the tables existed or not.
+    if (!success) return;
+
     const initializeDatabase = async () => {
       const isDatabaseSetup = await getSetting(
         SettingsKeys.databaseInitialSetup,
@@ -183,12 +199,14 @@ export default function RootLayout() {
         await insertSetting(SettingsKeys.databaseInitialSetup, "0000");
       }
 
-      if (loaded && success) {
+      if (loaded) {
         checkAuthentication();
       }
     };
 
-    initializeDatabase();
+    initializeDatabase().catch((err) => {
+      console.error("Database initialisation failed:", err);
+    });
   }, [loaded, success, checkAuthentication]);
 
   const handlePasswordSubmit = async (passwordInput: string) => {
