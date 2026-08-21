@@ -320,18 +320,40 @@ describe("precedence and shape", () => {
   });
 });
 
-describe("known defect, pinned so a fix is deliberate", () => {
-  // quickBirthControl.ts:50 inserts a Day with notes = null (insertDay writes
-  // `notes ?? null`). The Notes rule tests `day.notes === ""`, so null reads as
-  // "has notes" and the day gets a marker it never earned. Behaviour is moved
-  // here verbatim; fixing it is a separate change, and this test is what will
-  // fail loudly when someone makes it.
-  it("currently marks a Day whose notes column is null", () => {
+describe("what counts as having notes", () => {
+  // The `days.notes` column is nullable and insertDay writes `notes ?? null`,
+  // so a Day logged through quickBirthControl has null here, not "". This rule
+  // used to test `notes === ""` and marked every such Day.
+  it.each([
+    ["null", null],
+    ["empty", ""],
+    ["whitespace", "   "],
+  ])("draws a spacer when notes are %s", (_label, notes) => {
+    const marked = build({
+      filters: ["Notes"],
+      days: [day("2026-08-01", { notes })],
+    });
+
+    expect(marked["2026-08-01"].periods).toEqual([{ color: "transparent" }]);
+  });
+
+  it("draws a marker for real text", () => {
+    const marked = build({
+      filters: ["Notes"],
+      days: [day("2026-08-01", { notes: "cramping" })],
+    });
+
+    expect(marked["2026-08-01"].periods[0].color).toBe(SpecialtyFilterColor);
+  });
+
+  it("agrees with the pregnancy builder on what blank means", () => {
+    // Both modes have their own marking rules by ADR 0001, but "has notes" is
+    // one question and they answered it two ways.
     const marked = build({
       filters: ["Notes"],
       days: [day("2026-08-01", { notes: null })],
     });
 
-    expect(marked["2026-08-01"].periods[0].color).toBe(SpecialtyFilterColor);
+    expect(marked["2026-08-01"].periods[0].color).toBe("transparent");
   });
 });
