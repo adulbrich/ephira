@@ -10,12 +10,7 @@ import {
 } from "react-native-paper";
 import { ScrollView, View, Platform, StyleSheet } from "react-native";
 import { useState, useEffect } from "react";
-import {
-  getAllVisibleSymptoms,
-  getAllVisibleMoods,
-  getAllVisibleMedications,
-  getAllDays,
-} from "@/db/database";
+import { getAllDays } from "@/db/database";
 import {
   useCalendarFilters,
   useDatabaseChangeNotifier,
@@ -25,8 +20,10 @@ import { anySymptomOption } from "@/constants/Symptoms";
 import { anyMoodOption } from "@/constants/Moods";
 import { anyMedicationOption } from "@/constants/Medications";
 import { anyBirthControlOption } from "@/constants/BirthControlTypes";
-import { CYCLE_PREDICTION_CONSTANTS } from "@/constants/CyclePrediction";
 import { PREDICTION_FILTER, changeFilters } from "@/db/selectedFilters";
+import { useCatalogue } from "@/hooks/useCatalogue";
+import { hasEnoughCyclesForPrediction } from "@/services/cyclePredictionLogic";
+import type { DayData } from "@/constants/Interfaces";
 const flowOption = "Flow";
 const notesOption = "Notes";
 const StartEndOption = "Cycle Start/End";
@@ -120,10 +117,15 @@ export default function CalendarFilterDialog({
   const { selectedFilters, setSelectedFilters } = useCalendarFilters();
   const [tempSelectedFilters, setTempSelectedFilters] =
     useState<string[]>(selectedFilters);
-  const [symptomOptions, setSymptomOptions] = useState<string[]>([]);
-  const [moodOptions, setMoodOptions] = useState<string[]>([]);
-  const [medicationOptions, setMedicationOptions] = useState<string[]>([]);
-  const [birthControlOptions, setBirthControlOptions] = useState<string[]>([]);
+  // The Catalogue, cached and invalidated in db/catalogue.ts. This screen used
+  // to read the three tables itself and re-split medications on type, which is
+  // the same knowledge that module already owns.
+  const {
+    symptoms: symptomOptions,
+    moods: moodOptions,
+    medications: medicationOptions,
+    birthControl: birthControlOptions,
+  } = useCatalogue();
 
   const [symptomsExpanded, setSymptomsExpanded] = useState(false);
   const [moodsExpanded, setMoodsExpanded] = useState(false);
@@ -132,93 +134,34 @@ export default function CalendarFilterDialog({
   const [hasEnoughCycleData, setHasEnoughCycleData] = useState(false);
 
   useEffect(() => {
-    const fetchSymptoms = async () => {
-      const symptoms = await getAllVisibleSymptoms();
-      setSymptomOptions(symptoms.map((symptom) => symptom.name));
-    };
-
-    const fetchMoods = async () => {
-      const moods = await getAllVisibleMoods();
-      setMoodOptions(moods.map((mood) => mood.name));
-    };
-
-    const fetchMedications = async () => {
-      const medications = await getAllVisibleMedications();
-      setMedicationOptions(
-        medications
-          .filter((medication) => medication.type !== "birth control")
-          .map((medication) => medication.name),
-      );
-      setBirthControlOptions(
-        medications
-          .filter((medication) => medication.type === "birth control")
-          .map((medication) => medication.name),
-      );
-    };
-
-    fetchSymptoms();
-    fetchMoods();
-    fetchMedications();
-  }, [databaseChange]);
-
-  useEffect(() => {
     setTempSelectedFilters(selectedFilters);
   }, [selectedFilters]);
 
-  // Check if user has enough cycle data for predictions
+  // One definition of a Cycle, per CONTEXT.md. This screen carried its own
+  // gap-detection pass that never consulted is_cycle_start / is_cycle_end, so
+  // marking a cycle start changed what the cycle tab and settings said and not
+  // what this dialog said. cyclePredictionLogic.ts:271-277 records that same
+  // defect being fixed in settings; this copy was missed.
   useEffect(() => {
-    const checkCycleData = async () => {
-      try {
-        const allDays = await getAllDays();
-        const flowDays = allDays.filter((day) => day.flow_intensity);
+    let stale = false;
 
-        if (flowDays.length === 0) {
-          setHasEnoughCycleData(false);
-          return;
-        }
-
-        // Count cycles
-        let cycleCount = 0;
-        let consecutiveDays = 0;
-        const sortedDays = flowDays.sort(
-          (a, b) => new Date(a.date).valueOf() - new Date(b.date).valueOf(),
-        );
-
-        for (let i = 0; i < sortedDays.length; i++) {
-          const currentDate = new Date(sortedDays[i].date);
-          const nextDate =
-            i < sortedDays.length - 1 ? new Date(sortedDays[i + 1].date) : null;
-
-          consecutiveDays++;
-
-          const isLastDay = i === sortedDays.length - 1;
-          const isGap = nextDate
-            ? (nextDate.getTime() - currentDate.getTime()) /
-                (1000 * 60 * 60 * 24) >
-              1
-            : false;
-
-          if (
-            (isLastDay || isGap) &&
-            consecutiveDays >= CYCLE_PREDICTION_CONSTANTS.MIN_CONSECUTIVE_DAYS
-          ) {
-            cycleCount++;
-            consecutiveDays = 0;
-          } else if (isGap) {
-            consecutiveDays = 0;
-          }
-        }
-
+    getAllDays()
+      .then((allDays) => {
+        if (stale) return;
         setHasEnoughCycleData(
-          cycleCount >= CYCLE_PREDICTION_CONSTANTS.MIN_CYCLES_FOR_PREDICTION,
+          hasEnoughCyclesForPrediction(
+            allDays.filter((day) => day.flow_intensity) as DayData[],
+          ),
         );
-      } catch (error) {
+      })
+      .catch((error) => {
         console.error("Error checking cycle data:", error);
-        setHasEnoughCycleData(false);
-      }
-    };
+        if (!stale) setHasEnoughCycleData(false);
+      });
 
-    checkCycleData();
+    return () => {
+      stale = true;
+    };
   }, [databaseChange]);
 
   const applyFilter = async () => {
