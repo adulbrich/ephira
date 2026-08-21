@@ -1,7 +1,7 @@
 // This file is a fallback for using MaterialIcons on Android and web.
 
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import type { SymbolWeight } from "expo-symbols";
+import type { SFSymbol, SymbolWeight } from "expo-symbols";
 import type React from "react";
 import type { OpaqueColorValue, StyleProp, TextStyle } from "react-native";
 
@@ -19,7 +19,9 @@ const MAPPING = {
   "arrow.circlepath": "auto-mode",
 } as Partial<
   Record<
-    import("expo-symbols").SymbolViewProps["name"],
+    // expo-symbols 55 widened SymbolViewProps["name"] to SFSymbol or a
+    // per-platform { ios, android, web } object, which cannot key a Record.
+    SFSymbol,
     React.ComponentProps<typeof MaterialIcons>["name"]
   >
 >;

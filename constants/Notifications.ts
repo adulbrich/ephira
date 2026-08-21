@@ -121,3 +121,30 @@ export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   soundEnabled: NotificationDefaults.SOUND_ENABLED,
   minConfidence: NotificationDefaults.MIN_CONFIDENCE_FOR_NOTIFICATION,
 };
+
+/**
+ * Where tapping a notification should send the user, or `null` to stay put.
+ *
+ * Takes the payload rather than the notification so it stays free of
+ * expo-notifications and can be tested directly.
+ *
+ * `data` is optional because a notification can arrive without one, and its
+ * values are `unknown` because nothing constrains what a sender puts there --
+ * both of which SDK 55 made explicit in `NotificationContent`. The listener
+ * this came from read `data.type` unguarded, which throws on the first
+ * payload-less notification.
+ */
+export const routeForNotification = (
+  data: Record<string, unknown> | undefined,
+): "/(tabs)/calendar" | null => {
+  const type = data?.type;
+  if (typeof type !== "string") return null;
+
+  const aboutAPeriod: string[] = [
+    NotificationTypes.PERIOD_UPCOMING,
+    NotificationTypes.PERIOD_TODAY,
+    NotificationTypes.PERIOD_LATE,
+  ];
+
+  return aboutAPeriod.includes(type) ? "/(tabs)/calendar" : null;
+};
