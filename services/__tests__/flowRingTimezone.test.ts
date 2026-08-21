@@ -4,24 +4,15 @@ import type { DayData } from "@/constants/Interfaces";
 /**
  * The month window, east of Greenwich.
  *
- * Its own file because the timezone has to be set before anything builds a
- * Date, and because a test that silently ran in UTC would prove nothing: the
- * defect it pins is invisible at offset zero. The first case asserts the
- * offset actually took, so this cannot pass for the wrong reason.
+ * The timezone is pinned for the whole suite in `jest.globalSetup.js`, which
+ * runs before any worker spawns. Setting `process.env.TZ` from inside this file
+ * does not work: on Linux the zone is already cached by the time `beforeAll`
+ * runs, so the assignment is ignored and these cases pass vacuously in UTC --
+ * which is exactly what happened on CI before the guard below caught it.
  *
- * Every Date here is built inside a test rather than at module scope, because
- * imports hoist above any assignment to `process.env.TZ` and a Date built at
- * module load would carry the old offset.
+ * The first case asserts the offset actually took, so this file cannot pass for
+ * the wrong reason. The defect it pins is invisible at offset zero.
  */
-const ORIGINAL_TZ = process.env.TZ;
-
-beforeAll(() => {
-  process.env.TZ = "Europe/Berlin";
-});
-
-afterAll(() => {
-  process.env.TZ = ORIGINAL_TZ;
-});
 
 let nextId = 1;
 const day = (date: string, flow_intensity = 3): DayData => ({

@@ -18,7 +18,8 @@
     "preset": "jest-expo",
     "testMatch": [
       "**/?(*.)+(spec|test).[jt]s?(x)"
-    ]
+    ],
+    "globalSetup": "<rootDir>/jest.globalSetup.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
