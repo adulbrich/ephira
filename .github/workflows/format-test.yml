@@ -11,6 +11,13 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, edited]
 
+# Least privilege for GITHUB_TOKEN. These jobs only check out the repo and run
+# node; nothing here talks to the GitHub API. Without this key the token is
+# whatever the repository default happens to be, which is a wider grant than
+# anything in this file uses.
+permissions:
+  contents: read
+
 jobs:
   checks:
     name: Lint, typecheck and test
