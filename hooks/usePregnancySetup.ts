@@ -4,23 +4,12 @@ import {
   DateTimePickerAndroid,
   type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
-import { getSetting, updateSetting } from "@/db/database";
-import { SettingsKeys } from "@/constants/Settings";
 import {
   clampPregnancyValue,
-  DAYS_FROM_LMP_TO_DUE,
-  DEFAULT_DAYS_WHEN_UNCONFIGURED,
-  DEFAULT_GESTATION_OFFSET_DAYS,
-  DEFAULT_LMP_DAYS_AGO,
-  DEFAULT_WEEKS_WHEN_UNCONFIGURED,
   DUE_DATE_MAX_EXTRA_DAYS,
   FULL_TERM_DAYS,
   MAX_DAY_IN_WEEK_INPUT,
-  MAX_GESTATION_OFFSET_DAYS,
   MAX_PREGNANCY_WEEK_INPUT,
-  MIN_GESTATION_OFFSET_DAYS,
-  POSITIVE_TEST_DAYS_AFTER_LMP,
-  CONCEPTION_DAYS_AFTER_LMP,
 } from "@/constants/Pregnancy";
 import type {
   DateFieldKey,
@@ -28,9 +17,10 @@ import type {
   SetupMethod,
 } from "@/components/pregnancy/pregnancySetupTypes";
 import { addDays, startOfLocalDay } from "@/utils/dates";
+import { savePregnancyAnchor } from "@/db/pregnancyAnchor";
 import {
   anchorFromSetupAnswer,
-  gestationalAge,
+  setupDefaultsFromAnchor,
   type SetupAnswer,
 } from "@/utils/pregnancyDates";
 
@@ -47,9 +37,6 @@ export function usePregnancySetup({
   const [dueDateInput, setDueDateInput] = useState(new Date());
   const [lastPeriodInput, setLastPeriodInput] = useState(new Date());
   const [conceptionDateInput, setConceptionDateInput] = useState(new Date());
-  const [positiveTestDateInput, setPositiveTestDateInput] = useState(
-    new Date(),
-  );
   const [setupMethod, setSetupMethod] = useState<SetupMethod | null>(null);
   const [notSurePath, setNotSurePath] = useState<NotSurePath | null>(null);
   const [activeDateField, setActiveDateField] = useState<DateFieldKey | null>(
@@ -61,66 +48,25 @@ export function usePregnancySetup({
   const [saving, setSaving] = useState(false);
   const [setupError, setSetupError] = useState<string | null>(null);
 
-  const applyDefaultDateInputs = useCallback(
-    (
-      normalizedToday: Date,
-      configured: boolean,
-      currentPregnancyDay?: number,
-    ) => {
-      if (configured && currentPregnancyDay !== undefined) {
-        const derivedDayZero = addDays(normalizedToday, -currentPregnancyDay);
-        setDueDateInput(addDays(derivedDayZero, FULL_TERM_DAYS));
-        setLastPeriodInput(derivedDayZero);
-        setConceptionDateInput(
-          addDays(derivedDayZero, CONCEPTION_DAYS_AFTER_LMP),
-        );
-        setPositiveTestDateInput(
-          addDays(derivedDayZero, POSITIVE_TEST_DAYS_AFTER_LMP),
-        );
-        return;
-      }
+  /**
+   * Open the dialog on what is already stored.
+   *
+   * The arithmetic is in utils/pregnancyDates.ts, both directions of it. This
+   * used to re-derive pregnancy day zero and the due date here, by the same
+   * steps gestationalAge had already taken, and to read the two settings for
+   * itself with its own validation.
+   */
+  const hydrateFromAnchor = useCallback(
+    (anchor: { startDateIso: string | null; gestationOffsetDays: number }) => {
+      const defaults = setupDefaultsFromAnchor(anchor, startOfLocalDay());
 
-      setWeeksInput(DEFAULT_WEEKS_WHEN_UNCONFIGURED);
-      setDaysInput(DEFAULT_DAYS_WHEN_UNCONFIGURED);
-      setDueDateInput(addDays(normalizedToday, DAYS_FROM_LMP_TO_DUE));
-      setLastPeriodInput(addDays(normalizedToday, -DEFAULT_LMP_DAYS_AGO));
-      setConceptionDateInput(normalizedToday);
-      setPositiveTestDateInput(addDays(normalizedToday, DEFAULT_LMP_DAYS_AGO));
+      setDueDateInput(defaults.dueDate);
+      setLastPeriodInput(defaults.lastPeriod);
+      setConceptionDateInput(defaults.conceptionDate);
+      setWeeksInput(String(defaults.weeks));
+      setDaysInput(String(defaults.days));
     },
     [],
-  );
-
-  const hydrateFromSettings = useCallback(
-    async (_hasStartDate: boolean) => {
-      const offsetSetting = await getSetting(
-        SettingsKeys.pregnancyGestationOffsetDays,
-      );
-      const startSetting = await getSetting(SettingsKeys.pregnancyStartDate);
-      const normalizedToday = startOfLocalDay();
-
-      const offset = Number(offsetSetting?.value);
-      const hasValidOffset =
-        Number.isFinite(offset) &&
-        offset >= MIN_GESTATION_OFFSET_DAYS &&
-        offset <= MAX_GESTATION_OFFSET_DAYS;
-
-      if (!hasValidOffset) {
-        applyDefaultDateInputs(normalizedToday, false);
-        return { gestationOffsetDays: DEFAULT_GESTATION_OFFSET_DAYS };
-      }
-
-      if (startSetting?.value) {
-        const age = gestationalAge(startSetting.value, offset, normalizedToday);
-        setWeeksInput(String(age.weekNumber));
-        setDaysInput(String(age.dayInWeek));
-        applyDefaultDateInputs(normalizedToday, true, age.pregnancyDay);
-      } else {
-        applyDefaultDateInputs(normalizedToday, false);
-      }
-
-      return { gestationOffsetDays: offset };
-    },
-    [applyDefaultDateInputs],
   );
 
   const dueDateMin = useMemo(() => addDays(today, 1), [today]);
@@ -152,8 +98,6 @@ export function usePregnancySetup({
         if (activeDateField === "lastPeriod") setLastPeriodInput(selectedDate);
         if (activeDateField === "conceptionDate")
           setConceptionDateInput(selectedDate);
-        if (activeDateField === "positiveTestDate")
-          setPositiveTestDateInput(selectedDate);
       }
     },
     [activeDateField],
@@ -171,7 +115,7 @@ export function usePregnancySetup({
             ? lastPeriodInput
             : targetField === "conceptionDate"
               ? conceptionDateInput
-              : positiveTestDateInput;
+              : conceptionDateInput;
 
       if (Platform.OS === "android") {
         DateTimePickerAndroid.open({
@@ -193,7 +137,6 @@ export function usePregnancySetup({
       dueDateMin,
       lastPeriodInput,
       onDateChange,
-      positiveTestDateInput,
       today,
     ],
   );
@@ -264,17 +207,10 @@ export function usePregnancySetup({
         };
       }
 
-      const { startDateIso: isoDate, gestationOffsetDays: offsetDays } =
-        anchorFromSetupAnswer(answer, today);
+      const anchor = anchorFromSetupAnswer(answer, today);
 
-      await Promise.all([
-        updateSetting(SettingsKeys.pregnancyStartDate, isoDate),
-        updateSetting(
-          SettingsKeys.pregnancyGestationOffsetDays,
-          String(offsetDays),
-        ),
-      ]);
-      onSaved(isoDate, offsetDays);
+      await savePregnancyAnchor(anchor);
+      onSaved(anchor.startDateIso, anchor.gestationOffsetDays);
       setSetupVisible(false);
     } finally {
       setSaving(false);
@@ -297,7 +233,6 @@ export function usePregnancySetup({
     dueDateInput,
     lastPeriodInput,
     conceptionDateInput,
-    positiveTestDateInput,
     setupMethod,
     setSetupMethod,
     notSurePath,
@@ -318,6 +253,6 @@ export function usePregnancySetup({
     onDateChange,
     openDatePicker,
     handleSaveSetup,
-    hydrateFromSettings,
+    hydrateFromAnchor,
   };
 }

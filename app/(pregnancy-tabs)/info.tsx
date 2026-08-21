@@ -12,15 +12,13 @@ import {
   StatusBar,
 } from "react-native";
 import { IconSymbol } from "@/components/ui/IconSymbol";
-import { getSetting } from "@/db/database";
-import { SettingsKeys } from "@/constants/Settings";
 import {
-  DEFAULT_GESTATION_OFFSET_DAYS,
   getPregnancyWeekContent,
   getTrimesterLabel,
 } from "@/constants/Pregnancy";
 import { startOfLocalDay } from "@/utils/dates";
 import { gestationalAge } from "@/utils/pregnancyDates";
+import { loadPregnancyAnchor } from "@/db/pregnancyAnchor";
 
 // The idea here is that this tab will eventually be up to date with whatever week the user is at
 // Placeholder is week 5, but by the end of pregnancy tracking implementation, this tab *should* be providing information accurate
@@ -188,25 +186,23 @@ export default function PregnancyInfo() {
   const [currentWeek, setCurrentWeek] = useState<number | null>(null);
 
   const loadPregnancyWeek = useCallback(async () => {
-    const [startSetting, offsetSetting] = await Promise.all([
-      getSetting(SettingsKeys.pregnancyStartDate),
-      getSetting(SettingsKeys.pregnancyGestationOffsetDays),
-    ]);
+    // One reading of the stored anchor, validated. This used to be
+    // Number(value ?? DEFAULT), which accepts anything the row is not missing:
+    // a stored "" read as 0 and "abc" as NaN, and both reached gestationalAge.
+    const anchor = await loadPregnancyAnchor();
 
-    if (!startSetting?.value) {
+    if (!anchor.startDateIso) {
       setCurrentWeek(null);
       return;
     }
 
     const age = gestationalAge(
-      startSetting.value,
-      Number(offsetSetting?.value ?? DEFAULT_GESTATION_OFFSET_DAYS),
+      anchor.startDateIso,
+      anchor.gestationOffsetDays,
       startOfLocalDay(),
     );
 
-    const week = age.weekNumber;
-
-    setCurrentWeek(week);
+    setCurrentWeek(age.weekNumber);
   }, []);
 
   useEffect(() => {

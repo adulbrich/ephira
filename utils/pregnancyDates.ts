@@ -1,8 +1,16 @@
 import {
+  CONCEPTION_DAYS_AFTER_LMP,
   CONCEPTION_TO_CURRENT_DAY_OFFSET,
+  DAYS_FROM_LMP_TO_DUE,
   DAYS_IN_WEEK,
+  DEFAULT_DAYS_WHEN_UNCONFIGURED,
+  DEFAULT_GESTATION_OFFSET_DAYS,
+  DEFAULT_LMP_DAYS_AGO,
+  DEFAULT_WEEKS_WHEN_UNCONFIGURED,
   FULL_TERM_DAYS,
+  MAX_GESTATION_OFFSET_DAYS,
   MAX_PREGNANCY_WEEK_INPUT,
+  MIN_GESTATION_OFFSET_DAYS,
   clampPregnancyValue,
   getTrimesterLabel,
 } from "@/constants/Pregnancy";
@@ -30,6 +38,8 @@ export type GestationalAge = {
   /** 0 to 6 within `weekNumber`. */
   dayInWeek: number;
   trimesterLabel: string;
+  /** The day the pregnancy is counted from. Setup needs it; it was re-derived. */
+  pregnancyDayZero: Date;
   dueDate: Date;
   /** Never negative; a pregnancy past its due date reads 0. */
   dueDaysRemaining: number;
@@ -67,6 +77,7 @@ export function gestationalAge(
     trimesterLabel: getTrimesterLabel(
       Math.floor(pregnancyDay / DAYS_IN_WEEK) + 1,
     ),
+    pregnancyDayZero,
     dueDate: addDays(pregnancyDayZero, FULL_TERM_DAYS),
     dueDaysRemaining: Math.max(0, FULL_TERM_DAYS - pregnancyDay),
     progress: Math.min(1, Math.max(0, pregnancyDay / FULL_TERM_DAYS)),
@@ -138,5 +149,84 @@ export function anchorFromSetupAnswer(
   return {
     startDateIso: formatAsISODate(anchorDate),
     gestationOffsetDays: pregnancyDayToday - daysSinceAnchor,
+  };
+}
+
+/**
+ * A stored gestation offset, validated, with the default when it is not usable.
+ *
+ * There were three readings of this pair. Only one validated at all; the
+ * pregnancy info tab did `Number(value ?? DEFAULT)`, where `??` catches a
+ * missing row and nothing else, so a stored `""` read as 0 and `"abc"` as NaN
+ * and both went straight into the Gestational Age. The third hardcoded 14
+ * rather than naming the constant.
+ *
+ * An empty string is rejected here rather than read as 0, which the one
+ * validating copy also let through: `Number("")` is 0, and 0 is in range.
+ */
+export function parseGestationOffset(
+  stored: string | null | undefined,
+): number {
+  if (stored === null || stored === undefined || stored.trim() === "") {
+    return DEFAULT_GESTATION_OFFSET_DAYS;
+  }
+
+  const offset = Number(stored);
+
+  return Number.isFinite(offset) &&
+    offset >= MIN_GESTATION_OFFSET_DAYS &&
+    offset <= MAX_GESTATION_OFFSET_DAYS
+    ? offset
+    : DEFAULT_GESTATION_OFFSET_DAYS;
+}
+
+/** What the setup dialog opens with, given what is already stored. */
+export type PregnancySetupDefaults = {
+  dueDate: Date;
+  lastPeriod: Date;
+  conceptionDate: Date;
+  weeks: number;
+  days: number;
+};
+
+/**
+ * The other direction: an anchor back to the answers setup asks for.
+ *
+ * `anchorFromSetupAnswer` turns an answer into an anchor; this turns an anchor
+ * back into the dates and the week each question should open with, so both
+ * directions of the mapping live in this module. The setup hook used to
+ * recompute pregnancy day zero and the due date itself, by the same arithmetic
+ * `gestationalAge` had already done.
+ */
+export function setupDefaultsFromAnchor(
+  anchor: { startDateIso: string | null; gestationOffsetDays: number },
+  referenceDay: Date,
+): PregnancySetupDefaults {
+  if (!anchor.startDateIso) {
+    return {
+      dueDate: addDays(referenceDay, DAYS_FROM_LMP_TO_DUE),
+      lastPeriod: addDays(referenceDay, -DEFAULT_LMP_DAYS_AGO),
+      conceptionDate: referenceDay,
+      weeks: Number(DEFAULT_WEEKS_WHEN_UNCONFIGURED),
+      days: Number(DEFAULT_DAYS_WHEN_UNCONFIGURED),
+    };
+  }
+
+  const age = gestationalAge(
+    anchor.startDateIso,
+    anchor.gestationOffsetDays,
+    referenceDay,
+  );
+
+  return {
+    dueDate: age.dueDate,
+    lastPeriod: age.pregnancyDayZero,
+    conceptionDate: addDays(age.pregnancyDayZero, CONCEPTION_DAYS_AFTER_LMP),
+    // Clamped here, so what the stepper shows is what saving accepts.
+    // Hydration wrote the uncapped week, the stepper clamped it for display,
+    // and saving validated the raw value: at week 43 the dialog showed 42 and
+    // then refused it as outside 0-42.
+    weeks: clampPregnancyValue(age.weekNumber, 0, MAX_PREGNANCY_WEEK_INPUT),
+    days: age.dayInWeek,
   };
 }

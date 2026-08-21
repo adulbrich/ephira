@@ -37,7 +37,6 @@ type PregnancySetupDialogProps = {
   dueDateInput: Date;
   lastPeriodInput: Date;
   conceptionDateInput: Date;
-  positiveTestDateInput: Date;
   activeDateField: DateFieldKey | null;
   showDatePicker: boolean;
   setShowDatePicker: (visible: boolean) => void;
@@ -67,7 +66,6 @@ export default function PregnancySetupDialog({
   dueDateInput,
   lastPeriodInput,
   conceptionDateInput,
-  positiveTestDateInput,
   activeDateField,
   showDatePicker,
   setShowDatePicker,
@@ -89,7 +87,7 @@ export default function PregnancySetupDialog({
         ? lastPeriodInput
         : activeDateField === "conceptionDate"
           ? conceptionDateInput
-          : positiveTestDateInput;
+          : conceptionDateInput;
 
   return (
     <>

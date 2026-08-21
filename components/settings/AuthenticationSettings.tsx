@@ -12,10 +12,14 @@ import {
   TextInput,
 } from "react-native-paper";
 import { ThemedView } from "@/components/ThemedView";
-import { updateSetting, getSetting, deleteSetting } from "@/db/database";
 import * as LocalAuthentication from "expo-local-authentication";
-import * as Crypto from "expo-crypto";
-import { AUTH_TYPES, SettingsKeys } from "@/constants/Settings";
+import { AUTH_TYPES } from "@/constants/Settings";
+import {
+  chooseBiometric,
+  chooseNoAuthentication,
+  choosePassword,
+  loadAuthenticationChoice,
+} from "@/db/authenticationChoice";
 
 function NoAuthenticationDialog({
   handleConfirm,
@@ -226,21 +230,9 @@ export default function AuthenticationSettings() {
   const [showNoAuthDialog, setShowNoAuthDialog] = useState(false);
   const [showBiometricDialog, setShowBiometricDialog] = useState(false);
 
-  // load auth preference from db
+  // The four-branch parse that used to be here is in db/authenticationChoice.
   useEffect(() => {
-    const loadPreferences = async () => {
-      await getSetting(SettingsKeys.authentication).then((authType) => {
-        if (!authType || authType.value === AUTH_TYPES.NONE) {
-          setSelectedAuth(AUTH_TYPES.NONE);
-        } else if (authType.value === AUTH_TYPES.BIOMETRIC) {
-          setSelectedAuth(AUTH_TYPES.BIOMETRIC);
-        } else if (authType.value === AUTH_TYPES.PASSWORD) {
-          setSelectedAuth(AUTH_TYPES.PASSWORD);
-        }
-      });
-    };
-
-    loadPreferences();
+    loadAuthenticationChoice().then(setSelectedAuth);
   }, []);
 
   const handleBiometricSetup = async () => {
@@ -249,8 +241,7 @@ export default function AuthenticationSettings() {
     });
 
     if (result.success) {
-      await updateSetting(SettingsKeys.authentication, AUTH_TYPES.BIOMETRIC);
-      await deleteSetting(SettingsKeys.password);
+      await chooseBiometric();
       setSelectedAuth(AUTH_TYPES.BIOMETRIC);
       Alert.alert("Success", "Biometric authentication enabled!");
     } else {
@@ -262,20 +253,20 @@ export default function AuthenticationSettings() {
   };
 
   const handleSetPassword = async (password: string) => {
-    await updateSetting(SettingsKeys.authentication, AUTH_TYPES.PASSWORD);
-    const hashedPassword = await Crypto.digestStringAsync(
-      Crypto.CryptoDigestAlgorithm.SHA256,
-      password,
-    );
-    await updateSetting(SettingsKeys.password, hashedPassword);
+    try {
+      await choosePassword(password);
+    } catch (error) {
+      console.error("Error setting password:", error);
+      Alert.alert("Failed", "Could not set the password. Nothing changed.");
+      return;
+    }
     setSelectedAuth(AUTH_TYPES.PASSWORD);
     Alert.alert("Success", "Password set successfully!");
     setShowPasswordDialog(false);
   };
 
   const handleDisableAuthentication = async () => {
-    await updateSetting(SettingsKeys.authentication, AUTH_TYPES.NONE);
-    await deleteSetting(SettingsKeys.password);
+    await chooseNoAuthentication();
     setSelectedAuth(AUTH_TYPES.NONE);
     Alert.alert("Success", "Authentication disabled.");
   };
