@@ -44,6 +44,14 @@ run it locally you need:
    npm run ios      # or: npm run android
    ```
 
+   For Android, **start the emulator first and let it finish booting.**
+   `expo run:android` installs over adb, and adb reports
+   `cmd: Can't find service: package` if the package manager is not up yet.
+   `adb shell getprop sys.boot_completed` returns `1` when it is ready.
+
+   Android also needs `ANDROID_HOME` pointing at your SDK. Android Studio sets
+   it; a shell that has never run it may not have it.
+
    This runs `expo run:ios`, which generates the native projects with
    [`expo prebuild`](https://docs.expo.dev/workflow/prebuild/) and compiles a
    development build. **The first run is slow** — it compiles every native
