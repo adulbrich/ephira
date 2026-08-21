@@ -80,21 +80,27 @@ Documentation never goes under `docs/src/`. That is the website.
 
 ### `/hooks/`
 
-- `useFetchEntries.ts`
-  - Fetches symptom or mood entries for a given date.
-- `useFetchFlowData.ts`
-  - Fetches flow data for use in the homepage animated circle.
-- `useFetchMedicationEntries.ts`
-  - Fetches medication entries for a given date, separates them by type (currently only either "birth control" or not).
-- `useLiveFilteredData.ts`
-  - Fetches live data via [Drizzle's useLiveQuery](https://orm.drizzle.team/docs/connect-expo-sqlite#live-queries) function from the database based on the given filters and organizes it into a format suitable for use in `useMarkedDates.ts`.
+Hooks hold no rules. Each one subscribes to something and calls the module that
+owns the rules, which is what makes those rules testable without rendering.
+
+- `useCatalogue.ts`
+  - The Catalogue, re-read when `db/catalogue.ts` says it changed.
+- `useContractionTimer.ts`
+  - Timing state for the pregnancy contraction timer.
+- `useCyclePhase.ts`
+  - Current phase and cycle stats, derived by `services/cyclePredictionLogic.ts`.
+- `useFlowDays.ts`
+  - The flow Days, reloaded on a database change. Rules in `db/flowDays.ts`.
+- `useLoggedDaysLive.ts`
+  - The logged Days, live, already folded, via [Drizzle's useLiveQuery](https://orm.drizzle.team/docs/connect-expo-sqlite#live-queries) and `db/dayRows.ts`.
 - `useMarkedDates.ts`
-  - Makes the [markedDates](https://wix.github.io/react-native-calendars/docs/Components/Calendar#markeddates) object for the calendar based on the user's calendar filters.
-  - Utilizes `useLiveFilteredData.ts` to get the filtered data as it changes and updates the markedDates.
-- `useSyncEntries.ts`
-  - Syncs entries for the selected date with the database.
-- `useSyncMedicationEntries.ts`
-  - Syncs medication entries for the selected date with the database.
+  - Fetches and holds state; the marking rules are in `services/cycleMarkedDates.ts`.
+- `useNotifications.ts`
+  - Permission state and scheduling, over `services/notificationService.ts`.
+- `usePregnancyMarkedDates.ts`
+  - The pregnancy calendar's marks. Separate from cycle mode by ADR 0001.
+- `usePregnancySetup.ts`
+  - Dialog state for pregnancy setup; the arithmetic is in `utils/pregnancyDates.ts`.
 
 ## Tools & Libraries
 
