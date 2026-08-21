@@ -50,17 +50,6 @@ export const useData = create<LoadData>((set) => ({
   },
 }));
 
-interface FlowDataState {
-  flowDataForCurrentMonth: DayData[];
-  setFlowDataForCurrentMonth: (data: DayData[]) => void;
-}
-
-export const useFlowData = create<FlowDataState>((set) => ({
-  flowDataForCurrentMonth: [],
-  setFlowDataForCurrentMonth: (data: DayData[]) =>
-    set(() => ({ flowDataForCurrentMonth: data })),
-}));
-
 interface CalendarFilters {
   selectedFilters: string[];
   setSelectedFilters: (values: string[]) => void;

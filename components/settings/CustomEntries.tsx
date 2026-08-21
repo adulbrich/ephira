@@ -1,11 +1,6 @@
 import { Fragment, useState, useEffect } from "react";
-import {
-  getAllSymptoms,
-  getAllMoods,
-  getAllMedications,
-  updateSetting,
-} from "@/db/database";
-import { SettingsKeys } from "@/constants/Settings";
+import { getAllSymptoms, getAllMoods, getAllMedications } from "@/db/database";
+import { changeFilters } from "@/db/selectedFilters";
 import { ThemedView } from "@/components/ThemedView";
 import Snackbar from "@/components/ui/Snackbar";
 import {
@@ -304,13 +299,8 @@ function CustomEntriesModal({
 
     // check if entry is in calendar filters and remove if needed
     if (selectedFilters.includes(entryName)) {
-      const updatedFilters = selectedFilters.filter(
-        (filter: string) => filter !== entryName,
-      );
-      setSelectedFilters(updatedFilters);
-      updateSetting(
-        SettingsKeys.calendarFilters,
-        JSON.stringify(selectedFilters),
+      changeFilters(selectedFilters, { remove: entryName }).then(
+        setSelectedFilters,
       );
     }
   };

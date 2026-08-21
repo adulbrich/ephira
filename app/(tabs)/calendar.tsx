@@ -23,6 +23,7 @@ import {
 import CalendarHeader from "@/components/calendar/CalendarHeader";
 import CustomDay from "@/components/calendar/CustomDay";
 import { useMarkedDates } from "@/hooks/useMarkedDates";
+import { PREDICTION_FILTER } from "@/db/selectedFilters";
 import { CyclePredictionColor, SpecialtyFilterColor } from "@/constants/Colors";
 import FadeInView from "@/components/animations/FadeInView";
 import {
@@ -42,7 +43,7 @@ export default function FlowCalendar() {
   // can also be used like this
   // const selectedDate = useSelectedDate().date
 
-  const { loading, markedDates } = useMarkedDates(selectedFilters);
+  const { markedDates } = useMarkedDates(selectedFilters);
   const theme = useTheme();
   const styles = makeStyles({ theme });
 
@@ -110,7 +111,6 @@ export default function FlowCalendar() {
                     onDayPress={(day: { dateString: string }) =>
                       setDate(day.dateString)
                     }
-                    displayLoadingIndicator={loading}
                     theme={{
                       calendarBackground: theme.colors.background,
                       textSectionTitleColor: theme.colors.secondary,
@@ -168,7 +168,7 @@ export default function FlowCalendar() {
                           >
                             ♥
                           </Text>
-                        ) : filter === "Cycle Prediction" ? (
+                        ) : filter === PREDICTION_FILTER ? (
                           <View
                             style={{
                               width: 16,
@@ -193,7 +193,7 @@ export default function FlowCalendar() {
                       </View>
                     ))}
                   </View>
-                  {selectedFilters.includes("Cycle Prediction") &&
+                  {selectedFilters.includes(PREDICTION_FILTER) &&
                     predictionChoice && (
                       <View
                         style={{

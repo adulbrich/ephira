@@ -30,6 +30,16 @@ This file is maintained lazily: terms are added when a design decision actually 
 
 **Gestational Age**: the derived view of a pregnancy: given a stored start date, an offset and a reference day, it yields the pregnancy day, week, day within the week, trimester, due date and progress. Derived, never stored. The inverse mapping, from each setup answer back to a start date and offset, belongs to the same module. The week is not capped at 40, because a pregnancy can run past its due date; accessors that need a bounded week, such as baby size and week content, clamp for themselves. Progress and days remaining are bounded, since neither means anything past full term.
 
+**Selected Filters**: which filters the calendar is drawing, as one list. Flow comes first, a name whose Catalogue item is gone is not in it, and the list the store holds and the list on disk are the same list. Changing it is one operation, in `db/selectedFilters.ts`, because four screens each used to change it their own way and three of them wrote the list from before the change. The Prediction filter is named there too.
+
+**Prediction Availability**: whether the logged Cycles support predicting, counted through the one definition of a Cycle, together with what the user is told about it. Derived. When it turns false it revokes a Prediction choice the user made, and that revocation takes the same path as the user turning it off themselves.
+
+**Flow Ring**: the home screen's month ring. Given the Days and a reference day it yields the Days in that month with flow, how full the ring is against `MAX_FLOW_LENGTH`, where the marker for the reference day sits, and the gradient stops. Derived, and dated by the local calendar day: formatting a locally built month bound as UTC shifted the whole window by a day anywhere east of Greenwich.
+
+**Pregnancy Anchor**: what is stored for a pregnancy, being a start date and a gestation offset. Everything else about a pregnancy is derived from it and a reference day. There is one reading of it, which validates the offset and has a default on record; the range it may take is the range setup accepts, so the two cannot disagree.
+
+**Authentication Choice**: how the app is locked, being a mode and, for a password, a credential. The two move together or not at all. The credential is derived and written before the mode, so a failure part-way leaves the previous choice intact rather than a mode with no credential behind it.
+
 ## Terms we avoid
 
 **`Mood`, `Symptom`, `Medication` as UI state.** These names belong to the Catalogue entities in `db/schema.ts`. `constants/Interfaces.ts` used them for selection state as well, so `Mood` meant two different things depending on the import; those declarations are gone. Selection state is part of a Logged Day and is named accordingly.

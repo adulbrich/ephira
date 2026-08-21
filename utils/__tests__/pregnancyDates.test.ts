@@ -1,12 +1,18 @@
 import {
   DAYS_IN_WEEK,
+  DEFAULT_GESTATION_OFFSET_DAYS,
   FULL_TERM_DAYS,
   CONCEPTION_TO_CURRENT_DAY_OFFSET,
+  MAX_GESTATION_OFFSET_DAYS,
+  MAX_PREGNANCY_WEEK_INPUT,
+  MIN_GESTATION_OFFSET_DAYS,
 } from "@/constants/Pregnancy";
 import { formatAsISODate } from "@/utils/dates";
 import {
   anchorFromSetupAnswer,
   gestationalAge,
+  parseGestationOffset,
+  setupDefaultsFromAnchor,
   type SetupAnswer,
 } from "@/utils/pregnancyDates";
 
@@ -221,5 +227,99 @@ describe("anchorFromSetupAnswer", () => {
       gestationalAge(anchor.startDateIso, anchor.gestationOffsetDays, today)
         .pregnancyDay,
     ).toBe(0);
+  });
+});
+
+describe("parseGestationOffset", () => {
+  it("takes a stored offset that is in range", () => {
+    expect(parseGestationOffset("21")).toBe(21);
+    expect(parseGestationOffset("-14")).toBe(-14);
+  });
+
+  it("falls back to the default for anything unusable", () => {
+    // All three used to reach gestationalAge from the pregnancy info tab,
+    // which validated nothing: "" read as 0 and "abc" as NaN.
+    expect(parseGestationOffset("")).toBe(DEFAULT_GESTATION_OFFSET_DAYS);
+    expect(parseGestationOffset("   ")).toBe(DEFAULT_GESTATION_OFFSET_DAYS);
+    expect(parseGestationOffset("abc")).toBe(DEFAULT_GESTATION_OFFSET_DAYS);
+    expect(parseGestationOffset("999")).toBe(DEFAULT_GESTATION_OFFSET_DAYS);
+    expect(parseGestationOffset("-999")).toBe(DEFAULT_GESTATION_OFFSET_DAYS);
+    expect(parseGestationOffset(null)).toBe(DEFAULT_GESTATION_OFFSET_DAYS);
+    expect(parseGestationOffset(undefined)).toBe(DEFAULT_GESTATION_OFFSET_DAYS);
+  });
+
+  it("keeps the bounds themselves", () => {
+    expect(parseGestationOffset(String(MIN_GESTATION_OFFSET_DAYS))).toBe(
+      MIN_GESTATION_OFFSET_DAYS,
+    );
+    expect(parseGestationOffset(String(MAX_GESTATION_OFFSET_DAYS))).toBe(
+      MAX_GESTATION_OFFSET_DAYS,
+    );
+  });
+});
+
+describe("setupDefaultsFromAnchor", () => {
+  const REFERENCE = new Date(2026, 7, 15);
+
+  it("opens on the unconfigured defaults when nothing is stored", () => {
+    const defaults = setupDefaultsFromAnchor(
+      {
+        startDateIso: null,
+        gestationOffsetDays: DEFAULT_GESTATION_OFFSET_DAYS,
+      },
+      REFERENCE,
+    );
+
+    expect(defaults.weeks).toBe(2);
+    expect(defaults.days).toBe(0);
+    expect(formatAsISODate(defaults.conceptionDate)).toBe("2026-08-15");
+  });
+
+  it("derives the four answers from one anchor", () => {
+    const anchor = anchorFromSetupAnswer(
+      { method: "weeksPregnant", weeks: 10, days: 3 },
+      REFERENCE,
+    );
+
+    const defaults = setupDefaultsFromAnchor(anchor, REFERENCE);
+
+    expect(defaults.weeks).toBe(10);
+    expect(defaults.days).toBe(3);
+    // Day zero, the last period and the conception date all follow from it.
+    expect(formatAsISODate(defaults.lastPeriod)).toBe("2026-06-10");
+    expect(formatAsISODate(defaults.conceptionDate)).toBe("2026-06-24");
+    expect(formatAsISODate(defaults.dueDate)).toBe("2027-03-17");
+  });
+
+  it("round-trips a pregnancy at week 43 without changing the anchor", () => {
+    // The dialog used to display 42 for this pregnancy and then refuse to save
+    // it, because hydration wrote the uncapped week, the stepper clamped it
+    // and saving validated the raw value.
+    const anchor = anchorFromSetupAnswer(
+      { method: "weeksPregnant", weeks: 43, days: 0 },
+      REFERENCE,
+    );
+
+    const shown = setupDefaultsFromAnchor(anchor, REFERENCE);
+    expect(shown.weeks).toBe(MAX_PREGNANCY_WEEK_INPUT);
+
+    // What the dialog shows is now what it accepts, so saving is a no-op on
+    // the displayed value rather than an error.
+    const resaved = anchorFromSetupAnswer(
+      { method: "weeksPregnant", weeks: shown.weeks, days: shown.days },
+      REFERENCE,
+    );
+    expect(setupDefaultsFromAnchor(resaved, REFERENCE).weeks).toBe(
+      MAX_PREGNANCY_WEEK_INPUT,
+    );
+  });
+
+  it("reads day zero off gestationalAge rather than re-deriving it", () => {
+    const anchor = { startDateIso: "2026-08-15", gestationOffsetDays: 14 };
+    const defaults = setupDefaultsFromAnchor(anchor, REFERENCE);
+    const age = gestationalAge("2026-08-15", 14, REFERENCE);
+
+    expect(defaults.lastPeriod).toEqual(age.pregnancyDayZero);
+    expect(defaults.dueDate).toEqual(age.dueDate);
   });
 });

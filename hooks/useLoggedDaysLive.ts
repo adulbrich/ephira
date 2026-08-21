@@ -3,17 +3,28 @@ import { getDrizzleDatabase } from "@/db/database";
 import * as schema from "@/db/schema";
 import { eq } from "drizzle-orm";
 import type { DayData } from "@/constants/Interfaces";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { useDatabaseChangeNotifier } from "@/stores/calendar-storage";
 import { daysFromJoinedRows } from "@/db/dayRows";
 
-export const useLiveFilteredData = (filters: string[]) => {
+/**
+ * The logged Days, live, already folded.
+ *
+ * That clause is the whole interface. It used to take a `filters` argument that
+ * did not filter -- its only use was `filters.length > 0`, deciding whether to
+ * return the Days at all -- and to return a `loading` flag that was set true
+ * and false in one synchronous body, so React never committed a render with it
+ * true. Both were threaded through three modules to reach a calendar prop.
+ *
+ * Whether anything should be drawn is the caller's decision, next to the filter
+ * list that determines it, where "no filters selected" and "nothing logged" can
+ * still be told apart.
+ */
+export const useLoggedDaysLive = (): DayData[] => {
   const db = getDrizzleDatabase();
   // used to force useLiveQuery to re-run since it doesn't consistently recognize
   // changes to the visibility of symptoms, moods, and medications
   const dbChange = useDatabaseChangeNotifier().databaseChange;
-  const [filteredData, setFilteredData] = useState<DayData[]>([]);
-  const [loading, setLoading] = useState(false);
 
   const moodQuery = db
     .select({
@@ -65,15 +76,5 @@ export const useLiveFilteredData = (filters: string[]) => {
     [dbChange],
   );
 
-  useEffect(() => {
-    setLoading(true);
-    if (data && filters.length > 0) {
-      setFilteredData(daysFromJoinedRows(data));
-    } else {
-      setFilteredData([]);
-    }
-    setLoading(false);
-  }, [data, filters]);
-
-  return { loading, filteredData };
+  return useMemo(() => (data ? daysFromJoinedRows(data) : []), [data]);
 };

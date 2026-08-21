@@ -16,20 +16,16 @@ import {
 import { refreshPredictions } from "@/services/cyclePredictions";
 import { startOfLocalDay } from "@/utils/dates";
 import { useState, useEffect } from "react";
-import { SettingsKeys } from "@/constants/Settings";
 import {
-  insertSetting,
-  getAllDays,
+  applyPredictionChoice,
+  reconcilePredictionChoice,
+} from "@/services/predictionAvailability";
+import {
   getPredictionAccuracy,
   generateTestPredictionData,
   deleteAllPredictionSnapshots,
 } from "@/db/database";
 import { CYCLE_PREDICTION_CONSTANTS } from "@/constants/CyclePrediction";
-import {
-  countCompleteCycles,
-  hasEnoughCyclesForPrediction,
-} from "@/services/cyclePredictionLogic";
-import type { DayData } from "@/constants/Interfaces";
 
 export default function CyclePredictions() {
   const theme = useTheme();
@@ -68,68 +64,43 @@ export default function CyclePredictions() {
     }
   }, [predictionChoice]);
 
+  // Availability, and revoking the choice when the data stops supporting it,
+  // are one operation in services/predictionAvailability.ts. This screen reads
+  // the answer and renders it.
   useEffect(() => {
-    const checkDataQuality = async () => {
-      try {
-        const allDays = await getAllDays();
-        const flowDays = allDays.filter((day) => day.flow_intensity);
+    let stale = false;
 
-        if (flowDays.length === 0) {
-          setDataStatus({
-            cycleCount: 0,
-            hasEnoughData: false,
-            message:
-              "No flow data logged yet. Start logging to enable predictions!",
-          });
-          return;
-        }
-
-        // One definition of a Cycle, shared with the cycle tab. This used to
-        // be its own gap-detection pass that never consulted the
-        // is_cycle_start / is_cycle_end markers, so marking a cycle start
-        // changed what the cycle tab said and not what this screen said.
-        const cycleCount = countCompleteCycles(flowDays as DayData[]);
-
-        const hasEnough = hasEnoughCyclesForPrediction(flowDays as DayData[]);
-        let message = "";
-
-        if (hasEnough) {
-          message = `Great! You have ${cycleCount} complete cycles logged.`;
-        } else {
-          const needed =
-            CYCLE_PREDICTION_CONSTANTS.MIN_CYCLES_FOR_PREDICTION - cycleCount;
-          message = `You have ${cycleCount} cycle${cycleCount === 1 ? "" : "s"}. Log ${needed} more complete cycle${needed === 1 ? "" : "s"} for predictions.`;
-        }
-
-        setDataStatus({ cycleCount, hasEnoughData: hasEnough, message });
-
-        // Auto-disable predictions if data becomes insufficient
-        if (!hasEnough && predictionChoice) {
+    reconcilePredictionChoice({
+      choice: predictionChoice,
+      filters: selectedFilters,
+      referenceDay: startOfLocalDay(),
+    })
+      .then((result) => {
+        if (stale) return;
+        setDataStatus({
+          cycleCount: result.availability.cycleCount,
+          hasEnoughData: result.availability.hasEnough,
+          message: result.availability.message,
+        });
+        if (result.revoked) {
           setPredictionChoice(false);
           setPredictedCycle([]);
-          await insertSetting(
-            SettingsKeys.cyclePredictions,
-            JSON.stringify(false),
-          );
-          // Remove from filters if present
-          if (selectedFilters.includes("Cycle Prediction")) {
-            const updatedFilters = selectedFilters.filter(
-              (filter) => filter !== "Cycle Prediction",
-            );
-            setSelectedFilters(updatedFilters);
-          }
+          setSelectedFilters(result.filters);
         }
-      } catch (error) {
+      })
+      .catch((error) => {
         console.error("Error checking data quality:", error);
+        if (stale) return;
         setDataStatus({
           cycleCount: 0,
           hasEnoughData: false,
           message: "Error checking data quality",
         });
-      }
-    };
+      });
 
-    checkDataQuality();
+    return () => {
+      stale = true;
+    };
   }, [
     predictionChoice,
     selectedFilters,
@@ -138,43 +109,39 @@ export default function CyclePredictions() {
     setSelectedFilters,
   ]);
 
-  // Sync prediction state with calendar data
+  // Keep the forecast in step with the data while predictions are on.
   useEffect(() => {
-    const syncPredictionData = async () => {
-      if (!predictionChoice) {
-        // Clear prediction data when disabled
-        setPredictedCycle([]);
-      } else if (dataStatus.hasEnoughData) {
-        // Fetch prediction data when enabled and has enough data
-        setPredictedCycle(await refreshPredictions(startOfLocalDay()));
-      }
-    };
+    if (!predictionChoice) {
+      setPredictedCycle([]);
+      return;
+    }
+    if (!dataStatus.hasEnoughData) return;
 
-    syncPredictionData();
+    let stale = false;
+    refreshPredictions(startOfLocalDay())
+      .then((predictions) => {
+        if (!stale) setPredictedCycle(predictions);
+      })
+      .catch((error) => {
+        console.error("Error refreshing predictions:", error);
+      });
+
+    return () => {
+      stale = true;
+    };
   }, [predictionChoice, dataStatus.hasEnoughData, setPredictedCycle]);
 
   const handleOptionChange = async () => {
-    const newPredictionChoice = !predictionChoice;
-    setPredictionChoice(newPredictionChoice);
+    // The same write path the data uses when it revokes the choice.
+    const result = await applyPredictionChoice({
+      choice: !predictionChoice,
+      filters: selectedFilters,
+      referenceDay: startOfLocalDay(),
+    });
 
-    if (newPredictionChoice) {
-      // If enabling cycle predictions, add filter back if not present and fetch data
-      if (!selectedFilters.includes("Cycle Prediction")) {
-        setSelectedFilters([...selectedFilters, "Cycle Prediction"]);
-      }
-      setPredictedCycle(await refreshPredictions(startOfLocalDay()));
-    } else {
-      // If disabling cycle predictions, remove the filter
-      const updatedFilters = selectedFilters.filter(
-        (filter) => filter !== "Cycle Prediction",
-      );
-      setSelectedFilters(updatedFilters);
-    }
-
-    await insertSetting(
-      SettingsKeys.cyclePredictions,
-      JSON.stringify(newPredictionChoice),
-    );
+    setPredictionChoice(result.choice);
+    setSelectedFilters(result.filters);
+    setPredictedCycle(result.predictions);
   };
 
   return (

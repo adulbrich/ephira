@@ -10,8 +10,4 @@ export type NotSurePath =
   | "lastPeriod"
   | "conceptionDate";
 
-export type DateFieldKey =
-  | "dueDate"
-  | "lastPeriod"
-  | "conceptionDate"
-  | "positiveTestDate";
+export type DateFieldKey = "dueDate" | "lastPeriod" | "conceptionDate";

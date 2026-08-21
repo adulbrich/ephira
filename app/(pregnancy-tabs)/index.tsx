@@ -6,24 +6,29 @@ import FadeInView from "@/components/animations/FadeInView";
 import ContractionTimer from "@/components/pregnancy/ContractionTimer";
 import PregnancyProgressRing from "@/components/pregnancy/PregnancyProgressRing";
 import PregnancySetupDialog from "@/components/pregnancy/PregnancySetupDialog";
-import { getSetting } from "@/db/database";
-import { SettingsKeys } from "@/constants/Settings";
-import { getBabySizeForWeek, PREGNANCY_WEEKS } from "@/constants/Pregnancy";
+import {
+  DEFAULT_GESTATION_OFFSET_DAYS,
+  getBabySizeForWeek,
+  PREGNANCY_WEEKS,
+} from "@/constants/Pregnancy";
 import { usePregnancySetup } from "@/hooks/usePregnancySetup";
 import { startOfLocalDay } from "@/utils/dates";
+import { loadPregnancyAnchor } from "@/db/pregnancyAnchor";
 import { formatDueDate, gestationalAge } from "@/utils/pregnancyDates";
 
 export default function PregnancyHome() {
   const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [startDateIso, setStartDateIso] = useState<string | null>(null);
-  const [gestationOffsetDays, setGestationOffsetDays] = useState(14);
+  const [gestationOffsetDays, setGestationOffsetDays] = useState(
+    DEFAULT_GESTATION_OFFSET_DAYS,
+  );
 
   const today = useMemo(() => startOfLocalDay(), []);
 
   const {
     setSetupVisible,
-    hydrateFromSettings,
+    hydrateFromAnchor,
     setupVisible,
     setupMethod,
     setSetupMethod,
@@ -36,7 +41,6 @@ export default function PregnancyHome() {
     dueDateInput,
     lastPeriodInput,
     conceptionDateInput,
-    positiveTestDateInput,
     activeDateField,
     showDatePicker,
     setShowDatePicker,
@@ -57,23 +61,18 @@ export default function PregnancyHome() {
 
   const loadPregnancySettings = useCallback(async () => {
     try {
-      const startSetting = await getSetting(SettingsKeys.pregnancyStartDate);
+      // Read once. The start date used to be read here and again inside
+      // hydrateFromSettings, which then ignored the boolean it was handed.
+      const anchor = await loadPregnancyAnchor();
 
-      if (startSetting?.value) {
-        setStartDateIso(startSetting.value);
-        setSetupVisible(false);
-      } else {
-        setSetupVisible(true);
-      }
-
-      const { gestationOffsetDays: offset } = await hydrateFromSettings(
-        !!startSetting?.value,
-      );
-      setGestationOffsetDays(offset);
+      setStartDateIso(anchor.startDateIso);
+      setSetupVisible(!anchor.startDateIso);
+      setGestationOffsetDays(anchor.gestationOffsetDays);
+      hydrateFromAnchor(anchor);
     } finally {
       setLoading(false);
     }
-  }, [hydrateFromSettings, setSetupVisible]);
+  }, [hydrateFromAnchor, setSetupVisible]);
 
   useEffect(() => {
     loadPregnancySettings();
@@ -179,7 +178,6 @@ export default function PregnancyHome() {
           dueDateInput={dueDateInput}
           lastPeriodInput={lastPeriodInput}
           conceptionDateInput={conceptionDateInput}
-          positiveTestDateInput={positiveTestDateInput}
           activeDateField={activeDateField}
           showDatePicker={showDatePicker}
           setShowDatePicker={setShowDatePicker}

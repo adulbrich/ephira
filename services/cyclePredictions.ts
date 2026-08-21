@@ -1,6 +1,6 @@
-import { getAllDays } from "@/db/database";
+import { loadFlowDays } from "@/db/flowDays";
 import { savePredictions } from "@/db/operations/predictionSnapshots";
-import type { DayData, PredictedDate } from "@/constants/Interfaces";
+import type { PredictedDate } from "@/constants/Interfaces";
 import { generatePredictions } from "@/services/cyclePredictionLogic";
 import { NotificationService } from "@/services/notificationService";
 
@@ -23,17 +23,7 @@ import { NotificationService } from "@/services/notificationService";
 export async function refreshPredictions(
   referenceDay: Date,
 ): Promise<PredictedDate[]> {
-  const allDays = await getAllDays();
-
-  const flowDays: DayData[] = allDays
-    .filter((day) => day.flow_intensity)
-    .map((day) => ({
-      ...day,
-      flow_intensity: day.flow_intensity ?? 0,
-      is_cycle_start: day.is_cycle_start ?? undefined,
-      is_cycle_end: day.is_cycle_end ?? undefined,
-      notes: day.notes ?? undefined,
-    }));
+  const flowDays = await loadFlowDays();
 
   if (flowDays.length === 0) return [];
 

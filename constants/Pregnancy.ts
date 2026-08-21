@@ -8,9 +8,21 @@ export const PREGNANCY_WEEKS = 40;
 export const DAYS_IN_WEEK = 7;
 export const FULL_TERM_DAYS = PREGNANCY_WEEKS * DAYS_IN_WEEK;
 
-export const MAX_GESTATION_OFFSET_DAYS = 280;
-export const MIN_GESTATION_OFFSET_DAYS = -280;
 export const MAX_PREGNANCY_WEEK_INPUT = 42;
+
+/**
+ * The range a stored gestation offset may take.
+ *
+ * Derived from the largest week setup accepts rather than written out, because
+ * the two were 280 and 42 weeks -- 294 days -- and disagreed. A pregnancy
+ * entered at 42 weeks produced an offset of 287, which every reader then
+ * rejected as out of range and replaced with the default, so reopening the app
+ * showed week 3. The input bound and the storage bound describe the same thing
+ * and now cannot drift apart.
+ */
+export const MAX_GESTATION_OFFSET_DAYS =
+  MAX_PREGNANCY_WEEK_INPUT * DAYS_IN_WEEK;
+export const MIN_GESTATION_OFFSET_DAYS = -MAX_GESTATION_OFFSET_DAYS;
 export const MAX_DAY_IN_WEEK_INPUT = 6;
 
 export const DEFAULT_GESTATION_OFFSET_DAYS = 14;

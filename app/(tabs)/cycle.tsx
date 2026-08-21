@@ -15,9 +15,9 @@ import PhaseCard from "@/components/cycle/PhaseCard";
 import CycleStatsCard from "@/components/cycle/CycleStatsCard";
 import TipsCard from "@/components/cycle/TipsCard";
 import { useCyclePhase } from "@/hooks/useCyclePhase";
+import { useFlowDays } from "@/hooks/useFlowDays";
 import { startOfLocalDay } from "@/utils/dates";
 import {
-  useData,
   usePredictedCycle,
   useDatabaseChangeNotifier,
   usePredictionChoice,
@@ -112,7 +112,7 @@ function PredictionsDisabledCard() {
 
 export default function Cycle() {
   const theme = useTheme();
-  const { data: flowData } = useData();
+  const flowData = useFlowDays();
   const { predictedCycle, setPredictedCycle } = usePredictedCycle();
   const { databaseChange } = useDatabaseChangeNotifier();
   const { predictionChoice } = usePredictionChoice();

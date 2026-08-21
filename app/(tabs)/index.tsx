@@ -1,9 +1,9 @@
 import { StyleSheet, View, Pressable } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import FlowChart from "@/components/FlowChart";
+import { useFlowDays } from "@/hooks/useFlowDays";
 import { FlowColors } from "@/constants/Colors";
 import {
-  useData,
   useDatabaseChangeNotifier,
   usePredictedCycle,
 } from "@/stores/calendar-storage";
@@ -29,7 +29,7 @@ import { TourAnchor } from "@/assets/src/tour/TourAnchor";
 export default function HomeScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const { data: flowData } = useData();
+  const flowData = useFlowDays();
   const [busy, setBusy] = useState(false);
   const [activeBCType, setActiveBCType] = useState<string | null>(null);
   const [loggedToday, setLoggedToday] = useState<string | null>(null);
