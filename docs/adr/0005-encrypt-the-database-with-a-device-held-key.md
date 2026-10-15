@@ -3,6 +3,7 @@
 - **Status**: Accepted
 - **Date**: 2026-10-14
 - **Context commit**: 749b54f
+- **Amended**: 2026-10-15, before implementation. The commit point is a rename, "Start fresh" keeps the key, and a key that cannot be read asks for a restart. See `docs/plans/2026-10-15-encrypt-the-database.md`.
 
 ## Context
 
@@ -21,15 +22,16 @@ Two further facts shape the fix:
 
 **The key never leaves the device.** iOS stores it as `THIS_DEVICE_ONLY`. On Android, `expo-secure-store` wraps it with a Keystore key, which cannot be exported, and `android.allowBackup` is set to `false`. A backup holds nothing readable, and a new phone starts empty.
 
-**The encrypted database lives in a new file, `ephira.encrypted.db`.** `ephira.db` is only ever the legacy plaintext file. Which of the two files exist says which state the install is in, with no header sniffing and no rename. One invariant makes every state recoverable: **nothing writes to the encrypted file while the plaintext file exists.** Until the plaintext file is deleted it is the source of truth, so an interrupted upgrade is always safe to redo.
+**Three file names, and a rename is the commit point.** `ephira.db` is only ever the legacy plaintext file. An upgrade exports into `ephira.encrypting.db`, and only once that copy opens with the key and holds as many schema objects as the original is it renamed to `ephira.encrypted.db`. The invariant: **once `ephira.encrypted.db` exists, it is the source of truth, and `ephira.encrypting.db` never is.** Before the rename the plaintext file is the truth, so an interrupted export is always safe to redo. After it, a plaintext file is a leftover to delete, whether the upgrade stopped before deleting it or something recreated it later by opening `ephira.db` by name.
 
-At launch, before anything else touches the database:
+At launch, before anything else touches the database. An `ephira.encrypting.db` is always a leftover and is deleted wherever this sequence meets one.
 
 | `ephira.db` | `ephira.encrypted.db` | Action |
 | --- | --- | --- |
 | absent | absent | Fresh install. Read the key, or generate and store one. Create the encrypted file. |
-| present | absent | Upgrade. Read or create the key. `ATTACH` the encrypted file with the key, `SELECT sqlcipher_export('encrypted')`, `DETACH`. Close the plaintext connection, delete `ephira.db` and any `-journal`, `-wal` and `-shm` beside it, open the encrypted file. |
-| present | present | Interrupted upgrade. Delete the encrypted file and its siblings, then upgrade as above. |
+| present | absent | Upgrade. Read or create the key. `ATTACH` `ephira.encrypting.db` with the key, `SELECT sqlcipher_export('pending')`, `DETACH`, close. Open the copy with the key and compare its schema object count with the original's. Rename it to `ephira.encrypted.db`, open it, then delete `ephira.db` and any `-journal`, `-wal` and `-shm` beside it. |
+| present | present, with schema objects | Upgrade finished but the plaintext file survived, or was recreated. Open the encrypted file and delete the plaintext one. |
+| present | present, empty | A stray, created by something that opened `ephira.encrypted.db` before this sequence ran. Delete it and upgrade from the plaintext file. |
 | absent | present | Normal launch. Open with the key, then probe with `SELECT count(*) FROM sqlite_master`. |
 
 Failures resolve to one of three statuses:
@@ -37,14 +39,14 @@ Failures resolve to one of three statuses:
 | Status | When | What the user sees |
 | --- | --- | --- |
 | `ready` | The database is open and readable, or the upgrade failed and the plaintext file was opened instead | The app |
-| `unreadable` | The encrypted file exists and the key is absent, or the probe fails | A screen explaining that the data cannot be opened on this device, with **Start fresh**, which deletes the encrypted file and the key and asks the user to restart the app |
-| `keyUnavailable` | Reading the key throws, as opposed to returning nothing, while only the encrypted file exists | A screen with **Try again**. Nothing is deleted. |
+| `unreadable` | The encrypted file exists and the key is absent, malformed, or does not open it | A screen explaining that the data cannot be opened on this device, with **Start fresh**, which deletes the encrypted file and asks the user to close and reopen the app. The key stays: the next launch reuses it for a new file, or replaces it if it is malformed. |
+| `keyUnavailable` | Reading the key throws, as opposed to returning nothing, while the encrypted file exists | A screen asking the user to close and reopen the app. Nothing is deleted. There is no in-app retry, because every module that captured the database handle at import holds the placeholder, and only a restart re-runs the sequence. |
 
-**A failed upgrade falls back to the plaintext file.** If storing the key, the export or the delete throws, any partial encrypted file is deleted, the plaintext file opens as it did in 1.4.0, and the upgrade runs again at the next launch. A device stuck there stays unencrypted rather than locked out of its data. A fresh install that cannot read or store a key does the same: it creates a plaintext `ephira.db`, and the next launch upgrades it. The rule is that the app fails open while no encrypted file exists, and fails closed once one does.
+**A failed upgrade falls back to the plaintext file.** If reading or storing the key, the export, the comparison or the rename throws, `ephira.encrypting.db` is deleted, the plaintext file opens as it did in 1.4.0, and the upgrade runs again at the next launch. A failure after the rename does not fall back: the encrypted file is the truth by then, and a plaintext file that cannot be deleted is deleted at the next launch instead. A device stuck there stays unencrypted rather than locked out of its data. A fresh install that cannot read or store a key does the same: it creates a plaintext `ephira.db`, and the next launch upgrades it. The rule is that the app fails open while no encrypted file exists, and fails closed once one does.
 
 **The decision logic is its own module and takes its effects as parameters.** It receives the file checks, deletes, key reads and writes and the SQL as functions, and returns a status plus a connection. `db/operations/setup.ts` remains the only importer of `expo-sqlite` and plugs the real implementations in, so the test seam in `__tests__/helpers/testDatabase.ts` is unchanged. When the status is not `ready`, `getDatabase()` returns an in-memory connection so that module-level captures still evaluate, and `app/_layout.tsx` mounts nothing that queries until the status is `ready`.
 
-**`<SQLiteProvider>` is removed.** It would open the encrypted file without a key.
+**`<SQLiteProvider>` is removed, and only `db/operations/setup.ts` may import `expo-sqlite`.** The provider opened `ephira.db` by name, which after an upgrade recreates an empty plaintext file on every mount. A test fails if any other file imports `expo-sqlite`.
 
 ## Rationale
 
@@ -54,7 +56,9 @@ Failures resolve to one of three statuses:
 
 **`AFTER_FIRST_UNLOCK` over `WHEN_UNLOCKED`.** iOS gives the database file `NSFileProtectionCompleteUntilFirstUserAuthentication` by default. Matching the key to the file adds no new locked-phone failure modes; a stricter key would only add some without making the file stricter.
 
-**A new file name over in-place replacement.** Replacing `ephira.db` would need a rename that overwrites an open database's file and a header check to tell an encrypted `ephira.db` from a plaintext one. Two names make the state a pair of `exists` checks.
+**A new file name over in-place replacement.** Replacing `ephira.db` would need a header check to tell an encrypted `ephira.db` from a plaintext one. With separate names the state is a set of `exists` checks.
+
+**A rename as the commit point, not "both files exist means interrupted".** The first version of this decision deleted the encrypted file whenever a plaintext file sat beside it, on the reading that the export had not finished. That reading is wrong whenever anything recreates `ephira.db` after a finished upgrade, and `<SQLiteProvider>` did exactly that: the next launch would have deleted the only copy of the data. Exporting under a temporary name and renaming once the copy is verified means a file under the final name is always complete, so its presence alone settles which file is the truth. An empty encrypted file is the one exception, because nothing the upgrade writes is empty.
 
 **Fail open on upgrade, fail closed on an encrypted file.** A failed upgrade leaves the status quo, which is bad but no worse than 1.4.0. An encrypted file the app cannot open is never deleted without the user asking, because "the key read threw" and "the key is gone" look alike from a distance and only one of them means the data is lost.
 
