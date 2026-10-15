@@ -2,6 +2,12 @@ import { List, Divider, Text, useTheme } from "react-native-paper";
 import { ThemedView } from "@/components/ThemedView";
 import { View, Platform, StyleSheet } from "react-native";
 
+// react-native-paper caps a description at 2 lines unless told otherwise, and
+// React Native reads 0 as no limit. Policy text must never be cut off, and a
+// hand-picked cap clipped the Data Use paragraph once it grew: it wraps
+// differently with screen width and font size.
+const NO_LINE_LIMIT = 0;
+
 export default function PrivacyPolicy() {
   const theme = useTheme();
   return (
@@ -33,7 +39,7 @@ export default function PrivacyPolicy() {
                 store within the app.
               </Text>
             }
-            descriptionNumberOfLines={10}
+            descriptionNumberOfLines={NO_LINE_LIMIT}
           />
 
           <List.Item
@@ -153,10 +159,7 @@ export default function PrivacyPolicy() {
                 export it first.
               </Text>
             }
-            // 0 is React Native's "no limit". A fixed cap clipped this
-            // paragraph once it grew, and wraps differently by screen width
-            // and font size.
-            descriptionNumberOfLines={0}
+            descriptionNumberOfLines={NO_LINE_LIMIT}
           />
 
           <List.Item
@@ -225,7 +228,7 @@ export default function PrivacyPolicy() {
                 </Text>
               </Text>
             }
-            descriptionNumberOfLines={20}
+            descriptionNumberOfLines={NO_LINE_LIMIT}
           />
           <List.Item
             title="Changes to this Privacy Policy"
@@ -236,7 +239,7 @@ export default function PrivacyPolicy() {
                 on this page.
               </Text>
             }
-            descriptionNumberOfLines={10}
+            descriptionNumberOfLines={NO_LINE_LIMIT}
           />
           <List.Item
             title="Contact Us"
@@ -258,7 +261,7 @@ export default function PrivacyPolicy() {
                 </View>
               </Text>
             }
-            descriptionNumberOfLines={10}
+            descriptionNumberOfLines={NO_LINE_LIMIT}
           />
         </List.Accordion>
       </List.Section>
