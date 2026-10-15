@@ -163,11 +163,12 @@ beforeEach(() => {
 
 Babel hoists `jest.mock` above the imports wherever it is written, so it takes effect before the module-level `const db = getDrizzleDatabase()` in each operations file evaluates. With it in place `expo-sqlite` is never loaded, so no production code needs to change to be testable.
 
-Three things worth knowing:
+Four things worth knowing:
 
 - **Foreign keys are ON in tests**, deliberately stricter than the device, which has no `PRAGMA foreign_keys` anywhere and so runs with them off. A delete that orphans child rows passes on device and fails here. That is the point; do not turn them off to make a test pass.
 - **The handle is per test file**, because those module-level captures happen once per module registry. Isolation between tests comes from `resetTestDatabase()`, which empties every table and leaves the schema in place.
 - **SQLCipher is not exercised.** `better-sqlite3` has no SQLCipher, so the suite proves the launch sequence in `db/databaseFile.ts` with a fake and says nothing about encryption. Whether a device's database is encrypted is checked by hand: `ephira.encrypted.db` must not begin with the bytes `SQLite format 3\0`.
+- **The helper mirrors `setup.ts`.** `__tests__/helpers/testDatabase.ts` replaces `db/operations/setup.ts` wholesale, so every export added to `setup.ts` needs a stand-in there, or code under test receives `undefined`.
 
 Live queries are out of scope: `useLiveQuery` is not exercised, so `hooks/useLiveFilteredData.ts` and `hooks/usePregnancyMarkedDates.ts` are not covered by this setup.
 

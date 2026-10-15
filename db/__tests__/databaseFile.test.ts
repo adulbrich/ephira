@@ -316,6 +316,28 @@ describe("a fresh install", () => {
 });
 
 describe("upgrading a plaintext database", () => {
+  it("stays on an empty plaintext file until it has tables, then upgrades", () => {
+    const device = new FakeDevice({ [PLAINTEXT_DATABASE]: emptyFile(null) });
+
+    const opened = openDatabaseFile(device);
+
+    expect(opened.status).toBe("ready");
+    expect(opened.connection).toEqual({ name: PLAINTEXT_DATABASE, key: null });
+    expect(device.names()).toEqual([PLAINTEXT_DATABASE]);
+    expectOnlyOpen(device, opened);
+
+    // Migrations ran on the plaintext file during that launch.
+    device.files.set(PLAINTEXT_DATABASE, legacyDatabase());
+    device.restart();
+    const relaunched = openDatabaseFile(device);
+
+    expect(device.names()).toEqual([ENCRYPTED_DATABASE]);
+    expect(device.file(ENCRYPTED_DATABASE)).toEqual(
+      encryptedDatabase(GENERATED_KEY),
+    );
+    expectOnlyOpen(device, relaunched);
+  });
+
   it("moves the data into the encrypted file and deletes the plaintext one", () => {
     const device = new FakeDevice({ [PLAINTEXT_DATABASE]: legacyDatabase() });
 
@@ -530,6 +552,25 @@ describe("an encrypted database", () => {
     openDatabaseFile(device);
 
     expect(device.names()).toEqual([ENCRYPTED_DATABASE]);
+  });
+
+  it("deletes a leftover export even when the database is unreadable", () => {
+    const device = new FakeDevice(
+      {
+        [ENCRYPTED_DATABASE]: encryptedDatabase(OTHER_KEY),
+        [PENDING_DATABASE]: emptyFile(KEY),
+      },
+      KEY,
+    );
+
+    const opened = openDatabaseFile(device);
+
+    expect(opened.status).toBe("unreadable");
+    expect(device.names()).toEqual([ENCRYPTED_DATABASE]);
+    expect(device.file(ENCRYPTED_DATABASE)).toEqual(
+      encryptedDatabase(OTHER_KEY),
+    );
+    expectOnlyOpen(device, opened);
   });
 
   it("treats an empty encrypted file beside a plaintext one as a stray, and upgrades", () => {

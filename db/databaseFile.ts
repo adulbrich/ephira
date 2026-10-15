@@ -105,6 +105,8 @@ export function discardUnreadableDatabase<C>(files: DatabaseFiles<C>): void {
 function openEncrypted<C>(
   files: DatabaseFiles<C>,
 ): OpenedDatabase<C> | undefined {
+  removeLeftover(files, PENDING_DATABASE);
+
   let key: string | null;
   try {
     key = files.readKey();
@@ -141,7 +143,6 @@ function openEncrypted<C>(
     }
     removeLeftover(files, PLAINTEXT_DATABASE);
   }
-  removeLeftover(files, PENDING_DATABASE);
   return { status: "ready", connection: verified.connection };
 }
 
@@ -154,15 +155,17 @@ function upgrade<C>(files: DatabaseFiles<C>): OpenedDatabase<C> {
     files.rename(PENDING_DATABASE, ENCRYPTED_DATABASE);
   } catch (error) {
     // A rename that moved the file and then threw has still committed.
-    if (files.exists(ENCRYPTED_DATABASE)) {
+    if (!files.exists(ENCRYPTED_DATABASE)) {
       console.warn(
-        "The encrypted database moved into place with an error",
+        "Could not encrypt the database; staying on plaintext",
         error,
       );
-      return openEncrypted(files) ?? fallBackToPlaintext(files);
+      return fallBackToPlaintext(files);
     }
-    console.warn("Could not encrypt the database; staying on plaintext", error);
-    return fallBackToPlaintext(files);
+    console.warn(
+      "The encrypted database moved into place with an error",
+      error,
+    );
   }
   return openEncrypted(files) ?? fallBackToPlaintext(files);
 }

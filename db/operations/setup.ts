@@ -4,8 +4,8 @@
  * This is the only file that imports expo-sqlite
  * (db/__tests__/expoSqliteImport.test.ts holds it to that), and tests
  * substitute it wholesale through __tests__/helpers/testDatabase.ts, so
- * nothing here runs under Jest. Task 4 of
- * docs/plans/2026-10-15-encrypt-the-database.md checks it on a device.
+ * nothing here runs under Jest. ADR 0005's Consequences say how it is
+ * checked on a device instead.
  */
 import * as Crypto from "expo-crypto";
 import { File } from "expo-file-system";

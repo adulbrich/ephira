@@ -31,7 +31,7 @@ At launch, before anything else touches the database. An `ephira.encrypting.db` 
 | absent | absent | Fresh install. Read the key, or generate and store one. Create the encrypted file. |
 | present | absent | Upgrade. Read or create the key. `ATTACH` `ephira.encrypting.db` with the key, `SELECT sqlcipher_export('pending')`, `DETACH`, close. Open the copy with the key and compare its schema object count with the original's. Rename it to `ephira.encrypted.db`, open it, then delete `ephira.db` and any `-journal`, `-wal` and `-shm` beside it. |
 | present | present, with schema objects | Upgrade finished but the plaintext file survived, or was recreated. Open the encrypted file and delete the plaintext one. |
-| present | present, empty | A stray, created by something that opened `ephira.encrypted.db` before this sequence ran. Delete it and upgrade from the plaintext file. |
+| present | present, empty | A stray, created by something that opened `ephira.encrypted.db` before this sequence ran, or left by a fresh install that could not finish. Delete it and upgrade from the plaintext file. This needs a key that opens the file; without one, the `unreadable` status below applies and nothing is deleted. |
 | absent | present | Normal launch. Open with the key, then probe with `SELECT count(*) FROM sqlite_master`. |
 
 Failures resolve to one of three statuses:

@@ -5,6 +5,8 @@
  * undone: <SQLiteProvider databaseName="ephira.db"> recreated an empty
  * plaintext file on every mount. The launch sequence tolerates that file, but
  * a second opener is a second set of rules for which file is the truth.
+ * Subpaths count: expo-sqlite/kv-store and expo-sqlite/localStorage open
+ * plaintext databases of their own.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -32,7 +34,7 @@ function sourceFiles(directory: string): string[] {
 it("only db/operations/setup.ts imports expo-sqlite", () => {
   const importers = sourceFiles(ROOT)
     .filter((file) =>
-      /from\s+["']expo-sqlite["']|require\(\s*["']expo-sqlite["']\s*\)/.test(
+      /(?:from\s+|import\s+|import\s*\(\s*|require\(\s*)["']expo-sqlite(?:\/[^"']*)?["']/.test(
         fs.readFileSync(file, "utf8"),
       ),
     )
