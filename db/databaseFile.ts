@@ -11,8 +11,10 @@
  * still beside it: PENDING_DATABASE also there means the copy may be partial
  * (see copyMayBePartial), and an empty encrypted file is a stray (see
  * openEncrypted). PENDING_DATABASE is never the truth. Before the rename, and
- * in those two cases, the plaintext file is the truth and every failure falls
- * back to it. Otherwise nothing falls back.
+ * in those two cases once they are recognised, the plaintext file is the truth
+ * and every failure falls back to it. A stray is recognised only once the key
+ * opens it and it reads as empty; until then it is treated like any encrypted
+ * file. Otherwise nothing falls back.
  */
 
 /** The legacy plaintext database, written by every release up to 1.4.0. */

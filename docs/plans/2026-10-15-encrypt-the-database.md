@@ -14,7 +14,7 @@
 
 ## Global constraints
 
-- File names, exactly: `ephira.db` (legacy plaintext), `ephira.encrypting.db` (export in progress), `ephira.encrypted.db` (encrypted, the source of truth once it exists, unless `ephira.encrypting.db` and `ephira.db` are both still beside it; see the code review row in Decisions).
+- File names, exactly: `ephira.db` (legacy plaintext), `ephira.encrypting.db` (export in progress), `ephira.encrypted.db` (encrypted, the source of truth once it exists, with two exceptions while `ephira.db` is beside it: `ephira.encrypting.db` also there, or the file reads as empty; see Decisions).
 - Key: 32 bytes from `expo-crypto`, lowercase hex (64 characters), stored in `expo-secure-store` under `ephira.databaseKey` with `keychainAccessible: AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY`, issued as a raw key: `PRAGMA key = 'x''<hex>'''`.
 - `db/operations/setup.ts` is the only file that imports `expo-sqlite`.
 - `android.allowBackup` is `false`.
@@ -31,7 +31,7 @@ These amend the ADR as first approved. The ADR text already reflects them.
 | Question | Decision |
 | --- | --- |
 | What marks an upgrade as finished? | **A rename.** The export goes to `ephira.encrypting.db` and is renamed to `ephira.encrypted.db` only after it opens with the key and matches the original's schema object count. The first version deleted the encrypted file whenever a plaintext one sat beside it, and `<SQLiteProvider databaseName="ephira.db">` recreates exactly that on every mount, so the next launch would have deleted the only copy of the data. |
-| An empty encrypted file beside a plaintext one | A stray. Delete it and upgrade from the plaintext file. An upgrade writes an empty file only from an empty plaintext one, which then stays on plaintext for one more launch (ADR 0005, row 2). |
+| An empty encrypted file beside a plaintext one | A stray. Delete it and upgrade from the plaintext file. An upgrade writes an empty file only from an empty plaintext one, which then stays on plaintext for one more launch (ADR 0005, row 2). The code blocks in this plan predate this wording. |
 | What does "Start fresh" delete? | The encrypted file only. The key stays; the next launch reuses it for a new file, or replaces it if malformed. |
 | The `keyUnavailable` screen | Asks the user to close and reopen the app. An in-app retry cannot work: every module that captured the database handle at import holds the in-memory stand-in. |
 | A rename that is not atomic (code review, after Task 5) | Below Android API 26, expo-file-system renames by copying and then deleting, so a partial `ephira.encrypted.db` can exist. `ephira.encrypting.db` survives until the copy is complete, so with `ephira.db` also present it marks the copy as possibly partial: the copy is discarded and the upgrade redone, and the mark is kept until the copy is gone. ADR 0005 carries the rule; the code blocks in this plan predate it. |
