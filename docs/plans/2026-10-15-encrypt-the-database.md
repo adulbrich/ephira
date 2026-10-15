@@ -34,6 +34,7 @@ These amend the ADR as first approved. The ADR text already reflects them.
 | An empty encrypted file beside a plaintext one | A stray. Delete it and upgrade from the plaintext file. Nothing an upgrade writes is empty. |
 | What does "Start fresh" delete? | The encrypted file only. The key stays; the next launch reuses it for a new file, or replaces it if malformed. |
 | The `keyUnavailable` screen | Asks the user to close and reopen the app. An in-app retry cannot work: every module that captured the database handle at import holds the in-memory stand-in. |
+| What counts as unreadable? (Task 1 review) | Only a key that does not open the file: the adapter maps SQLCipher's `file is not a database` to `WrongKeyError`. Every other failure to open or read the encrypted file, and a key read that throws, is `temporarilyUnavailable`, which replaces `keyUnavailable`. Otherwise an I/O error on a readable file would lead the user to "Start fresh". Task 1's code was amended in its fix round; the code blocks in Task 1 below predate that. |
 
 ## Review Focus
 
@@ -44,6 +45,7 @@ Failure modes the spec implies that no Jest test can reach, most likely first. E
 3. **The raw-key quoting.** `PRAGMA key` and `ATTACH ... KEY` both use `'x''<hex>'''`. If SQLCipher misreads it, the data is unreadable, or encrypted under a passphrase-derived key instead. Pinned by Task 4 Step 4: the file header is not plaintext, `sqlite3` refuses it, and the app shows the seeded day.
 4. **The splash screen on the unavailable screen.** `SplashScreen.preventAutoHideAsync()` runs at import and only `checkAuthentication` hides it, which never runs there. Pinned by Task 4 Step 6 seeing the screen at all.
 5. **A second opener of a database file by name.** Pinned in Jest by the import tripwire in Task 2 Step 1.
+6. **The wrong-key message match.** The adapter recognises a wrong key by the text `file is not a database` in expo-sqlite's error. If the text differs, a wrong key shows "close and reopen" forever instead of "Start fresh". Pinned by Task 4 Step 6's file swap.
 
 ---
 
@@ -935,6 +937,7 @@ import {
   type DatabaseFiles,
   type DatabaseStatus,
   type OpenedDatabase,
+  WrongKeyError,
   discardUnreadableDatabase as discardFrom,
   isDatabaseKey,
   openDatabaseFile,
@@ -980,10 +983,21 @@ const files: DatabaseFiles<SQLite.SQLiteDatabase> = {
     if (key !== undefined) connection.execSync(`PRAGMA key = ${rawKey(key)}`);
     return connection;
   },
-  countSchemaObjects: (connection) =>
-    connection.getFirstSync<{ count: number }>(
-      "SELECT count(*) AS count FROM sqlite_master",
-    )?.count ?? 0,
+  countSchemaObjects: (connection) => {
+    try {
+      return (
+        connection.getFirstSync<{ count: number }>(
+          "SELECT count(*) AS count FROM sqlite_master",
+        )?.count ?? 0
+      );
+    } catch (error) {
+      // SQLCipher reports a key that does not open the file as SQLITE_NOTADB.
+      if (String(error).includes("file is not a database")) {
+        throw new WrongKeyError();
+      }
+      throw error;
+    }
+  },
   exportEncrypted: (plaintext, name, key) => {
     const path = `${SQLite.defaultDatabaseDirectory}/${name}`;
     plaintext.execSync(
@@ -1061,8 +1075,8 @@ const COPY: Record<UnavailableStatus, { title: string; body: string }> = {
     title: "Your data can't be opened on this phone",
     body: "ephira encrypts your data with a key that never leaves the phone that created it. This phone doesn't have that key, which happens after restoring a backup or moving to a new phone. Start fresh deletes the data that can't be opened, so you can use ephira again.",
   },
-  keyUnavailable: {
-    title: "ephira couldn't unlock your data",
+  temporarilyUnavailable: {
+    title: "ephira couldn't open your data",
     body: "Nothing has been changed or deleted. Close ephira completely and open it again.",
   },
 };
@@ -1379,7 +1393,23 @@ xcrun simctl keychain booted reset
 xcrun simctl launch booted com.capucity.ephira
 ```
 
-Expected: the splash goes away and "Your data can't be opened on this phone" shows. Tap **Start fresh**, then **Delete**. Expected: the close-and-reopen message. Relaunch. Expected: onboarding, an empty calendar, and `ls "$APP_DATA/Documents/SQLite"` shows a new `ephira.encrypted.db` whose first 16 bytes are not "SQLite format 3\0".
+Expected: the splash goes away and "Your data can't be opened on this phone" shows. Before tapping anything, keep a copy of the file this key no longer opens:
+
+```bash
+cp "$APP_DATA/Documents/SQLite/ephira.encrypted.db" "$TMPDIR/old-key.db"
+```
+
+Tap **Start fresh**, then **Delete**. Expected: the close-and-reopen message. Relaunch. Expected: onboarding, an empty calendar, and `ls "$APP_DATA/Documents/SQLite"` shows a new `ephira.encrypted.db` whose first 16 bytes are not "SQLite format 3\0".
+
+Now the wrong-key path (Review Focus 6). The keychain holds a new key, and the saved file was encrypted under the old one:
+
+```bash
+xcrun simctl terminate booted com.capucity.ephira
+cp "$TMPDIR/old-key.db" "$APP_DATA/Documents/SQLite/ephira.encrypted.db"
+xcrun simctl launch booted com.capucity.ephira
+```
+
+Expected: "Your data can't be opened on this phone" with **Start fresh**. If "ephira couldn't open your data" shows instead, the adapter's `file is not a database` match missed: report the error text the app logged. Tap **Start fresh**, **Delete**, and relaunch to leave the simulator clean.
 
 - [ ] **Step 7: Android, same upgrade**
 
