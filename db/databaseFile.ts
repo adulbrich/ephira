@@ -140,10 +140,11 @@ export function discardUnreadableDatabase<C>(files: DatabaseFiles<C>): void {
 }
 
 /**
- * Opens the encrypted file. Returns undefined for the one case where it is not
- * the truth: empty, with a plaintext file beside it. An upgrade writes an
- * empty file only from an empty plaintext one, so either way the plaintext
- * file holds at least as much, and the upgrade is redone from it.
+ * Opens the encrypted file. Returns undefined for the two cases where it is
+ * not the truth, both with a plaintext file beside it: a leftover export that
+ * cannot be deleted (the copy may be partial), and an empty file. An upgrade
+ * writes an empty file only from an empty plaintext one. Either way the
+ * plaintext file holds at least as much, and the upgrade is redone from it.
  */
 function openEncrypted<C>(
   files: DatabaseFiles<C>,
@@ -316,7 +317,11 @@ function unavailable<C>(
   return { status, connection: files.open(IN_MEMORY_DATABASE) };
 }
 
-/** Deletes a file nothing needs. A failure is retried at the next launch. */
+/**
+ * Deletes a file nothing needs. A failure is retried at the next launch; for a
+ * leftover export beside ephira.db, it also means the encrypted file is not
+ * trusted until the export is gone.
+ */
 function removeLeftover<C>(files: DatabaseFiles<C>, name: string): void {
   try {
     files.remove(name);
