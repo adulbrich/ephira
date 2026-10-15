@@ -30,6 +30,7 @@
         "backgroundColor": "#312935"
       },
       "softwareKeyboardLayoutMode": "pan",
+      "allowBackup": false,
       "package": "com.capucity.ephira",
       "permissions": [
         "android.permission.USE_BIOMETRIC",
