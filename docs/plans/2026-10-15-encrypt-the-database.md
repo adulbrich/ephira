@@ -14,7 +14,7 @@
 
 ## Global constraints
 
-- File names, exactly: `ephira.db` (legacy plaintext), `ephira.encrypting.db` (export in progress), `ephira.encrypted.db` (encrypted, the source of truth once it exists).
+- File names, exactly: `ephira.db` (legacy plaintext), `ephira.encrypting.db` (export in progress), `ephira.encrypted.db` (encrypted, the source of truth once it exists, unless `ephira.encrypting.db` and `ephira.db` are both still beside it; see the code review row in Decisions).
 - Key: 32 bytes from `expo-crypto`, lowercase hex (64 characters), stored in `expo-secure-store` under `ephira.databaseKey` with `keychainAccessible: AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY`, issued as a raw key: `PRAGMA key = 'x''<hex>'''`.
 - `db/operations/setup.ts` is the only file that imports `expo-sqlite`.
 - `android.allowBackup` is `false`.
@@ -34,6 +34,7 @@ These amend the ADR as first approved. The ADR text already reflects them.
 | An empty encrypted file beside a plaintext one | A stray. Delete it and upgrade from the plaintext file. Nothing an upgrade writes is empty. |
 | What does "Start fresh" delete? | The encrypted file only. The key stays; the next launch reuses it for a new file, or replaces it if malformed. |
 | The `keyUnavailable` screen | Asks the user to close and reopen the app. An in-app retry cannot work: every module that captured the database handle at import holds the in-memory stand-in. |
+| A rename that is not atomic (code review, after Task 5) | Below Android API 26, expo-file-system renames by copying and then deleting, so a partial `ephira.encrypted.db` can exist. `ephira.encrypting.db` survives until the copy is complete, so with `ephira.db` also present it marks the copy as possibly partial: the copy is discarded and the upgrade redone, and the mark is kept until the copy is gone. ADR 0005 carries the rule; the code blocks in this plan predate it. |
 | What counts as unreadable? (Task 1 review) | Only a key that does not open the file: the adapter maps SQLCipher's `file is not a database` to `WrongKeyError`. Every other failure to open or read the encrypted file, and a key read that throws, is `temporarilyUnavailable`, which replaces `keyUnavailable`. Otherwise an I/O error on a readable file would lead the user to "Start fresh". Task 1's code was amended in its fix round; the code blocks in Task 1 below predate that. |
 
 ## Review Focus

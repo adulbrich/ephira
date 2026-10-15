@@ -6,11 +6,12 @@
  * store and the SQL. Keeping every effect a parameter is what lets each state
  * and each failure be tested without SQLCipher, which Jest does not have.
  *
- * The invariant everything here protects: once ENCRYPTED_DATABASE exists, and
- * no PENDING_DATABASE beside it says the copy may be partial, it is the source
- * of truth. PENDING_DATABASE never is. Before the rename that creates it, the
- * plaintext file is the truth and every failure falls back to it. After,
- * nothing falls back.
+ * The invariant everything here protects: once ENCRYPTED_DATABASE exists, it
+ * is the source of truth, unless PENDING_DATABASE and the plaintext file are
+ * both still beside it, which means the copy may be partial (see
+ * copyMayBePartial). PENDING_DATABASE never is. Before the rename, and while a
+ * copy may be partial, the plaintext file is the truth and every failure falls
+ * back to it. After a rename that finished, nothing falls back.
  */
 
 /** The legacy plaintext database, written by every release up to 1.4.0. */
