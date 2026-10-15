@@ -34,6 +34,7 @@ Documentation never goes under `docs/src/`. That is the website.
 - Entry point of the app.
 - Sets up the app's main layout and navigation structure.
 - Authenticates user if needed and loads initial data/sets up database.
+- Shows `components/DatabaseUnavailable.tsx` instead of the app when the encrypted database cannot be opened.
 
 ### `/app/(tabs)/_layout.tsx`
 
@@ -77,6 +78,7 @@ Documentation never goes under `docs/src/`. That is the website.
 - Contains the [Drizzle (Expo SQLite)](https://orm.drizzle.team/docs/connect-expo-sqlite) database schema and operations, which are separated by table in the `/db/operatiosn/` folder.
 - Drizzle handles schema migrations automatically using their [CLI tool](https://orm.drizzle.team/docs/connect-expo-sqlite#generate-migrations) and stores the files in the `/drizzle/` folder - don't edit these files directly.
 - **Data** migrations are the exception. drizzle-kit generates DDL from the schema and has nothing to say about the rows already on a user's device, so a migration that repairs or moves data is written by hand: add the `.sql` file, an entry in `drizzle/meta/_journal.json`, a snapshot copied from the previous one with a fresh `id`, and the import in `drizzle/migrations.js`. See `docs/adr/0002-hand-written-data-migrations.md`.
+- **The database is encrypted with SQLCipher**, using a random key held in the iOS Keychain or Android Keystore. `db/databaseFile.ts` decides at launch which file to open and upgrades a plaintext `ephira.db` from 1.4.0 or earlier into `ephira.encrypted.db`. `db/operations/setup.ts` supplies the real files, key store and SQL, and is the only file allowed to import `expo-sqlite`. See `docs/adr/0005-encrypt-the-database-with-a-device-held-key.md`.
 
 ### `/hooks/`
 
@@ -161,10 +163,11 @@ beforeEach(() => {
 
 Babel hoists `jest.mock` above the imports wherever it is written, so it takes effect before the module-level `const db = getDrizzleDatabase()` in each operations file evaluates. With it in place `expo-sqlite` is never loaded, so no production code needs to change to be testable.
 
-Two things worth knowing:
+Three things worth knowing:
 
 - **Foreign keys are ON in tests**, deliberately stricter than the device, which has no `PRAGMA foreign_keys` anywhere and so runs with them off. A delete that orphans child rows passes on device and fails here. That is the point; do not turn them off to make a test pass.
 - **The handle is per test file**, because those module-level captures happen once per module registry. Isolation between tests comes from `resetTestDatabase()`, which empties every table and leaves the schema in place.
+- **SQLCipher is not exercised.** `better-sqlite3` has no SQLCipher, so the suite proves the launch sequence in `db/databaseFile.ts` with a fake and says nothing about encryption. Whether a device's database is encrypted is checked by hand: `ephira.encrypted.db` must not begin with the bytes `SQLite format 3\0`.
 
 Live queries are out of scope: `useLiveQuery` is not exercised, so `hooks/useLiveFilteredData.ts` and `hooks/usePregnancyMarkedDates.ts` are not covered by this setup.
 

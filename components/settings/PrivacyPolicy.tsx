@@ -139,15 +139,16 @@ export default function PrivacyPolicy() {
                   </Text>
                 </View>
                 {"\n"}This can also be done by uninstalling the app.
-                {"\n\n"}Please note that while{" "}
+                {"\n\n"}
                 <Text
                   style={[styles.ephiraFont, { color: theme.colors.primary }]}
                 >
                   ephira
                 </Text>{" "}
-                only saves your data locally, depending on your device settings
-                an automatic cloud backup might still take place. We recommend
-                checking your general settings to prevent this from happening.
+                encrypts your data with a key that never leaves this phone. A
+                backup of the phone holds nothing that can be read, and your
+                data does not move to a new phone. To keep a copy when you
+                change phones, export it first.
               </Text>
             }
             descriptionNumberOfLines={25}
