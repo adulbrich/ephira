@@ -82,10 +82,35 @@ export function openDatabaseFile<C>(
   files: DatabaseFiles<C>,
 ): OpenedDatabase<C> {
   if (files.exists(ENCRYPTED_DATABASE)) {
-    const opened = openEncrypted(files);
+    const opened = renameFinished(files)
+      ? openEncrypted(files)
+      : discardUnfinishedCopy(files);
     if (opened) return opened;
   }
   return files.exists(PLAINTEXT_DATABASE) ? upgrade(files) : create(files);
+}
+
+/**
+ * Whether the rename that made the encrypted file finished. A rename that
+ * copies and then deletes (expo-file-system below Android API 26) keeps the
+ * export under its temporary name until the copy is complete, so both names
+ * present while the plaintext file still exists mean the copy may be partial.
+ */
+function renameFinished<C>(files: DatabaseFiles<C>): boolean {
+  return !(files.exists(PENDING_DATABASE) && files.exists(PLAINTEXT_DATABASE));
+}
+
+/** Deletes a copy that may be partial, so the upgrade runs again from the plaintext file. */
+function discardUnfinishedCopy<C>(
+  files: DatabaseFiles<C>,
+): OpenedDatabase<C> | undefined {
+  try {
+    files.remove(ENCRYPTED_DATABASE);
+  } catch (error) {
+    console.warn("Could not delete an unfinished encrypted copy", error);
+    return fallBackToPlaintext(files);
+  }
+  return undefined;
 }
 
 /**
@@ -154,12 +179,14 @@ function upgrade<C>(files: DatabaseFiles<C>): OpenedDatabase<C> {
     exportToPending(files, key);
     files.rename(PENDING_DATABASE, ENCRYPTED_DATABASE);
   } catch (error) {
-    // A rename that moved the file and then threw has still committed.
-    if (!files.exists(ENCRYPTED_DATABASE)) {
+    // A rename that moved the file and then threw has still committed. One
+    // that copied part of it and then threw has not.
+    if (!files.exists(ENCRYPTED_DATABASE) || !renameFinished(files)) {
       console.warn(
         "Could not encrypt the database; staying on plaintext",
         error,
       );
+      removeLeftover(files, ENCRYPTED_DATABASE);
       return fallBackToPlaintext(files);
     }
     console.warn(

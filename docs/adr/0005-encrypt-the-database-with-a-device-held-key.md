@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Date**: 2026-10-14
 - **Context commit**: 749b54f
-- **Amended**: 2026-10-15, before implementation. The commit point is a rename, "Start fresh" keeps the key, and only a key that does not open the file counts as unreadable; anything else asks for a restart. See `docs/plans/2026-10-15-encrypt-the-database.md`.
+- **Amended**: 2026-10-15, during planning and implementation. The commit point is a rename, "Start fresh" keeps the key, and only a key that does not open the file counts as unreadable; anything else asks for a restart. See `docs/plans/2026-10-15-encrypt-the-database.md`.
 
 ## Context
 
@@ -29,7 +29,8 @@ At launch, before anything else touches the database. An `ephira.encrypting.db` 
 | `ephira.db` | `ephira.encrypted.db` | Action |
 | --- | --- | --- |
 | absent | absent | Fresh install. Read the key, or generate and store one. Create the encrypted file. |
-| present | absent | Upgrade. Read or create the key. `ATTACH` `ephira.encrypting.db` with the key, `SELECT sqlcipher_export('pending')`, `DETACH`, close. Open the copy with the key and compare its schema object count with the original's. Rename it to `ephira.encrypted.db`, open it, then delete `ephira.db` and any `-journal`, `-wal` and `-shm` beside it. |
+| present | absent | Upgrade. Read or create the key. `ATTACH` `ephira.encrypting.db` with the key, `SELECT sqlcipher_export('pending')`, `DETACH`, close. Open the copy with the key and compare its schema object count with the original's. Rename it to `ephira.encrypted.db`, open it, then delete `ephira.db` and any `-journal`, `-wal` and `-shm` beside it. An empty `ephira.db`, one the app created but never migrated, yields an empty copy that the stray rule below deletes; that launch stays on plaintext, and the next one upgrades it. |
+| present | present, with `ephira.encrypting.db` still beside it | A rename that copies and then deletes did not finish, so the encrypted file may be partial. Delete it and upgrade again from the plaintext file. This row wins over the two below. |
 | present | present, with schema objects | Upgrade finished but the plaintext file survived, or was recreated. Open the encrypted file and delete the plaintext one. |
 | present | present, empty | A stray, created by something that opened `ephira.encrypted.db` before this sequence ran, or left by a fresh install that could not finish. Delete it and upgrade from the plaintext file. This needs a key that opens the file; without one, the `unreadable` status below applies and nothing is deleted. |
 | absent | present | Normal launch. Open with the key, then probe with `SELECT count(*) FROM sqlite_master`. |
@@ -70,7 +71,7 @@ Failures resolve to one of three statuses:
 - The Jest suite runs on `better-sqlite3` and never exercises SQLCipher. The decision module is tested with fakes. Whether the SQL encrypts is verified on a device by checking that `ephira.encrypted.db` does not begin with `SQLite format 3\0`, and that a 1.4.0 database survives the upgrade.
 - `ITSAppUsesNonExemptEncryption` stays `false`. On iOS, SQLCipher is built with `SQLCIPHER_CRYPTO_CC` and uses Apple's CommonCrypto. The maintainer confirms the export-compliance answer before the release that ships this.
 - The password credential is still an unsalted SHA-256 in the `settings` table, now inside the encrypted file. It remains a gate on the UI; #260 replaces it.
-- On Android 7 (API 24 and 25), expo-file-system renames by copying and then deleting, so the rename is not atomic there. A process killed during that copy can leave a truncated `ephira.encrypted.db` whose first page survives, and the next launch then deletes the plaintext file beside it. The window is milliseconds, on the first launch after the upgrade. Raising `minSdkVersion` to 26 removes it.
+- On Android 7 (API 24 and 25), expo-file-system renames by copying and then deleting, so the rename is not atomic there. The source goes only once the copy is complete, so an `ephira.encrypting.db` still beside `ephira.encrypted.db` marks a copy that may be partial, whether the copy threw or the process died. While `ephira.db` exists, that copy is discarded and the upgrade redone. Raising `minSdkVersion` to 26 would remove the case altogether.
 - A key store that keeps failing, or a file damaged in a way SQLite reports as anything but "file is not a database", leaves the user on the `temporarilyUnavailable` screen at every launch. Its copy suggests restarting the phone; nothing in the app offers more.
 
 ## When to revisit

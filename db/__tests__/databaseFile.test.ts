@@ -25,6 +25,7 @@ type Step =
   | "export"
   | "rename"
   | "renameAfterMoving"
+  | "renameCopyFails"
   | `remove:${string}`
   | `open:${string}`
   | `count:${string}`;
@@ -97,6 +98,14 @@ class FakeDevice implements DatabaseFiles<FakeConnection> {
   rename(from: string, to: string) {
     this.fail("rename");
     const file = this.file(from);
+    if (this.failing.has("renameCopyFails")) {
+      // A rename that copies and then deletes (Android below API 26), stopped
+      // part-way: the first page made it across, the rows did not, and the
+      // source is still there.
+      this.files.set(to, { ...file, days: [] });
+      this.onEffect?.();
+      throw new Error("rename copy failed");
+    }
     this.files.delete(from);
     this.files.set(to, file);
     this.onEffect?.();
@@ -316,6 +325,37 @@ describe("a fresh install", () => {
 });
 
 describe("upgrading a plaintext database", () => {
+  it("keeps the plaintext file when a copying rename fails part-way", () => {
+    const device = new FakeDevice({ [PLAINTEXT_DATABASE]: legacyDatabase() });
+    device.failing.add("renameCopyFails");
+
+    const opened = openDatabaseFile(device);
+
+    expect(opened.status).toBe("ready");
+    expect(opened.connection).toEqual({ name: PLAINTEXT_DATABASE, key: null });
+    expect(device.names()).toEqual([PLAINTEXT_DATABASE]);
+    expect(device.file(PLAINTEXT_DATABASE)).toEqual(legacyDatabase());
+    expectOnlyOpen(device, opened);
+  });
+
+  it("redoes an upgrade whose copying rename was killed part-way", () => {
+    const device = new FakeDevice(
+      {
+        [PLAINTEXT_DATABASE]: legacyDatabase(),
+        [PENDING_DATABASE]: encryptedDatabase(KEY),
+        [ENCRYPTED_DATABASE]: { key: KEY, schemaObjects: 14, days: [] },
+      },
+      KEY,
+    );
+
+    const opened = openDatabaseFile(device);
+
+    expect(opened.status).toBe("ready");
+    expect(device.names()).toEqual([ENCRYPTED_DATABASE]);
+    expect(device.file(ENCRYPTED_DATABASE)).toEqual(encryptedDatabase(KEY));
+    expectOnlyOpen(device, opened);
+  });
+
   it("stays on an empty plaintext file until it has tables, then upgrades", () => {
     const device = new FakeDevice({ [PLAINTEXT_DATABASE]: emptyFile(null) });
 
