@@ -153,7 +153,7 @@ export default function PrivacyPolicy() {
                 export it first.
               </Text>
             }
-            descriptionNumberOfLines={25}
+            descriptionNumberOfLines={40}
           />
 
           <List.Item
