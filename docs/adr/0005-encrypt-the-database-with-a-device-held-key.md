@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Date**: 2026-10-14
 - **Context commit**: 749b54f
-- **Amended**: 2026-10-15, before implementation. The commit point is a rename, "Start fresh" keeps the key, and a key that cannot be read asks for a restart. See `docs/plans/2026-10-15-encrypt-the-database.md`.
+- **Amended**: 2026-10-15, before implementation. The commit point is a rename, "Start fresh" keeps the key, and only a key that does not open the file counts as unreadable; anything else asks for a restart. See `docs/plans/2026-10-15-encrypt-the-database.md`.
 
 ## Context
 
@@ -39,8 +39,8 @@ Failures resolve to one of three statuses:
 | Status | When | What the user sees |
 | --- | --- | --- |
 | `ready` | The database is open and readable, or the upgrade failed and the plaintext file was opened instead | The app |
-| `unreadable` | The encrypted file exists and the key is absent, malformed, or does not open it | A screen explaining that the data cannot be opened on this device, with **Start fresh**, which deletes the encrypted file and asks the user to close and reopen the app. The key stays: the next launch reuses it for a new file, or replaces it if it is malformed. |
-| `keyUnavailable` | Reading the key throws, as opposed to returning nothing, while the encrypted file exists | A screen asking the user to close and reopen the app. Nothing is deleted. There is no in-app retry, because every module that captured the database handle at import holds the placeholder, and only a restart re-runs the sequence. |
+| `unreadable` | The encrypted file exists and the key is absent or malformed, or SQLCipher reports that the key does not open it (`file is not a database`) | A screen explaining that the data cannot be opened on this device, with **Start fresh**, which deletes the encrypted file and asks the user to close and reopen the app. The key stays: the next launch reuses it for a new file, or replaces it if it is malformed. |
+| `temporarilyUnavailable` | The encrypted file exists and reading the key throws (as opposed to returning nothing), or opening or reading the file fails for any reason other than the key: an I/O error, a lock, a full disk | A screen asking the user to close and reopen the app. Nothing is deleted. There is no in-app retry, because every module that captured the database handle at import holds the placeholder, and only a restart re-runs the sequence. |
 
 **A failed upgrade falls back to the plaintext file.** If reading or storing the key, the export, the comparison or the rename throws, `ephira.encrypting.db` is deleted, the plaintext file opens as it did in 1.4.0, and the upgrade runs again at the next launch. A failure after the rename does not fall back: the encrypted file is the truth by then, and a plaintext file that cannot be deleted is deleted at the next launch instead. A device stuck there stays unencrypted rather than locked out of its data. A fresh install that cannot read or store a key does the same: it creates a plaintext `ephira.db`, and the next launch upgrades it. The rule is that the app fails open while no encrypted file exists, and fails closed once one does.
 
@@ -60,7 +60,7 @@ Failures resolve to one of three statuses:
 
 **A rename as the commit point, not "both files exist means interrupted".** The first version of this decision deleted the encrypted file whenever a plaintext file sat beside it, on the reading that the export had not finished. That reading is wrong whenever anything recreates `ephira.db` after a finished upgrade, and `<SQLiteProvider>` did exactly that: the next launch would have deleted the only copy of the data. Exporting under a temporary name and renaming once the copy is verified means a file under the final name is always complete, so its presence alone settles which file is the truth. An empty encrypted file is the one exception, because nothing the upgrade writes is empty.
 
-**Fail open on upgrade, fail closed on an encrypted file.** A failed upgrade leaves the status quo, which is bad but no worse than 1.4.0. An encrypted file the app cannot open is never deleted without the user asking, because "the key read threw" and "the key is gone" look alike from a distance and only one of them means the data is lost.
+**Fail open on upgrade, fail closed on an encrypted file.** A failed upgrade leaves the status quo, which is bad but no worse than 1.4.0. An encrypted file the app cannot open is never deleted without the user asking, because "the key read threw" and "the key is gone" look alike from a distance and only one of them means the data is lost. Opening the file follows the same rule: only SQLCipher's own "file is not a database" counts as a wrong key. An I/O error, a lock or a full disk on a file whose key is right would otherwise lead the user to delete the only copy of data a restart would have opened.
 
 ## Consequences
 

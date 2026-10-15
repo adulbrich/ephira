@@ -23,9 +23,21 @@ export const IN_MEMORY_DATABASE = ":memory:";
 
 const KEY_BYTES = 32;
 
-export type DatabaseStatus = "ready" | "unreadable" | "keyUnavailable";
+export type DatabaseStatus = "ready" | "unreadable" | "temporarilyUnavailable";
 
 export type UnavailableStatus = Exclude<DatabaseStatus, "ready">;
+
+/**
+ * Thrown by DatabaseFiles.countSchemaObjects when the key does not open the
+ * file. Every other failure to read it means "not right now", and nothing may
+ * be deleted on the strength of it.
+ */
+export class WrongKeyError extends Error {
+  constructor() {
+    super("The key does not open this database");
+    this.name = "WrongKeyError";
+  }
+}
 
 /** Everything the sequence does to the device, passed in. */
 export interface DatabaseFiles<Connection> {
@@ -41,7 +53,10 @@ export interface DatabaseFiles<Connection> {
   randomBytes(count: number): Uint8Array;
   /** Opens or creates the file, issuing the key first when one is given. */
   open(name: string, key?: string): Connection;
-  /** How many objects `sqlite_master` lists. Throws when the key does not open the file. */
+  /**
+   * How many objects `sqlite_master` lists. Throws WrongKeyError when the key
+   * does not open the file, and any other error when it cannot be read now.
+   */
   countSchemaObjects(connection: Connection): number;
   /** Writes an encrypted copy of `plaintext` to a new file `name`, keyed with `key`. */
   exportEncrypted(plaintext: Connection, name: string, key: string): void;
@@ -83,9 +98,9 @@ export function discardUnreadableDatabase<C>(files: DatabaseFiles<C>): void {
 
 /**
  * Opens the encrypted file. Returns undefined for the one case where it is not
- * the truth: empty, with a plaintext file beside it. Nothing an upgrade writes
- * is empty, so something opened it by name, and the plaintext file still
- * holds the data.
+ * the truth: empty, with a plaintext file beside it. An upgrade writes an
+ * empty file only from an empty plaintext one, so either way the plaintext
+ * file holds at least as much, and the upgrade is redone from it.
  */
 function openEncrypted<C>(
   files: DatabaseFiles<C>,
@@ -95,7 +110,7 @@ function openEncrypted<C>(
     key = files.readKey();
   } catch (error) {
     console.warn("Could not read the database key", error);
-    return unavailable(files, "keyUnavailable");
+    return unavailable(files, "temporarilyUnavailable");
   }
   if (key === null || !isDatabaseKey(key)) {
     return unavailable(files, "unreadable");
@@ -105,8 +120,12 @@ function openEncrypted<C>(
   try {
     verified = openVerified(files, ENCRYPTED_DATABASE, key);
   } catch (error) {
-    console.warn("The database key does not open the database", error);
-    return unavailable(files, "unreadable");
+    if (error instanceof WrongKeyError) {
+      console.warn("The database key does not open the database", error);
+      return unavailable(files, "unreadable");
+    }
+    console.warn("Could not open the encrypted database", error);
+    return unavailable(files, "temporarilyUnavailable");
   }
 
   if (files.exists(PLAINTEXT_DATABASE)) {
@@ -134,6 +153,14 @@ function upgrade<C>(files: DatabaseFiles<C>): OpenedDatabase<C> {
     exportToPending(files, key);
     files.rename(PENDING_DATABASE, ENCRYPTED_DATABASE);
   } catch (error) {
+    // A rename that moved the file and then threw has still committed.
+    if (files.exists(ENCRYPTED_DATABASE)) {
+      console.warn(
+        "The encrypted database moved into place with an error",
+        error,
+      );
+      return openEncrypted(files) ?? fallBackToPlaintext(files);
+    }
     console.warn("Could not encrypt the database; staying on plaintext", error);
     return fallBackToPlaintext(files);
   }
@@ -145,6 +172,7 @@ function create<C>(files: DatabaseFiles<C>): OpenedDatabase<C> {
   try {
     const key = usableKey(files);
     const { connection } = openVerified(files, ENCRYPTED_DATABASE, key);
+    removeLeftover(files, PENDING_DATABASE);
     return { status: "ready", connection };
   } catch (error) {
     console.warn("Could not create an encrypted database", error);

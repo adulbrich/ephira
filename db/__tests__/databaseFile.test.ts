@@ -11,6 +11,7 @@ import {
   PLAINTEXT_DATABASE,
   type DatabaseFiles,
   type OpenedDatabase,
+  WrongKeyError,
   discardUnreadableDatabase,
   isDatabaseKey,
   openDatabaseFile,
@@ -18,13 +19,22 @@ import {
 
 type FakeFile = { key: string | null; schemaObjects: number; days: string[] };
 type FakeConnection = { name: string; key: string | null };
-type Step = "readKey" | "writeKey" | "export" | "rename" | `remove:${string}`;
+type Step =
+  | "readKey"
+  | "writeKey"
+  | "export"
+  | "rename"
+  | "renameAfterMoving"
+  | `remove:${string}`
+  | `open:${string}`
+  | `count:${string}`;
 
 /**
  * A phone's database directory and key store, in memory.
  *
  * A file opened with the wrong key, or a plaintext file opened with any key,
- * fails to count its schema objects, which is how SQLCipher reports it too.
+ * throws WrongKeyError when its schema objects are counted, which is how the
+ * adapter reports SQLCipher's `file is not a database`.
  */
 class FakeDevice implements DatabaseFiles<FakeConnection> {
   readonly files = new Map<string, FakeFile>();
@@ -33,6 +43,8 @@ class FakeDevice implements DatabaseFiles<FakeConnection> {
   storedKey: string | null;
   /** Makes the export drop a table, as an incomplete copy would. */
   shortExport = false;
+  /** Runs once the rename has moved the file, before anything reads it. */
+  afterRename: (() => void) | undefined;
 
   constructor(
     files: Record<string, FakeFile>,
@@ -74,6 +86,8 @@ class FakeDevice implements DatabaseFiles<FakeConnection> {
     const file = this.file(from);
     this.files.delete(from);
     this.files.set(to, file);
+    this.afterRename?.();
+    this.fail("renameAfterMoving");
   }
 
   readKey() {
@@ -91,6 +105,7 @@ class FakeDevice implements DatabaseFiles<FakeConnection> {
   }
 
   open(name: string, key?: string) {
+    this.fail(`open:${name}`);
     if (name !== IN_MEMORY_DATABASE && !this.files.has(name)) {
       this.files.set(name, { key: key ?? null, schemaObjects: 0, days: [] });
     }
@@ -101,10 +116,9 @@ class FakeDevice implements DatabaseFiles<FakeConnection> {
 
   countSchemaObjects(connection: FakeConnection) {
     if (connection.name === IN_MEMORY_DATABASE) return 0;
+    this.fail(`count:${connection.name}`);
     const file = this.file(connection.name);
-    if (file.key !== connection.key) {
-      throw new Error("file is not a database");
-    }
+    if (file.key !== connection.key) throw new WrongKeyError();
     return file.schemaObjects;
   }
 
@@ -236,6 +250,27 @@ describe("a fresh install", () => {
       expectOnlyOpen(device, opened);
     },
   );
+
+  it("creates a plaintext file when the new encrypted file cannot be read", () => {
+    const device = new FakeDevice({});
+    device.failing.add(`count:${ENCRYPTED_DATABASE}`);
+
+    const opened = openDatabaseFile(device);
+
+    expect(opened.status).toBe("ready");
+    expect(device.names()).toEqual([PLAINTEXT_DATABASE]);
+    expect(opened.connection).toEqual({ name: PLAINTEXT_DATABASE, key: null });
+    expectOnlyOpen(device, opened);
+  });
+
+  it("deletes a leftover export", () => {
+    const device = new FakeDevice({ [PENDING_DATABASE]: emptyFile(KEY) }, KEY);
+
+    const opened = openDatabaseFile(device);
+
+    expect(device.names()).toEqual([ENCRYPTED_DATABASE]);
+    expectOnlyOpen(device, opened);
+  });
 });
 
 describe("upgrading a plaintext database", () => {
@@ -343,6 +378,36 @@ describe("upgrading a plaintext database", () => {
     expect(device.names()).toEqual([ENCRYPTED_DATABASE]);
     expectOnlyOpen(device, relaunched);
   });
+
+  it("opens the encrypted file when the rename moved it and then threw", () => {
+    const device = new FakeDevice({ [PLAINTEXT_DATABASE]: legacyDatabase() });
+    device.failing.add("renameAfterMoving");
+
+    const opened = openDatabaseFile(device);
+
+    expect(opened.status).toBe("ready");
+    expect(opened.connection).toEqual({
+      name: ENCRYPTED_DATABASE,
+      key: GENERATED_KEY,
+    });
+    expect(device.names()).toEqual([ENCRYPTED_DATABASE]);
+    expectOnlyOpen(device, opened);
+  });
+
+  it("never falls back to the plaintext file once the rename has happened", () => {
+    const device = new FakeDevice({ [PLAINTEXT_DATABASE]: legacyDatabase() });
+    device.afterRename = () => device.failing.add("readKey");
+
+    const opened = openDatabaseFile(device);
+
+    expect(opened.status).toBe("temporarilyUnavailable");
+    expect(opened.connection.name).toBe(IN_MEMORY_DATABASE);
+    expect(device.names()).toEqual([PLAINTEXT_DATABASE, ENCRYPTED_DATABASE]);
+    expect(device.file(ENCRYPTED_DATABASE)).toEqual(
+      encryptedDatabase(GENERATED_KEY),
+    );
+    expectOnlyOpen(device, opened);
+  });
 });
 
 describe("an encrypted database", () => {
@@ -440,7 +505,7 @@ describe("an encrypted database", () => {
     expect(device.names()).toEqual([PLAINTEXT_DATABASE, ENCRYPTED_DATABASE]);
   });
 
-  it("reports the key as unavailable when the key store throws, and deletes nothing", () => {
+  it("is temporarily unavailable when the key store throws, and deletes nothing", () => {
     const device = new FakeDevice(
       { [ENCRYPTED_DATABASE]: encryptedDatabase() },
       KEY,
@@ -449,11 +514,51 @@ describe("an encrypted database", () => {
 
     const opened = openDatabaseFile(device);
 
-    expect(opened.status).toBe("keyUnavailable");
+    expect(opened.status).toBe("temporarilyUnavailable");
     expect(opened.connection.name).toBe(IN_MEMORY_DATABASE);
     expect(device.names()).toEqual([ENCRYPTED_DATABASE]);
     expectOnlyOpen(device, opened);
   });
+
+  it("falls back to the plaintext file when an empty encrypted file beside it cannot be deleted", () => {
+    const device = new FakeDevice(
+      {
+        [PLAINTEXT_DATABASE]: legacyDatabase(),
+        [ENCRYPTED_DATABASE]: emptyFile(KEY),
+      },
+      KEY,
+    );
+    device.failing.add(`remove:${ENCRYPTED_DATABASE}`);
+
+    const opened = openDatabaseFile(device);
+
+    expect(opened.status).toBe("ready");
+    expect(opened.connection).toEqual({ name: PLAINTEXT_DATABASE, key: null });
+    expect(device.file(PLAINTEXT_DATABASE)).toEqual(legacyDatabase());
+    expectOnlyOpen(device, opened);
+  });
+
+  it.each([
+    `open:${ENCRYPTED_DATABASE}`,
+    `count:${ENCRYPTED_DATABASE}`,
+  ] as const)(
+    "is temporarily unavailable when %s fails for a reason other than the key, and deletes nothing",
+    (step) => {
+      const device = new FakeDevice(
+        { [ENCRYPTED_DATABASE]: encryptedDatabase() },
+        KEY,
+      );
+      device.failing.add(step);
+
+      const opened = openDatabaseFile(device);
+
+      expect(opened.status).toBe("temporarilyUnavailable");
+      expect(opened.connection.name).toBe(IN_MEMORY_DATABASE);
+      expect(device.names()).toEqual([ENCRYPTED_DATABASE]);
+      expect(device.file(ENCRYPTED_DATABASE)).toEqual(encryptedDatabase());
+      expectOnlyOpen(device, opened);
+    },
+  );
 });
 
 describe("discardUnreadableDatabase", () => {
