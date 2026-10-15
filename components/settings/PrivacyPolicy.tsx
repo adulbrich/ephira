@@ -153,7 +153,10 @@ export default function PrivacyPolicy() {
                 export it first.
               </Text>
             }
-            descriptionNumberOfLines={40}
+            // 0 is React Native's "no limit". A fixed cap clipped this
+            // paragraph once it grew, and wraps differently by screen width
+            // and font size.
+            descriptionNumberOfLines={0}
           />
 
           <List.Item
