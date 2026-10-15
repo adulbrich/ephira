@@ -19,7 +19,7 @@ const COPY: Record<UnavailableStatus, { title: string; body: string }> = {
   },
   temporarilyUnavailable: {
     title: "ephira couldn't open your data",
-    body: "Nothing has been changed or deleted. Close ephira completely and open it again.",
+    body: "Nothing has been changed or deleted. Close ephira completely and open it again. If this keeps happening, restart your phone.",
   },
 };
 

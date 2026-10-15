@@ -145,10 +145,12 @@ export default function PrivacyPolicy() {
                 >
                   ephira
                 </Text>{" "}
-                encrypts your data with a key that never leaves this phone. A
-                backup of the phone holds nothing that can be read, and your
-                data does not move to a new phone. To keep a copy when you
-                change phones, export it first.
+                encrypts your data with a key that never leaves your phone.
+                Backups of your phone made since ephira began encrypting hold
+                nothing that can be read; an older backup may still hold a
+                readable copy until your phone replaces it. Your data does not
+                move to a new phone, so to keep a copy when you change phones,
+                export it first.
               </Text>
             }
             descriptionNumberOfLines={25}

@@ -52,7 +52,7 @@ Failures resolve to one of three statuses:
 
 **Random key now, password-derived key later.** A key derived from the user's password is stronger, but it cannot exist before the user authenticates, and today the database opens at module load and the Authentication Choice is itself stored in it. Doing that restructuring here would hold the encryption fix hostage to it. It is tracked in #260 and builds on this.
 
-**Device-bound over portable.** A key that travels with an iCloud backup travels next to the file it unlocks, so anyone who can read the backup reads the data, exactly as with no encryption. The privacy policy already advises users to keep the app out of cloud backups. The cost is that moving phones no longer carries data across; the remedy is export and import, not a portable key.
+**Device-bound over portable.** A key that travels with an iCloud backup travels next to the file it unlocks, so anyone who can read the backup reads the data, exactly as with no encryption. The privacy policy used to advise users to keep the app out of cloud backups; a device-bound key makes that advice unnecessary. The cost is that moving phones no longer carries data across; the remedy is export and import, not a portable key.
 
 **`AFTER_FIRST_UNLOCK` over `WHEN_UNLOCKED`.** iOS gives the database file `NSFileProtectionCompleteUntilFirstUserAuthentication` by default. Matching the key to the file adds no new locked-phone failure modes; a stricter key would only add some without making the file stricter.
 
@@ -60,7 +60,7 @@ Failures resolve to one of three statuses:
 
 **A rename as the commit point, not "both files exist means interrupted".** The first version of this decision deleted the encrypted file whenever a plaintext file sat beside it, on the reading that the export had not finished. That reading is wrong whenever anything recreates `ephira.db` after a finished upgrade, and `<SQLiteProvider>` did exactly that: the next launch would have deleted the only copy of the data. Exporting under a temporary name and renaming once the copy is verified means a file under the final name is always complete, so its presence alone settles which file is the truth. An empty encrypted file beside a plaintext one is the one exception: the upgrade writes an empty file only from an empty plaintext one, so the plaintext file holds at least as much, and the upgrade is redone from it.
 
-**Fail open on upgrade, fail closed on an encrypted file.** A failed upgrade leaves the status quo, which is bad but no worse than 1.4.0. An encrypted file the app cannot open is never deleted without the user asking, because "the key read threw" and "the key is gone" look alike from a distance and only one of them means the data is lost. Opening the file follows the same rule: only SQLCipher's own "file is not a database" counts as a wrong key. An I/O error, a lock or a full disk on a file whose key is right would otherwise lead the user to delete the only copy of data a restart would have opened.
+**Fail open on upgrade, fail closed on an encrypted file.** A failed upgrade leaves the status quo, which is bad but no worse than 1.4.0. An encrypted file the app cannot open is never deleted without the user asking, because "the key read threw" and "the key is gone" look alike from a distance and only one of them means the data is lost. Opening the file follows the same rule: only SQLCipher's own "file is not a database" counts as a wrong key. An I/O error, a lock or a full disk on a file whose key is right would otherwise lead the user to delete the only copy of data a restart would have opened. SQLCipher also reports a damaged first page as "file is not a database", so a corrupt file is classed as unreadable too. That is the right screen, since no restart opens it, though its wording speaks only of a missing key.
 
 ## Consequences
 
@@ -70,7 +70,13 @@ Failures resolve to one of three statuses:
 - The Jest suite runs on `better-sqlite3` and never exercises SQLCipher. The decision module is tested with fakes. Whether the SQL encrypts is verified on a device by checking that `ephira.encrypted.db` does not begin with `SQLite format 3\0`, and that a 1.4.0 database survives the upgrade.
 - `ITSAppUsesNonExemptEncryption` stays `false`. On iOS, SQLCipher is built with `SQLCIPHER_CRYPTO_CC` and uses Apple's CommonCrypto. The maintainer confirms the export-compliance answer before the release that ships this.
 - The password credential is still an unsalted SHA-256 in the `settings` table, now inside the encrypted file. It remains a gate on the UI; #260 replaces it.
+- On Android 7 (API 24 and 25), expo-file-system renames by copying and then deleting, so the rename is not atomic there. A process killed during that copy can leave a truncated `ephira.encrypted.db` whose first page survives, and the next launch then deletes the plaintext file beside it. The window is milliseconds, on the first launch after the upgrade. Raising `minSdkVersion` to 26 removes it.
+- A key store that keeps failing, or a file damaged in a way SQLite reports as anything but "file is not a database", leaves the user on the `temporarilyUnavailable` screen at every launch. Its copy suggests restarting the phone; nothing in the app offers more.
 
 ## When to revisit
 
 When #260 lands, password mode derives its own key and this decision covers only the `none` and `biometric` modes. If the app ever needs a database that survives a change of phone without an export, the device-bound key is the decision to reopen, together with the backup question above.
+
+Transferring the iOS app to another developer team changes the keychain access group, and every user would land on the `unreadable` screen. Check Apple's app-transfer notes before any transfer.
+
+Before an expo-sqlite upgrade that changes SQLCipher's major version, open a file written by the current version on a device. The move from SQLCipher 3 to 4 made old files report "file is not a database", which this app turns into an offer to start fresh.

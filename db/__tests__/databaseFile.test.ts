@@ -45,6 +45,10 @@ class FakeDevice implements DatabaseFiles<FakeConnection> {
   shortExport = false;
   /** Runs once the rename has moved the file, before anything reads it. */
   afterRename: (() => void) | undefined;
+  /** Makes the key store accept a write and keep nothing, as a failing keychain could. */
+  dropKeyWrites = false;
+  /** Runs after every change to the files or the key, as a killed process would leave them. */
+  onEffect: (() => void) | undefined;
 
   constructor(
     files: Record<string, FakeFile>,
@@ -66,6 +70,14 @@ class FakeDevice implements DatabaseFiles<FakeConnection> {
     return [...this.files.keys()].sort();
   }
 
+  /** The files and key as they stand, copied, so a new device can start from them. */
+  snapshot(): { files: Record<string, FakeFile>; storedKey: string | null } {
+    return {
+      files: JSON.parse(JSON.stringify(Object.fromEntries(this.files))),
+      storedKey: this.storedKey,
+    };
+  }
+
   file(name: string) {
     const file = this.files.get(name);
     if (!file) throw new Error(`no such file: ${name}`);
@@ -79,6 +91,7 @@ class FakeDevice implements DatabaseFiles<FakeConnection> {
   remove(name: string) {
     this.fail(`remove:${name}`);
     this.files.delete(name);
+    this.onEffect?.();
   }
 
   rename(from: string, to: string) {
@@ -86,6 +99,7 @@ class FakeDevice implements DatabaseFiles<FakeConnection> {
     const file = this.file(from);
     this.files.delete(from);
     this.files.set(to, file);
+    this.onEffect?.();
     this.afterRename?.();
     this.fail("renameAfterMoving");
   }
@@ -97,7 +111,8 @@ class FakeDevice implements DatabaseFiles<FakeConnection> {
 
   writeKey(key: string) {
     this.fail("writeKey");
-    this.storedKey = key;
+    if (!this.dropKeyWrites) this.storedKey = key;
+    this.onEffect?.();
   }
 
   randomBytes(count: number) {
@@ -108,6 +123,7 @@ class FakeDevice implements DatabaseFiles<FakeConnection> {
     this.fail(`open:${name}`);
     if (name !== IN_MEMORY_DATABASE && !this.files.has(name)) {
       this.files.set(name, { key: key ?? null, schemaObjects: 0, days: [] });
+      this.onEffect?.();
     }
     const connection = { name, key: key ?? null };
     this.connections.add(connection);
@@ -127,6 +143,7 @@ class FakeDevice implements DatabaseFiles<FakeConnection> {
     if (this.failing.has("export")) {
       // ATTACH has already created the file; the copy stops part-way.
       this.files.set(name, { key, schemaObjects: 3, days: [] });
+      this.onEffect?.();
       throw new Error("export failed");
     }
     this.files.set(name, {
@@ -134,6 +151,7 @@ class FakeDevice implements DatabaseFiles<FakeConnection> {
       schemaObjects: source.schemaObjects - (this.shortExport ? 1 : 0),
       days: [...source.days],
     });
+    this.onEffect?.();
   }
 
   close(connection: FakeConnection) {
@@ -251,9 +269,33 @@ describe("a fresh install", () => {
     },
   );
 
-  it("creates a plaintext file when the new encrypted file cannot be read", () => {
+  it("creates a plaintext file when the new encrypted file cannot be read, and upgrades it at the next launch", () => {
     const device = new FakeDevice({});
     device.failing.add(`count:${ENCRYPTED_DATABASE}`);
+
+    const opened = openDatabaseFile(device);
+
+    expect(opened.status).toBe("ready");
+    expect(opened.connection).toEqual({ name: PLAINTEXT_DATABASE, key: null });
+    expect(device.names()).toEqual([PLAINTEXT_DATABASE, ENCRYPTED_DATABASE]);
+    expectOnlyOpen(device, opened);
+
+    // The session ran migrations and logged a day on the plaintext file.
+    device.files.set(PLAINTEXT_DATABASE, legacyDatabase());
+    device.restart();
+    const relaunched = openDatabaseFile(device);
+
+    expect(relaunched.status).toBe("ready");
+    expect(device.names()).toEqual([ENCRYPTED_DATABASE]);
+    expect(device.file(ENCRYPTED_DATABASE)).toEqual(
+      encryptedDatabase(GENERATED_KEY),
+    );
+    expectOnlyOpen(device, relaunched);
+  });
+
+  it("creates a plaintext file when the key store does not keep the key", () => {
+    const device = new FakeDevice({});
+    device.dropKeyWrites = true;
 
     const opened = openDatabaseFile(device);
 
@@ -304,6 +346,39 @@ describe("upgrading a plaintext database", () => {
 
     expect(device.names()).toEqual([ENCRYPTED_DATABASE]);
     expect(device.file(ENCRYPTED_DATABASE)).toEqual(encryptedDatabase(KEY));
+    expectOnlyOpen(device, opened);
+  });
+
+  it.each(["readKey", "writeKey"] as const)(
+    "keeps the plaintext file when %s fails during an upgrade",
+    (step) => {
+      const device = new FakeDevice({
+        [PLAINTEXT_DATABASE]: legacyDatabase(),
+      });
+      device.failing.add(step);
+
+      const opened = openDatabaseFile(device);
+
+      expect(opened.status).toBe("ready");
+      expect(device.names()).toEqual([PLAINTEXT_DATABASE]);
+      expect(device.file(PLAINTEXT_DATABASE)).toEqual(legacyDatabase());
+      expect(opened.connection).toEqual({
+        name: PLAINTEXT_DATABASE,
+        key: null,
+      });
+      expectOnlyOpen(device, opened);
+    },
+  );
+
+  it("keeps the plaintext file when the key store does not keep the key", () => {
+    const device = new FakeDevice({ [PLAINTEXT_DATABASE]: legacyDatabase() });
+    device.dropKeyWrites = true;
+
+    const opened = openDatabaseFile(device);
+
+    expect(device.names()).toEqual([PLAINTEXT_DATABASE]);
+    expect(device.file(PLAINTEXT_DATABASE)).toEqual(legacyDatabase());
+    expect(opened.connection).toEqual({ name: PLAINTEXT_DATABASE, key: null });
     expectOnlyOpen(device, opened);
   });
 
@@ -579,5 +654,30 @@ describe("discardUnreadableDatabase", () => {
 
     expect(relaunched.status).toBe("ready");
     expect(device.file(ENCRYPTED_DATABASE)).toEqual(emptyFile(KEY));
+  });
+});
+
+describe("a process killed after any step of an upgrade", () => {
+  it("leaves a device whose next launch still opens the data", () => {
+    const device = new FakeDevice({ [PLAINTEXT_DATABASE]: legacyDatabase() });
+    const states: ReturnType<FakeDevice["snapshot"]>[] = [];
+    device.onEffect = () => states.push(device.snapshot());
+
+    openDatabaseFile(device);
+
+    // At least: delete a leftover export, store the key, export, rename,
+    // delete the plaintext file, delete a leftover export.
+    expect(states.length).toBeGreaterThanOrEqual(6);
+    for (const state of states) {
+      const relaunched = new FakeDevice(state.files, state.storedKey);
+
+      const opened = openDatabaseFile(relaunched);
+
+      expect(opened.status).toBe("ready");
+      expect(relaunched.file(opened.connection.name).days).toEqual([
+        "2026-10-01",
+      ]);
+      expectOnlyOpen(relaunched, opened);
+    }
   });
 });

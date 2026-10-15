@@ -167,7 +167,12 @@ function upgrade<C>(files: DatabaseFiles<C>): OpenedDatabase<C> {
   return openEncrypted(files) ?? fallBackToPlaintext(files);
 }
 
-/** A fresh install. There is no data yet, so any failure falls back. */
+/**
+ * A fresh install. There is no data yet, so any failure falls back. An
+ * encrypted file it created is left in place: deleting it here would trust an
+ * `exists` that said there was none, and the next launch removes it anyway
+ * once it reads as empty beside the plaintext file.
+ */
 function create<C>(files: DatabaseFiles<C>): OpenedDatabase<C> {
   try {
     const key = usableKey(files);
@@ -176,7 +181,6 @@ function create<C>(files: DatabaseFiles<C>): OpenedDatabase<C> {
     return { status: "ready", connection };
   } catch (error) {
     console.warn("Could not create an encrypted database", error);
-    removeLeftover(files, ENCRYPTED_DATABASE);
     return fallBackToPlaintext(files);
   }
 }
@@ -233,6 +237,10 @@ function usableKey<C>(files: DatabaseFiles<C>): string {
     byte.toString(16).padStart(2, "0"),
   ).join("");
   files.writeKey(key);
+  // Prove the store keeps it before anything is encrypted with it.
+  if (files.readKey() !== key) {
+    throw new Error("The key store did not keep the database key");
+  }
   return key;
 }
 
