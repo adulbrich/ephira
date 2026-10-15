@@ -5,7 +5,7 @@ import { View, Platform, StyleSheet } from "react-native";
 export default function PrivacyPolicy() {
   const theme = useTheme();
   return (
-    <ThemedView style={{ height: "100%" }}>
+    <ThemedView>
       <List.Section>
         <List.Accordion
           title="Privacy Policy"
