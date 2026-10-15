@@ -2,7 +2,7 @@
   "expo": {
     "name": "ephira",
     "slug": "ephira",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "orientation": "portrait",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
