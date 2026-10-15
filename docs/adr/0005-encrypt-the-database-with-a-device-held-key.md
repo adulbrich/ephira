@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Date**: 2026-10-14
 - **Context commit**: 749b54f
-- **Amended**: 2026-10-15, during planning and implementation. The commit point is a rename, "Start fresh" keeps the key, and only a key that does not open the file counts as unreadable; anything else asks for a restart. See `docs/plans/2026-10-15-encrypt-the-database.md`.
+- **Amended**: 2026-10-15, during planning, implementation and code review. The commit point is a rename, "Start fresh" keeps the key, and only a key that does not open the file counts as unreadable; anything else asks for a restart. Code review added the partial-copy rule: an `ephira.encrypting.db` beside the encrypted file while `ephira.db` exists marks a copy that may be partial. See `docs/plans/2026-10-15-encrypt-the-database.md`.
 
 ## Context
 
@@ -22,7 +22,7 @@ Two further facts shape the fix:
 
 **The key never leaves the device.** iOS stores it as `THIS_DEVICE_ONLY`. On Android, `expo-secure-store` wraps it with a Keystore key, which cannot be exported, and `android.allowBackup` is set to `false`. A backup holds nothing readable, and a new phone starts empty.
 
-**Three file names, and a rename is the commit point.** `ephira.db` is only ever the legacy plaintext file. An upgrade exports into `ephira.encrypting.db`, and only once that copy opens with the key and holds as many schema objects as the original is it renamed to `ephira.encrypted.db`. The invariant: **once `ephira.encrypted.db` exists, it is the source of truth, unless `ephira.encrypting.db` and `ephira.db` are both still beside it, which means the copy may be partial; `ephira.encrypting.db` is never the truth.** Before the rename the plaintext file is the truth, so an interrupted export is always safe to redo. After it, a plaintext file is a leftover to delete, whether the upgrade stopped before deleting it or something recreated it later by opening `ephira.db` by name.
+**Three file names, and a rename is the commit point.** `ephira.db` is only ever the legacy plaintext file. An upgrade exports into `ephira.encrypting.db`, and only once that copy opens with the key and holds as many schema objects as the original is it renamed to `ephira.encrypted.db`. The invariant: **once `ephira.encrypted.db` exists, it is the source of truth, with two exceptions while `ephira.db` is still beside it: `ephira.encrypting.db` also there means the copy may be partial, and an empty encrypted file is a stray. `ephira.encrypting.db` is never the truth.** Before the rename the plaintext file is the truth, so an interrupted export is always safe to redo. After it, a plaintext file is a leftover to delete, whether the upgrade stopped before deleting it or something recreated it later by opening `ephira.db` by name.
 
 At launch, before anything else touches the database. An `ephira.encrypting.db` is a leftover and is deleted wherever this sequence meets one, except beside `ephira.encrypted.db` while `ephira.db` exists: there it marks a copy that may be partial, and it stays until that copy is deleted.
 

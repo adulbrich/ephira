@@ -7,11 +7,12 @@
  * and each failure be tested without SQLCipher, which Jest does not have.
  *
  * The invariant everything here protects: once ENCRYPTED_DATABASE exists, it
- * is the source of truth, unless PENDING_DATABASE and the plaintext file are
- * both still beside it, which means the copy may be partial (see
- * copyMayBePartial). PENDING_DATABASE never is. Before the rename, and while a
- * copy may be partial, the plaintext file is the truth and every failure falls
- * back to it. After a rename that finished, nothing falls back.
+ * is the source of truth, with two exceptions while the plaintext file is
+ * still beside it: PENDING_DATABASE also there means the copy may be partial
+ * (see copyMayBePartial), and an empty encrypted file is a stray (see
+ * openEncrypted). PENDING_DATABASE is never the truth. Before the rename, and
+ * in those two cases, the plaintext file is the truth and every failure falls
+ * back to it. Otherwise nothing falls back.
  */
 
 /** The legacy plaintext database, written by every release up to 1.4.0. */
