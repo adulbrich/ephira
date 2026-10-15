@@ -1365,7 +1365,7 @@ APP_DATA=$(xcrun simctl get_app_container booted com.capucity.ephira data)
 ls "$APP_DATA/Documents/SQLite"
 ```
 
-Expected: `ephira.encrypted.db` and nothing named `ephira.db` or `ephira.encrypting.db`. Then open the calendar at October 2026 and confirm 1 October shows flow and the note `upgrade-check`. **If `ephira.db` is still there and the calendar is empty, stop.** The file URI is wrong (Review Focus 1), and the user's data is untouched but invisible.
+Expected: `ephira.encrypted.db` and nothing named `ephira.db` or `ephira.encrypting.db`, and no "Database migration error" screen. Then open the calendar at October 2026 and confirm 1 October shows flow and the note `upgrade-check`. **If `ephira.db` is still there and the calendar is empty, stop.** The file URI is wrong (Review Focus 1), and the user's data is untouched but invisible.
 
 - [ ] **Step 4: Prove the file is encrypted (Review Focus 3)**
 
@@ -1383,7 +1383,7 @@ xcrun simctl terminate booted com.capucity.ephira
 xcrun simctl launch booted com.capucity.ephira
 ```
 
-Twice. Expected: the app opens both times and still shows 1 October.
+Twice. Expected: the app opens both times and still shows 1 October. Then open Settings, expand the Privacy Policy's data-use section, and confirm its last sentence ("... export it first.") is fully visible: the item caps the text at `descriptionNumberOfLines={25}` and the paragraph grew by about three lines. Use the narrowest simulator available (iPhone 17e). If it clips, record it; raising the cap is a one-line follow-up.
 
 - [ ] **Step 6: The unreadable screen and Start fresh (Review Focus 4)**
 
@@ -1445,7 +1445,30 @@ adb shell run-as com.capucity.ephira ls files/SQLite
 adb exec-out run-as com.capucity.ephira head -c 16 files/SQLite/ephira.encrypted.db | xxd
 ```
 
-Expected: the manifest has `android:allowBackup="false"` (record whether backup-rule attributes appear too); `ls` shows `ephira.encrypted.db` only; the header is not "SQLite format 3\0"; the app shows 1 October with its note, and still does after `adb shell am force-stop com.capucity.ephira` and a relaunch.
+Expected: the manifest has `android:allowBackup="false"` (record whether backup-rule attributes appear too); `ls` shows `ephira.encrypted.db` only; the header is not "SQLite format 3\0"; no "Database migration error" screen; the app shows 1 October with its note, and still does after `adb shell am force-stop com.capucity.ephira` and a relaunch.
+
+- [ ] **Step 7b: Android unreadable and wrong-key paths (Review Focus 4 and 6)**
+
+Android has its own SQLCipher build (OpenSSL) and its own error path, so repeat Step 6 here. Save the encrypted file, then remove the key:
+
+```bash
+adb shell am force-stop com.capucity.ephira
+adb exec-out run-as com.capucity.ephira cat files/SQLite/ephira.encrypted.db > "$TMPDIR/android-old-key.db"
+adb shell run-as com.capucity.ephira rm shared_prefs/SecureStore.xml
+adb shell monkey -p com.capucity.ephira -c android.intent.category.LAUNCHER 1
+```
+
+Expected: the splash goes away and "Your data can't be opened on this phone" shows. Tap **Start fresh**, **Delete**, then force-stop and relaunch. Expected: onboarding and an empty calendar. Now put the file encrypted under the old key back:
+
+```bash
+adb shell am force-stop com.capucity.ephira
+adb push "$TMPDIR/android-old-key.db" /data/local/tmp/ephira.encrypted.db
+adb shell "cat /data/local/tmp/ephira.encrypted.db | run-as com.capucity.ephira sh -c 'cat > files/SQLite/ephira.encrypted.db'"
+adb shell rm /data/local/tmp/ephira.encrypted.db
+adb shell monkey -p com.capucity.ephira -c android.intent.category.LAUNCHER 1
+```
+
+Expected: "Your data can't be opened on this phone" with **Start fresh**. If "ephira couldn't open your data" shows instead, the `file is not a database` match missed on Android: report the logged error text (`adb logcat -d | grep -i "database"`). Tap **Start fresh**, **Delete**, and relaunch to leave the emulator clean.
 
 - [ ] **Step 8: Record the results**
 
@@ -1503,6 +1526,9 @@ Jest cannot exercise SQLCipher; the suite covers the launch sequence with a fake
 - **Privacy policy date.** The backup paragraph changed in both copies; the "Last updated" date is left to #240.
 - **Old backups.** Backups taken before this release still hold the plaintext file until the OS replaces them.
 - **Version.** Not bumped here.
+- **Android 7.** Below API 26, expo-file-system renames by copy and delete, so the commit point is not atomic there (ADR 0005, Consequences). Raising `minSdkVersion` to 26 removes the window.
+- **Downgrades.** TestFlight and sideloading let a tester install an older build over this one. 1.4.0 would create a fresh plaintext `ephira.db`, and the next upgrade deletes whatever was logged on it.
+- **A screen with no way out.** A key store that keeps failing, or a file damaged in a way SQLite reports as anything but "file is not a database", shows "close and reopen" at every launch. Worth a follow-up if it is ever reported.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 EOF
