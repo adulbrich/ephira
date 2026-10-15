@@ -6,15 +6,20 @@
  * store and the SQL. Keeping every effect a parameter is what lets each state
  * and each failure be tested without SQLCipher, which Jest does not have.
  *
- * The invariant everything here protects: once ENCRYPTED_DATABASE exists it is
- * the source of truth, and PENDING_DATABASE never is. Before the rename that
- * creates it, the plaintext file is the truth and every failure falls back to
- * it. After, nothing falls back.
+ * The invariant everything here protects: once ENCRYPTED_DATABASE exists, and
+ * no PENDING_DATABASE beside it says the copy may be partial, it is the source
+ * of truth. PENDING_DATABASE never is. Before the rename that creates it, the
+ * plaintext file is the truth and every failure falls back to it. After,
+ * nothing falls back.
  */
 
 /** The legacy plaintext database, written by every release up to 1.4.0. */
 export const PLAINTEXT_DATABASE = "ephira.db";
-/** An export in progress. Always a leftover when this sequence meets one. */
+/**
+ * An export in progress, never the truth. Beside ENCRYPTED_DATABASE while the
+ * plaintext file exists, it marks a copy that may be partial, and it stays
+ * until that copy is gone. Anywhere else it is a leftover.
+ */
 export const PENDING_DATABASE = "ephira.encrypting.db";
 /** The encrypted database. */
 export const ENCRYPTED_DATABASE = "ephira.encrypted.db";
@@ -82,32 +87,41 @@ export function openDatabaseFile<C>(
   files: DatabaseFiles<C>,
 ): OpenedDatabase<C> {
   if (files.exists(ENCRYPTED_DATABASE)) {
-    const opened = renameFinished(files)
-      ? openEncrypted(files)
-      : discardUnfinishedCopy(files);
+    const opened = copyMayBePartial(files)
+      ? discardEncryptedCopy(files)
+      : openEncrypted(files);
     if (opened) return opened;
   }
   return files.exists(PLAINTEXT_DATABASE) ? upgrade(files) : create(files);
 }
 
 /**
- * Whether the rename that made the encrypted file finished. A rename that
- * copies and then deletes (expo-file-system below Android API 26) keeps the
- * export under its temporary name until the copy is complete, so both names
- * present while the plaintext file still exists mean the copy may be partial.
+ * Whether an encrypted file may be a partial copy. A rename that copies and
+ * then deletes (expo-file-system below Android API 26) keeps the export under
+ * its temporary name until the copy is complete, so both names present while
+ * the plaintext file still exists mean the copy may not have finished.
  */
-function renameFinished<C>(files: DatabaseFiles<C>): boolean {
-  return !(files.exists(PENDING_DATABASE) && files.exists(PLAINTEXT_DATABASE));
+function copyMayBePartial<C>(files: DatabaseFiles<C>): boolean {
+  return files.exists(PENDING_DATABASE) && files.exists(PLAINTEXT_DATABASE);
 }
 
-/** Deletes a copy that may be partial, so the upgrade runs again from the plaintext file. */
-function discardUnfinishedCopy<C>(
+/**
+ * Deletes an encrypted file that is not the truth (a copy that may be partial,
+ * or an empty stray) so the upgrade runs again from the plaintext file.
+ * Returns undefined when that can go ahead. If the delete fails, the app stays
+ * on plaintext, and fallBackToPlaintext keeps the export beside it, so the
+ * next launch still knows the copy is not to be trusted.
+ */
+function discardEncryptedCopy<C>(
   files: DatabaseFiles<C>,
 ): OpenedDatabase<C> | undefined {
   try {
     files.remove(ENCRYPTED_DATABASE);
   } catch (error) {
-    console.warn("Could not delete an unfinished encrypted copy", error);
+    console.warn(
+      "Could not delete an encrypted copy that is not the truth",
+      error,
+    );
     return fallBackToPlaintext(files);
   }
   return undefined;
@@ -158,13 +172,7 @@ function openEncrypted<C>(
   if (files.exists(PLAINTEXT_DATABASE)) {
     if (verified.schemaObjects === 0) {
       files.close(verified.connection);
-      try {
-        files.remove(ENCRYPTED_DATABASE);
-      } catch (error) {
-        console.warn("Could not delete an empty encrypted database", error);
-        return fallBackToPlaintext(files);
-      }
-      return undefined;
+      return discardEncryptedCopy(files);
     }
     removeLeftover(files, PLAINTEXT_DATABASE);
   }
@@ -179,15 +187,21 @@ function upgrade<C>(files: DatabaseFiles<C>): OpenedDatabase<C> {
     exportToPending(files, key);
     files.rename(PENDING_DATABASE, ENCRYPTED_DATABASE);
   } catch (error) {
-    // A rename that moved the file and then threw has still committed. One
-    // that copied part of it and then threw has not.
-    if (!files.exists(ENCRYPTED_DATABASE) || !renameFinished(files)) {
+    if (!files.exists(ENCRYPTED_DATABASE)) {
       console.warn(
         "Could not encrypt the database; staying on plaintext",
         error,
       );
-      removeLeftover(files, ENCRYPTED_DATABASE);
       return fallBackToPlaintext(files);
+    }
+    // A rename that moved the file and then threw has still committed. One
+    // that copied part of it and then threw has not.
+    if (copyMayBePartial(files)) {
+      console.warn(
+        "The encrypted copy may be partial; staying on plaintext",
+        error,
+      );
+      return discardEncryptedCopy(files) ?? fallBackToPlaintext(files);
     }
     console.warn(
       "The encrypted database moved into place with an error",
@@ -274,9 +288,15 @@ function usableKey<C>(files: DatabaseFiles<C>): string {
   return key;
 }
 
-/** Opens, or creates, the plaintext file, as 1.4.0 did. The next launch tries again. */
+/**
+ * Opens, or creates, the plaintext file, as 1.4.0 did. The next launch tries
+ * again. A leftover export is deleted only when no encrypted file is there for
+ * it to vouch against.
+ */
 function fallBackToPlaintext<C>(files: DatabaseFiles<C>): OpenedDatabase<C> {
-  removeLeftover(files, PENDING_DATABASE);
+  if (!files.exists(ENCRYPTED_DATABASE)) {
+    removeLeftover(files, PENDING_DATABASE);
+  }
   return { status: "ready", connection: files.open(PLAINTEXT_DATABASE) };
 }
 

@@ -22,9 +22,9 @@ Two further facts shape the fix:
 
 **The key never leaves the device.** iOS stores it as `THIS_DEVICE_ONLY`. On Android, `expo-secure-store` wraps it with a Keystore key, which cannot be exported, and `android.allowBackup` is set to `false`. A backup holds nothing readable, and a new phone starts empty.
 
-**Three file names, and a rename is the commit point.** `ephira.db` is only ever the legacy plaintext file. An upgrade exports into `ephira.encrypting.db`, and only once that copy opens with the key and holds as many schema objects as the original is it renamed to `ephira.encrypted.db`. The invariant: **once `ephira.encrypted.db` exists, it is the source of truth, and `ephira.encrypting.db` never is.** Before the rename the plaintext file is the truth, so an interrupted export is always safe to redo. After it, a plaintext file is a leftover to delete, whether the upgrade stopped before deleting it or something recreated it later by opening `ephira.db` by name.
+**Three file names, and a rename is the commit point.** `ephira.db` is only ever the legacy plaintext file. An upgrade exports into `ephira.encrypting.db`, and only once that copy opens with the key and holds as many schema objects as the original is it renamed to `ephira.encrypted.db`. The invariant: **once `ephira.encrypted.db` exists, and no `ephira.encrypting.db` beside it says the copy may be partial, it is the source of truth; `ephira.encrypting.db` never is.** Before the rename the plaintext file is the truth, so an interrupted export is always safe to redo. After it, a plaintext file is a leftover to delete, whether the upgrade stopped before deleting it or something recreated it later by opening `ephira.db` by name.
 
-At launch, before anything else touches the database. An `ephira.encrypting.db` is always a leftover and is deleted wherever this sequence meets one.
+At launch, before anything else touches the database. An `ephira.encrypting.db` is a leftover and is deleted wherever this sequence meets one, except beside `ephira.encrypted.db` while `ephira.db` exists: there it marks a copy that may be partial, and it stays until that copy is deleted.
 
 | `ephira.db` | `ephira.encrypted.db` | Action |
 | --- | --- | --- |

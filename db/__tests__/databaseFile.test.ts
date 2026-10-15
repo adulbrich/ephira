@@ -338,6 +338,38 @@ describe("upgrading a plaintext database", () => {
     expectOnlyOpen(device, opened);
   });
 
+  it("keeps the mark of a partial copy when the copy cannot be deleted", () => {
+    const partial = { key: KEY, schemaObjects: 14, days: [] };
+    const device = new FakeDevice(
+      {
+        [PLAINTEXT_DATABASE]: legacyDatabase(),
+        [PENDING_DATABASE]: encryptedDatabase(KEY),
+        [ENCRYPTED_DATABASE]: partial,
+      },
+      KEY,
+    );
+    device.failing.add(`remove:${ENCRYPTED_DATABASE}`);
+
+    const opened = openDatabaseFile(device);
+
+    expect(opened.status).toBe("ready");
+    expect(opened.connection).toEqual({ name: PLAINTEXT_DATABASE, key: null });
+    expect(device.names()).toEqual([
+      PLAINTEXT_DATABASE,
+      ENCRYPTED_DATABASE,
+      PENDING_DATABASE,
+    ]);
+    expect(device.file(PLAINTEXT_DATABASE)).toEqual(legacyDatabase());
+    expectOnlyOpen(device, opened);
+
+    device.restart();
+    const relaunched = openDatabaseFile(device);
+
+    expect(device.names()).toEqual([ENCRYPTED_DATABASE]);
+    expect(device.file(ENCRYPTED_DATABASE)).toEqual(encryptedDatabase(KEY));
+    expectOnlyOpen(device, relaunched);
+  });
+
   it("redoes an upgrade whose copying rename was killed part-way", () => {
     const device = new FakeDevice(
       {
