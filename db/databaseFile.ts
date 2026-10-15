@@ -149,6 +149,11 @@ function openEncrypted<C>(
   files: DatabaseFiles<C>,
 ): OpenedDatabase<C> | undefined {
   removeLeftover(files, PENDING_DATABASE);
+  // A copying rename whose own delete of the export failed leaves it behind.
+  // If it still cannot be deleted, the next launch would take this file for a
+  // partial copy and discard it, so it must not become the truth now either.
+  // ephira.db holds the same data, so nothing is lost by staying on it.
+  if (copyMayBePartial(files)) return discardEncryptedCopy(files);
 
   let key: string | null;
   try {

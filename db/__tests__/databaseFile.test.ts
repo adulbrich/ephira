@@ -26,6 +26,7 @@ type Step =
   | "rename"
   | "renameAfterMoving"
   | "renameCopyFails"
+  | "renameLeavesSource"
   | `remove:${string}`
   | `open:${string}`
   | `count:${string}`;
@@ -98,6 +99,14 @@ class FakeDevice implements DatabaseFiles<FakeConnection> {
   rename(from: string, to: string) {
     this.fail("rename");
     const file = this.file(from);
+    if (this.failing.has("renameLeavesSource")) {
+      // A rename that copies and then deletes, whose delete of the source
+      // failed silently: the copy is complete and the source is still there.
+      this.files.set(to, { ...file, days: [...file.days] });
+      this.onEffect?.();
+      this.afterRename?.();
+      return;
+    }
     if (this.failing.has("renameCopyFails")) {
       // A rename that copies and then deletes (Android below API 26), stopped
       // part-way: the first page made it across, the rows did not, and the
@@ -394,6 +403,29 @@ describe("upgrading a plaintext database", () => {
     expect(device.names()).toEqual([ENCRYPTED_DATABASE]);
     expect(device.file(ENCRYPTED_DATABASE)).toEqual(encryptedDatabase(KEY));
     expectOnlyOpen(device, relaunched);
+  });
+
+  it("stays on the plaintext file when a copying rename leaves an export it cannot delete", () => {
+    const device = new FakeDevice({ [PLAINTEXT_DATABASE]: legacyDatabase() });
+    device.failing.add("renameLeavesSource");
+    // Only the deletes after the rename fail; the upgrade's first one must not.
+    device.afterRename = () => device.failing.add(`remove:${PENDING_DATABASE}`);
+
+    const opened = openDatabaseFile(device);
+
+    expect(opened.status).toBe("ready");
+    expect(opened.connection).toEqual({ name: PLAINTEXT_DATABASE, key: null });
+    expect(device.file(PLAINTEXT_DATABASE)).toEqual(legacyDatabase());
+    expect(device.names()).toEqual([PLAINTEXT_DATABASE, PENDING_DATABASE]);
+    expectOnlyOpen(device, opened);
+
+    device.restart();
+    openDatabaseFile(device);
+
+    expect(device.names()).toEqual([ENCRYPTED_DATABASE]);
+    expect(device.file(ENCRYPTED_DATABASE)).toEqual(
+      encryptedDatabase(GENERATED_KEY),
+    );
   });
 
   it("redoes an upgrade whose copying rename was killed part-way", () => {
