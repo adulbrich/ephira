@@ -163,16 +163,21 @@ export interface TappedNotification {
 }
 
 /**
- * Returns a `routeForNotification` that takes the whole response and answers
- * `null` for a tap it has already routed.
+ * Returns a function that takes a tap's route: what `routeForNotification`
+ * answers the first time it sees a tap, and `null` every time after.
  *
- * Two paths see each tap: the response listener in `app/_layout.tsx`, and
- * `app/index.tsx` reading the last response when it mounts. The second exists
- * because a tap that launches the app reaches expo-notifications natively
- * before any JS listener is registered, so the listener never hears it. Index
- * also remounts on every return from the background, when the last response
- * may be a tap the listener already routed. Keying on the request identifier
- * lets both paths share one instance without either navigating twice.
+ * Two paths see each tap, and they share one instance,
+ * `takeNotificationRoute` in `services/notificationRouting.ts`:
+ *
+ * - The response listener in `app/_layout.tsx` hears taps while JS runs.
+ * - `app/index.tsx` reads the last response when it mounts. A tap that
+ *   launches the app reaches expo-notifications natively before any listener
+ *   is registered, so only this read sees it. Index lands on the route itself
+ *   because a push from the layout would be undone by index's own replace.
+ *
+ * Index also remounts on every return from the background, when the last
+ * response may be a tap the listener already took. Keying on the request
+ * identifier keeps the two paths from navigating twice for one tap.
  */
 export const routeEachResponseOnce = () => {
   const routed = new Set<string>();

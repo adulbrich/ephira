@@ -57,14 +57,7 @@ describe("routeForNotification", () => {
   });
 });
 
-/**
- * Two paths see the same tap. The listener in `app/_layout.tsx` hears taps
- * while JS is running; `app/index.tsx` reads the tap that launched the app,
- * which expo-notifications receives natively before any listener exists.
- * The index route also remounts on every return from the background, and
- * the last response is still there then, so without a guard one tap would
- * navigate twice.
- */
+/** The guard both notification paths share; its doc comment says why. */
 describe("routeEachResponseOnce", () => {
   const tap = (identifier: string, data?: Record<string, unknown>) => ({
     notification: { request: { identifier, content: { data } } },

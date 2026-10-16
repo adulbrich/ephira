@@ -7,10 +7,8 @@ import { takeLaunchNotificationRoute } from "@/services/notificationRouting";
 
 export default function Index() {
   useEffect(() => {
-    // Taken before the awaits so the tap listener in the root layout, if it
-    // hears this same tap meanwhile, finds it already routed. Landing here
-    // rather than pushing from the layout matters: a push would be undone by
-    // the replace below.
+    // Taken before the awaits, so the listener in the root layout finds this
+    // tap already taken if it hears it meanwhile.
     const notificationRoute = takeLaunchNotificationRoute();
 
     (async () => {

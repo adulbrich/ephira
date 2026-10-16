@@ -45,7 +45,7 @@ import {
   loadCyclePredictionChoice,
 } from "@/db/preferences";
 import * as Notifications from "expo-notifications";
-import { routeForNotificationResponse } from "@/services/notificationRouting";
+import { takeNotificationRoute } from "@/services/notificationRouting";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -168,18 +168,16 @@ function AppShell() {
     }
   }, []);
 
-  // Handle taps while JS is running. A tap that launches the app is never
-  // heard here; app/index.tsx routes that one.
+  // Taps while JS is running. The tap that launches the app is taken in
+  // app/index.tsx instead.
   useEffect(() => {
     const subscription = Notifications.addNotificationResponseReceivedListener(
       (response) => {
-        // A notification can arrive with no payload at all, which SDK 55 made
-        // explicit in the type. Reading .type off it used to throw here.
-        const data = response.notification.request.content.data;
-        console.log("[Notification] Tapped:", data?.type);
+        const route = takeNotificationRoute(response);
+        if (!route) return;
 
-        const route = routeForNotificationResponse(response);
-        if (route) router.push(route);
+        console.log("[Notification] Tapped, routing to", route);
+        router.push(route);
       },
     );
 
