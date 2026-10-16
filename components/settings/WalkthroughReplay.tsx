@@ -8,7 +8,7 @@ export default function WalkthroughReplay() {
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <ThemedView style={{ height: "100%" }}>
+    <ThemedView>
       <List.Section>
         <List.Accordion
           title="Walkthrough"
