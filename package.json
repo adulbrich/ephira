@@ -1,7 +1,7 @@
 {
   "name": "ephira",
   "main": "expo-router/entry",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
@@ -42,6 +42,7 @@
     "expo-local-authentication": "~57.0.2",
     "expo-notifications": "~57.0.12",
     "expo-router": "~57.0.14",
+    "expo-secure-store": "~57.0.4",
     "expo-sharing": "~57.0.13",
     "expo-splash-screen": "~57.0.7",
     "expo-sqlite": "~57.0.1",

@@ -2,10 +2,16 @@ import { List, Divider, Text, useTheme } from "react-native-paper";
 import { ThemedView } from "@/components/ThemedView";
 import { View, Platform, StyleSheet } from "react-native";
 
+// react-native-paper caps a description at 2 lines unless told otherwise, and
+// React Native reads 0 as no limit. Policy text must never be cut off, and a
+// hand-picked cap clipped the Data Use paragraph once it grew: it wraps
+// differently with screen width and font size.
+const NO_LINE_LIMIT = 0;
+
 export default function PrivacyPolicy() {
   const theme = useTheme();
   return (
-    <ThemedView style={{ height: "100%" }}>
+    <ThemedView>
       <List.Section>
         <List.Accordion
           title="Privacy Policy"
@@ -33,7 +39,7 @@ export default function PrivacyPolicy() {
                 store within the app.
               </Text>
             }
-            descriptionNumberOfLines={10}
+            descriptionNumberOfLines={NO_LINE_LIMIT}
           />
 
           <List.Item
@@ -139,18 +145,21 @@ export default function PrivacyPolicy() {
                   </Text>
                 </View>
                 {"\n"}This can also be done by uninstalling the app.
-                {"\n\n"}Please note that while{" "}
+                {"\n\n"}
                 <Text
                   style={[styles.ephiraFont, { color: theme.colors.primary }]}
                 >
                   ephira
                 </Text>{" "}
-                only saves your data locally, depending on your device settings
-                an automatic cloud backup might still take place. We recommend
-                checking your general settings to prevent this from happening.
+                encrypts your data with a key that never leaves your phone.
+                Backups of your phone made since ephira began encrypting hold
+                nothing that can be read; an older backup may still hold a
+                readable copy until your phone replaces it. Your data does not
+                move to a new phone, so to keep a copy when you change phones,
+                export it first.
               </Text>
             }
-            descriptionNumberOfLines={25}
+            descriptionNumberOfLines={NO_LINE_LIMIT}
           />
 
           <List.Item
@@ -219,7 +228,7 @@ export default function PrivacyPolicy() {
                 </Text>
               </Text>
             }
-            descriptionNumberOfLines={20}
+            descriptionNumberOfLines={NO_LINE_LIMIT}
           />
           <List.Item
             title="Changes to this Privacy Policy"
@@ -230,7 +239,7 @@ export default function PrivacyPolicy() {
                 on this page.
               </Text>
             }
-            descriptionNumberOfLines={10}
+            descriptionNumberOfLines={NO_LINE_LIMIT}
           />
           <List.Item
             title="Contact Us"
@@ -252,7 +261,7 @@ export default function PrivacyPolicy() {
                 </View>
               </Text>
             }
-            descriptionNumberOfLines={10}
+            descriptionNumberOfLines={NO_LINE_LIMIT}
           />
         </List.Accordion>
       </List.Section>
