@@ -1,5 +1,6 @@
 import {
   NotificationTypes,
+  routeEachResponseOnce,
   routeForNotification,
 } from "@/constants/Notifications";
 
@@ -53,5 +54,51 @@ describe("routeForNotification", () => {
     expect(
       routeForNotification({ type: { toString: () => "period_today" } }),
     ).toBeNull();
+  });
+});
+
+/**
+ * Two paths see the same tap. The listener in `app/_layout.tsx` hears taps
+ * while JS is running; `app/index.tsx` reads the tap that launched the app,
+ * which expo-notifications receives natively before any listener exists.
+ * The index route also remounts on every return from the background, and
+ * the last response is still there then, so without a guard one tap would
+ * navigate twice.
+ */
+describe("routeEachResponseOnce", () => {
+  const tap = (identifier: string, data?: Record<string, unknown>) => ({
+    notification: { request: { identifier, content: { data } } },
+  });
+
+  it("routes a tapped period notification to the calendar", () => {
+    const route = routeEachResponseOnce();
+
+    expect(route(tap("a", { type: NotificationTypes.PERIOD_TODAY }))).toBe(
+      "/(tabs)/calendar",
+    );
+  });
+
+  it("routes the same tap only once", () => {
+    const route = routeEachResponseOnce();
+    const today = tap("a", { type: NotificationTypes.PERIOD_TODAY });
+
+    route(today);
+
+    expect(route(today)).toBeNull();
+  });
+
+  it("still routes a different tap after one was handled", () => {
+    const route = routeEachResponseOnce();
+    route(tap("a", { type: NotificationTypes.PERIOD_TODAY }));
+
+    expect(route(tap("b", { type: NotificationTypes.PERIOD_LATE }))).toBe(
+      "/(tabs)/calendar",
+    );
+  });
+
+  it("stays put when no notification was tapped", () => {
+    const route = routeEachResponseOnce();
+
+    expect(route(null)).toBeNull();
   });
 });
