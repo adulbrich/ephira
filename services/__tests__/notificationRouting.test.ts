@@ -3,6 +3,8 @@
  * mocked, and the module is loaded in isolation per test so each starts with
  * a fresh guard.
  */
+import { NotificationTypes } from "@/constants/Notifications";
+
 const mockGetLastResponse = jest.fn();
 const mockClearLastResponse = jest.fn();
 jest.mock("expo-notifications", () => ({
@@ -12,7 +14,10 @@ jest.mock("expo-notifications", () => ({
 
 const periodToday = {
   notification: {
-    request: { identifier: "a", content: { data: { type: "period_today" } } },
+    request: {
+      identifier: "a",
+      content: { data: { type: NotificationTypes.PERIOD_TODAY } },
+    },
   },
 };
 
@@ -31,6 +36,7 @@ describe("takeLaunchNotificationRoute", () => {
     mockGetLastResponse.mockReturnValue(periodToday);
 
     expect(routing.takeLaunchNotificationRoute()).toBe("/(tabs)/calendar");
+    expect(mockClearLastResponse).toHaveBeenCalledTimes(1);
 
     const [read] = mockGetLastResponse.mock.invocationCallOrder;
     const [clear] = mockClearLastResponse.mock.invocationCallOrder;

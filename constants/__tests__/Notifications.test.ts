@@ -64,34 +64,34 @@ describe("routeEachResponseOnce", () => {
   });
 
   it("routes a tapped period notification to the calendar", () => {
-    const route = routeEachResponseOnce();
+    const take = routeEachResponseOnce();
 
-    expect(route(tap("a", { type: NotificationTypes.PERIOD_TODAY }))).toBe(
+    expect(take(tap("a", { type: NotificationTypes.PERIOD_TODAY }))).toBe(
       "/(tabs)/calendar",
     );
   });
 
   it("routes the same tap only once", () => {
-    const route = routeEachResponseOnce();
+    const take = routeEachResponseOnce();
     const today = tap("a", { type: NotificationTypes.PERIOD_TODAY });
 
-    route(today);
+    take(today);
 
-    expect(route(today)).toBeNull();
+    expect(take(today)).toBeNull();
   });
 
   it("still routes a different tap after one was handled", () => {
-    const route = routeEachResponseOnce();
-    route(tap("a", { type: NotificationTypes.PERIOD_TODAY }));
+    const take = routeEachResponseOnce();
+    take(tap("a", { type: NotificationTypes.PERIOD_TODAY }));
 
-    expect(route(tap("b", { type: NotificationTypes.PERIOD_LATE }))).toBe(
+    expect(take(tap("b", { type: NotificationTypes.PERIOD_LATE }))).toBe(
       "/(tabs)/calendar",
     );
   });
 
   it("stays put when no notification was tapped", () => {
-    const route = routeEachResponseOnce();
+    const take = routeEachResponseOnce();
 
-    expect(route(null)).toBeNull();
+    expect(take(null)).toBeNull();
   });
 });
