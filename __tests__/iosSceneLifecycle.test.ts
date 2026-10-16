@@ -14,9 +14,10 @@ import appConfig from "@/app.json";
  * 57.0.23+) makes prebuild add the scene manifest, point it at Expo's
  * `EXExpoAppSceneDelegate`, and move window creation out of the AppDelegate.
  *
- * Nothing else notices if the flag goes: iOS 26 runs either way, and EAS's
- * default SDK 57 image still builds with Xcode 26. The first Xcode 27 build
- * would crash at launch on iOS 27. Expo SDK 58's template adopts scenes itself
+ * Nothing else notices if the flag goes: iOS 26 runs either way, and an EAS
+ * build that takes the `sdk-57` image (Xcode 26.6 as of October 2026) most
+ * likely links the iOS 26 SDK. The first Xcode 27 build would crash at launch
+ * on iOS 27. Expo SDK 58's template adopts scenes itself
  * and the flag becomes a no-op; remove the flag and this file together then.
  */
 type IosBuildProperties = {
