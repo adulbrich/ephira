@@ -4,7 +4,7 @@ import * as SplashScreen from "expo-splash-screen";
 import * as LocalAuthentication from "expo-local-authentication";
 import * as Crypto from "expo-crypto";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useState, useRef, useCallback, Suspense } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import "react-native-reanimated";
 import { TourProvider } from "@/assets/src/tour/TourContext";
 import { SpotlightOverlay } from "@/assets/src/tour/SpotlightOverlay";
@@ -14,27 +14,23 @@ import {
   View,
   AppState,
   type AppStateStatus,
-  ActivityIndicator,
   Alert,
 } from "react-native";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import migrations from "@/drizzle/migrations";
-import { SQLiteProvider } from "expo-sqlite";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
+import { AUTH_TYPES, SettingsKeys, TRACKING_MODES } from "@/constants/Settings";
 import {
-  AUTH_TYPES,
-  SettingsKeys,
-  DATABASE_NAME,
-  TRACKING_MODES,
-} from "@/constants/Settings";
-import {
+  discardUnreadableDatabase,
   getDatabase,
+  getDatabaseStatus,
   getDrizzleDatabase,
   getSetting,
   insertSetting,
   setupEntryTypes,
 } from "@/db/database";
+import DatabaseUnavailable from "@/components/DatabaseUnavailable";
 import DatabaseMigrationError from "@/components/DatabaseMigrationError";
 import PasswordAuthenticationView from "@/components/PasswordAuthenticationView";
 import { getTheme } from "@/components/ThemeHandler";
@@ -53,7 +49,27 @@ import { routeForNotification } from "@/constants/Notifications";
 
 SplashScreen.preventAutoHideAsync();
 
+/**
+ * Shows the app, or explains why it cannot open its data.
+ *
+ * No hooks here. Whether the database opened is settled at import, before the
+ * first render, and the hooks in AppShell must not run against the in-memory
+ * stand-in getDatabase() returns when it did not.
+ */
 export default function RootLayout() {
+  const status = getDatabaseStatus();
+  if (status !== "ready") {
+    return (
+      <DatabaseUnavailable
+        status={status}
+        onStartFresh={discardUnreadableDatabase}
+      />
+    );
+  }
+  return <AppShell />;
+}
+
+function AppShell() {
   const systemTheme = useColorScheme();
   const isDarkMode = systemTheme === "dark";
   const { themeColor, setThemeColor } = useThemeColor();
@@ -265,26 +281,22 @@ export default function RootLayout() {
     <TourProvider>
       <SpotlightOverlay />
 
-      <Suspense fallback={<ActivityIndicator size="large" />}>
-        <SQLiteProvider databaseName={DATABASE_NAME} useSuspense>
-          <PaperProvider theme={theme}>
-            <SafeAreaProvider>
-              <SafeAreaView
-                style={{ flex: 1, backgroundColor: theme.colors.background }}
-              >
-                <Stack screenOptions={{ headerShown: false }}>
-                  <Stack.Screen name="index" />
-                  <Stack.Screen name="(onboarding)" />
-                  <Stack.Screen name="(tabs)" />
-                  <Stack.Screen name="(pregnancy-tabs)" />
-                </Stack>
+      <PaperProvider theme={theme}>
+        <SafeAreaProvider>
+          <SafeAreaView
+            style={{ flex: 1, backgroundColor: theme.colors.background }}
+          >
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="index" />
+              <Stack.Screen name="(onboarding)" />
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="(pregnancy-tabs)" />
+            </Stack>
 
-                <StatusBar style="auto" />
-              </SafeAreaView>
-            </SafeAreaProvider>
-          </PaperProvider>
-        </SQLiteProvider>
-      </Suspense>
+            <StatusBar style="auto" />
+          </SafeAreaView>
+        </SafeAreaProvider>
+      </PaperProvider>
     </TourProvider>
   );
 }

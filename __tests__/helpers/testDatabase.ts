@@ -91,6 +91,12 @@ export const getDrizzleDatabase = () => open().database;
 /** Stands in for the raw Expo handle. Nothing under test calls it today. */
 export const getDatabase = () => open().connection;
 
+/** The device can fail to open its database; the test handle never does. */
+export const getDatabaseStatus = () => "ready" as const;
+
+/** Nothing to discard: the test handle is never unreadable. */
+export const discardUnreadableDatabase = () => undefined;
+
 /** The same handle, for tests that want to assert against it directly. */
 export const getTestDatabase = () => open().database;
 
