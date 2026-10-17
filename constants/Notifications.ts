@@ -176,8 +176,9 @@ export interface NotificationTapResponse {
  *   because, by a static read, a push made after the Stack mounts would be
  *   undone by index's own replace once its awaits finish.
  *
- * Index also remounts on a later return from the background without a tap,
- * when the last response may still hold a tap the listener already took.
+ * With a lock on, index also remounts on a later return from the background
+ * without a tap, since locking unmounts the navigator (services/appLock.ts),
+ * and the last response may still hold a tap the listener already took.
  * Keying on the request identifier keeps the two paths from navigating twice
  * for one tap.
  */
