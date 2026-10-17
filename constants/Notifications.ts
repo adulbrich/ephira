@@ -1,5 +1,5 @@
 /**
- * Constants and configuration for notification system
+ * Notification types, templates and settings, and routing for taps on them
  */
 
 export const NotificationTypes = {
@@ -147,4 +147,50 @@ export const routeForNotification = (
   ];
 
   return aboutAPeriod.includes(type) ? "/(tabs)/calendar" : null;
+};
+
+/**
+ * The part of an expo-notifications `NotificationResponse` that routing reads.
+ * Structural, so this file stays free of expo-notifications.
+ */
+export interface NotificationTapResponse {
+  notification: {
+    request: {
+      identifier: string;
+      content: { data?: Record<string, unknown> };
+    };
+  };
+}
+
+/**
+ * Returns a function that takes a tap's route: what `routeForNotification`
+ * answers the first time it sees a tap, and `null` every time after.
+ *
+ * Two paths see each tap, and they share one instance,
+ * `takeNotificationRoute` in `services/notificationRouting.ts`:
+ *
+ * - The response listener in `app/_layout.tsx` hears taps while JS runs.
+ * - `app/index.tsx` reads the last response when it mounts. A tap that
+ *   launches the app reaches expo-notifications natively before any listener
+ *   is registered, so only this read sees it. Index lands on the route itself
+ *   because, by a static read, a push made after the Stack mounts would be
+ *   undone by index's own replace once its awaits finish.
+ *
+ * Index also remounts on a later return from the background without a tap,
+ * when the last response may still hold a tap the listener already took.
+ * Keying on the request identifier keeps the two paths from navigating twice
+ * for one tap.
+ */
+export const routeEachResponseOnce = () => {
+  const routed = new Set<string>();
+
+  return (response: NotificationTapResponse | null) => {
+    if (!response) return null;
+
+    const { identifier, content } = response.notification.request;
+    if (routed.has(identifier)) return null;
+    routed.add(identifier);
+
+    return routeForNotification(content.data);
+  };
 };

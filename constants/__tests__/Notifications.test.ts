@@ -1,5 +1,6 @@
 import {
   NotificationTypes,
+  routeEachResponseOnce,
   routeForNotification,
 } from "@/constants/Notifications";
 
@@ -53,5 +54,44 @@ describe("routeForNotification", () => {
     expect(
       routeForNotification({ type: { toString: () => "period_today" } }),
     ).toBeNull();
+  });
+});
+
+/** The guard both notification paths share; its doc comment says why. */
+describe("routeEachResponseOnce", () => {
+  const tap = (identifier: string, data?: Record<string, unknown>) => ({
+    notification: { request: { identifier, content: { data } } },
+  });
+
+  it("routes a tapped period notification to the calendar", () => {
+    const take = routeEachResponseOnce();
+
+    expect(take(tap("a", { type: NotificationTypes.PERIOD_TODAY }))).toBe(
+      "/(tabs)/calendar",
+    );
+  });
+
+  it("routes the same tap only once", () => {
+    const take = routeEachResponseOnce();
+    const periodToday = tap("a", { type: NotificationTypes.PERIOD_TODAY });
+
+    take(periodToday);
+
+    expect(take(periodToday)).toBeNull();
+  });
+
+  it("still routes a different tap after one was handled", () => {
+    const take = routeEachResponseOnce();
+    take(tap("a", { type: NotificationTypes.PERIOD_TODAY }));
+
+    expect(take(tap("b", { type: NotificationTypes.PERIOD_LATE }))).toBe(
+      "/(tabs)/calendar",
+    );
+  });
+
+  it("stays put when no notification was tapped", () => {
+    const take = routeEachResponseOnce();
+
+    expect(take(null)).toBeNull();
   });
 });
