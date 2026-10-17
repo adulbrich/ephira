@@ -73,11 +73,11 @@ describe("routeEachResponseOnce", () => {
 
   it("routes the same tap only once", () => {
     const take = routeEachResponseOnce();
-    const today = tap("a", { type: NotificationTypes.PERIOD_TODAY });
+    const periodToday = tap("a", { type: NotificationTypes.PERIOD_TODAY });
 
-    take(today);
+    take(periodToday);
 
-    expect(take(today)).toBeNull();
+    expect(take(periodToday)).toBeNull();
   });
 
   it("still routes a different tap after one was handled", () => {

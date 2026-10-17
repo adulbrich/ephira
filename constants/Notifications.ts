@@ -173,7 +173,8 @@ export interface NotificationTapResponse {
  * - `app/index.tsx` reads the last response when it mounts. A tap that
  *   launches the app reaches expo-notifications natively before any listener
  *   is registered, so only this read sees it. Index lands on the route itself
- *   because a push from the layout would be undone by index's own replace.
+ *   because, by a static read, a push made after the Stack mounts would be
+ *   undone by index's own replace once its awaits finish.
  *
  * Index also remounts on a later return from the background without a tap,
  * when the last response may still hold a tap the listener already took.
