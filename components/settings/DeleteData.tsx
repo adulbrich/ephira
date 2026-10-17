@@ -41,7 +41,7 @@ function DeleteDataModal({ onDismiss }: { onDismiss: () => void }) {
 
   return (
     <Portal>
-      <Modal visible={true} onDismiss={() => {}} style={styles.modal}>
+      <Modal visible={true} onDismiss={onDismissModal} style={styles.modal}>
         <ThemedView style={styles.modalWrapper}>
           <ThemedView style={styles.modalTitleContainer}>
             <IconButton icon="arrow-left" onPress={onDismissModal} />
