@@ -49,7 +49,7 @@ function DeleteDataModal({ onDismiss }: { onDismiss: () => void }) {
                 pointerEvents on a Text, so a View has to pass the taps on. */}
             <View pointerEvents="none" style={styles.modalTitleWrapper}>
               <Text variant="titleLarge" style={styles.modalTitle}>
-                Export Data
+                Delete Data
               </Text>
             </View>
           </ThemedView>
