@@ -2,6 +2,7 @@ import * as Crypto from "expo-crypto";
 import {
   deleteSetting,
   getSetting,
+  getSettingSync,
   insertSetting,
   updateSetting,
 } from "@/db/operations/settings";
@@ -38,6 +39,22 @@ export async function loadAuthenticationChoice(): Promise<AuthenticationChoice> 
     DEFAULT_AUTHENTICATION_CHOICE,
   );
   return DEFAULT_AUTHENTICATION_CHOICE;
+}
+
+/**
+ * Which authentication is on, read without awaiting and without writing the
+ * default.
+ *
+ * The root layout asks as the app goes to the background. An await there can
+ * resolve only after the OS has suspended JS, and the answer cannot be cached
+ * from launch: a lock turned on in Settings must apply at the next background.
+ */
+export function readAuthenticationChoiceSync(): AuthenticationChoice {
+  const value = getSettingSync(SettingsKeys.authentication)?.value as
+    | AuthenticationChoice
+    | undefined;
+
+  return value && KNOWN.includes(value) ? value : DEFAULT_AUTHENTICATION_CHOICE;
 }
 
 /**

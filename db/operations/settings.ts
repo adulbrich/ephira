@@ -16,6 +16,13 @@ export const getSetting = async (name: string) => {
   return setting;
 };
 
+/**
+ * For a caller that must not await. Both drivers are synchronous underneath
+ * (expo-sqlite here, better-sqlite3 under Jest), so `.get()` returns the row.
+ */
+export const getSettingSync = (name: string) =>
+  db.select().from(settings).where(eq(settings.name, name)).get();
+
 export const updateSetting = async (name: string, value: string) => {
   const setting = await getSetting(name);
   if (!setting) await insertSetting(name, value);

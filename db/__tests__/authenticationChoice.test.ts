@@ -4,6 +4,7 @@ import {
   chooseNoAuthentication,
   choosePassword,
   loadAuthenticationChoice,
+  readAuthenticationChoiceSync,
 } from "@/db/authenticationChoice";
 import { getSetting, insertSetting } from "@/db/operations/settings";
 import { AUTH_TYPES, SettingsKeys } from "@/constants/Settings";
@@ -52,6 +53,37 @@ describe("loadAuthenticationChoice", () => {
     expect(await loadAuthenticationChoice()).toBe(
       DEFAULT_AUTHENTICATION_CHOICE,
     );
+  });
+});
+
+describe("readAuthenticationChoiceSync", () => {
+  it("returns a value, not a promise", () => {
+    // The root layout reads this as the app goes to the background, where an
+    // await could resolve only after the OS has suspended JS.
+    expect(readAuthenticationChoiceSync()).toBe(DEFAULT_AUTHENTICATION_CHOICE);
+  });
+
+  it("reads none for a user who has never chosen, and writes nothing", async () => {
+    expect(readAuthenticationChoiceSync()).toBe(AUTH_TYPES.NONE);
+
+    expect(await stored(SettingsKeys.authentication)).toBeNull();
+  });
+
+  it("reads a lock chosen in this session", async () => {
+    await choosePassword("hunter2");
+    expect(readAuthenticationChoiceSync()).toBe(AUTH_TYPES.PASSWORD);
+
+    await chooseBiometric();
+    expect(readAuthenticationChoiceSync()).toBe(AUTH_TYPES.BIOMETRIC);
+
+    await chooseNoAuthentication();
+    expect(readAuthenticationChoiceSync()).toBe(AUTH_TYPES.NONE);
+  });
+
+  it("reads a value it does not recognise as the default, like loadAuthenticationChoice", async () => {
+    await insertSetting(SettingsKeys.authentication, "fingerprint-ish");
+
+    expect(readAuthenticationChoiceSync()).toBe(DEFAULT_AUTHENTICATION_CHOICE);
   });
 });
 
