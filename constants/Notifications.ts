@@ -1,5 +1,5 @@
 /**
- * Constants and configuration for notification system
+ * Notification types, templates and settings, and routing for taps on them
  */
 
 export const NotificationTypes = {
@@ -153,7 +153,7 @@ export const routeForNotification = (
  * The part of an expo-notifications `NotificationResponse` that routing reads.
  * Structural, so this file stays free of expo-notifications.
  */
-export interface TappedNotification {
+export interface NotificationTapResponse {
   notification: {
     request: {
       identifier: string;
@@ -175,14 +175,15 @@ export interface TappedNotification {
  *   is registered, so only this read sees it. Index lands on the route itself
  *   because a push from the layout would be undone by index's own replace.
  *
- * Index also remounts on every return from the background, when the last
- * response may be a tap the listener already took. Keying on the request
- * identifier keeps the two paths from navigating twice for one tap.
+ * Index also remounts on a later return from the background without a tap,
+ * when the last response may still hold a tap the listener already took.
+ * Keying on the request identifier keeps the two paths from navigating twice
+ * for one tap.
  */
 export const routeEachResponseOnce = () => {
   const routed = new Set<string>();
 
-  return (response: TappedNotification | null) => {
+  return (response: NotificationTapResponse | null) => {
     if (!response) return null;
 
     const { identifier, content } = response.notification.request;
