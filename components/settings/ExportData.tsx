@@ -14,7 +14,7 @@ import {
   type MD3Theme,
   Button,
 } from "react-native-paper";
-import { StyleSheet, Dimensions } from "react-native";
+import { StyleSheet, Dimensions, View } from "react-native";
 import type { ExportData as ExportDataInterface } from "@/constants/Interfaces";
 import { toCsv } from "@/services/exportRows";
 import { exportPDF } from "@/components/settings/PdfBuilder";
@@ -99,9 +99,13 @@ function ExportDataModal({ onDismiss }: { onDismiss: () => void }) {
         <ThemedView style={styles.modalWrapper}>
           <ThemedView style={styles.modalTitleContainer}>
             <IconButton icon="arrow-left" onPress={onDismissModal} />
-            <Text variant="titleLarge" style={styles.modalTitle}>
-              Export Data
-            </Text>
+            {/* The title spans the header, over the arrow. Android ignores
+                pointerEvents on a Text, so a View has to pass the taps on. */}
+            <View pointerEvents="none" style={styles.modalTitleWrapper}>
+              <Text variant="titleLarge" style={styles.modalTitle}>
+                Export Data
+              </Text>
+            </View>
           </ThemedView>
           <ThemedView style={styles.modalContentContainer}>
             <SegmentedButtons
@@ -172,13 +176,13 @@ const makeStyles = (theme: MD3Theme, _width: number, height: number) => {
       justifyContent: "space-between",
       flexDirection: "row",
     },
+    modalTitleWrapper: {
+      ...StyleSheet.absoluteFill,
+      justifyContent: "center",
+    },
     modalTitle: {
-      position: "absolute",
-      left: 0,
-      right: 0,
       textAlign: "center",
       fontWeight: "bold",
-      pointerEvents: "none",
       color: theme.colors.onPrimaryContainer,
     },
     modalWrapper: {
