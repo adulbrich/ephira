@@ -1,4 +1,5 @@
 import type { AppStateStatus } from "react-native";
+import { AUTH_TYPES } from "@/constants/Settings";
 import type { AuthenticationChoice } from "@/db/authenticationChoice";
 
 /** What the root layout does about the lock when AppState changes. */
@@ -26,7 +27,7 @@ export function appLockAction(
   if (next !== "background") return "ignore";
 
   try {
-    return readChoice() === "none" ? "ignore" : "lock";
+    return readChoice() === AUTH_TYPES.NONE ? "ignore" : "lock";
   } catch {
     return "lock";
   }

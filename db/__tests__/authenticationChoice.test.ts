@@ -57,13 +57,7 @@ describe("loadAuthenticationChoice", () => {
 });
 
 describe("readAuthenticationChoiceSync", () => {
-  it("returns a value, not a promise", () => {
-    // The root layout reads this as the app goes to the background, where an
-    // await could resolve only after the OS has suspended JS.
-    expect(readAuthenticationChoiceSync()).toBe(DEFAULT_AUTHENTICATION_CHOICE);
-  });
-
-  it("reads none for a user who has never chosen, and writes nothing", async () => {
+  it("reads none, as a value and not a promise, for a user who has never chosen, and writes nothing", async () => {
     expect(readAuthenticationChoiceSync()).toBe(AUTH_TYPES.NONE);
 
     expect(await stored(SettingsKeys.authentication)).toBeNull();

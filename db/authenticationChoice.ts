@@ -20,6 +20,13 @@ const KNOWN: AuthenticationChoice[] = [
 /** Nothing is locked unless the user says so. */
 export const DEFAULT_AUTHENTICATION_CHOICE: AuthenticationChoice = "none";
 
+/** Whether a stored value names a choice. Anything else reads as the default. */
+function isAuthenticationChoice(
+  value: string | null | undefined,
+): value is AuthenticationChoice {
+  return KNOWN.includes(value as AuthenticationChoice);
+}
+
 /**
  * Which authentication is on, with the default written down.
  *
@@ -29,10 +36,9 @@ export const DEFAULT_AUTHENTICATION_CHOICE: AuthenticationChoice = "none";
  * that shape.
  */
 export async function loadAuthenticationChoice(): Promise<AuthenticationChoice> {
-  const stored = await getSetting(SettingsKeys.authentication);
-  const value = stored?.value as AuthenticationChoice | undefined;
+  const value = (await getSetting(SettingsKeys.authentication))?.value;
 
-  if (value && KNOWN.includes(value)) return value;
+  if (isAuthenticationChoice(value)) return value;
 
   await insertSetting(
     SettingsKeys.authentication,
@@ -50,11 +56,9 @@ export async function loadAuthenticationChoice(): Promise<AuthenticationChoice> 
  * from launch: a lock turned on in Settings must apply at the next background.
  */
 export function readAuthenticationChoiceSync(): AuthenticationChoice {
-  const value = getSettingSync(SettingsKeys.authentication)?.value as
-    | AuthenticationChoice
-    | undefined;
+  const value = getSettingSync(SettingsKeys.authentication)?.value;
 
-  return value && KNOWN.includes(value) ? value : DEFAULT_AUTHENTICATION_CHOICE;
+  return isAuthenticationChoice(value) ? value : DEFAULT_AUTHENTICATION_CHOICE;
 }
 
 /**
