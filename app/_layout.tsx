@@ -30,6 +30,8 @@ import {
   insertSetting,
   setupEntryTypes,
 } from "@/db/database";
+import { readAuthenticationChoiceSync } from "@/db/authenticationChoice";
+import { appLockAction } from "@/services/appLock";
 import DatabaseUnavailable from "@/components/DatabaseUnavailable";
 import DatabaseMigrationError from "@/components/DatabaseMigrationError";
 import PasswordAuthenticationView from "@/components/PasswordAuthenticationView";
@@ -184,12 +186,18 @@ function AppShell() {
     return () => subscription.remove();
   }, [router]);
 
-  // re-authenticate user if needed when app is brought back to the foreground
+  // Lock on the way to the background if a lock is on, and authenticate on the
+  // way back. services/appLock.ts says why only then.
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (nextAppState) => {
-      if (appState.current === "background" && nextAppState === "active") {
+      const action = appLockAction(
+        appState.current,
+        nextAppState,
+        readAuthenticationChoiceSync,
+      );
+      if (action === "reauthenticate") {
         checkAuthentication();
-      } else if (nextAppState === "background") {
+      } else if (action === "lock") {
         setIsAuthenticated(false);
       }
       appState.current = nextAppState;
