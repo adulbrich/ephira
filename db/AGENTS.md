@@ -2,7 +2,7 @@
 
 - **Modules here own the rules.** `db/loggedDay.ts` owns loading and saving a
   Logged Day, including the debounce and its guards; `db/catalogue.ts` owns what
-  the user can choose from. Screens and hooks call them and hold no rules of
+  the user can choose from. UI code and hooks call them and hold no rules of
   their own.
 - **Schema migrations are generated; data migrations are written by hand.**
   Change `db/schema.ts` and run `npx drizzle-kit generate` for DDL. A migration
@@ -23,7 +23,8 @@
   decides at launch which file to open and upgrades a plaintext `ephira.db`
   into `ephira.encrypted.db`. While no key can be read or stored, or an upgrade
   fails, the app runs on the plaintext file and tries again at the next launch:
-  it fails open while no encrypted file is the truth, and closed otherwise. `db/operations/setup.ts` supplies the
-  real files, key store and SQL, and is the only file that imports
-  `expo-sqlite` (`db/__tests__/expoSqliteImport.test.ts` holds it there). Jest
-  cannot exercise SQLCipher; ADR 0005 has the device check.
+  it fails open while no encrypted file is the truth, and closed otherwise.
+  `db/operations/setup.ts` supplies the real files, key store and SQL, and is
+  the only file that imports `expo-sqlite`
+  (`db/__tests__/expoSqliteImport.test.ts` holds it there). Jest cannot
+  exercise SQLCipher; ADR 0005 has the device check.

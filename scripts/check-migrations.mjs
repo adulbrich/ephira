@@ -36,6 +36,12 @@ export function checkMigrations(dir) {
   if (!Array.isArray(journal?.entries)) {
     return [...problems, "meta/_journal.json has no entries list"];
   }
+  if (journal.entries.some((entry) => typeof entry?.tag !== "string")) {
+    return [...problems, "meta/_journal.json has an entry with no tag"];
+  }
+  if (!existsSync(join(dir, "migrations.js"))) {
+    return [...problems, "migrations.js is missing, so no migration runs"];
+  }
   const tags = journal.entries.map((entry) => entry.tag);
   const pad = (n) => String(n).padStart(4, "0");
 

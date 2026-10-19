@@ -10,25 +10,30 @@
  * the source instead. `components/settings/__tests__/hardwareBack.test.tsx`
  * shows how to drive Back itself when a modal's behaviour needs testing.
  *
- * What it cannot see: a component imported under another name, and a handler
- * passed through a `{...props}` spread, which it trusts.
+ * What it cannot see: a component imported under another name, a
+ * `dismissable` that is not a literal (the pregnancy setup dialog's depends
+ * on whether a start date exists), and a handler passed through a
+ * `{...props}` spread, which it trusts.
  */
 import fs from "node:fs";
 import path from "node:path";
 
 const ROOT = path.resolve(__dirname, "../..");
 const SCANNED = ["app", "components", "assets/src"];
+/** A handler's value, inside its braces, that does nothing. */
 const NO_OP =
-  /=\{\s*(?:undefined|\(\)\s*=>\s*(?:\{\s*(?:\/\*[\s\S]*?\*\/|\/\/[^\n]*\n)?\s*\}|undefined|null|void 0))\s*\}/;
-const PAPER_IMPORT = /import\s*\{([^}]*)\}\s*from\s*["']react-native-paper["']/;
+  /^\s*(?:undefined|\(\)\s*=>\s*(?:\{\s*(?:\/\*[\s\S]*?\*\/|\/\/[^\n]*\n)?\s*\}|undefined|null|void 0))\s*$/;
+const PAPER_IMPORT =
+  /import\s*\{([^}]*)\}\s*from\s*["']react-native-paper["']/g;
+/** A spread of attributes onto the element, not a spread inside a value. */
+const ATTRIBUTE_SPREAD = /\s\{\s*\.\.\./;
 
 /**
  * Swallowing Back on purpose. Each entry is a file and the problem the
  * scanner reports there, once per occurrence.
  */
 const BY_DESIGN = [
-  // The lock screen: Back must not dismiss a lock.
-  "components/PasswordAuthenticationView.tsx: a Paper modal with dismissable={false}",
+  // The lock screen's password prompts: Back must not dismiss a lock.
   "components/PasswordAuthenticationView.tsx: a Paper modal with dismissable={false}",
   "components/PasswordAuthenticationView.tsx: a Paper modal with dismissable={false}",
 ];
@@ -40,10 +45,13 @@ const BY_DESIGN = [
  *
  * - The authentication choice dialogs: Back could cancel, as their Cancel
  *   buttons do.
+ * - The lock screen's reset-password confirmation: Back could do what its
+ *   Cancel does and return to the lock, which unlocks nothing.
  * - The onboarding tour's spotlight: Back could skip the tour, as its Skip
  *   button does, or step back one stop.
  */
 const KNOWN = [
+  "components/PasswordAuthenticationView.tsx: a Paper modal with dismissable={false}",
   "components/settings/AuthenticationSettings.tsx: a Paper modal with no onDismiss",
   "components/settings/AuthenticationSettings.tsx: a Paper modal with no onDismiss",
   "components/settings/AuthenticationSettings.tsx: a Paper modal with no onDismiss",
@@ -61,9 +69,9 @@ function sourceFiles(directory: string): string[] {
 
 /**
  * The opening tags of element `name` in `source`: `<Modal ...>` but not
- * `<ModalWrapper>` or `<Dialog.Title>`. Quotes are tracked at every depth and
- * braces are counted, so `=>` or `"}"` inside an attribute does not end the
- * tag.
+ * `<ModalWrapper>` or `<Dialog.Title>`. Quotes are tracked at every depth,
+ * comments inside braces are skipped and braces are counted, so `=>`, `"}"`
+ * or an apostrophe in a comment does not end the tag.
  */
 function openingTags(source: string, name: string): string[] {
   const tags: string[] = [];
@@ -77,6 +85,12 @@ function openingTags(source: string, name: string): string[] {
       if (quote) {
         if (char === "\\") end++;
         else if (char === quote) quote = "";
+      } else if (depth > 0 && source.startsWith("/*", end)) {
+        const close = source.indexOf("*/", end + 2);
+        end = close === -1 ? source.length : close + 1;
+      } else if (depth > 0 && source.startsWith("//", end)) {
+        const newline = source.indexOf("\n", end);
+        end = newline === -1 ? source.length : newline;
       } else if (char === '"' || char === "'" || char === "`") {
         quote = char;
       } else if (char === "{") {
@@ -92,31 +106,43 @@ function openingTags(source: string, name: string): string[] {
   return tags;
 }
 
+/** The text inside `name={...}` in `tag`, braces matched, or null. */
+function attributeValue(tag: string, name: string): string | null {
+  const start = new RegExp(`\\b${name}=\\{`).exec(tag);
+  if (!start) return null;
+  const from = start.index + start[0].length;
+  let depth = 1;
+  let at = from;
+  for (; at < tag.length && depth > 0; at++) {
+    if (tag[at] === "{") depth++;
+    else if (tag[at] === "}") depth--;
+  }
+  return tag.slice(from, at - 1);
+}
+
 /** Why `tag` swallows Back, or null when it answers it. */
 function backProblem(tag: string, paper: boolean): string | null {
-  const spread = /\{\s*\.\.\./.test(tag);
-  if (paper) {
-    if (/\bdismissable=\{\s*false\s*\}/.test(tag)) {
-      return "a Paper modal with dismissable={false}";
-    }
-    const handler = /\bonDismiss(=\{[\s\S]*)?$/.exec(tag)?.[1] ?? null;
-    if (!/\bonDismiss=\{/.test(tag)) {
-      return spread ? null : "a Paper modal with no onDismiss";
-    }
-    return handler && NO_OP.test(tag.slice(tag.indexOf("onDismiss")))
-      ? "a Paper modal whose onDismiss does nothing"
-      : null;
+  const handlerName = paper ? "onDismiss" : "onRequestClose";
+  const kind = paper ? "a Paper modal" : "a React Native Modal";
+  if (paper && /\bdismissable=\{\s*false\s*\}/.test(tag)) {
+    // Paper's Modal lets Back through even then with dismissableBackButton.
+    return /\bdismissableBackButton\b/.test(tag)
+      ? null
+      : "a Paper modal with dismissable={false}";
   }
-  if (!/\bonRequestClose=\{/.test(tag)) {
-    return spread ? null : "a React Native Modal with no onRequestClose";
+  const handler = attributeValue(tag, handlerName);
+  if (handler === null) {
+    return ATTRIBUTE_SPREAD.test(tag) ? null : `${kind} with no ${handlerName}`;
   }
-  return NO_OP.test(tag.slice(tag.indexOf("onRequestClose")))
-    ? "a React Native Modal whose onRequestClose does nothing"
+  return NO_OP.test(handler)
+    ? `${kind} whose ${handlerName} does nothing`
     : null;
 }
 
 function problemsIn(source: string): string[] {
-  const paperNames = PAPER_IMPORT.exec(source)?.[1] ?? "";
+  const paperNames = [...source.matchAll(PAPER_IMPORT)]
+    .map((match) => match[1])
+    .join(",");
   const paperModal = /\bModal\b/.test(paperNames);
   const paperDialog = /\bDialog\b/.test(paperNames);
   const found: string[] = [];
@@ -186,6 +212,32 @@ describe("the scanner", () => {
 
   it("ignores components whose names start with Modal", () => {
     expect(problemsIn(`${native}<ModalWrapper visible>`)).toEqual([]);
+  });
+
+  it("trusts an attribute spread, not a spread inside a value", () => {
+    expect(problemsIn(`${paper}<Dialog visible {...props}>`)).toEqual([]);
+    expect(problemsIn(`${paper}<Dialog visible style={{ ...base }}>`)).toEqual([
+      "a Paper modal with no onDismiss",
+    ]);
+  });
+
+  it("judges only the handler's own value", () => {
+    expect(
+      problemsIn(
+        `${native}<Modal onRequestClose={() => close() /* don't */} onShow={() => {}}>`,
+      ),
+    ).toEqual([]);
+  });
+
+  it("reads every Paper import and honours dismissableBackButton", () => {
+    const twoImports =
+      'import { Text } from "react-native-paper";\nimport { Dialog } from "react-native-paper";\n';
+    expect(problemsIn(`${twoImports}<Dialog visible>`)).toEqual([
+      "a Paper modal with no onDismiss",
+    ]);
+    expect(
+      problemsIn(`${paper}<Dialog dismissable={false} dismissableBackButton>`),
+    ).toEqual([]);
   });
 });
 
