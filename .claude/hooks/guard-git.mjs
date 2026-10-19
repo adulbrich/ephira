@@ -6,8 +6,9 @@
  * - Never commit on main.
  * - No force push at main, no `reset --hard`, `clean -f`, `branch -D`, or a
  *   working-tree wipe through `checkout .` and `restore .`.
- * - A commit message that would fail `commit-msg` fails here first, so a
- *   `--no-verify` cannot get it past lefthook.
+ * - A commit message that would fail `commit-msg` fails here first, for the
+ *   forms this can read (`-m`, `--message`, a `cat` heredoc, `-F -`), so a
+ *   `--no-verify` does not get one of those past lefthook.
  *
  * Everything else, including a plain push, a rebase and a stash, goes through.
  *
@@ -36,8 +37,8 @@ const CAT_HEREDOC =
 const STDIN_HEREDOC = /(?:-F|--file)(?:=|\s+)-\s/;
 const QUOTED = /"(?:[^"\\]|\\.)*"|'[^']*'/g;
 const MESSAGE_FLAG =
-  /(?:^|\s)(?:-m|--message)(?:=|\s+)(?:"((?:[^"\\]|\\.)*)"|'([^']*)')/g;
-const SEGMENT = /\s*(?:&&|\|\||;|\|)\s*|\n/;
+  /(?:^|\s)(?:-[A-Za-z]*m|--message)(?:=|\s*)(?:"((?:[^"\\]|\\.)*)"|'([^']*)')/g;
+const SEGMENT = /\s*(?:&&|\|\||;|\||&)\s*|\n/;
 const SHORT_CLUSTER = /^-[A-Za-z]+$/;
 const WHITESPACE = /\s+/;
 const MAIN_REF = /(?:^|[:+])(?:refs\/heads\/)?main$/;
@@ -52,7 +53,8 @@ const GLOBAL_WITH_ARG = new Set([
 ]);
 
 const input = readInput();
-const command = input.tool_input?.command ?? "";
+// A backslash-newline continues the line, so the shell reads one command.
+const command = (input.tool_input?.command ?? "").replaceAll("\\\n", " ");
 const cwd = input.cwd ?? process.cwd();
 
 if (!/\bgit\b/.test(command)) {
@@ -63,7 +65,11 @@ if (!/\bgit\b/.test(command)) {
  * `{ sub, args }` for the git invocation in one shell segment, or null.
  */
 function parseGit(segment) {
-  const tokens = segment.trim().split(WHITESPACE);
+  // A subshell's parentheses cling to the first and last words.
+  const tokens = segment
+    .trim()
+    .split(WHITESPACE)
+    .map((t) => t.replace(/^\(+/, "").replace(/\)+$/, ""));
   const at = tokens.findIndex((t) => t === "git" || t.endsWith("/git"));
   if (at === -1) {
     return null;
@@ -164,8 +170,7 @@ function ruleBroken(sub, args, alreadyBranched) {
 function createsBranch(sub, args) {
   return (
     (sub === "checkout" && args.some((t) => t === "-b" || t === "-B")) ||
-    (sub === "switch" && args.some((t) => t === "-c" || t === "-C")) ||
-    (sub === "worktree" && args[0] === "add")
+    (sub === "switch" && args.some((t) => t === "-c" || t === "-C"))
   );
 }
 

@@ -9,7 +9,7 @@
  */
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, realpathSync } from "node:fs";
-import { relative } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 
 /**
  * `process.env` without the `GIT_*` keys a git hook exports. Running git on
@@ -63,6 +63,31 @@ export function repoRelative(root, path) {
   return relative(root, path).replaceAll("\\", "/");
 }
 
+/**
+ * The trusted checkout an edited file belongs to and its path inside it, or
+ * null. Resolved from the file itself, not the session's cwd, so an edit in a
+ * worktree is judged by that worktree, and through symlinks (`/tmp` is
+ * `/private/tmp` on macOS) so the spelling of the path does not matter. The
+ * file may not exist yet, so its nearest existing directory is resolved.
+ */
+export function locate(filePath) {
+  if (!filePath) {
+    return null;
+  }
+  const absolute = resolve(filePath);
+  let dir = dirname(absolute);
+  while (!existsSync(dir) && dirname(dir) !== dir) {
+    dir = dirname(dir);
+  }
+  const root = trustedRoot(dir);
+  if (!root) {
+    return null;
+  }
+  const real = join(realpathOr(dir), relative(dir, absolute));
+  const path = repoRelative(realpathOr(root), real);
+  return path && !path.startsWith("../") ? { root, path } : null;
+}
+
 function realpathOr(path) {
   try {
     return realpathSync(path);
@@ -81,6 +106,10 @@ function realpathOr(path) {
  * has a gap: the root must share this repository's git directory, and it
  * must be a live checkout the repository lists (a stale, prunable entry does
  * not count, since another directory could since have taken its path).
+ *
+ * Trust is per checkout, not per commit: a checkout of someone else's branch
+ * runs that branch's scripts, as lefthook and npm scripts already do. Read a
+ * branch's `.claude/` and `scripts/` before checking it out.
  */
 export function trustedRoot(cwd) {
   const project = process.env.CLAUDE_PROJECT_DIR;

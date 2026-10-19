@@ -154,6 +154,7 @@ first column stops you locally; the last stops the merge.
 | Stage by name; never commit on `main` | `pre-commit` branch check | `guard-git` | the ruleset refuses a push to `main` |
 | No force push at `main`, `reset --hard`, `clean -f`, `branch -D` | | `guard-git` | the ruleset refuses a force push |
 | Generated files, signing material and shipped migrations stay untouched | | `guard-edits` | |
+| No branch rename through the API (it closes the PR the branch heads) | | `guard-gh` | |
 | Biome clean | `pre-commit`, staged files | `after-edit` | `Checks` |
 | ESLint, typecheck and tests green | `pre-push` (typecheck, tests) | | `Checks` |
 

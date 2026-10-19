@@ -13,15 +13,16 @@
  */
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
-import { loadScript, readInput, repoRelative, trustedRoot } from "./lib.mjs";
+import { loadScript, locate, readInput } from "./lib.mjs";
 
 const input = readInput();
 // Null outside this repository, whose scripts and Biome binary are not ours
 // to run.
-const root = trustedRoot(input.cwd ?? process.cwd());
-const path = root ? repoRelative(root, input.tool_input?.file_path ?? "") : "";
+const found = locate(input.tool_input?.file_path ?? "");
+const root = found?.root;
+const path = found?.path;
 
-if (!path || path.startsWith("../") || !existsSync(`${root}/${path}`)) {
+if (!(found && existsSync(`${root}/${path}`))) {
   process.exit(0);
 }
 

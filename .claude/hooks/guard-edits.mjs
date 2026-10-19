@@ -10,7 +10,7 @@
  * only and the two populations diverge (docs/adr/0002). A new `.sql` file, the
  * journal and `drizzle/migrations.js` stay editable.
  */
-import { git, readInput, repoRelative, trustedRoot } from "./lib.mjs";
+import { git, locate, readInput } from "./lib.mjs";
 
 const PREFIXES = [
   [
@@ -35,6 +35,10 @@ const FILES = new Map([
     "package-lock.json",
     "written by npm; change `package.json` and run `npm install`",
   ],
+  [
+    "docs/package-lock.json",
+    "written by npm; change `docs/package.json` and run `npm install` in `docs/`",
+  ],
 ]);
 
 const SHIPPED_MIGRATION = /^drizzle\/\d{4}_[^/]+\.sql$/;
@@ -57,10 +61,10 @@ function reasonFor(root, path) {
 }
 
 const input = readInput();
-// The rules describe this repository; an edit in any other checkout passes.
-const root = trustedRoot(input.cwd ?? process.cwd());
-const path = root ? repoRelative(root, input.tool_input?.file_path ?? "") : "";
-const reason = !path || path.startsWith("../") ? null : reasonFor(root, path);
+// The rules describe this repository; an edit anywhere else passes.
+const found = locate(input.tool_input?.file_path ?? "");
+const path = found?.path ?? "";
+const reason = found ? reasonFor(found.root, path) : null;
 
 if (reason) {
   process.stdout.write(

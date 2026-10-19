@@ -13,7 +13,7 @@ updates:
   # month cost less than many small ones.
   #
   # Expo SDK packages move together: `npx expo install --fix` pins each to the
-  # range its SDK ships with, and a lone bump past that range breaks the
+  # range its SDK ships with (`expo/bundledNativeModules.json` lists them), and a lone bump past that range breaks the
   # native build. Dependabot offers them patch updates only; an SDK upgrade
   # is its own deliberate PR. The `react-native-*` pattern also holds back
   # minors for the few React Native libraries Expo does not manage, such as
@@ -41,6 +41,8 @@ updates:
           - "react-native-*"
           - "@react-native/*"
           - "react-test-renderer"
+          - "@react-native-async-storage/*"
+          - "@react-native-community/*"
       all-other:
         patterns:
           - "*"
@@ -68,6 +70,10 @@ updates:
       - dependency-name: "@react-native/*"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: "react-test-renderer"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "@react-native-async-storage/*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "@react-native-community/*"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
 
   # The website under docs/ has its own lockfile.

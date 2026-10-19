@@ -14,7 +14,7 @@
  *   node scripts/check-commit-message.mjs --stdin         a message on stdin
  *   node scripts/check-commit-message.mjs --range <a..b>  every commit in a range
  *
- * Only the file form strips git's `#` comment lines and the scissors block,
+ * Only the file form strips git's comment template and scissors block,
  * because only COMMIT_EDITMSG carries them.
  */
 import { execFileSync } from "node:child_process";
@@ -50,17 +50,29 @@ const SUBJECT = new RegExp(
 
 /**
  * Subjects written by git, GitHub and Dependabot, which the rule does not
- * reach: a merge commit's subject, a revert, an autosquash marker, and
- * Dependabot's capitalized "Bump".
+ * reach: the merge commits git and GitHub write, git's revert, and
+ * Dependabot's capitalized "Bump". Autosquash markers are not exempt: with
+ * merge commits, a `fixup!` commit would land on main as written.
  */
 const EXEMPT_SUBJECT =
-  /^(?:Merge |Revert |fixup! |squash! |(?:chore|build)\(deps(?:-dev)?\): Bump )/;
+  /^(?:Merge (?:branch|remote-tracking branch|pull request #\d+|[0-9a-f]{7,40} into) |Revert "|(?:chore|build)\(deps(?:-dev)?\): Bump )/;
+
+/** The comment block git writes into the editor, and only then. */
+const EDITOR_TEMPLATE = /^# Please enter the commit message/m;
 
 const SCISSORS = /^# -{8,} >8 -{8,}$/m;
 
+/**
+ * COMMIT_EDITMSG as git will record it. Git strips `#` lines only when it
+ * opened an editor, which is when it wrote its template; a `-m` message keeps
+ * a line such as `#123 ...`, and CI's `--range` sees it, so this does too.
+ */
 function stripCommentary(message) {
   const scissors = SCISSORS.exec(message);
   const body = scissors ? message.slice(0, scissors.index) : message;
+  if (!EDITOR_TEMPLATE.test(body)) {
+    return body;
+  }
   return body
     .split("\n")
     .filter((line) => !line.startsWith("#"))

@@ -8,10 +8,10 @@
  * `after-edit` hook, the commit-message check and the `gh` hook import it.
  *
  * "Emoji" means a character that renders as an emoji by default (Unicode's
- * Emoji_Presentation), or any pictograph forced into emoji form by U+FE0F. The
- * typographic symbols the app draws as text are not emoji: the star and heart
- * calendar markers in `components/calendar/CustomDay.tsx` and the check mark
- * in the theme selector. A `--` standing in for a sentence dash breaks the same
+ * Emoji_Presentation), any pictograph forced into emoji form by U+FE0F, or a
+ * keycap (U+20E3). The typographic symbols the app draws as text are not
+ * emoji: the star and heart calendar markers in
+ * `components/calendar/CustomDay.tsx` and the check mark in the theme selector. A `--` standing in for a sentence dash breaks the same
  * rule and is not checked, because every command-line flag would trip it.
  *
  * Usage:
@@ -24,7 +24,8 @@ import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
 const EMDASH = "\u2014";
-const EMOJI = /\p{Emoji_Presentation}|\p{Extended_Pictographic}\u{FE0F}/u;
+const EMOJI =
+  /\p{Emoji_Presentation}|\p{Extended_Pictographic}\u{FE0F}|\u{20E3}/u;
 
 /**
  * Extensions that are prose or source. Anything else `git ls-files` reports

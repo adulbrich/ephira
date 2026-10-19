@@ -49,6 +49,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_BODY: ${{ github.event.pull_request.body }}
         run: |
+          # Without pipefail a failed API call hands the check an empty file
+          # list, and a PR with UI changes passes.
+          set -o pipefail
           printf '%s\n' "$PR_BODY" > "$RUNNER_TEMP/pr-body.md"
           gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" --paginate --jq '.[].filename' \
             | node scripts/check-pr-body.mjs --files-stdin --body "$RUNNER_TEMP/pr-body.md"
