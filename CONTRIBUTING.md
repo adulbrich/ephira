@@ -120,9 +120,10 @@ docs, a workflow is configuration, and a dependency is supply chain.
 
 Repeat until a pass raises nothing you have not answered. Answered means fixed,
 or declined in writing with the reason. A fix is new code, so the loop ends when
-each of the three reviews has a clean pass on the newest commit that is not an
-update from `main`. A clean update from `main` leaves the PR's three-dot diff
-unchanged and needs no new pass; one that resolved a conflict does. Verify a
+each of the three reviews has a clean pass on the newest commit that is not a
+clean update from `main`. A clean update leaves the PR's three-dot diff
+unchanged and needs no new pass; one that resolved a conflict does. Update a
+branch with a merge, never a rebase, so the commit the passes saw stays in it. Verify a
 finding before acting on it: reviewers are sometimes confidently wrong. Record
 each review's pass count, the commit the last passes saw, and every decline in
 the PR.

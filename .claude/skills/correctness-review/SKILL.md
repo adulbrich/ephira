@@ -149,16 +149,24 @@ the full checklist from step 3, and a 400-word limit on the report.
   ```bash
   S="$(mktemp -d "$TMPDIR/boundaries.XXXXXX")"; mkdir -p "$S/tree" "$S/tests"
   git archive <head> | tar -x -C "$S/tree"
-  cp -c -R node_modules "$S/tree/"
+  # node_modules must match the head's lockfile: clone it when it does,
+  # install it when it does not (a dependency bump, say)
+  if git diff --quiet <head> -- package-lock.json; then
+    cp -c -R node_modules "$S/tree/"
+  else
+    (cd "$S/tree" && npm ci --ignore-scripts)
+  fi
   echo 'module.exports = () => {};' > "$S/no-tz.cjs"
   # write $S/tests/<name>.test.ts importing from "@/..." and logging each output
-  cd "$S/tree" && TZ=Pacific/Kiritimati ./node_modules/.bin/jest --no-watchman \
+  (cd "$S/tree" && TZ=Pacific/Kiritimati ./node_modules/.bin/jest --no-watchman \
     --roots "$S/tests" --globalSetup "$S/no-tz.cjs" \
-    --modulePaths "$S/tree/node_modules"
+    --modulePaths "$S/tree/node_modules")
+  rm -rf "$S"
   ```
 
   The tree is the pinned head exactly, whatever the working tree holds, and the
-  recipe runs inside the command sandbox. `jest.globalSetup.js` pins every run to
+  recipe runs inside the command sandbox (`npm ci` needs the network, so the
+  install branch may need it off). `jest.globalSetup.js` pins every run to
   Europe/Berlin, which is why the runner swaps in a no-op setup and passes `TZ`
   itself. `--modulePaths` lets a test outside the tree resolve the Babel helpers
   a namespace or default import needs. To run one file, name it with
