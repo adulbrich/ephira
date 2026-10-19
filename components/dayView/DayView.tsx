@@ -33,6 +33,17 @@ export default function DayView() {
   const { date } = useSelectedDate();
   const { databaseChange } = useDatabaseChangeNotifier();
 
+  // A different day opens with every Section closed. Reset while rendering,
+  // keyed on the date alone. It used to happen in the load effect below,
+  // which also runs on the database-change signal that closing Custom Entries
+  // sends, so closing it shut the Section it was opened from and lost the
+  // scroll position with it.
+  const [previousDate, setPreviousDate] = useState(date);
+  if (previousDate !== date) {
+    setPreviousDate(date);
+    setExpandedAccordion(null);
+  }
+
   // The selected day's contents are this screen's, not the app's. They were
   // global only so accordions and fetch hooks could talk past each other,
   // which db/loggedDay.ts absorbed.
@@ -83,6 +94,10 @@ export default function DayView() {
   const loaded = useRef(false);
 
   // Open a day: one load, and the saver's baseline comes from what was read.
+  // The database-change signal reloads the open day too. Deleting a custom
+  // Catalogue item deletes its Entries, and the selection must drop it: the
+  // next save would otherwise re-create it, since saving creates any Catalogue
+  // name it cannot find.
   // biome-ignore lint/correctness/useExhaustiveDependencies: the store setters and the saver are stable; re-running on their identity would reload the day on every render
   useEffect(() => {
     let stale = false;
@@ -96,8 +111,6 @@ export default function DayView() {
       setLastSaved(loadedDay);
       loaded.current = true;
     });
-
-    setExpandedAccordion(null);
 
     // Flush, not cancel. The pending edit was made against the day that is
     // closing, so it belongs to that day. Cancelling here is what dropped a

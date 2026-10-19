@@ -172,6 +172,14 @@ Four things worth knowing:
 
 Live queries are out of scope: `useLiveQuery` is not exercised, so `hooks/useLiveFilteredData.ts` and `hooks/usePregnancyMarkedDates.ts` are not covered by this setup.
 
+### Rendering a component
+
+When a component's behaviour lives in its effects, render it with `@testing-library/react-native` against the same in-memory database. `components/dayView/__tests__/DayView.test.tsx` is the example:
+
+- **Wrap it in `PaperProvider`.** It hosts the `Portal`s this app renders its Snackbar and modals into.
+- **`render`, `fireEvent` and `act` return promises** in version 14. Await them.
+- **The Catalogue is held outside the database**, in `db/catalogue.ts`. Call `invalidateCatalogue()` after `resetTestDatabase()`, or one test sees the previous test's Catalogue.
+
 ## CI/CD
 
 Ephira is currently published on both Google Play and the Apple App Store. The app is built using [EAS Build](https://docs.expo.dev/build/introduction/), which can be manually triggered via [this Github Action](https://github.com/adulbrich/ephira/actions/workflows/manual-eas-build.yml). After building, the app must be submitted to the app stores manually through their respective developer consoles.

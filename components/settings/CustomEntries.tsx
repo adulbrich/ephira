@@ -310,7 +310,9 @@ function CustomEntriesModal({
     // accordions instead, because their fetch was keyed on that state, which
     // meant adding a custom Mood shut the Section the user was working in.
     invalidateCatalogue();
-    // force useLiveQuery to update
+    // A delete takes its Entries with it, which the Catalogue signal does not
+    // cover. Everything keyed on this reloads, the open day and the Marked
+    // Dates among them.
     setDbChange(Math.random().toString());
     onDismiss();
   };
