@@ -5,10 +5,13 @@
  * This is the one place the published-text rules (no session link, no emdash,
  * no emoji) can be enforced for PR, issue, review, comment and release text:
  * the repo is public, and lefthook never sees `gh` text. The text checked is
- * the command line plus every body, notes or `--input` file it names that
- * this hook can read. The rules come from `scripts/check-prose.mjs`, loaded
- * from the session's checkout when it is this repository and from the hook's
- * own checkout anywhere else, so a session elsewhere is still guarded.
+ * the command line plus every body it sends that this hook can read: a body,
+ * notes or `--input` file, a `-F body=@file` field, a `--body "$(cat f)"`, and
+ * a heredoc. The line is read with `shell-words.mjs`, so a flag inside quoted
+ * text is not a flag, and a `gh` command inside `$(...)` is still one. The
+ * rules come from `scripts/check-prose.mjs`, loaded from the session's
+ * checkout when it is this repository and from the hook's own checkout
+ * anywhere else.
  *
  * A named file the hook cannot read gets a warning, not a refusal: it may be
  * written earlier in the same command, or named through a shell variable the
@@ -21,34 +24,25 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import { isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { deny, git, loadScript, readInput, trustedRoot } from "./lib.mjs";
+import { readCommands } from "./shell-words.mjs";
 
-const PUBLISHES =
-  /\bgh\s+(?:(?:pr|issue)\s+(?:create|edit|comment|review|close|merge)|release\s+(?:create|edit))\b/;
-const API_WITH_BODY = /\bgh\s+api\b[\s\S]*(?:\bbody\b|--input\b)/;
-const PR_BODY = /\bgh\s+pr\s+(?:create|edit)\b/;
 // Branch names here carry a slash (`type/name`).
 const RENAMES_BRANCH = /\bgh\s+api\b[\s\S]*\/branches\/\S+\/rename\b/;
-const HEREDOC = /<<-?\s*(["']?)(\w+)\1\n[\s\S]*?\n\2\b/g;
-const QUOTED = /"((?:[^"\\]|\\.)*)"|'([^']*)'/g;
-const TOKEN = /\0(\d+)\0/g;
-// Looked for in the masked line, so a flag written inside quoted text is not
-// read as one. `-F` and `--field` take `name=value`, read from a file only
-// as `body=@path`; `gh pr` and `gh issue` take `-F path`.
-const FILE_FLAG =
-  /(?:^|\s)(-F|--field|--body-file|--notes-file|--input)(?:=|\s+)(\S+)/g;
-// Read on the unmasked line, so a `--body "$(cat <<EOF ...)"` keeps its text.
-const INLINE_FLAG =
-  /(?:^|\s)(?:-b|--body|-n|--notes)(?:=|\s+)(?:"((?:[^"\\]|\\.)*)"|'([^']*)')/g;
+const PUBLISHING = {
+  pr: new Set(["create", "edit", "comment", "review", "close", "merge"]),
+  issue: new Set(["create", "edit", "comment", "close"]),
+  release: new Set(["create", "edit"]),
+};
 const CAT_HEREDOC =
   /^\$\(\s*cat\s*<<-?\s*["']?(\w+)["']?\n([\s\S]*?)\n\1\s*\)$/;
+const CAT_FILE = /^\$\(\s*(?:cat\s+|<\s*)(["']?)([^"'\s)]+)\1\s*\)$/;
 const HOOK_CHECKOUT = fileURLToPath(new URL("../..", import.meta.url));
 // A copy, so a name read at run time is a plain lookup (the Expo lint rule
 // against dynamic env access is about app code, which Expo inlines).
 const ENV = { ...process.env };
 
 const input = readInput();
-// A backslash-newline continues the line, so the shell reads one command.
-const command = (input.tool_input?.command ?? "").replaceAll("\\\n", " ");
+const command = input.tool_input?.command ?? "";
 const cwd = input.cwd ?? process.cwd();
 
 if (RENAMES_BRANCH.test(command)) {
@@ -58,39 +52,67 @@ if (RENAMES_BRANCH.test(command)) {
 }
 
 /**
- * The command line with heredoc bodies removed and each quoted string
- * replaced by a token, plus the way back from a token to its text.
+ * What one `gh` command publishes, or null if it publishes nothing: the
+ * files and inline texts it sends, its heredoc bodies when it reads stdin,
+ * and its `--base` and `--head`.
  */
-function mask(text) {
-  const strings = [];
-  const masked = text
-    .replace(HEREDOC, "")
-    .replace(QUOTED, (_, double, single) => {
-      strings.push(double ?? single);
-      return `\0${strings.length - 1}\0`;
-    });
-  const unmask = (value) =>
-    value.replace(TOKEN, (_, at) => strings[Number(at)]);
-  return { masked, unmask };
+function publication({ words, heredocs }) {
+  const at = words.findIndex((w) => w === "gh" || w.endsWith("/gh"));
+  if (at === -1) {
+    return null;
+  }
+  const [group, action] = words.slice(at + 1);
+  const sent = { files: [], inline: [], base: null, head: null, pr: false };
+  for (let k = at + 1; k < words.length; k++) {
+    const [name, attached] = words[k].startsWith("--")
+      ? words[k].split(/=(.*)/s)
+      : [words[k]];
+    const value = () => attached ?? words[++k] ?? "";
+    if (name === "-F" || name === "--field") {
+      const field = value();
+      if (field.startsWith("body=@")) {
+        sent.files.push(field.slice("body=@".length));
+      } else if (field.startsWith("body=")) {
+        sent.inline.push(field.slice("body=".length));
+      } else if (!/^[\w.[\]]+=/.test(field)) {
+        sent.files.push(field);
+      }
+    } else if (name === "-f" || name === "--raw-field") {
+      const field = value();
+      if (field.startsWith("body=")) {
+        sent.inline.push(field.slice("body=".length));
+      }
+    } else if (["--body-file", "--notes-file", "--input"].includes(name)) {
+      sent.files.push(value());
+    } else if (["-b", "--body", "-n", "--notes"].includes(name)) {
+      sent.inline.push(value());
+    } else if (name === "-B" || name === "--base") {
+      sent.base = value();
+    } else if (name === "-H" || name === "--head") {
+      sent.head = value();
+    }
+  }
+  if (sent.files.includes("-")) {
+    sent.inline.push(...heredocs);
+    sent.files = sent.files.filter((file) => file !== "-");
+  }
+  const publishes =
+    PUBLISHING[group]?.has(action) ||
+    (group === "api" && (sent.files.length > 0 || sent.inline.length > 0));
+  sent.pr = group === "pr" && (action === "create" || action === "edit");
+  return publishes ? sent : null;
 }
 
-const SEGMENT = /\s*(?:&&|\|\||;|\||&)\s*|\n/;
-// `gh` as a word: after whitespace, or opening a `(...)` or `$(...)`.
-const GH_TOKEN = /(?:^|[\s(])(?:\S*\/)?gh\s/;
-
-/**
- * The `gh` commands on the line, as masked segments: a `gh` token outside
- * quotes, so `grep -F 'gh pr create'` is not one. Each keeps whether it
- * publishes, judged on its unmasked text so a quoted `body=@file` counts.
- */
-function ghCommands(text) {
-  const { masked, unmask } = mask(text);
-  const commands = masked
-    .split(SEGMENT)
-    .filter((segment) => GH_TOKEN.test(segment))
-    .map((segment) => ({ segment, plain: unmask(segment) }))
-    .filter(({ plain }) => PUBLISHES.test(plain) || API_WITH_BODY.test(plain));
-  return { commands, unmask };
+/** Every publishing `gh` command in `text`, inside substitutions too. */
+function publications(text, depth = 0) {
+  const { commands, inner } = readCommands(text);
+  const found = commands.map(publication).filter(Boolean);
+  if (depth < 3) {
+    for (const body of inner) {
+      found.push(...publications(body, depth + 1));
+    }
+  }
+  return found;
 }
 
 /**
@@ -116,67 +138,44 @@ function resolvePath(given) {
   return isAbsolute(expanded) ? expanded : join(cwd, expanded);
 }
 
-function readable(path) {
+function readFile(given, unreadable) {
+  const path = resolvePath(given);
   try {
-    return path !== null && existsSync(path) && statSync(path).isFile();
+    if (path !== null && existsSync(path) && statSync(path).isFile()) {
+      return readFileSync(path, "utf8");
+    }
   } catch {
-    return false;
+    // Unreadable for any reason; reported below.
   }
+  unreadable.push(given);
+  return null;
 }
 
 /**
- * The texts the command sends from files and inline, and the files it names
- * that this hook cannot read. A file of `-` is stdin, whose heredoc is
- * already part of the command line.
+ * The texts the publications send, in order, and the files they name that
+ * this hook cannot read. An inline `$(cat <<EOF ...)` is its heredoc, and an
+ * inline `$(cat file)` or `$(< file)` is that file.
  */
-function bodiesOf(commands, unmask) {
-  const masked = commands.map(({ segment }) => segment).join("\n");
-  const files = [];
-  for (const [, flag, value] of masked.matchAll(FILE_FLAG)) {
-    const given = unmask(value);
-    if (flag === "-F" || flag === "--field") {
-      if (given.startsWith("body=@")) {
-        files.push(given.slice("body=@".length));
-      } else if (!/^[\w.[\]]+=/.test(given)) {
-        files.push(given);
-      }
-    } else {
-      files.push(given);
-    }
-  }
-  const bodies = [];
+function bodiesOf(found) {
   const unreadable = [];
-  for (const given of files.filter((file) => file !== "-")) {
-    // The last word inside `$(...)` carries its closing parenthesis.
-    const path = [given, given.replace(/\)+$/, "")]
-      .map(resolvePath)
-      .find(readable);
-    if (path) {
-      bodies.push(readFileSync(path, "utf8"));
-    } else {
-      unreadable.push(given);
-    }
-  }
-  const inline = [...command.matchAll(INLINE_FLAG)].map(
-    ([, double, single]) => {
-      const value = double ?? single;
-      return CAT_HEREDOC.exec(value)?.[2] ?? value;
-    },
-  );
-  return { bodies, inline, unreadable, flagOf: flagReader(masked, unmask) };
-}
-
-/** The value of the first of `names` in the masked line, or null. */
-function flagReader(masked, unmask) {
-  return (...names) => {
-    for (const name of names) {
-      const found = new RegExp(`(?:^|\\s)${name}(?:=|\\s+)(\\S+)`).exec(masked);
-      if (found) {
-        return unmask(found[1]);
+  const textsOf = (sent) => [
+    ...sent.files.map((file) => readFile(file, unreadable)),
+    ...sent.inline.map((value) => {
+      const heredoc = CAT_HEREDOC.exec(value);
+      if (heredoc) {
+        return heredoc[2];
       }
-    }
-    return null;
-  };
+      const file = CAT_FILE.exec(value);
+      return file ? readFile(file[2], unreadable) : value;
+    }),
+  ];
+  const texts = found.map((sent) => ({
+    sent,
+    text: textsOf(sent)
+      .filter((t) => t !== null)
+      .join("\n"),
+  }));
+  return { texts, unreadable };
 }
 
 /**
@@ -198,6 +197,18 @@ async function publishedRules(root) {
   return null;
 }
 
+let found = [];
+try {
+  found = publications(command);
+} catch (error) {
+  deny(
+    `guard-gh could not read this command line (${error.message}); refusing to publish it unchecked.`,
+  );
+}
+if (found.length === 0) {
+  process.exit(0);
+}
+
 // Fails closed: text this hook cannot check against its rules is not
 // published.
 const root = trustedRoot(cwd);
@@ -208,17 +219,14 @@ if (!prose) {
   );
 }
 
-const { commands, unmask } = ghCommands(command);
-if (commands.length === 0) {
-  process.exit(0);
-}
-
-let parsed;
+let bodies;
 let problems = [];
 try {
-  parsed = bodiesOf(commands, unmask);
+  bodies = bodiesOf(found);
   problems = prose
-    .findPublishedViolations([command, ...parsed.bodies].join("\n"))
+    .findPublishedViolations(
+      [command, ...bodies.texts.map(({ text }) => text)].join("\n"),
+    )
     .map(prose.describeViolation);
 } catch (error) {
   deny(
@@ -233,28 +241,31 @@ if (problems.length > 0) {
 }
 
 const warnings = [];
-if (parsed.unreadable.length > 0) {
+if (bodies.unreadable.length > 0) {
   warnings.push(
-    `guard-gh could not read ${parsed.unreadable.join(", ")} to check it (it may not exist yet, or name a shell variable the hook does not share). pr-text checks a PR's title and body in CI; nothing checks issue or comment text there, so check it yourself with \`node scripts/check-prose.mjs --stdin --published < <file>\`.`,
+    `guard-gh could not read ${bodies.unreadable.join(", ")} to check it (it may not exist yet, or name a shell variable the hook does not share). pr-text checks a PR's title and body in CI; nothing checks issue or comment text there, so check it yourself with \`node scripts/check-prose.mjs --stdin --published < <file>\`.`,
   );
 }
 
 const prBody = await loadScript(root, "check-pr-body.mjs");
-const body = [...parsed.bodies, ...parsed.inline].join("\n");
-const createsPr = commands.some(({ plain }) => PR_BODY.test(plain));
-if (prBody && body && createsPr) {
-  const base = parsed.flagOf("--base", "-B") ?? "main";
-  const head = parsed.flagOf("--head", "-H") ?? "HEAD";
-  const changed = git(root, ["diff", "--name-only", `origin/${base}...${head}`])
+for (const { sent, text } of bodies.texts) {
+  if (!(prBody && sent.pr && text)) {
+    continue;
+  }
+  const changed = git(root, [
+    "diff",
+    "--name-only",
+    `origin/${sent.base ?? "main"}...${sent.head ?? "HEAD"}`,
+  ])
     .split("\n")
     .filter(Boolean);
-  const found = [
-    prBody.checkPrScreenshots(body, changed),
-    prBody.checkReviewLoop(body),
+  const problem = [
+    prBody.checkPrScreenshots(text, changed),
+    prBody.checkReviewLoop(text),
   ].filter(Boolean);
-  if (found.length > 0) {
+  if (problem.length > 0) {
     warnings.push(
-      `pr-text will fail this pull request: ${found.join("; ")} (CONTRIBUTING.md, "The gates").`,
+      `pr-text will fail this pull request: ${problem.join("; ")} (CONTRIBUTING.md, "The gates").`,
     );
   }
 }
