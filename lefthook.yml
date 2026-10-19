@@ -14,6 +14,10 @@ pre-commit:
       run: npx biome check --no-errors-on-unmatched {staged_files}
     prose:
       run: node scripts/check-prose.mjs {staged_files}
+    # A migration touches four files (docs/adr/0002); all four must agree.
+    migrations:
+      glob: "drizzle/**"
+      run: node scripts/check-migrations.mjs
     # The ruleset refuses a push to main; this stops the commit that would
     # need untangling first.
     branch:

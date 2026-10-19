@@ -1,6 +1,20 @@
 # ephira docs
 
-Landing page, future documentation, privacy policy.
+Two unrelated things share this directory, and the name says only one of them.
+
+- **The website**: the Astro site that publishes the landing page and the
+  privacy policy: `astro.config.mjs`, `src/`, `public/`, and its own
+  `package.json`. Astro builds only `src/pages` and `public`, so the markdown
+  beside them is invisible to it.
+- **The repo's documentation**: `adr/`, `agents/`, `plans/` and the
+  `CYCLE_PREDICTION_*.md` files.
+
+An architecture decision record goes in `adr/`, numbered in sequence, when a
+decision would otherwise be re-litigated. Implementation plans go in `plans/`,
+and the instructions the agent skills read go in `agents/`. Documentation never
+goes under `src/`: that is the website.
+
+The rest of this file is about the website.
 
 ## Stack
 

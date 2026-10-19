@@ -51,6 +51,10 @@ jobs:
       - name: No emdash or emoji in tracked text
         run: |
           npm run check:prose
+      # docs/adr/0002: journal, .sql files, migrations.js and snapshots agree.
+      - name: Migration bookkeeping
+        run: |
+          node scripts/check-migrations.mjs
       # The script lefthook runs at commit-msg, over the commits a
       # `--no-verify` could have let through. Dependabot is skipped: its
       # bodies embed upstream release notes. Keyed on who opened the PR, not

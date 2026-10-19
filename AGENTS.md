@@ -17,6 +17,12 @@ Tools enforce these where they can, so a refusal names the rule you hit.
 - **Branch before committing:** fetch, branch from `origin/main` as `type/name`,
   push, open a PR, let the required checks go green.
 
+## Before you start
+
+- **Writing or changing a test:** read `__tests__/README.md` first.
+- **Running the app on a simulator or emulator, or testing an upgrade:** use the
+  `run-on-device` skill.
+
 ## Pull requests
 
 Every PR goes through the **review loop** in `CONTRIBUTING.md` before it merges:

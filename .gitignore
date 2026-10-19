@@ -30,6 +30,12 @@ credentials/
 *.tar.gz
 *.aab
 
+# Database copies pulled off a device or simulator hold someone's health data.
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
 # Metro
 .metro-health-check*
 
