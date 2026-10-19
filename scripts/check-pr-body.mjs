@@ -34,9 +34,10 @@ const COMMENT = /<!--[\s\S]*?-->/g;
 const NEXT_HEADING = /^#{1,2}\s/m;
 // An image hosted somewhere (GitHub's uploads are https), not the template's
 // `(link)` placeholder; a reason that is words, not `<reason>` or `...`.
-const IMAGE = /!\[[^\]]*\]\(https?:\/\/[^)\s]+\)|<img\b[^>]*\bsrc="https?:\/\//;
+const IMAGE =
+  /!\[[^\]]*\]\(https?:\/\/[^)\s]+\)|<img\b[^>]*\bsrc=["']https?:\/\//;
 const OPT_OUT =
-  /^\s*Screenshots:\s*none,\s*because\s+(?![^\n]*[<>])(?!\.{3}\s*$)(.*\w.*)$/m;
+  /^\s*Screenshots:\s*none,\s*because\s+(?!<reason>\s*$)(?!\.{3}\s*$)(.*\w.*)$/m;
 const LOOP_FIELDS = [
   "Code review passes",
   "Correctness passes",

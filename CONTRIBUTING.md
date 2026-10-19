@@ -148,7 +148,7 @@ first column stops you locally; the last stops the merge.
 | --- | --- | --- | --- |
 | Conventional subject; no emdash, emoji or session link in a commit message | `commit-msg` | `guard-git` reads the message first | `Checks` walks the PR's commits |
 | No emdash or emoji in tracked text | `pre-commit`, staged files | `after-edit`, the edited file | `Checks`: `npm run check:prose` |
-| No session link, emdash or emoji in PR, issue, review, comment or release text | (never sees it) | `guard-gh` refuses the command, body files included, and any file it cannot read | `pr-text`, the PR title and body |
+| No session link, emdash or emoji in PR, issue, review, comment or release text | (never sees it) | `guard-gh` refuses the command, body files included; it warns on a file it cannot read | `pr-text`, the PR title and body |
 | A UI change carries a screenshot, or a reason | | `guard-gh` warns | `pr-text` |
 | The PR body records the review loop's pass counts and last commit | | `guard-gh` warns | `pr-text` (the record, not the reviews) |
 | Stage by name; never commit on `main` | `pre-commit` branch check | `guard-git` | the ruleset refuses a push to `main` |
