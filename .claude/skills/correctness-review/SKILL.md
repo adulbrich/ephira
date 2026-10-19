@@ -3,7 +3,8 @@ name: correctness-review
 description: Sweep the changes since a fixed point (commit, branch, tag, or merge-base) for the defect classes ephira has shipped fixes for, and report each finding with the input or sequence that triggers it. Use on every PR as the correctness pass of the review loop in CONTRIBUTING.md, or whenever the question is "is it wrong" rather than "does it conform"; with `mutate`, also removes each guard in the diff and reports the ones no test catches.
 ---
 
-Correctness sweep of the diff between `HEAD` and a fixed point the user supplies.
+Correctness sweep of the diff between a pinned head and a fixed point the user
+supplies.
 Three read-only sub-agents run in parallel, each with one way of finding things:
 walking the diff for sequences, executing pure functions at their boundaries, and
 checking what the diff takes on trust. An optional fourth step mutates guards in a
@@ -14,14 +15,17 @@ conformance; see _Why_.
 
 ## Process
 
-### 1. Pin the fixed point
+### 1. Pin both ends
 
-Whatever the user said is the fixed point. If they did not name one, ask. Capture the
-diff command once, `git diff <fixed-point>...HEAD` (three-dot, against the
-merge-base), and the commit list, `git log <fixed-point>..HEAD --oneline`.
+Whatever the user said is the fixed point. If they did not name one, ask. Pin the
+head too, `git rev-parse HEAD`, because the author may keep committing while the
+sub-agents read. Capture the diff command once, `git diff <fixed-point>...<head>`
+(three-dot, against the merge-base), and the commit list,
+`git log <fixed-point>..<head> --oneline`. Sub-agents read files as
+`git show <head>:<path>`, never from the working tree.
 
-Confirm `git rev-parse <fixed-point>` resolves and the diff is non-empty before
-spawning anything. Note whether the user passed `mutate`.
+Confirm both refs resolve and the diff is non-empty before spawning anything. Note
+whether the user passed `mutate`.
 
 ### 2. Find the spec
 
@@ -31,9 +35,9 @@ the user passed. If none exists, that entry reports "no spec".
 
 ### 3. The checklist
 
-Each entry reads _what it is_, then _how to find it_, and names the fixes that put it
-here. Paste the whole list into every sub-agent prompt: the sub-agent has no other
-access to it.
+Each entry reads _what it is_, then _how to find it_, and names the fixes or issues
+that put it here where it has them. Paste the whole list into every sub-agent
+prompt: the sub-agent has no other access to it.
 
 **Sequences**
 
@@ -51,7 +55,7 @@ access to it.
   a state a later reader accepts: password mode written before its hash, a database
   upgrade killed between copy and rename. Find it: for each multi-step write, say
   what the next launch concludes if the app is killed after the first part.
-- **Stale view after a write (38e0064, #279, #281).** A write that fires no change
+- **Stale view after a write (38e0064, #279, #281 open).** A write that fires no change
   signal or bypasses `useLiveQuery`, a signal fired before an unawaited write lands,
   or a signal that resets UI state the user had open. Find it: for each write, name
   the screens that show that data and the signal that refreshes each.
@@ -62,12 +66,12 @@ access to it.
 - **Swallowed failure with a user waiting (bcd8ca1).** An error caught and logged
   on a path where the user expects an answer: a failed export used to end in
   silence. Find it: every `catch` in the diff, and what the user sees afterwards.
-- **State, not sequence.** An acceptance criterion that describes a state when the
-  defect lives in an ordering. Find it: for each criterion in the spec, ask whether
+- **State, not sequence (#214, #216).** An acceptance criterion that describes a
+  state when the defect lives in an ordering. Find it: for each criterion in the spec, ask whether
   it mentions time; one that cannot fail on a race proves nothing about one.
-- **A comment that claims safety (8fad236).** Every comment or PR text saying
-  something is safe, impossible or already handled is a hypothesis: a PR once said
-  the database was already encrypted, and it was not. Find it: construct the case
+- **A comment that claims safety (#53, 010dab7).** Every comment or PR text saying
+  something is safe, impossible or already handled is a hypothesis: #53 said the
+  database was already encrypted, and it was not until 010dab7. Find it: construct the case
   that disproves it, and report the claims that survive as well as the ones that
   fall.
 
@@ -131,9 +135,9 @@ that triggers it. A description of the risk is not a finding.
 ### 4. Spawn three sub-agents in parallel
 
 Every prompt opens with: "You are read only. Write nothing under the repository,
-stage nothing, change no branch. A scratch file goes under `$TMPDIR`." Every prompt
-carries the diff command, the commit list, the full checklist from step 3, and a
-400-word limit on the report.
+stage nothing, change no branch. Read files as `git show <head>:<path>`. A scratch
+file goes under `$TMPDIR`." Every prompt carries the diff command, the commit list,
+the full checklist from step 3, and a 400-word limit on the report.
 
 - **Sequences.** Entries under _Sequences_. Also carries the spec from step 2. Brief:
   "For each entry, walk every hunk it applies to. Report each finding under the
@@ -143,19 +147,22 @@ carries the diff command, the commit list, the full checklist from step 3, and a
   output for each input. Read nothing you can run." Give it the runner:
 
   ```bash
-  S="$TMPDIR/boundaries"; mkdir -p "$S"
+  S="$(mktemp -d "$TMPDIR/boundaries.XXXXXX")"
   echo 'module.exports = () => {};' > "$S/no-tz.cjs"
   # write $S/<name>.test.ts importing from "@/..." and logging each output
   TZ=Pacific/Kiritimati ./node_modules/.bin/jest --no-watchman \
-    --rootDir "$PWD" --roots "$S" --modulePaths "$PWD/node_modules" \
-    --globalSetup "$S/no-tz.cjs"
+    --rootDir "$PWD" --roots "$S" --globalSetup "$S/no-tz.cjs" \
+    --modulePaths "$PWD/node_modules"
   ```
 
-  `jest.globalSetup.js` pins every run to Europe/Berlin, which is why the runner
-  swaps in a no-op setup and passes `TZ` itself. `--modulePaths` lets a test
-  outside the repository resolve the Babel helpers a namespace or default import
-  needs. A function that touches the
-  database swaps in the in-memory one with
+  Run it from a checkout whose working tree is the pinned head
+  (`git status --porcelain` empty, `HEAD` at `<head>`): the imports resolve from
+  `$PWD`, so an uncommitted edit would be what gets tested. `jest.globalSetup.js`
+  pins every run to Europe/Berlin, which is why the runner swaps in a no-op setup
+  and passes `TZ` itself. `--modulePaths` lets a test outside the repository
+  resolve the Babel helpers a namespace or default import needs; it takes a list,
+  so keep it last. A function that touches the database swaps in the in-memory one
+  with
   `jest.mock("@/db/operations/setup", () => jest.requireActual("@/__tests__/helpers/testDatabase"))`
   and calls `resetTestDatabase()` first.
 - **Trust.** Entries under _Trust_. Brief: "For each migration, upgrade path and
@@ -167,12 +174,14 @@ carries the diff command, the commit list, the full checklist from step 3, and a
 
 Guard mutation runs tests against changed code, so it happens in a scratch worktree
 and never in the checkout the user is working in. `git worktree add` needs the
-command sandbox off.
+command sandbox off, and `$TMPDIR` can name a different directory with the sandbox
+on and off, so fix one absolute path `M` for the worktree and use it in every step.
 
-1. `git worktree add --detach "$TMPDIR/mutate-<sha>" HEAD`, then clone
-   `node_modules` into it with `cp -c -R node_modules "$TMPDIR/mutate-<sha>/"` (an
-   APFS clone, seconds; symlink it where clones are unavailable). Run `./node_modules/.bin/jest --no-watchman <a test file>`
-   once, unchanged, to prove the worktree works before trusting a result from it.
+1. `git worktree add --detach "$M" <head>`, then clone `node_modules` into it with
+   `cp -c -R node_modules "$M/"` (an APFS clone, seconds; symlink it where clones
+   are unavailable). Run `./node_modules/.bin/jest --no-watchman <a test file>` in
+   `$M` once, unchanged, to prove the worktree works before trusting a result
+   from it.
 2. List every conditional in the diff that protects something: a null check before
    a write, a debounce guard, a lock check, a bounds check, a platform check.
 3. For each guard, remove it (or invert it), run Jest on the test files for the
@@ -180,7 +189,7 @@ command sandbox off.
 4. Report each guard with the tests that failed. A guard whose removal fails no
    test is **unverified here**: say so in those words, and say whether it needs a
    device (SQLCipher, Android Back, a notification cold start) to verify.
-5. `git worktree remove --force "$TMPDIR/mutate-<sha>"`.
+5. `git worktree remove --force "$M"`.
 
 ### 6. Aggregate
 

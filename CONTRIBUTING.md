@@ -12,8 +12,6 @@ them:
   stock library Expo Go carries
 - `expo-local-authentication`: needs `NSFaceIDUsageDescription` in an
   `Info.plist` that is ours
-- `plugins/withAndroid16KBSupport.js`: a local config plugin, so by definition
-  not compiled into anything published
 
 You need a **development build** on a simulator, an emulator or a device. To
 run it locally you need:
@@ -36,6 +34,13 @@ run it locally you need:
 
    ```bash
    npm install
+   ```
+
+   If you use Claude Code, install the plugin the review loop runs once per
+   clone. The tracked `.claude/settings.json` enables it but does not fetch it:
+
+   ```bash
+   claude plugin install mattpocock-skills@claude-plugins-official --scope project
    ```
 
 3. **Build and run:**
@@ -65,10 +70,10 @@ run it locally you need:
 
    Once a development build is installed, `expo start` is all a JavaScript
    change needs. Rebuild only when something native changes: a dependency with
-   native code, anything in `app.json`, or anything in `plugins/`.
+   native code, or anything in `app.json`, including its `plugins` list.
 
 `/ios` and `/android` are generated output and are gitignored. Edit `app.json`
-and `plugins/` instead; prebuild rebuilds the native projects from them.
+instead; prebuild rebuilds the native projects from it.
 
 ## 2. Local Quality Checks
 
@@ -96,8 +101,8 @@ We follow the **Feature Branch Workflow**.
 
 ### The review loop
 
-GitHub requires no approving review while the project has one maintainer, and
-green CI is not a review, so this loop is the review. A teammate's review is
+The ruleset requires no approving review while the project has one maintainer,
+and green CI is not a review, so this loop is the review. A teammate's review is
 welcome on top of it, never instead of it.
 
 Every PR runs three reviews against `origin/main`:
@@ -112,10 +117,11 @@ All three run on docs-only diffs and dependency bumps too: the privacy policy is
 docs, a workflow is configuration, and a dependency is supply chain.
 
 Repeat until a pass raises nothing you have not answered. Answered means fixed,
-or declined in writing with the reason, so a pass whose findings you all
-declined ends the loop. Later passes review the code the earlier ones made you
-write. Verify a finding before acting on it: reviewers are sometimes confidently
-wrong. Record each review's pass count and every decline in the PR.
+or declined in writing with the reason. A fix is new code, so the loop ends on a
+pass that ran on the commit that merges; updating the branch from `main` needs
+no new pass unless it resolved a conflict. Verify a finding before acting on
+it: reviewers are sometimes confidently wrong. Record each review's pass count,
+the commit the last pass saw, and every decline in the PR.
 
 ### What blocks a merge
 

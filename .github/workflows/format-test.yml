@@ -12,8 +12,7 @@ on:
     types: [opened, synchronize, reopened, edited]
   # The ruleset's up-to-date requirement means a PR's last run already tested
   # the tree main becomes. This run records that result on main itself, so a
-  # red main (a flaky test, a new runner image) shows where everyone looks,
-  # and it covers any change that reaches main without a PR.
+  # red main (a flaky test, a new runner image) shows where everyone looks.
   push:
     branches: [main]
 

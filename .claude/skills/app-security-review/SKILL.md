@@ -3,26 +3,28 @@ name: app-security-review
 description: Review the changes since a fixed point (commit, branch, tag, or merge-base) for the ways ephira's health data has leaked or nearly leaked (encryption claimed but not applied, a database upgrade that strands or leaves plaintext, a key store taken on trust, a lock that fails open, health data reaching a log, a notification or an export, privacy claims the code does not keep). Use on every PR, as the security pass of the review loop in CONTRIBUTING.md.
 ---
 
-Security review of the diff between `HEAD` and a fixed point the user supplies,
-scoped to what a generic security review does not cover. Two read-only sub-agents
-run in parallel: one on the data at rest, one on the data in use.
+Security review of the diff between a pinned head and a fixed point the user
+supplies, scoped to what a generic security review does not cover. Two read-only
+sub-agents run in parallel: one on the data at rest, one on the data in use.
 
-It is the complement of a generic security review, not a replacement: a generic
-review is tuned for servers and the web, and ephira has no server. Its data is a
-person's cycle, pregnancy and symptom history on their own phone, and the people it
-must be kept from are close by. The harness's generic security review is optional
-beside it; see _Why_.
+A generic review is tuned for servers and the web, and ephira has no server. Its
+data is a person's cycle, pregnancy and symptom history on their own phone, and the
+people it must be kept from are close by. This skill carries those classes; the
+classes every app shares are covered by the harness's generic security review where
+one runs, and by hand in step 4 where it does not.
 
 ## Process
 
-### 1. Pin the fixed point
+### 1. Pin both ends
 
-Whatever the user said is the fixed point. If they did not name one, ask. Capture the
-diff command once, `git diff <fixed-point>...HEAD` (three-dot, against the
-merge-base), and the commit list, `git log <fixed-point>..HEAD --oneline`.
+Whatever the user said is the fixed point. If they did not name one, ask. Pin the
+head too, `git rev-parse HEAD`, because the author may keep committing while the
+sub-agents read. Capture the diff command once, `git diff <fixed-point>...<head>`
+(three-dot, against the merge-base), and the commit list,
+`git log <fixed-point>..<head> --oneline`. Sub-agents read files as
+`git show <head>:<path>`, never from the working tree.
 
-Confirm `git rev-parse <fixed-point>` resolves and the diff is non-empty before
-spawning anything.
+Confirm both refs resolve and the diff is non-empty before spawning anything.
 
 ### 2. The checklist
 
@@ -31,7 +33,7 @@ sub-agent prompts: the sub-agent has no other access to it.
 
 **At rest**
 
-- **Encryption claimed, not applied (8fad236, 010dab7).** Every install up to 1.4.0
+- **Encryption claimed, not applied (#53, 010dab7).** Every install up to 1.4.0
   was plaintext: `useSQLCipher` linked SQLCipher, nothing issued `PRAGMA key`, and a
   PR body said the database was already encrypted. A second opener reached the
   plaintext file by name. Find it: every database open and every `expo-sqlite`
@@ -71,13 +73,14 @@ sub-agent prompts: the sub-agent has no other access to it.
   the system prompt's own `inactive`), say whether health data is visible before
   the lock screen, including in the app switcher. The password is a hash and does not yet derive the database
   key (#260, open).
-- **Health data reaching a log (open).** Flow Days, Predictions and Gestational Age
-  are health data, and so is any date that implies one. `hooks/useNotifications.ts` logs scheduled trigger
+- **Health data reaching a log (open).** Days with flow, Predictions and Gestational
+  Age are health data, and so is any date that implies one. `hooks/useNotifications.ts` logs scheduled trigger
   dates today. Find it: every `console` call in the diff and what the value carries;
   a new one that logs an Entry, a date tied to a Cycle, or an error wrapping a row
   is a finding.
-- **What the lock screen shows (open).** Notification bodies name the period in
-  plain text, and nothing sets their lock-screen visibility. Find it: for each
+- **What the lock screen shows (open).** Notifications read like "Period Expected
+  Tomorrow" (`constants/Notifications.ts`), and nothing sets their lock-screen
+  visibility. Find it: for each
   notification the diff adds or changes, write the text a person holding the locked
   phone reads.
 - **Privacy claims the code does not keep (1cdf378, #240).** The policy lives in
@@ -103,9 +106,10 @@ exposure; report a diff that widens it, not the exposure itself.
 ### 3. Spawn two sub-agents in parallel
 
 Every prompt opens with: "You are read only. Write nothing under the repository,
-stage nothing, change no branch. A scratch file goes under `$TMPDIR`." Every prompt
-carries the diff command, the commit list, the full checklist and the technique from
-step 2, and a 400-word limit on the report.
+stage nothing, change no branch. Read files as `git show <head>:<path>`. A scratch
+file goes under `$TMPDIR`." Every prompt carries the diff command, the commit list,
+the full checklist and the technique from step 2, and a 400-word limit on the
+report.
 
 - **At rest.** Entries under _At rest_. Brief: "For each file, key and storage
   location the diff touches, apply the entry and the technique. Report each finding
@@ -124,16 +128,18 @@ screen without anyone noticing comes before one that fails loudly. Keep the sect
 separate. End with one line per section: finding count and the most silent finding in
 it. Name no winner across sections.
 
+When the harness's generic security review did not run on this diff, add a third
+section, `## Generic`, from your own read of the diff: injection, secrets in code,
+unsafe deserialization, and permissions the app requests but does not need.
+
 ## Why
 
 A generic security review looks for injection, authentication bypass, secrets in
 code and the like, and filters logging and on-device storage out by policy. In this
 repo the worst defect was neither: every install up to 1.4.0 stored its database in
-plaintext while the code and a PR said it was encrypted (8fad236), and fixing it
-took six follow-ups to keep the upgrade from stranding or deleting data. The people
-a period tracker must be kept from are a partner, a parent or an official holding
-the phone, so the lock, the lock screen and what is left on disk matter more here
-than any network path. This skill carries those classes and leaves the shared ones
-to the tool built for them. A harness with no built-in review covers the generic
-classes by hand: injection, secrets in code, unsafe deserialization, and permissions
-the app requests but does not need.
+plaintext while the code and a PR said it was encrypted (#53, fixed in 010dab7), and
+fixing it took six follow-ups to keep the upgrade from stranding or deleting data.
+The people a period tracker must be kept from are a partner, a parent or an official
+holding the phone, so the lock, the lock screen and what is left on disk matter more
+here than any network path. This skill carries those classes, and the shared ones
+stay with the tool built for them.

@@ -12,6 +12,7 @@ Closes #
 - Code review passes:
 - Correctness passes:
 - Security passes:
+- Last pass on commit:
 - Declined:
 
 <!--
