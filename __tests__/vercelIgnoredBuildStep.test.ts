@@ -14,8 +14,14 @@ import path from "node:path";
  * `origin` is the repository itself, so fetching `main` works offline.
  */
 const SCRIPT = path.resolve(__dirname, "../docs/ignored-build-step.sh");
+/**
+ * Built up, not copied from `process.env`: a hook in a linked worktree, such
+ * as the pre-push that runs this suite, has `GIT_DIR` set, and git would
+ * follow it out of the throwaway repository into the real one.
+ */
 const ENV = {
-  ...process.env,
+  PATH: process.env.PATH,
+  HOME: process.env.HOME,
   GIT_CONFIG_GLOBAL: "/dev/null",
   GIT_CONFIG_NOSYSTEM: "1",
   GIT_AUTHOR_NAME: "test",
@@ -71,14 +77,21 @@ function repository(): string {
   return repo;
 }
 
-/** Whether the script builds, given the last successful deployment's SHA. */
+/**
+ * Whether the script builds, given the last successful deployment's SHA. Only
+ * its own two answers count, so a missing script or shell fails the test
+ * instead of reading as a build.
+ */
 function builds(repo: string, previous: string): boolean {
   const run = spawnSync("sh", [SCRIPT], {
     cwd: path.join(repo, "docs"),
     env: { ...ENV, VERCEL_GIT_PREVIOUS_SHA: previous },
     encoding: "utf8",
   });
-  return run.status !== 0;
+  if (run.status !== 0 && run.status !== 1) {
+    throw new Error(`exit ${run.status}: ${run.stderr}${run.error ?? ""}`);
+  }
+  return run.status === 1;
 }
 
 afterAll(() => {
@@ -125,6 +138,17 @@ test("main with no deployment to compare with builds", () => {
   const repo = repository();
   change(repo, "app/index.tsx");
   expect(builds(repo, "")).toBe(true);
+});
+
+test("a previous deployment older than a shallow clone is fetched", () => {
+  const repo = repository();
+  const previous = change(repo, "docs/src/pages/privacy.astro");
+  change(repo, "docs/agents/notes.md");
+  change(repo, "app/index.tsx");
+  const shallow = `${repo}-shallow`;
+  made.push(shallow);
+  git(os.tmpdir(), "clone", "-q", "--depth=1", `file://${repo}`, shallow);
+  expect(builds(shallow, previous)).toBe(false);
 });
 
 test("a previous deployment it cannot find builds", () => {

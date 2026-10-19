@@ -10,7 +10,7 @@
 # installing and building.
 #
 # The list names what is not the website, so a new file builds by default;
-# add a new folder of documentation to it.
+# add a new folder or top-level file of documentation to it.
 # __tests__/vercelIgnoredBuildStep.test.ts pins which changes build.
 
 if [ -n "${VERCEL_GIT_PREVIOUS_SHA:-}" ]; then
@@ -19,17 +19,19 @@ if [ -n "${VERCEL_GIT_PREVIOUS_SHA:-}" ]; then
   base=$VERCEL_GIT_PREVIOUS_SHA
   git cat-file -e "$base^{commit}" 2>/dev/null ||
     git fetch --quiet --depth=1 origin "$base" 2>/dev/null
-elif git fetch --quiet --depth=1 origin main 2>/dev/null &&
-  [ "$(git rev-parse FETCH_HEAD)" != "$(git rev-parse HEAD)" ]; then
-  # Nothing has succeeded on this branch yet: compare its website with main's.
-  base=$(git rev-parse FETCH_HEAD)
 else
-  echo "No deployment or main to compare with: building."
-  exit 1
+  # Nothing has succeeded on this branch yet: compare its website with main's.
+  base=$(git fetch --quiet --depth=1 origin main 2>/dev/null &&
+    git rev-parse FETCH_HEAD)
+  if [ -z "$base" ] || [ "$base" = "$(git rev-parse HEAD)" ]; then
+    echo "No deployment or main to compare with: building."
+    exit 1
+  fi
 fi
 
 if git diff --quiet "$base" HEAD -- . ':!adr' ':!agents' ':!plans' \
-  ':!.vscode' ':!.gitignore' ':!README.md' ':!CYCLE_PREDICTION_*.md'; then
+  ':!.vscode' ':!.gitignore' ':!README.md' \
+  ':(exclude,glob)CYCLE_PREDICTION_*.md'; then
   echo "The website is unchanged since $base: skipping the build."
   exit 0
 fi
