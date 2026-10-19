@@ -51,6 +51,11 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
+# Claude Code. `.claude/settings.json` and `.claude/skills/` are tracked and
+# shared; personal overrides and agent worktrees are not.
+.claude/settings.local.json
+.claude/worktrees/
+
 app-example
 
 docs/.vercel
