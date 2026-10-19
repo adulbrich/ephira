@@ -10,7 +10,7 @@
  */
 import { existsSync, readFileSync } from "node:fs";
 import { isAbsolute, join } from "node:path";
-import { deny, git, loadScript, readInput, repoRoot } from "./lib.mjs";
+import { deny, git, loadScript, readInput, trustedRoot } from "./lib.mjs";
 
 const PUBLISHES =
   /\bgh\s+(?:(?:pr|issue)\s+(?:create|edit|comment|review|close|merge)|release\s+(?:create|edit))\b/;
@@ -45,7 +45,9 @@ function prBody(text) {
   return inline ? (inline[1] ?? inline[2]) : null;
 }
 
-const root = repoRoot(cwd);
+// Null outside this repository: the session-link rule still applies, the
+// rules that need the repo's scripts are skipped.
+const root = trustedRoot(cwd);
 const body = BODIED.test(command) ? prBody(command) : null;
 const published = body === null ? command : `${command}\n${body}`;
 const problems = [];

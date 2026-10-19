@@ -12,13 +12,15 @@
  */
 import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
-import { loadScript, readInput, repoRelative, repoRoot } from "./lib.mjs";
+import { loadScript, readInput, repoRelative, trustedRoot } from "./lib.mjs";
 
 const BIOME_EXTENSIONS = /\.(?:[cm]?jsx?|tsx?|jsonc?|css)$/;
 
 const input = readInput();
-const root = repoRoot(input.cwd ?? process.cwd());
-const path = repoRelative(root, input.tool_input?.file_path ?? "");
+// Null outside this repository, whose scripts and Biome binary are not ours
+// to run.
+const root = trustedRoot(input.cwd ?? process.cwd());
+const path = root ? repoRelative(root, input.tool_input?.file_path ?? "") : "";
 
 if (!path || path.startsWith("../") || !existsSync(`${root}/${path}`)) {
   process.exit(0);

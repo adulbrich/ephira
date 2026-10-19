@@ -10,7 +10,7 @@
  * only and the two populations diverge (docs/adr/0002). A new `.sql` file, the
  * journal and `drizzle/migrations.js` stay editable.
  */
-import { git, readInput, repoRelative, repoRoot } from "./lib.mjs";
+import { git, readInput, repoRelative, trustedRoot } from "./lib.mjs";
 
 const PREFIXES = [
   [
@@ -57,9 +57,10 @@ function reasonFor(root, path) {
 }
 
 const input = readInput();
-const root = repoRoot(input.cwd ?? process.cwd());
-const path = repoRelative(root, input.tool_input?.file_path ?? "");
-const reason = path.startsWith("../") ? null : reasonFor(root, path);
+// The rules describe this repository; an edit in any other checkout passes.
+const root = trustedRoot(input.cwd ?? process.cwd());
+const path = root ? repoRelative(root, input.tool_input?.file_path ?? "") : "";
+const reason = !path || path.startsWith("../") ? null : reasonFor(root, path);
 
 if (reason) {
   process.stdout.write(

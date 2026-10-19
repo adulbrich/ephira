@@ -17,13 +17,17 @@
  * `-fd`), and a refspec can carry the force as a `+`. Quoted strings and
  * heredoc bodies are blanked before parsing, so a commit message that
  * mentions `git add -A` is not a `git add -A`. Ported from eecs-capstone.
+ *
+ * This catches honest mistakes, not a determined bypass: `eval`, `sh -c` or an
+ * abbreviated long option gets past a parser that is not the shell. The hard
+ * boundary is server-side, where the ruleset refuses pushes to main.
  */
 import {
   currentBranch,
   deny,
   loadScript,
   readInput,
-  repoRoot,
+  trustedRoot,
 } from "./lib.mjs";
 
 const HEREDOC = /<<-?\s*(["']?)([A-Za-z_][A-Za-z0-9_]*)\1\n([\s\S]*?)\n\2\b/;
@@ -208,7 +212,7 @@ for (const segment of detectable.split(SEGMENT)) {
 
 if (commits) {
   const message = extractCommitMessage(command);
-  const script = await loadScript(repoRoot(cwd), "check-commit-message.mjs");
+  const script = await loadScript(trustedRoot(cwd), "check-commit-message.mjs");
   if (message !== null && script) {
     const problems = script.checkCommitMessage(message);
     if (problems.length > 0) {

@@ -8,7 +8,7 @@
  * checkout, so the repository root is resolved from `cwd`.
  */
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync } from "node:fs";
 import { relative } from "node:path";
 
 /**
@@ -63,13 +63,41 @@ export function repoRelative(root, path) {
   return relative(root, path).replaceAll("\\", "/");
 }
 
+function commonDir(dir) {
+  const found = git(dir, [
+    "rev-parse",
+    "--path-format=absolute",
+    "--git-common-dir",
+  ]);
+  try {
+    return found ? realpathSync(found) : "";
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * The checkout root for `cwd` when it is this project's repository (the main
+ * checkout or one of its worktrees), or null anywhere else.
+ *
+ * The hooks import scripts and run binaries from the root they resolve. A
+ * session can `cd` into any clone, so resolving the root from `cwd` alone
+ * would run whatever code that clone ships. Comparing git's common directory
+ * with the project's keeps worktrees in and other repositories out.
+ */
+export function trustedRoot(cwd) {
+  const project = process.env.CLAUDE_PROJECT_DIR;
+  const mine = project ? commonDir(project) : "";
+  return mine && commonDir(cwd) === mine ? repoRoot(cwd) : null;
+}
+
 /**
  * One of the repo's own check scripts, loaded from the session's checkout so a
- * worktree checks against the rules it carries. Null when the checkout has no
- * such script (a session outside this repo, or a branch older than the
- * script), and the caller skips only the rule that script implements.
+ * worktree checks against the rules it carries. Null when `root` is not
+ * trusted or has no such script (a branch older than the script), and the
+ * caller skips only the rule that script implements.
  */
 export async function loadScript(root, name) {
-  const path = `${root}/scripts/${name}`;
-  return existsSync(path) ? await import(path) : null;
+  const path = root ? `${root}/scripts/${name}` : "";
+  return path && existsSync(path) ? await import(path) : null;
 }
