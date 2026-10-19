@@ -1,0 +1,85 @@
+version: 2
+updates:
+  # The SHA-pinned actions in .github/workflows, kept current through reviewed
+  # PRs.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: ci
+
+  # The app. Every PR goes through the review loop, so a few grouped PRs a
+  # month cost less than many small ones.
+  #
+  # Expo SDK packages move together: `npx expo install --fix` pins each to the
+  # range its SDK ships with, and a lone bump past that range breaks the
+  # native build. Dependabot offers them patch updates only; an SDK upgrade
+  # is its own deliberate PR. The `react-native-*` pattern also holds back
+  # minors for the few React Native libraries Expo does not manage, such as
+  # Paper and the calendar; an SDK upgrade refreshes those too.
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      expo-sdk:
+        patterns:
+          - "expo"
+          - "expo-*"
+          - "@expo/*"
+          - "jest-expo"
+          - "babel-preset-expo"
+          - "eslint-config-expo"
+          - "react"
+          - "react-dom"
+          - "react-native"
+          - "react-native-*"
+          - "@react-native/*"
+          - "react-test-renderer"
+      all-other:
+        patterns:
+          - "*"
+    ignore:
+      - dependency-name: "expo"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "expo-*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "@expo/*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "jest-expo"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "babel-preset-expo"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "eslint-config-expo"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "react-native"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "react-native-*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "@react-native/*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "react-test-renderer"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+
+  # The website under docs/ has its own lockfile.
+  - package-ecosystem: npm
+    directory: "/docs"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 1
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      docs-site:
+        patterns:
+          - "*"

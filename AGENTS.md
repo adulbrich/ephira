@@ -1,5 +1,22 @@
 # ephira
 
+## Always
+
+A tool enforces each of these, so a refusal names the rule you hit.
+`CONTRIBUTING.md`, "The gates", maps each rule to its hook, script and check.
+
+- **Punctuate with commas, colons, parentheses or a new sentence, and use words
+  for a status mark:** no emdash and no emoji in commits, comments, string
+  literals, docs, PR or issue text.
+- **Conventional Commits, lowercase imperative subject:**
+  `fix(calendar): keep the open Section on close`. The body, if any, says why.
+  Keep the `Co-Authored-By` trailer the harness supplies.
+- **Keep `claude.ai/code/session` links out of everything you publish:** commits,
+  PRs, issues and comments. The repo is public.
+- **Stage files by name.**
+- **Branch before committing:** fetch, branch from `origin/main` as `type/name`,
+  push, open a PR, let the required checks go green.
+
 ## Pull requests
 
 Every PR goes through the **review loop** in `CONTRIBUTING.md` before it merges:

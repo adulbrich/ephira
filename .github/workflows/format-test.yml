@@ -25,19 +25,42 @@ permissions:
 
 jobs:
   checks:
+    # The required check on main is this name; renaming the job blocks every
+    # PR until the ruleset is updated to match.
     name: Lint, typecheck and test
     runs-on: ubuntu-latest
     steps:
+      # Actions are pinned to a commit, not a tag, so a moved tag cannot
+      # change what runs here; Dependabot proposes the bumps.
       - name: Checkout
-        uses: actions/checkout@v4
-      - name: Set-up Node
-        uses: actions/setup-node@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          node-version: 22
+          # The commit-message step walks every commit the PR adds, which
+          # needs the base branch reachable.
+          fetch-depth: 0
+      - name: Set-up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
           cache: npm
+      # `npm ci` installs the lockfile exactly and fails if it disagrees with
+      # package.json; `npm install` would quietly rewrite it.
       - name: Install Dependencies
         run: |
-          npm install
+          npm ci
+      - name: No emdash or emoji in tracked text
+        run: |
+          npm run check:prose
+      # The script lefthook runs at commit-msg, over the commits a
+      # `--no-verify` could have let through. Dependabot is skipped: its
+      # bodies embed upstream release notes. Keyed on who opened the PR, not
+      # `github.actor`, which changes when a maintainer pushes a fix-up.
+      - name: Commit messages
+        if: github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          node scripts/check-commit-message.mjs --range "origin/$BASE_REF..HEAD"
       - name: Lint and check formatting
         run: |
           npx biome ci .

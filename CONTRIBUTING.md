@@ -79,11 +79,13 @@ instead; prebuild rebuilds the native projects from it.
 
 ## 2. Local Quality Checks
 
-Before opening a Pull Request, run what CI runs:
+Before opening a Pull Request, run what CI runs. Lefthook runs most of it for
+you at commit and push; "The gates" below says which.
 
 - **Lint and format:** `npm run lint` (`npm run format` fixes what is fixable)
 - **Type check:** `npm run typecheck`
 - **Tests:** `npm test`
+- **Prose:** `npm run check:prose` (no emdash, no emoji)
 
 ## 3. Contribution Workflow
 
@@ -93,11 +95,19 @@ We follow the **Feature Branch Workflow**.
     - Format: `type/feature-name`
     - Example: `feat/pregnancy-mode-ui` or `fix/calendar-bug`
 2.  **Commit Often:**
-    - Use descriptive commit messages: "Added toggle for pregnancy mode" (not "fixed stuff").
+    - [Conventional Commits](https://www.conventionalcommits.org/) with a
+      lowercase imperative subject: `fix(calendar): keep the open Section on close`.
+      Types: `feat`, `fix`, `docs`, `test`, `refactor`, `style`, `perf`,
+      `build`, `ci`, `chore`; the scope is optional.
+    - The body, if any, says why in a sentence or two.
+    - Stage files by name, so a commit carries only what you meant.
 3.  **Open a Pull Request (PR):**
     - Target the `main` branch.
     - **Description:** Link the GitHub Issue (e.g., "Closes #42").
-    - **Screenshots:** Attach a screenshot or video of the feature running on a **physical device**.
+    - **Screenshots:** a PR that touches `app/`, `components/`, `assets/` or a
+      theme carries a screenshot or video of the change on a simulator, an
+      emulator or a device (iOS and Android when the change is
+      platform-specific), or the line `Screenshots: none, because <reason>`.
 4.  **Code Review:** the review loop below, then merge with a merge commit.
     The branch is deleted on merge.
 
@@ -128,12 +138,30 @@ finding before acting on it: reviewers are sometimes confidently wrong. Record
 each review's pass count, the commit the last passes saw, and every decline in
 the PR.
 
-### What blocks a merge
+### The gates
 
-- **`Lint, typecheck and test`** is a required check on `main`, and the branch
-  must be up to date with `main` before it merges. The same check runs again on
-  `main` after every merge.
-- Force pushes to `main` and deleting it are refused.
+One script per rule, run at the earliest point that can see the violation. The
+first column stops you locally; the last stops the merge.
+
+| Rule | Local (lefthook) | Claude Code hook | CI |
+| --- | --- | --- | --- |
+| Conventional subject; no emdash, emoji or session link in a commit message | `commit-msg` | `guard-git` reads the message first | `Checks` walks the PR's commits |
+| No emdash or emoji in tracked text | `pre-commit`, staged files | `after-edit`, the edited file | `Checks`: `npm run check:prose` |
+| No session link, emdash or emoji in PR or issue text | (never sees it) | `guard-gh` refuses the command | `pr-text`, the PR title and body |
+| A UI change carries a screenshot, or a reason | | `guard-gh` warns | `pr-text` |
+| Stage by name; never commit on `main` | `pre-commit` branch check | `guard-git` | the ruleset refuses a push to `main` |
+| No force push at `main`, `reset --hard`, `clean -f`, `branch -D` | | `guard-git` | the ruleset refuses a force push |
+| Generated files, signing material and shipped migrations stay untouched | | `guard-edits` | |
+| Biome clean | `pre-commit`, staged files | `after-edit` | `Checks` |
+| ESLint, typecheck and tests green | `pre-push` (typecheck, tests) | | `Checks` |
+
+`Checks` reports as **`Lint, typecheck and test`**. It and `pr-text` are
+required on `main`, the branch must be up to date with `main` before it merges,
+and `Checks` runs again on `main` after every merge. The hooks live in
+`.claude/hooks/` and the scripts in `scripts/`; `npm install` installs lefthook.
+
+Skipping locally (`LEFTHOOK=0 git commit`, or `--no-verify`) moves the failure
+to the hooks and CI rather than removing it.
 
 ## 4. Definition of Done (DoD)
 

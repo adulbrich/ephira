@@ -4,6 +4,16 @@ Closes #
 
 -
 
+## Screenshots
+
+<!-- Required when the diff touches app/, components/, assets/ or a theme
+     (pr-text checks it). One image per changed screen; iOS and Android when the
+     change is platform-specific. Keep one of the two lines below. -->
+
+![screen on iOS](url) ![screen on Android](url)
+
+Screenshots: none, because ...
+
 ## Review loop
 
 <!-- The review loop in CONTRIBUTING.md. One line per declined finding, with the
