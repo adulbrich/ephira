@@ -17,9 +17,11 @@ const SCRIPT = path.resolve(__dirname, "../docs/ignored-build-step.sh");
 /**
  * Built up, not copied from `process.env`: a hook in a linked worktree, such
  * as the pre-push that runs this suite, has `GIT_DIR` set, and git would
- * follow it out of the throwaway repository into the real one.
+ * follow it out of the throwaway repository into the real one. `NODE_ENV` is
+ * here only because Expo's types make it required in every environment.
  */
 const ENV = {
+  NODE_ENV: process.env.NODE_ENV,
   PATH: process.env.PATH,
   HOME: process.env.HOME,
   GIT_CONFIG_GLOBAL: "/dev/null",
