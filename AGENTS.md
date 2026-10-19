@@ -4,7 +4,8 @@
 
 Every PR goes through the **review loop** in `CONTRIBUTING.md` before it merges:
 `mattpocock-skills:code-review`, `correctness-review` and `app-security-review`,
-with each pass count and every declined finding recorded in the PR body.
+with each pass count, the commit the last passes saw and every declined finding
+recorded in the PR body.
 
 ## Agent skills
 

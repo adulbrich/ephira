@@ -147,22 +147,23 @@ the full checklist from step 3, and a 400-word limit on the report.
   output for each input. Read nothing you can run." Give it the runner:
 
   ```bash
-  S="$(mktemp -d "$TMPDIR/boundaries.XXXXXX")"
+  S="$(mktemp -d "$TMPDIR/boundaries.XXXXXX")"; mkdir -p "$S/tree" "$S/tests"
+  git archive <head> | tar -x -C "$S/tree"
+  cp -c -R node_modules "$S/tree/"
   echo 'module.exports = () => {};' > "$S/no-tz.cjs"
-  # write $S/<name>.test.ts importing from "@/..." and logging each output
-  TZ=Pacific/Kiritimati ./node_modules/.bin/jest --no-watchman \
-    --rootDir "$PWD" --roots "$S" --globalSetup "$S/no-tz.cjs" \
-    --modulePaths "$PWD/node_modules"
+  # write $S/tests/<name>.test.ts importing from "@/..." and logging each output
+  cd "$S/tree" && TZ=Pacific/Kiritimati ./node_modules/.bin/jest --no-watchman \
+    --roots "$S/tests" --globalSetup "$S/no-tz.cjs" \
+    --modulePaths "$S/tree/node_modules"
   ```
 
-  Run it from a checkout whose working tree is the pinned head
-  (`git status --porcelain` empty, `HEAD` at `<head>`): the imports resolve from
-  `$PWD`, so an uncommitted edit would be what gets tested. `jest.globalSetup.js`
-  pins every run to Europe/Berlin, which is why the runner swaps in a no-op setup
-  and passes `TZ` itself. `--modulePaths` lets a test outside the repository
-  resolve the Babel helpers a namespace or default import needs; it takes a list,
-  so keep it last. A function that touches the database swaps in the in-memory one
-  with
+  The tree is the pinned head exactly, whatever the working tree holds, and the
+  recipe runs inside the command sandbox. `jest.globalSetup.js` pins every run to
+  Europe/Berlin, which is why the runner swaps in a no-op setup and passes `TZ`
+  itself. `--modulePaths` lets a test outside the tree resolve the Babel helpers
+  a namespace or default import needs. To run one file, name it with
+  `--testPathPattern`; a bare path after `--modulePaths` joins its list. A
+  function that touches the database swaps in the in-memory one with
   `jest.mock("@/db/operations/setup", () => jest.requireActual("@/__tests__/helpers/testDatabase"))`
   and calls `resetTestDatabase()` first.
 - **Trust.** Entries under _Trust_. Brief: "For each migration, upgrade path and

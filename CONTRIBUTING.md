@@ -37,10 +37,12 @@ run it locally you need:
    ```
 
    If you use Claude Code, install the plugin the review loop runs once per
-   clone. The tracked `.claude/settings.json` enables it but does not fetch it:
+   clone. The tracked `.claude/settings.json` enables it but does not fetch it,
+   and the local scope records the install in your untracked
+   `.claude/settings.local.json`:
 
    ```bash
-   claude plugin install mattpocock-skills@claude-plugins-official --scope project
+   claude plugin install mattpocock-skills@claude-plugins-official --scope local
    ```
 
 3. **Build and run:**
@@ -117,11 +119,13 @@ All three run on docs-only diffs and dependency bumps too: the privacy policy is
 docs, a workflow is configuration, and a dependency is supply chain.
 
 Repeat until a pass raises nothing you have not answered. Answered means fixed,
-or declined in writing with the reason. A fix is new code, so the loop ends on a
-pass that ran on the commit that merges; updating the branch from `main` needs
-no new pass unless it resolved a conflict. Verify a finding before acting on
-it: reviewers are sometimes confidently wrong. Record each review's pass count,
-the commit the last pass saw, and every decline in the PR.
+or declined in writing with the reason. A fix is new code, so the loop ends when
+each of the three reviews has a clean pass on the newest commit that is not an
+update from `main`. A clean update from `main` leaves the PR's three-dot diff
+unchanged and needs no new pass; one that resolved a conflict does. Verify a
+finding before acting on it: reviewers are sometimes confidently wrong. Record
+each review's pass count, the commit the last passes saw, and every decline in
+the PR.
 
 ### What blocks a merge
 

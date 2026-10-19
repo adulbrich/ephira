@@ -128,7 +128,7 @@ screen without anyone noticing comes before one that fails loudly. Keep the sect
 separate. End with one line per section: finding count and the most silent finding in
 it. Name no winner across sections.
 
-When the harness's generic security review did not run on this diff, add a third
+When the harness's generic security review did not run on this head, add a third
 section, `## Generic`, from your own read of the diff: injection, secrets in code,
 unsafe deserialization, and permissions the app requests but does not need.
 
@@ -141,5 +141,6 @@ plaintext while the code and a PR said it was encrypted (#53, fixed in 010dab7),
 fixing it took six follow-ups to keep the upgrade from stranding or deleting data.
 The people a period tracker must be kept from are a partner, a parent or an official
 holding the phone, so the lock, the lock screen and what is left on disk matter more
-here than any network path. This skill carries those classes, and the shared ones
-stay with the tool built for them.
+here than any network path. This skill carries those classes; the shared ones go
+to the tool built for them where it runs, and to step 4's `## Generic` section
+where it does not.
