@@ -19,6 +19,13 @@
     "testMatch": [
       "**/?(*.)+(spec|test).[jt]s?(x)"
     ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "<rootDir>/.claude/"
+    ],
+    "modulePathIgnorePatterns": [
+      "<rootDir>/.claude/"
+    ],
     "globalSetup": "<rootDir>/jest.globalSetup.js"
   },
   "dependencies": {

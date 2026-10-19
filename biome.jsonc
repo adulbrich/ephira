@@ -7,6 +7,7 @@
     "includes": [
       "**",
       "!**/node_modules",
+      "!.claude/worktrees",
       "!drizzle",
       "!docs",
       "!dist",

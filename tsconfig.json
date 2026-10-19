@@ -11,5 +11,8 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"]
+  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
+  // Agent worktrees are second copies of the repo; naming `exclude` replaces
+  // the default, so node_modules is listed again.
+  "exclude": ["node_modules", ".claude"]
 }
