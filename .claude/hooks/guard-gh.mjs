@@ -33,8 +33,9 @@ const PUBLISHING = {
   issue: new Set(["create", "edit", "comment", "close"]),
   release: new Set(["create", "edit"]),
 };
-// A backstop for lines the reader does not follow (a backtick substitution,
-// a gh nested deeper than it looks): the whole line is still checked.
+// A backstop for lines the reader reports it did not follow (a backtick, a
+// quote left open, a gh nested deeper than it reads): when such a line looks
+// like a publishing gh command, the whole line is still checked.
 const LOOKS_PUBLISHING =
   /\bgh\s+(?:(?:pr|issue)\s+(?:create|edit|comment|review|close|merge)|release\s+(?:create|edit)|api\b[\s\S]*(?:\bbody\b|--input\b))/;
 const CAT_HEREDOC =
@@ -113,14 +114,17 @@ function publication({ words, heredocs }) {
 
 /** Every publishing `gh` command in `text`, inside substitutions too. */
 function publications(text, depth = 0) {
-  const { commands, inner } = readCommands(text);
+  const { commands, inner, uncertain } = readCommands(text);
   const found = commands.map(publication).filter(Boolean);
+  let unsure = uncertain || (depth >= 3 && inner.length > 0);
   if (depth < 3) {
     for (const body of inner) {
-      found.push(...publications(body, depth + 1));
+      const nested = publications(body, depth + 1);
+      found.push(...nested.found);
+      unsure ||= nested.unsure;
     }
   }
-  return found;
+  return { found, unsure };
 }
 
 /**
@@ -206,14 +210,15 @@ async function publishedRules(root) {
 }
 
 let found = [];
+let unsure = false;
 try {
-  found = publications(command);
+  ({ found, unsure } = publications(command));
 } catch (error) {
   deny(
     `guard-gh could not read this command line (${error.message}); refusing to publish it unchecked.`,
   );
 }
-if (found.length === 0 && !LOOKS_PUBLISHING.test(command)) {
+if (found.length === 0 && !(unsure && LOOKS_PUBLISHING.test(command))) {
   process.exit(0);
 }
 
