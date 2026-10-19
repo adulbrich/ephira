@@ -36,14 +36,19 @@ const TOKEN = /\0(\d+)\0/g;
 // as `body=@path`; `gh pr` and `gh issue` take `-F path`.
 const FILE_FLAG =
   /(?:^|\s)(-F|--field|--body-file|--notes-file|--input)(?:=|\s+)(\S+)/g;
-const INLINE_FLAG = /(?:^|\s)(?:-b|--body|-n|--notes)(?:=|\s+)(\S+)/g;
+// Read on the unmasked line, so a `--body "$(cat <<EOF ...)"` keeps its text.
+const INLINE_FLAG =
+  /(?:^|\s)(?:-b|--body|-n|--notes)(?:=|\s+)(?:"((?:[^"\\]|\\.)*)"|'([^']*)')/g;
+const CAT_HEREDOC =
+  /^\$\(\s*cat\s*<<-?\s*["']?(\w+)["']?\n([\s\S]*?)\n\1\s*\)$/;
 const HOOK_CHECKOUT = fileURLToPath(new URL("../..", import.meta.url));
 // A copy, so a name read at run time is a plain lookup (the Expo lint rule
 // against dynamic env access is about app code, which Expo inlines).
 const ENV = { ...process.env };
 
 const input = readInput();
-const command = input.tool_input?.command ?? "";
+// A backslash-newline continues the line, so the shell reads one command.
+const command = (input.tool_input?.command ?? "").replaceAll("\\\n", " ");
 const cwd = input.cwd ?? process.cwd();
 
 if (RENAMES_BRANCH.test(command)) {
@@ -70,7 +75,8 @@ function mask(text) {
 }
 
 const SEGMENT = /\s*(?:&&|\|\||;|\||&)\s*|\n/;
-const GH_TOKEN = /(?:^|\s)(?:\S*\/)?gh\s/;
+// `gh` as a word: after whitespace, or opening a `(...)` or `$(...)`.
+const GH_TOKEN = /(?:^|[\s(])(?:\S*\/)?gh\s/;
 
 /**
  * The `gh` commands on the line, as masked segments: a `gh` token outside
@@ -141,15 +147,21 @@ function bodiesOf(commands, unmask) {
   const bodies = [];
   const unreadable = [];
   for (const given of files.filter((file) => file !== "-")) {
-    const path = resolvePath(given);
-    if (readable(path)) {
+    // The last word inside `$(...)` carries its closing parenthesis.
+    const path = [given, given.replace(/\)+$/, "")]
+      .map(resolvePath)
+      .find(readable);
+    if (path) {
       bodies.push(readFileSync(path, "utf8"));
     } else {
       unreadable.push(given);
     }
   }
-  const inline = [...masked.matchAll(INLINE_FLAG)].map(([, value]) =>
-    unmask(value),
+  const inline = [...command.matchAll(INLINE_FLAG)].map(
+    ([, double, single]) => {
+      const value = double ?? single;
+      return CAT_HEREDOC.exec(value)?.[2] ?? value;
+    },
   );
   return { bodies, inline, unreadable, flagOf: flagReader(masked, unmask) };
 }
