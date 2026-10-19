@@ -94,6 +94,8 @@ We follow the **Feature Branch Workflow**.
 1.  **Create a Branch:**
     - Format: `type/feature-name`
     - Example: `feat/pregnancy-mode-ui` or `fix/calendar-bug`
+    - Name it right before opening the PR: renaming a PR's head branch
+      deletes the old ref, and GitHub closes the PR.
 2.  **Commit Often:**
     - [Conventional Commits](https://www.conventionalcommits.org/) with a
       lowercase imperative subject: `fix(calendar): keep the open Section on close`.
@@ -155,6 +157,8 @@ first column stops you locally; the last stops the merge.
 | No force push at `main`, `reset --hard`, `clean -f`, `branch -D` | | `guard-git` | the ruleset refuses a force push |
 | Generated files, signing material and shipped migrations stay untouched | | `guard-edits` | |
 | No branch rename through the API (it closes the PR the branch heads) | | `guard-gh` | |
+| A migration's journal entry, `.sql` file, import and snapshot agree | `pre-commit`, when `drizzle/` is staged | | `Checks` |
+| Every modal answers hardware Back | | | `Checks`: `components/__tests__/modalBack.test.ts` |
 | Biome clean | `pre-commit`, staged files | `after-edit` | `Checks` |
 | ESLint, typecheck and tests green | `pre-push` (typecheck, tests) | | `Checks` |
 
@@ -175,7 +179,19 @@ to the hooks and CI rather than removing it.
 - [ ] Feature satisfies the Acceptance Criteria in the linked Issue.
 - [ ] The review loop is recorded in the PR.
 
-## 5. Reporting Bugs
+## 5. Releasing
+
+Ephira is published on Google Play and the App Store, built with
+[EAS Build](https://docs.expo.dev/build/introduction/).
+
+1. A PR that needs a store build bumps `expo.version` in `app.json`
+   (MAJOR.MINOR.PATCH); the PR template's build reminder asks the reviewer to
+   confirm it.
+2. After it merges, run **Manual Expo EAS Build** (Actions, then Run workflow,
+   then pick the platforms). It builds on EAS with the `production` profile.
+3. Submit each build to its store by hand from the developer console.
+
+## 6. Reporting Bugs
 
 Found a bug? Open a **GitHub Issue** with:
 
@@ -183,7 +199,9 @@ Found a bug? Open a **GitHub Issue** with:
 - **Steps to Reproduce:** 1. Go to Home, 2. Click X...
 - **Environment:** (e.g., iOS 17, iPhone 13).
 
-## 6. Getting Help
+## 7. Getting Help
 
 - **Team Members:** Post in the iMessage group for quick questions.
-- **Docs:** Check the `/docs` folder for architecture decisions.
+- **Docs:** decisions are in `docs/adr/`; `docs/README.md` says what else lives
+  in `docs/`. Rules for one directory sit in that directory's `AGENTS.md`
+  (`db/`, `hooks/`), and the testing guide is `__tests__/README.md`.

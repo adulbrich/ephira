@@ -118,11 +118,11 @@ npm run ios      # or: npm run android
 The first run compiles a development build, which takes a while. After that,
 `npm start` is enough for JavaScript changes.
 
-See [PROJECTSTRUCTURE.md](PROJECTSTRUCTURE.md) for an overview of the codebase, key libraries, and local setup instructions.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, the checks every change passes, and how a release ships.
 
 > **Note:** ephira **cannot run in Expo Go**, and does not run on the web. It
 > uses config plugins that change the native projects (SQLCipher-backed
-> storage, biometric authentication, and a local Android plugin) and Expo Go
+> storage and biometric authentication) and Expo Go
 > ships a fixed native runtime that has none of them. You need a development
 > build on a simulator, an emulator or a device. See
 > [CONTRIBUTING.md](CONTRIBUTING.md) for the full setup.
