@@ -113,12 +113,26 @@ function publication({ words, heredocs }) {
 }
 
 /** Every publishing `gh` command in `text`, inside substitutions too. */
+/**
+ * The text a command hands another shell to run: a `bash -c` (or `sh`,
+ * `zsh`) argument, or a heredoc fed to one.
+ */
+function scriptsFor({ words, heredocs }) {
+  const shell = words[0]?.split("/").pop();
+  if (!["bash", "sh", "zsh"].includes(shell)) {
+    return [];
+  }
+  const at = words.indexOf("-c");
+  return at === -1 ? heredocs : [words[at + 1] ?? ""];
+}
+
 function publications(text, depth = 0) {
   const { commands, inner, uncertain } = readCommands(text);
   const found = commands.map(publication).filter(Boolean);
-  let unsure = uncertain || (depth >= 3 && inner.length > 0);
+  const nestedTexts = [...inner, ...commands.flatMap(scriptsFor)];
+  let unsure = uncertain || (depth >= 3 && nestedTexts.length > 0);
   if (depth < 3) {
-    for (const body of inner) {
+    for (const body of nestedTexts) {
       const nested = publications(body, depth + 1);
       found.push(...nested.found);
       unsure ||= nested.unsure;

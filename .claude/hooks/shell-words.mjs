@@ -9,9 +9,9 @@
  * variable expansion, no aliases, no backtick substitution. A word keeps a
  * substitution verbatim, as `$(cat f)`.
  *
- * `uncertain` is true when it met something it does not follow (a backtick,
- * a quote or substitution left open), so a caller can fall back to the raw
- * text.
+ * `uncertain` is true when it met something it does not follow (a backtick
+ * the shell would run, a substitution inside arithmetic, a quote or
+ * substitution left open), so a caller can fall back to the raw text.
  */
 
 // The delimiter is any word, quoted or not, as the shell takes it.
@@ -22,7 +22,7 @@ const HEREDOC_START = /^<<(-?)\s*(["']?)([^\s"'<>|&;()]+)\2/;
  * `$(...)` substitution met on the way (outermost first), and `uncertain`.
  */
 export function readCommands(text) {
-  const state = { uncertain: text.includes("`") };
+  const state = { uncertain: false };
   const commands = [];
   const inner = [];
   let words = [];
@@ -59,6 +59,10 @@ export function readCommands(text) {
     } else if (char === "#" && word === null) {
       const newline = text.indexOf("\n", i);
       i = newline === -1 ? text.length : newline;
+    } else if (char === "`") {
+      state.uncertain = true;
+      add(char);
+      i += 1;
     } else if (char === "'") {
       const end = closeSingle(text, i + 1, state);
       add(text.slice(i + 1, end));
@@ -133,6 +137,9 @@ function closeArithmetic(text, from, state) {
     state.uncertain = true;
     return text.length;
   }
+  if (/\$\(|`/.test(text.slice(from + 2, close))) {
+    state.uncertain = true;
+  }
   return close + 2;
 }
 
@@ -158,6 +165,9 @@ function readDouble(text, start, inner, state) {
       value += text.slice(i, end + 1);
       i = end + 1;
     } else {
+      if (text[i] === "`") {
+        state.uncertain = true;
+      }
       value += text[i];
       i += 1;
     }
@@ -183,6 +193,9 @@ function readSubstitution(text, start, state) {
     const wordStart = i === start || /[\s;|&(]/.test(text[i - 1]);
     if (char === "\\") {
       i += 2;
+    } else if (char === "`") {
+      state.uncertain = true;
+      i += 1;
     } else if (char === "#" && wordStart) {
       const newline = text.indexOf("\n", i);
       i = newline === -1 ? text.length : newline;
