@@ -33,8 +33,10 @@ const ATTRIBUTE_SPREAD = /\s\{\s*\.\.\./;
  * scanner reports there, once per occurrence.
  */
 const BY_DESIGN = [
-  // The lock screen's password prompts: Back must not dismiss a lock.
+  // The lock screen's password prompt: Back must not dismiss a lock.
   "components/PasswordAuthenticationView.tsx: a Paper modal with dismissable={false}",
+  // The lock screen's data-deletion notice: while data is deleted, and after,
+  // there is nothing to go back to; it asks for a restart.
   "components/PasswordAuthenticationView.tsx: a Paper modal with dismissable={false}",
 ];
 
