@@ -4,9 +4,9 @@
  *
  * This is the one place the session-link rule can be enforced for PR and
  * issue text: the repo is public, and lefthook never sees `gh` text. The
- * prose rule applies too. The screenshots rule only warns: a `--body-file`
- * may not exist yet in every flow, and the `pr-text` workflow is the gate
- * that refuses. Ported from eecs-capstone.
+ * prose rule applies too. The screenshots and review-loop rules only warn: a
+ * `--body-file` may not exist yet in every flow, and the `pr-text` workflow is
+ * the gate that refuses. Ported from eecs-capstone.
  */
 import { existsSync, readFileSync } from "node:fs";
 import { isAbsolute, join } from "node:path";
@@ -71,13 +71,17 @@ if (problems.length > 0) {
 }
 
 const screenshots = await loadScript(root, "check-pr-screenshots.mjs");
-if (body !== null && screenshots) {
+const reviewLoop = await loadScript(root, "check-pr-review-loop.mjs");
+if (body !== null) {
   const changed = git(root, ["diff", "--name-only", "origin/main...HEAD"])
     .split("\n")
     .filter(Boolean);
-  const problem = screenshots.checkPrScreenshots(body, changed);
-  if (problem) {
-    const warning = `pr-text will fail this pull request: ${problem} (CONTRIBUTING.md, "The gates").`;
+  const found = [
+    screenshots?.checkPrScreenshots(body, changed),
+    reviewLoop?.checkReviewLoop(body),
+  ].filter(Boolean);
+  if (found.length > 0) {
+    const warning = `pr-text will fail this pull request: ${found.join("; ")} (CONTRIBUTING.md, "The gates").`;
     process.stdout.write(
       JSON.stringify({
         hookSpecificOutput: {

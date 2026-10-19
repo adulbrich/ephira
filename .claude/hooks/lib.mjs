@@ -63,14 +63,9 @@ export function repoRelative(root, path) {
   return relative(root, path).replaceAll("\\", "/");
 }
 
-function commonDir(dir) {
-  const found = git(dir, [
-    "rev-parse",
-    "--path-format=absolute",
-    "--git-common-dir",
-  ]);
+function realpathOr(path) {
   try {
-    return found ? realpathSync(found) : "";
+    return realpathSync(path);
   } catch {
     return "";
   }
@@ -82,13 +77,21 @@ function commonDir(dir) {
  *
  * The hooks import scripts and run binaries from the root they resolve. A
  * session can `cd` into any clone, so resolving the root from `cwd` alone
- * would run whatever code that clone ships. Comparing git's common directory
- * with the project's keeps worktrees in and other repositories out.
+ * would run whatever code that clone ships. The root must be one of the
+ * checkouts the project's own repository lists, which a directory elsewhere
+ * cannot join without writing into this repository's `.git`.
  */
 export function trustedRoot(cwd) {
   const project = process.env.CLAUDE_PROJECT_DIR;
-  const mine = project ? commonDir(project) : "";
-  return mine && commonDir(cwd) === mine ? repoRoot(cwd) : null;
+  const root = project ? git(cwd, ["rev-parse", "--show-toplevel"]) : "";
+  if (!root) {
+    return null;
+  }
+  const listed = git(project, ["worktree", "list", "--porcelain"])
+    .split("\n")
+    .filter((line) => line.startsWith("worktree "))
+    .map((line) => realpathOr(line.slice("worktree ".length)));
+  return listed.includes(realpathOr(root)) ? root : null;
 }
 
 /**

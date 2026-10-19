@@ -149,6 +149,7 @@ first column stops you locally; the last stops the merge.
 | No emdash or emoji in tracked text | `pre-commit`, staged files | `after-edit`, the edited file | `Checks`: `npm run check:prose` |
 | No session link, emdash or emoji in PR or issue text | (never sees it) | `guard-gh` refuses the command | `pr-text`, the PR title and body |
 | A UI change carries a screenshot, or a reason | | `guard-gh` warns | `pr-text` |
+| The PR body records the review loop's pass counts and last commit | | `guard-gh` warns | `pr-text` (the record, not the reviews) |
 | Stage by name; never commit on `main` | `pre-commit` branch check | `guard-git` | the ruleset refuses a push to `main` |
 | No force push at `main`, `reset --hard`, `clean -f`, `branch -D` | | `guard-git` | the ruleset refuses a force push |
 | Generated files, signing material and shipped migrations stay untouched | | `guard-edits` | |

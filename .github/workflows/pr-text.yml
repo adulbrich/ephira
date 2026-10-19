@@ -1,7 +1,7 @@
 # A merge commit carries the pull request title into main's history, and the
 # body is public, so both get the checks a commit gets: the prose rule and no
-# claude.ai/code/session link. A body that touches a UI path also carries a
-# screenshot or says why not.
+# claude.ai/code/session link. Every body records the review loop, and one
+# that touches a UI path also carries a screenshot or says why not.
 #
 # Its own workflow rather than a step in format-test.yml because it reruns
 # when the title or body is edited, and rerunning the test suite for a typo in
@@ -45,6 +45,13 @@ jobs:
               ;;
           esac
           printf '%s' "$text" | node scripts/check-prose.mjs --stdin
+      # The record of the review loop, not proof the reviews ran.
+      - name: Review loop recorded
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          printf '%s\n' "$PR_BODY" > "$RUNNER_TEMP/pr-body.md"
+          node scripts/check-pr-review-loop.mjs --body "$RUNNER_TEMP/pr-body.md"
       # The file list comes from the API, paginated, so a large diff is not
       # truncated. The repository and PR number are set by GitHub, not typed
       # by anyone, so they are safe to interpolate.
