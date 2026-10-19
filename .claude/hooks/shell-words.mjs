@@ -9,7 +9,8 @@
  * `$(cat f)`.
  */
 
-const HEREDOC_START = /^<<(-?)\s*(["']?)(\w+)\2/;
+// The delimiter is any word, quoted or not, as the shell takes it.
+const HEREDOC_START = /^<<(-?)\s*(["']?)([^\s"'<>|&;()]+)\2/;
 
 /**
  * The commands in `text`, each `{ words, heredocs }`, and the inner text of

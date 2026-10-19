@@ -33,6 +33,10 @@ const PUBLISHING = {
   issue: new Set(["create", "edit", "comment", "close"]),
   release: new Set(["create", "edit"]),
 };
+// A backstop for lines the reader does not follow (a backtick substitution,
+// a gh nested deeper than it looks): the whole line is still checked.
+const LOOKS_PUBLISHING =
+  /\bgh\s+(?:(?:pr|issue)\s+(?:create|edit|comment|review|close|merge)|release\s+(?:create|edit)|api\b[\s\S]*(?:\bbody\b|--input\b))/;
 const CAT_HEREDOC =
   /^\$\(\s*cat\s*<<-?\s*["']?(\w+)["']?\n([\s\S]*?)\n\1\s*\)$/;
 const CAT_FILE = /^\$\(\s*(?:cat\s+|<\s*)(["']?)([^"'\s)]+)\1\s*\)$/;
@@ -64,9 +68,13 @@ function publication({ words, heredocs }) {
   const [group, action] = words.slice(at + 1);
   const sent = { files: [], inline: [], base: null, head: null, pr: false };
   for (let k = at + 1; k < words.length; k++) {
+    // `--flag=value`, and a short flag with its value attached (`-Ffile`).
+    const short = /^(-[FfbnBH])=?(.+)$/s.exec(words[k]);
     const [name, attached] = words[k].startsWith("--")
       ? words[k].split(/=(.*)/s)
-      : [words[k]];
+      : short
+        ? [short[1], short[2]]
+        : [words[k]];
     const value = () => attached ?? words[++k] ?? "";
     if (name === "-F" || name === "--field") {
       const field = value();
@@ -205,7 +213,7 @@ try {
     `guard-gh could not read this command line (${error.message}); refusing to publish it unchecked.`,
   );
 }
-if (found.length === 0) {
+if (found.length === 0 && !LOOKS_PUBLISHING.test(command)) {
   process.exit(0);
 }
 
