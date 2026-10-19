@@ -205,7 +205,7 @@ async function catalogueIdsByName(
  * Reconcile, not insert: names no longer selected have their entries removed,
  * and per-entry detail is updated in place.
  *
- * `checkedOn` is today, which is not `day.date` — a user can log a day in the
+ * `checkedOn` is today, which is not `day.date`: a user can log a day in the
  * past. It reaches the prediction accuracy check that every flow write fires.
  */
 export async function saveLoggedDay(

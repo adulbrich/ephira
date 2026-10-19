@@ -12,9 +12,12 @@ import fs from "node:fs";
 import path from "node:path";
 
 const ROOT = path.resolve(__dirname, "../..");
+// `.claude` holds agent worktrees: whole second copies of the repo, each
+// with its own setup.ts.
 const SKIPPED = new Set([
   "node_modules",
   ".git",
+  ".claude",
   ".expo",
   "android",
   "ios",

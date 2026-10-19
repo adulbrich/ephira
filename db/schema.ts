@@ -126,9 +126,9 @@ export const pregnancyAppointments = sqliteTable("pregnancy_appointments", {
  * shape of the data is, which is what `db.query.…({ with })` needs in order to
  * load a Day and its entries in one statement instead of four.
  *
- * Declared here rather than beside each query because both drizzle handles —
+ * Declared here rather than beside each query because both drizzle handles (
  * `db/operations/setup.ts` on device and `__tests__/helpers/testDatabase.ts`
- * under jest — build themselves from `import * as schema`. Exporting them from
+ * under jest) build themselves from `import * as schema`. Exporting them from
  * this module is what makes the two agree without either knowing about the
  * other.
  *

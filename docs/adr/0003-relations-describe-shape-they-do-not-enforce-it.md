@@ -27,7 +27,7 @@ That is a crash on opening a day, on ordinary device data, in a shipped release.
 
 **`relations()` are declared in `db/schema.ts` and are understood as a description of shape, not as a constraint.** Every reader of a `one(...)` side treats it as possibly absent, regardless of what the foreign key column says or what the types say.
 
-`loadLoggedDay` does this through `nameOf` and `loggedNames`, which skip an entry whose catalogue row is gone — restoring, explicitly, what `innerJoin` was doing implicitly.
+`loadLoggedDay` does this through `nameOf` and `loggedNames`, which skip an entry whose catalogue row is gone, restoring, explicitly, what `innerJoin` was doing implicitly.
 
 **Foreign keys stay off on device**, per ADR 0002. This decision does not reopen that.
 
@@ -41,9 +41,9 @@ Turning the constraints on instead would make this decision unnecessary, and is 
 
 ## Consequences
 
-- A relational query is one statement, but it is a statement built out of `json_group_array` and `json_array` — SQLite's JSON1 functions. `expo-sqlite` vendors SQLite 3.50.3 with JSON built in and nothing sets `SQLITE_OMIT_JSON`, so this is available. It is a dependency to keep in mind on an SDK upgrade (#232).
+- A relational query is one statement, but it is a statement built out of `json_group_array` and `json_array`, SQLite's JSON1 functions. `expo-sqlite` vendors SQLite 3.50.3 with JSON built in and nothing sets `SQLITE_OMIT_JSON`, so this is available. It is a dependency to keep in mind on an SDK upgrade (#232).
 - Query count is now asserted, not asserted-about. `recordQueries` in the test helper collects the SQL drizzle issues, and `loadLoggedDay` has a test pinning it at one. Nothing else in the file would notice an N+1 creeping back.
-- Relations are exported from `db/schema.ts` rather than declared next to a query, so both drizzle handles — `db/operations/setup.ts` on device and the test seam under jest — pick them up from their existing `import * as schema`. Neither had to change.
+- Relations are exported from `db/schema.ts` rather than declared next to a query, so both drizzle handles (`db/operations/setup.ts` on device and the test seam under jest) pick them up from their existing `import * as schema`. Neither had to change.
 
 ## When to revisit
 

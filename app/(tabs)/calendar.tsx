@@ -211,7 +211,7 @@ export default function FlowCalendar() {
                             color: theme.colors.onSurfaceVariant,
                           }}
                         >
-                          📅 Showing predicted cycles (estimates based on your
+                          Showing predicted cycles (estimates based on your
                           data)
                         </Text>
                       </View>

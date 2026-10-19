@@ -1,0 +1,35 @@
+# The local gates, each the same script or tool CI runs. `npm install` installs
+# them through the `prepare` script. Skip with `LEFTHOOK=0 git commit` or
+# `git commit --no-verify`; the Claude Code hooks in `.claude/hooks/` and CI
+# catch what was skipped, so skipping moves the failure rather than removing it.
+#
+# Git worktrees share one hooks directory. A checkout of a branch older than
+# this file has no config, and lefthook then prints a notice and lets the
+# commit through.
+pre-commit:
+  commands:
+    # Each tool picks its own files from the staged list: Biome by
+    # `files.includes`, the prose check by its extension list.
+    biome:
+      run: npx biome check --no-errors-on-unmatched {staged_files}
+    prose:
+      run: node scripts/check-prose.mjs {staged_files}
+    # The ruleset refuses a push to main; this stops the commit that would
+    # need untangling first.
+    branch:
+      run: test "$(git branch --show-current)" != main
+      fail_text: "never commit on main; branch first as type/name (CONTRIBUTING.md)"
+
+commit-msg:
+  commands:
+    message:
+      run: node scripts/check-commit-message.mjs {1}
+
+pre-push:
+  commands:
+    # The two checks a red PR is usually red for, once per push rather than
+    # once per commit. About 50 seconds.
+    typecheck:
+      run: npm run typecheck
+    test:
+      run: npx jest --ci

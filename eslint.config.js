@@ -38,6 +38,7 @@ module.exports = defineConfig([
   ...expoConfig,
   {
     ignores: [
+      ".claude/worktrees/**",
       "dist/**",
       "docs/**",
       "drizzle/**",

@@ -261,7 +261,7 @@ export default function CyclePredictions() {
               >
                 <Card.Content>
                   <Text variant="titleMedium" style={{ marginBottom: 5 }}>
-                    💡 Want reminders?
+                    Want reminders?
                   </Text>
                   <Text>
                     Enable notifications in the settings below to get reminded
@@ -317,7 +317,7 @@ export default function CyclePredictions() {
                   variant="titleMedium"
                   style={{ marginTop: 20, color: theme.colors.error }}
                 >
-                  🧪 Test Utilities (Dev Only)
+                  Test Utilities (Dev Only)
                 </Text>
                 <View style={{ gap: 10, marginTop: 10 }}>
                   <Button

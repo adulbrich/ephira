@@ -234,7 +234,7 @@ describe("loadLoggedDay", () => {
   it("skips an entry whose catalogue item is gone", async () => {
     // Device state, not a contrived one. The app ships no PRAGMA, so foreign
     // keys are off in production and an entry can outlive the Symptom it
-    // points at — that is what drizzle/0004 was written to clean up. This
+    // points at, which is what drizzle/0004 was written to clean up. This
     // reproduces it rather than asserting the constraint the device lacks.
     await saveLoggedDay(
       aDay({ symptoms: ["Cramps"], moods: ["Calm"] }),

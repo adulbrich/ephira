@@ -42,17 +42,17 @@ Track D   04, then 08               independent of everything
 
 ---
 
-## Track A — the cycle Marked Dates rules
+## Track A: the cycle Marked Dates rules
 
 **Candidates:** 06 (shrink `useLiveFilteredData`), 01 (extract the rules), 09-deletion (drop `selected`).
 
 **Files:**
 - Create: `services/cycleMarkedDates.ts`
 - Create: `services/__tests__/cycleMarkedDates.test.ts`
-- Modify: `hooks/useLiveFilteredData.ts` — drop the `filters` parameter and the `loading` return
+- Modify: `hooks/useLiveFilteredData.ts`: drop the `filters` parameter and the `loading` return
 - Modify: `hooks/useMarkedDates.ts:133-327` (delete builder), `:329-457` (rewrite hook), delete `:430-454`
-- Modify: `constants/Interfaces.ts:31-36` — `selected?: boolean`
-- Modify: `app/(tabs)/calendar.tsx:113` — `displayLoadingIndicator`
+- Modify: `constants/Interfaces.ts:31-36`: `selected?: boolean`
+- Modify: `app/(tabs)/calendar.tsx:113`: `displayLoadingIndicator`
 
 **Interfaces:**
 
@@ -66,7 +66,7 @@ Track D   04, then 08               independent of everything
     predictions: PredictedDate[];
   }): MarkedDates;
   ```
-  Pure and synchronous. `predictions` is `[]` when the Cycle Prediction filter is off or the choice is false — the caller decides, the module just does not overlay. Prediction marks are written first and logged-day marks overlay them, preserving the current `{ ...predicted, ...logged }` precedence at `useMarkedDates.ts:413`.
+  Pure and synchronous. `predictions` is `[]` when the Cycle Prediction filter is off or the choice is false; the caller decides, the module just does not overlay. Prediction marks are written first and logged-day marks overlay them, preserving the current `{ ...predicted, ...logged }` precedence at `useMarkedDates.ts:413`.
 
 - Consumes: `Catalogue` from `db/catalogue.ts:66-71`, already exactly the four lists the builder fetches by hand at `:137-154`. `useCatalogue()` (`hooks/useCatalogue.ts:19`) supplies it in the shell.
 
@@ -77,26 +77,26 @@ Track D   04, then 08               independent of everything
 
 ### Steps
 
-- [x] **A1. Write the failing tests for `cycleMarkedDates`.** In `services/__tests__/cycleMarkedDates.test.ts`. No database, no mocks — it is a pure function. Cover, at minimum:
+- [x] **A1. Write the failing tests for `cycleMarkedDates`.** In `services/__tests__/cycleMarkedDates.test.ts`. No database, no mocks: it is a pure function. Cover, at minimum:
   - Confidence boundaries, the rules that are unreachable today. A prediction at 49 → `rgba(...,0.4)`, at 50 → `rgba(...,0.7)`, at 79 → `rgba(...,0.7)`, at 80 → `rgba(...,1)`. Colour base is `CyclePredictionColor`.
   - Run capping: three consecutive flow days with `filters: ["Flow"]` give `startingDay: true` on the first, neither cap on the middle, `endingDay: true` on the last. A one-day gap splits it into two capped runs.
   - The transparent-spacer invariant: with `filters: ["Flow", "Notes"]`, a day with flow and no notes still pushes two entries, so the Flow bar keeps its index.
   - Logged-day marks overlay prediction marks on the same date.
   - `filters: []` yields an entry per day with `periods: []`.
   - No returned entry has a `selected` key.
-- [x] **A2. Run them and watch them fail.** `npx jest services/__tests__/cycleMarkedDates.test.ts` — expected: cannot resolve `services/cycleMarkedDates`.
+- [x] **A2. Run them and watch them fail.** `npx jest services/__tests__/cycleMarkedDates.test.ts`. Expected: cannot resolve `services/cycleMarkedDates`.
 - [x] **A3. Create `services/cycleMarkedDates.ts`.** Move `getStartingAndEndingDay` (`useMarkedDates.ts:27-45`), `applyOpacityToColor` (`:53-76`), `applyFilterToMarkedDates` (`:78-131`) and the body of `markedDatesBuilder` (`:156-326`) verbatim, with three changes: the four `await get…` calls at `:137-154` become reads off the `catalogue` parameter; every `{ selected: false, periods: [] }` becomes `{ periods: [] }`; and the prediction overlay from `:376-412` moves in ahead of the day loop, guarded by `predictions.length > 0`. Give the module a doc comment naming CONTEXT.md's **Marked Dates** entry as the definition it implements.
 - [x] **A4. Run the tests until they pass.** Fix the module, not the tests.
 - [x] **A5. Make `selected` optional.** `constants/Interfaces.ts:32` → `selected?: boolean`. Run `npm run typecheck`. `usePregnancyMarkedDates.ts` still writes `selected: false` and stays assignable, so pregnancy mode does not change.
 - [x] **A6. Shrink `useLiveFilteredData`.** Rename to `useLoggedDaysLive`, drop the `filters` parameter, delete the `loading` state and the `useEffect` at `:68-76`, and return `daysFromJoinedRows(data)` memoised on `data`. Update the import at `hooks/useMarkedDates.ts:19`.
-- [x] **A7. Rewrite the hook.** `useMarkedDates` keeps the store reads, `useCatalogue()`, and one effect that fetches predictions when `calendarFilters?.includes("Cycle Prediction") && predictionChoice === true`, then calls `cycleMarkedDates`. Delete the selected-tracking effect at `:430-454` and the now-unused `today` at `:347`. **Drop `date` from the dependency array** — nothing in the effect reads it, and its presence fires a `prediction_snapshots` write and a notification reschedule on every day tap.
-- [x] **A8. Fix the loading indicator.** `useMarkedDates` no longer returns `loading`. At `app/(tabs)/calendar.tsx:113`, remove `displayLoadingIndicator` rather than replacing it — the flag it read has never been `true`.
+- [x] **A7. Rewrite the hook.** `useMarkedDates` keeps the store reads, `useCatalogue()`, and one effect that fetches predictions when `calendarFilters?.includes("Cycle Prediction") && predictionChoice === true`, then calls `cycleMarkedDates`. Delete the selected-tracking effect at `:430-454` and the now-unused `today` at `:347`. **Drop `date` from the dependency array**: nothing in the effect reads it, and its presence fires a `prediction_snapshots` write and a notification reschedule on every day tap.
+- [x] **A8. Fix the loading indicator.** `useMarkedDates` no longer returns `loading`. At `app/(tabs)/calendar.tsx:113`, remove `displayLoadingIndicator` rather than replacing it: the flag it read has never been `true`.
 - [x] **A9. Verify.** `npm test`, `npm run typecheck`, `npm run lint`. All three green.
 - [x] **A10. Commit.** `refactor: give the cycle Marked Dates rules a seam a test can reach`
 
 ---
 
-## Track B — the selected filters, then Prediction availability
+## Track B: the selected filters, then Prediction availability
 
 **Candidates:** 02 (one owner for the selected filters), 05 (Prediction availability and choice).
 
@@ -104,7 +104,7 @@ Track D   04, then 08               independent of everything
 - Create: `db/selectedFilters.ts`, `db/__tests__/selectedFilters.test.ts`
 - Create: `services/predictionAvailability.ts`, `db/__tests__/predictionAvailability.test.ts`
 - Modify: `components/settings/CustomEntries.tsx:299-316`, `components/settings/EntryVisibilitySettings.tsx:174-196`, `components/settings/CyclePrediction.tsx:40-178`, `components/calendar/CalendarFilterDialog.tsx:32, :165-215, :225-243`
-- Modify: `app/(tabs)/calendar.tsx:171, :196`, `hooks/useMarkedDates.ts` — use the exported filter name
+- Modify: `app/(tabs)/calendar.tsx:171, :196`, `hooks/useMarkedDates.ts`: use the exported filter name
 
 **Interfaces:**
 
@@ -119,7 +119,7 @@ Track D   04, then 08               independent of everything
   ): string[];                                                       // pure
   export async function commitFilters(next: string[]): Promise<string[]>;
   ```
-  `commitFilters` orders, then writes `SettingsKeys.calendarFilters` — one operation, so store and disk cannot disagree. Callers pass the result to `setSelectedFilters`. `loadCalendarFilters` (`db/preferences.ts:60-67`) is unchanged and is this module's read side.
+  `commitFilters` orders, then writes `SettingsKeys.calendarFilters`, one operation, so store and disk cannot disagree. Callers pass the result to `setSelectedFilters`. `loadCalendarFilters` (`db/preferences.ts:60-67`) is unchanged and is this module's read side.
 
   ```ts
   // services/predictionAvailability.ts
@@ -138,10 +138,10 @@ Track D   04, then 08               independent of everything
 
 - [x] **B1. Write the failing test for the durable filter list.** `db/__tests__/selectedFilters.test.ts`, using the database harness. Assert: deleting a Catalogue item that is an active filter leaves it out of what `loadCalendarFilters()` returns after a round trip; Flow stays first however the change arrived; adding then removing the Prediction filter is a no-op on disk.
 - [x] **B2. Run it; watch it fail.** Expected: cannot resolve `@/db/selectedFilters`.
-- [x] **B3. Write `db/selectedFilters.ts`.** Move the Flow-first sort from `CalendarFilterDialog.tsx:228-237` verbatim — it is the only correct copy. Export `PREDICTION_FILTER` and delete the local `PredictionOption` at `:32`.
+- [x] **B3. Write `db/selectedFilters.ts`.** Move the Flow-first sort from `CalendarFilterDialog.tsx:228-237` verbatim: it is the only correct copy. Export `PREDICTION_FILTER` and delete the local `PredictionOption` at `:32`.
 - [x] **B4. Run until green.**
-- [x] **B5. Move the three broken writers onto the seam.** `CustomEntries.tsx:306-315` and `EntryVisibilitySettings.tsx:186-195` call `commitFilters(applyFilterChange(selectedFilters, { remove: name }))` and hand the result to `setSelectedFilters` — this is where the stale-array defect dies. `CalendarFilterDialog.tsx:226-243` calls `commitFilters(applyFilterChange(current, { replace: next }))`.
-- [x] **B6. Replace the seven bare literals.** `"Cycle Prediction"` at `CyclePrediction.tsx:115,117,162,169`, `app/(tabs)/calendar.tsx:171,196` and `hooks/useMarkedDates.ts` becomes `PREDICTION_FILTER`. Leave the user-facing strings at `CyclePrediction.tsx:186-189` and `useNotifications.ts:85` alone — those are copy, not the filter name.
+- [x] **B5. Move the three broken writers onto the seam.** `CustomEntries.tsx:306-315` and `EntryVisibilitySettings.tsx:186-195` call `commitFilters(applyFilterChange(selectedFilters, { remove: name }))` and hand the result to `setSelectedFilters`; this is where the stale-array defect dies. `CalendarFilterDialog.tsx:226-243` calls `commitFilters(applyFilterChange(current, { replace: next }))`.
+- [x] **B6. Replace the seven bare literals.** `"Cycle Prediction"` at `CyclePrediction.tsx:115,117,162,169`, `app/(tabs)/calendar.tsx:171,196` and `hooks/useMarkedDates.ts` becomes `PREDICTION_FILTER`. Leave the user-facing strings at `CyclePrediction.tsx:186-189` and `useNotifications.ts:85` alone: those are copy, not the filter name.
 - [x] **B7. Verify and commit the first half.** `npm test && npm run typecheck && npm run lint`, then `fix: write the filter list the user just changed, not the one before it`.
 - [x] **B8. Write the failing test for Prediction availability.** `db/__tests__/predictionAvailability.test.ts`. The headline assertion: logging enough Cycles makes predictions available, and then deleting flow days turns the stored preference back off **and** drops the Prediction filter from what survives a restart. Modelled on `db/__tests__/refreshPredictions.test.ts`.
 - [x] **B9. Run it; watch it fail.**
@@ -149,12 +149,12 @@ Track D   04, then 08               independent of everything
 - [x] **B11. Run until green.**
 - [x] **B12. Reduce `CyclePrediction.tsx` to rendering.** It reads availability and calls the verb. Its three effects at `:71-139` and `:142-154` collapse to one. The `setInterval` at `:53-69` stays, per the scope decision.
 - [x] **B13. Delete the fourth Cycle definition.** Replace `CalendarFilterDialog.tsx:182-215` with `hasEnoughCyclesForPrediction`. This restores CONTEXT.md's "exactly one definition" to being true and removes ~34 lines.
-- [x] **B14. Subscribe to the Catalogue.** `CalendarFilterDialog.tsx:136-164` — four `useState`s and an effect become `useCatalogue()`.
+- [x] **B14. Subscribe to the Catalogue.** `CalendarFilterDialog.tsx:136-164`: four `useState`s and an effect become `useCatalogue()`.
 - [x] **B15. Verify and commit.** `refactor: give Prediction availability and the choice to use it one owner`
 
 ---
 
-## Track C — the flow Days, and the flow ring
+## Track C: the flow Days, and the flow ring
 
 **Candidates:** 03 (an owner for the flow Days), 07 (the ring's rules and the timezone defect).
 
@@ -163,7 +163,7 @@ Track D   04, then 08               independent of everything
 - Create: `db/flowDays.ts`, `db/__tests__/flowDays.test.ts`
 - Delete: `hooks/useFetchFlowData.ts`; delete `useFlowData` from `stores/calendar-storage.tsx:52-62`
 - Modify: `components/FlowChart.tsx:37-62, :104-147, :150-167, :171-234`, `app/(tabs)/index.tsx:32,:39-51`, `app/(tabs)/cycle.tsx:115,:120-133`
-- Modify: `services/cyclePredictions.ts:28-36` — read the normalisation from `db/flowDays.ts`
+- Modify: `services/cyclePredictions.ts:28-36`: read the normalisation from `db/flowDays.ts`
 - Delete: `components/__tests__/FlowChart.gradient.test.ts` once `flowRing.test.ts` covers the same nineteen cases against the real code
 
 **Interfaces:**
@@ -198,7 +198,7 @@ Track D   04, then 08               independent of everything
 
 ---
 
-## Track D — the pregnancy anchor, and the authentication choice
+## Track D: the pregnancy anchor, and the authentication choice
 
 **Candidates:** 04, 08. Independent of Tracks A–C and of each other.
 
@@ -212,7 +212,7 @@ Track D   04, then 08               independent of everything
 
 - Produces:
   ```ts
-  // utils/pregnancyDates.ts — grown, not restructured
+  // utils/pregnancyDates.ts: grown, not restructured
   export async function loadPregnancyAnchor(): Promise<{ startDate: string | null; offsetDays: number }>;
   export async function savePregnancyAnchor(anchor: { startDate: string; offsetDays: number }): Promise<void>;
   export function setupDefaultsFromAnchor(
@@ -225,7 +225,7 @@ Track D   04, then 08               independent of everything
   export async function chooseBiometric(): Promise<void>;
   export async function choosePassword(plaintext: string): Promise<void>;
   ```
-  `loadPregnancyAnchor` applies the finiteness and range check from `usePregnancySetup.ts:101-110` — the only copy that validates — so `info.tsx` inherits it. `setupDefaultsFromAnchor` reads pregnancy day zero and the due date off `gestationalAge` rather than re-deriving them as `usePregnancySetup.ts:64-91` does. `choosePassword` derives the hash **before** it writes either setting.
+  `loadPregnancyAnchor` applies the finiteness and range check from `usePregnancySetup.ts:101-110` (the only copy that validates), so `info.tsx` inherits it. `setupDefaultsFromAnchor` reads pregnancy day zero and the due date off `gestationalAge` rather than re-deriving them as `usePregnancySetup.ts:64-91` does. `choosePassword` derives the hash **before** it writes either setting.
 
 ### Steps
 
@@ -234,7 +234,7 @@ Track D   04, then 08               independent of everything
 - [x] **D3. Grow `utils/pregnancyDates.ts`.** Add the three functions. Move the validation from `usePregnancySetup.ts:101-110` and the default derivation from `:64-91`, taking day zero and due date from `gestationalAge` instead of recomputing.
 - [x] **D4. Run until green.**
 - [x] **D5. Move the three readers onto it.** `app/(pregnancy-tabs)/info.tsx:201-205` (which does not validate today) and `app/(pregnancy-tabs)/index.tsx:20` (which hardcodes `14`) both call `loadPregnancyAnchor`. Remove the double read at `index.tsx:60` and the ignored `_hasStartDate` parameter.
-- [x] **D6. Settle the week rule.** Hydration, the stepper and save must agree. Clamp at the point of hydration so what is displayed is what is validated — this is what fixes the week-43 save failure. Delete the unreachable `positiveTestDateInput` state (`usePregnancySetup.ts:50-52, :174, :300`, `PregnancySetupDialog.tsx:40, :92`); nothing ever opens that picker and `SetupAnswer` has no arm for it.
+- [x] **D6. Settle the week rule.** Hydration, the stepper and save must agree. Clamp at the point of hydration so what is displayed is what is validated; this is what fixes the week-43 save failure. Delete the unreachable `positiveTestDateInput` state (`usePregnancySetup.ts:50-52, :174, :300`, `PregnancySetupDialog.tsx:40, :92`); nothing ever opens that picker and `SetupAnswer` has no arm for it.
 - [x] **D7. Write the failing test for the authentication choice.** `db/__tests__/authenticationChoice.test.ts`: a failure while deriving the credential leaves the previous mode intact; choosing none or biometric leaves no stored password behind.
 - [x] **D8. Run; watch it fail.**
 - [x] **D9. Write `db/authenticationChoice.ts`.** Shaped like `db/preferences.ts:32-50`: a loader with the default on record, and one operation per transition. `choosePassword` derives the hash first, then writes mode and credential in a fixed order, so a rejection from `Crypto.digestStringAsync` cannot leave "password mode, no password".

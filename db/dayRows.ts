@@ -13,7 +13,7 @@ type JoinedCatalogueItem = { day_id: number; id: number; name: string } | null;
  * Written out rather than derived from the query, because the query lives in
  * the hook and this module is the thing being tested. The call site is what
  * checks it: drizzle's row type has to be assignable to this. Note what that
- * does and does not prove — it proves every field declared here exists on the
+ * does and does not prove: it proves every field declared here exists on the
  * real row with a compatible type; it does not prove this declares everything
  * the row has. A narrower type passes silently.
  */

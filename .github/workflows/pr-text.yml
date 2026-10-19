@@ -1,0 +1,57 @@
+# A merge commit carries the pull request title into main's history, and the
+# body is public, so both get the checks a commit gets: the prose rule and no
+# claude.ai/code/session link. Every body records the review loop, and one
+# that touches a UI path also carries a screenshot or says why not.
+#
+# Its own workflow rather than a step in format-test.yml because it reruns
+# when the title or body is edited, and rerunning the test suite for a typo in
+# the description is waste.
+name: pr-text
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+  # The screenshots step lists the pull request's changed files.
+  pull-requests: read
+
+jobs:
+  pr-text:
+    # Dependabot bodies embed upstream release notes, and Dependabot rewrites
+    # its own body, so a review-loop record there would not last: its PRs
+    # record the loop in a comment instead (CONTRIBUTING.md). A skipped job
+    # satisfies a required check.
+    if: github.event.pull_request.user.login != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+      # Title and body arrive through env, never interpolated into the
+      # script, so a body is data and cannot become shell. The title is
+      # checked as prose, not as a commit subject: with merge commits it
+      # lands in the merge commit's body.
+      - name: Title and body
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          printf '%s\n\n%s\n' "$PR_TITLE" "$PR_BODY" | node scripts/check-prose.mjs --stdin --published
+      # A screenshot for a UI change, and the review-loop record. The file
+      # list comes from the API, paginated, so a large diff is not truncated.
+      # The repository and PR number are set by GitHub, not typed by anyone,
+      # so they are safe to interpolate.
+      - name: Screenshots and review loop
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          # Without pipefail a failed API call hands the check an empty file
+          # list, and a PR with UI changes passes.
+          set -o pipefail
+          printf '%s\n' "$PR_BODY" > "$RUNNER_TEMP/pr-body.md"
+          gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" --paginate --jq '.[].filename' \
+            | node scripts/check-pr-body.mjs --files-stdin --body "$RUNNER_TEMP/pr-body.md"
