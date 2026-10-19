@@ -11,12 +11,12 @@ Landing page, future documentation, privacy policy.
 
 `npm audit` reports 3 high advisories, all one `path-to-regexp` issue counted
 through `@astrojs/vercel` → `@vercel/routing-utils`, which pins it to exactly
-`6.1.0` with no caret — including in its newest release. No upgrade clears it,
+`6.1.0` with no caret, including in its newest release. No upgrade clears it,
 and `npm audit fix --force` "fixes" it by downgrading `@astrojs/vercel` two
 majors. The site is `output: "static"` and fully prerendered, so no Astro
 request handler runs in production and the advisory is build-time only.
 
-## 🚀 Project Structure
+## Project Structure
 
 Inside of your Astro project, you'll see the following folders and files:
 
@@ -56,7 +56,7 @@ dropped the Astro integration in favour of a Vite plugin, which does not inject
 the stylesheet for you: remove that import and every page still builds and still
 deploys, with no styles at all.
 
-## 🧞 Commands
+## Commands
 
 All commands are run from the root of the project, from a terminal:
 

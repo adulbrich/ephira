@@ -58,11 +58,11 @@ Add and track custom symptoms, moods, medications, and more with a smooth, visua
 
 The Cycle tab gives you a personalized view of your menstrual health. Once you've logged enough data, Ephira provides:
 
-- **Current cycle status** — where you are in your cycle today
-- **Phase tracking** — follicular, ovulation, luteal, and menstrual phases with wellness context
-- **Cycle predictions** — predicted period start dates based on your logged history
-- **Cycle statistics** — average cycle length, period duration, and historical trends
-- **Wellness tips** — phase-specific suggestions tailored to your current cycle stage
+- **Current cycle status**: where you are in your cycle today
+- **Phase tracking**: follicular, ovulation, luteal, and menstrual phases with wellness context
+- **Cycle predictions**: predicted period start dates based on your logged history
+- **Cycle statistics**: average cycle length, period duration, and historical trends
+- **Wellness tips**: phase-specific suggestions tailored to your current cycle stage
 
 Predictions require at least 2 complete cycles and can be toggled on or off in Settings.
 
@@ -74,7 +74,7 @@ Protect your data with Face ID, fingerprint, or a custom password unique to Ephi
 
 ### Data Export
 
-Export your full health history as a PDF at any time from the Settings screen. Your data stays yours — you can take it with you or share it with a healthcare provider.
+Export your full health history as a PDF at any time from the Settings screen. Your data stays yours: you can take it with you or share it with a healthcare provider.
 
 ### Color Themes
 
@@ -121,8 +121,8 @@ The first run compiles a development build, which takes a while. After that,
 See [PROJECTSTRUCTURE.md](PROJECTSTRUCTURE.md) for an overview of the codebase, key libraries, and local setup instructions.
 
 > **Note:** ephira **cannot run in Expo Go**, and does not run on the web. It
-> uses config plugins that change the native projects — SQLCipher-backed
-> storage, biometric authentication, and a local Android plugin — and Expo Go
+> uses config plugins that change the native projects (SQLCipher-backed
+> storage, biometric authentication, and a local Android plugin) and Expo Go
 > ships a fixed native runtime that has none of them. You need a development
 > build on a simulator, an emulator or a device. See
 > [CONTRIBUTING.md](CONTRIBUTING.md) for the full setup.
