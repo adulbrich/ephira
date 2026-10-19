@@ -55,10 +55,13 @@ const SUBJECT = new RegExp(
  * merge commits, a `fixup!` commit would land on main as written.
  */
 const EXEMPT_SUBJECT =
-  /^(?:Merge (?:branch|remote-tracking branch|pull request #\d+|[0-9a-f]{7,40} into) |Revert "|(?:chore|build)\(deps(?:-dev)?\): Bump )/;
+  /^(?:Merge (?:branch|remote-tracking branch|commit|tag|pull request #\d+|[0-9a-f]{7,40} into) |Revert "|Reapply "|(?:chore|build)\(deps(?:-dev)?\): Bump )/;
 
-/** The comment block git writes into the editor, and only then. */
-const EDITOR_TEMPLATE = /^# Please enter the commit message/m;
+/**
+ * The comment block git writes into the editor, and only then: a commit's
+ * template, or a merge's.
+ */
+const EDITOR_TEMPLATE = /^# Please enter (?:the|a) commit message/m;
 
 const SCISSORS = /^# -{8,} >8 -{8,}$/m;
 

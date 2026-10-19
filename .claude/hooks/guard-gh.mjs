@@ -21,13 +21,15 @@ import { deny, git, loadScript, readInput, trustedRoot } from "./lib.mjs";
 
 const PUBLISHES =
   /\bgh\s+(?:(?:pr|issue)\s+(?:create|edit|comment|review|close|merge)|release\s+(?:create|edit))\b/;
-const API_WITH_BODY = /\bgh\s+api\b[\s\S]*\bbody\b/;
+const API_WITH_BODY = /\bgh\s+api\b[\s\S]*(?:\bbody\b|--input\b)/;
 const PR_BODY = /\bgh\s+pr\s+(?:create|edit)\b/;
-// `gh api -F body=@file` first: `-F` there takes a field, not a file name.
-const API_BODY_FILE = /\bbody=@(?:"([^"]+)"|'([^']+)'|(\S+))/;
+// `gh api -F body=@file` is a field read from a file; `-F` with a name
+// before `=` is any other field, and is skipped.
+const API_BODY_FILE = /\bbody=@(?:"([^"]+)"|'([^']+)'|(\S+))/g;
 const FILE_FLAG =
-  /(?:^|\s)(?:-F|--body-file|--notes-file)(?:=|\s+)(?!\w+=)(?:"([^"]+)"|'([^']+)'|(\S+))/;
-const RENAMES_BRANCH = /\bgh\s+api\b[\s\S]*\/branches\/[^\s/]+\/rename\b/;
+  /(?:^|\s)(?:-F|--body-file|--notes-file|--input)(?:=|\s+)(?!\w+=)(?:"([^"]+)"|'([^']+)'|(\S+))/g;
+// Branch names here carry a slash (`type/name`).
+const RENAMES_BRANCH = /\bgh\s+api\b[\s\S]*\/branches\/\S+\/rename\b/;
 const INLINE_FLAG =
   /(?:^|\s)(?:-b|--body|-n|--notes)(?:=|\s+)(?:"((?:[^"\\]|\\.)*)"|'([^']*)')/;
 const HOOK_CHECKOUT = fileURLToPath(new URL("../..", import.meta.url));
@@ -47,21 +49,51 @@ if (!(PUBLISHES.test(command) || API_WITH_BODY.test(command))) {
 }
 
 /**
- * The body or notes the command sends from a file, or inline, or null. A
- * file of `-` is stdin, whose heredoc is already part of the command line.
+ * A file name as the shell would expand it: `~`, `$VAR` and `${VAR}` from
+ * this process's environment, which the session shares. Null when it holds a
+ * substitution this cannot evaluate.
  */
-function bodyOf(text) {
-  const file = API_BODY_FILE.exec(text) ?? FILE_FLAG.exec(text);
-  if (file) {
-    const given = file.slice(1).find((part) => part !== undefined);
+function expandPath(given) {
+  if (/\$\(|`/.test(given)) {
+    return null;
+  }
+  const expanded = given
+    .replace(/^~(?=\/|$)/, process.env.HOME ?? "~")
+    .replace(
+      /\$\{(\w+)\}|\$(\w+)/g,
+      (_, braced, bare) => process.env[braced ?? bare] ?? "",
+    );
+  return isAbsolute(expanded) ? expanded : join(cwd, expanded);
+}
+
+/**
+ * The texts the command sends from files or inline, and the files it names
+ * that cannot be read. A file of `-` is stdin, whose heredoc is already part
+ * of the command line.
+ */
+function bodiesOf(text) {
+  const bodies = [];
+  const unreadable = [];
+  for (const match of [
+    ...text.matchAll(API_BODY_FILE),
+    ...text.matchAll(FILE_FLAG),
+  ]) {
+    const given = match.slice(1).find((part) => part !== undefined);
     if (given === "-") {
-      return null;
+      continue;
     }
-    const path = isAbsolute(given) ? given : join(cwd, given);
-    return existsSync(path) ? readFileSync(path, "utf8") : null;
+    const path = expandPath(given);
+    if (path && existsSync(path)) {
+      bodies.push(readFileSync(path, "utf8"));
+    } else {
+      unreadable.push(given);
+    }
   }
   const inline = INLINE_FLAG.exec(text);
-  return inline ? (inline[1] ?? inline[2]) : null;
+  if (inline) {
+    bodies.push(inline[1] ?? inline[2]);
+  }
+  return { bodies, unreadable };
 }
 
 /**
@@ -91,8 +123,14 @@ if (!prose) {
     "guard-gh could not load scripts/check-prose.mjs, so it cannot check this text; refusing to publish it unchecked.",
   );
 }
-const body = bodyOf(command);
-const published = body === null ? command : `${command}\n${body}`;
+const { bodies, unreadable } = bodiesOf(command);
+if (unreadable.length > 0) {
+  deny(
+    `guard-gh cannot read ${unreadable.join(", ")} to check it; refusing to publish it unchecked. Pass a path it can resolve (absolute, or with $VAR, ~ or relative to the session's directory).`,
+  );
+}
+const body = bodies.length > 0 ? bodies.join("\n") : null;
+const published = [command, ...bodies].join("\n");
 let problems = [];
 try {
   problems = prose

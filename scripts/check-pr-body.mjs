@@ -12,9 +12,10 @@
  *   proves the record exists, not that the reviews ran.
  *
  * HTML comments are stripped first, so the template's placeholders, which sit
- * in comments, satisfy nothing; an image pointing at `url` and a reason of
- * `...` do not count either. A section runs from its `##` heading to the next
- * `#` or `##`, so `###` subsections stay inside it.
+ * in comments, satisfy nothing. Copied out of the comment they still fail: an
+ * image must point at an http(s) address, and a reason must be words, not
+ * `<reason>` or `...`. A section runs from its `##` heading to the next `#`
+ * or `##`, so `###` subsections stay inside it.
  *
  * One implementation, two callers. The `pr-text` workflow runs the CLI with
  * the changed paths on stdin and the body in a file, so a body is data and
@@ -31,8 +32,11 @@ const UI_PATH =
 const NOT_UI = /(?:\/__tests__\/|\.test\.[^/]+$|\.md$)/;
 const COMMENT = /<!--[\s\S]*?-->/g;
 const NEXT_HEADING = /^#{1,2}\s/m;
-const IMAGE = /!\[[^\]]*\]\((?!url\))[^)]+\)|<img\b[^>]*>/;
-const OPT_OUT = /^\s*Screenshots:\s*none,\s*because\s+(.*\w.*)$/m;
+// An image hosted somewhere (GitHub's uploads are https), not the template's
+// `(link)` placeholder; a reason that is words, not `<reason>` or `...`.
+const IMAGE = /!\[[^\]]*\]\(https?:\/\/[^)\s]+\)|<img\b[^>]*\bsrc="https?:\/\//;
+const OPT_OUT =
+  /^\s*Screenshots:\s*none,\s*because\s+(?![^\n]*[<>])(?!\.{3}\s*$)(.*\w.*)$/m;
 const LOOP_FIELDS = [
   "Code review passes",
   "Correctness passes",

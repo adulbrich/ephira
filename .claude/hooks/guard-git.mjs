@@ -21,7 +21,9 @@
  *
  * This catches honest mistakes, not a determined bypass: `eval`, `sh -c` or an
  * abbreviated long option gets past a parser that is not the shell. The hard
- * boundary is server-side, where the ruleset refuses pushes to main.
+ * boundary is server-side, where the ruleset refuses pushes to main. It errs
+ * toward refusing: every `-m` on a line that commits is read as the message,
+ * so `git tag -m ... && git commit` is refused until the two are split.
  */
 import {
   currentBranch,
@@ -33,7 +35,7 @@ import {
 
 const HEREDOC = /<<-?\s*(["']?)([A-Za-z_][A-Za-z0-9_]*)\1\n([\s\S]*?)\n\2\b/;
 const CAT_HEREDOC =
-  /(?:-m|--message)(?:=|\s+)"?\$\(\s*cat\s*<<-?\s*["']?[A-Za-z_]/;
+  /(?:-[A-Za-z]*m|--message)(?:=|\s*)"?\$\(\s*cat\s*<<-?\s*["']?[A-Za-z_]/;
 const STDIN_HEREDOC = /(?:-F|--file)(?:=|\s+)-\s/;
 const QUOTED = /"(?:[^"\\]|\\.)*"|'[^']*'/g;
 const MESSAGE_FLAG =

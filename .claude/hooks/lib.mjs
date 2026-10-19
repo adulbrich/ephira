@@ -68,7 +68,10 @@ export function repoRelative(root, path) {
  * null. Resolved from the file itself, not the session's cwd, so an edit in a
  * worktree is judged by that worktree, and through symlinks (`/tmp` is
  * `/private/tmp` on macOS) so the spelling of the path does not matter. The
- * file may not exist yet, so its nearest existing directory is resolved.
+ * file may not exist yet, so its nearest existing directory is resolved. A
+ * symlink to the file itself, or a different letter case on a
+ * case-insensitive disk, is not followed: that is crafted input, outside what
+ * these hooks guard against.
  */
 export function locate(filePath) {
   if (!filePath) {
