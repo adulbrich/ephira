@@ -73,6 +73,10 @@ All commands are run from the root of the project, from a terminal:
 
 Vercel deploys this site from every push: previews from pull requests,
 production from `main`. Before it installs anything, `vercel.json` runs
-`ignored-build-step.sh`, which cancels the deployment when nothing but the app
-or the documentation here changed since the branch's last successful one. The
-script names those documentation folders; a new one goes on its list.
+`ignored-build-step.sh`, which cancels the deployment when the push changed
+nothing the website is built from; its header says what counts.
+
+A dashboard Redeploy runs that step too, and cancels. To force a rebuild,
+untick "Use project's Ignore Build Step" in the Redeploy dialog. The footer's
+year is rendered at build time, so after New Year it stays behind until the
+next website change or a forced Redeploy.
