@@ -8,11 +8,11 @@ Welcome to the Ephira project! We welcome contributions from our team members an
 native projects, and Expo Go ships one fixed native runtime that has none of
 them:
 
-- `expo-sqlite` with `useSQLCipher: true` — an encrypted SQLite build, not the
+- `expo-sqlite` with `useSQLCipher: true`: an encrypted SQLite build, not the
   stock library Expo Go carries
-- `expo-local-authentication` — needs `NSFaceIDUsageDescription` in an
+- `expo-local-authentication`: needs `NSFaceIDUsageDescription` in an
   `Info.plist` that is ours
-- `plugins/withAndroid16KBSupport.js` — a local config plugin, so by definition
+- `plugins/withAndroid16KBSupport.js`: a local config plugin, so by definition
   not compiled into anything published
 
 You need a **development build** on a simulator, an emulator or a device. To
@@ -54,7 +54,7 @@ run it locally you need:
 
    This runs `expo run:ios`, which generates the native projects with
    [`expo prebuild`](https://docs.expo.dev/workflow/prebuild/) and compiles a
-   development build. **The first run is slow** — it compiles every native
+   development build. **The first run is slow**: it compiles every native
    dependency from scratch. Later runs are incremental.
 
 4. **Day to day:**
@@ -91,17 +91,45 @@ We follow the **Feature Branch Workflow**.
     - Target the `main` branch.
     - **Description:** Link the GitHub Issue (e.g., "Closes #42").
     - **Screenshots:** Attach a screenshot or video of the feature running on a **physical device**.
-4.  **Code Review:**
-    - Assign at least one team member to review.
-    - Address all comments.
-    - **Requirement:** All CI checks must pass (lint, typecheck, tests).
+4.  **Code Review:** the review loop below, then merge with a merge commit.
+    The branch is deleted on merge.
+
+### The review loop
+
+GitHub requires no approving review while the project has one maintainer, and
+green CI is not a review, so this loop is the review. A teammate's review is
+welcome on top of it, never instead of it.
+
+Every PR runs three reviews against `origin/main`:
+
+| Review | Asks |
+| --- | --- |
+| `mattpocock-skills:code-review` | Does the diff follow the repo's standards and the linked issue? |
+| `correctness-review` (`.claude/skills/`) | What input or sequence breaks it? |
+| `app-security-review` (`.claude/skills/`) | Can health data, the database key or the lock leak or fail open? |
+
+All three run on docs-only diffs and dependency bumps too: the privacy policy is
+docs, a workflow is configuration, and a dependency is supply chain.
+
+Repeat until a pass raises nothing you have not answered. Answered means fixed,
+or declined in writing with the reason, so a pass whose findings you all
+declined ends the loop. Later passes review the code the earlier ones made you
+write. Verify a finding before acting on it: reviewers are sometimes confidently
+wrong. Record each review's pass count and every decline in the PR.
+
+### What blocks a merge
+
+- **`Lint, typecheck and test`** is a required check on `main`, and the branch
+  must be up to date with `main` before it merges. The same check runs again on
+  `main` after every merge.
+- Force pushes to `main` and deleting it are refused.
 
 ## 4. Definition of Done (DoD)
 
 - [ ] Runs without errors on a simulator, emulator or device.
 - [ ] `npm run lint`, `npm run typecheck` and `npm test` all pass.
 - [ ] Feature satisfies the Acceptance Criteria in the linked Issue.
-- [ ] PR has 1 approval.
+- [ ] The review loop is recorded in the PR.
 
 ## 5. Reporting Bugs
 

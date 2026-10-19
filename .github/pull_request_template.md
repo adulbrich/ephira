@@ -1,3 +1,19 @@
+Closes #
+
+<!-- What changed and why, from the reader's side. Two to five bullets. -->
+
+-
+
+## Review loop
+
+<!-- The review loop in CONTRIBUTING.md. One line per declined finding, with the
+     reason. -->
+
+- Code review passes:
+- Correctness passes:
+- Security passes:
+- Declined:
+
 <!--
   Does this PR require a mobile build? If so, make sure that you have updated the expo.version number in the app.json file (e.g., 1.2.0 -> 1.3.0)! Expo uses this number for versioning the builds.
   The version format is MAJOR.MINOR.PATCH
