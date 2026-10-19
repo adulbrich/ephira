@@ -8,12 +8,10 @@ Welcome to the Ephira project! We welcome contributions from our team members an
 native projects, and Expo Go ships one fixed native runtime that has none of
 them:
 
-- `expo-sqlite` with `useSQLCipher: true` — an encrypted SQLite build, not the
+- `expo-sqlite` with `useSQLCipher: true`: an encrypted SQLite build, not the
   stock library Expo Go carries
-- `expo-local-authentication` — needs `NSFaceIDUsageDescription` in an
+- `expo-local-authentication`: needs `NSFaceIDUsageDescription` in an
   `Info.plist` that is ours
-- `plugins/withAndroid16KBSupport.js` — a local config plugin, so by definition
-  not compiled into anything published
 
 You need a **development build** on a simulator, an emulator or a device. To
 run it locally you need:
@@ -38,6 +36,15 @@ run it locally you need:
    npm install
    ```
 
+   If you use Claude Code, install the plugin the review loop runs once per
+   clone. The tracked `.claude/settings.json` enables it but does not fetch it,
+   and the local scope records the install in your untracked
+   `.claude/settings.local.json`:
+
+   ```bash
+   claude plugin install mattpocock-skills@claude-plugins-official --scope local
+   ```
+
 3. **Build and run:**
 
    ```bash
@@ -54,7 +61,7 @@ run it locally you need:
 
    This runs `expo run:ios`, which generates the native projects with
    [`expo prebuild`](https://docs.expo.dev/workflow/prebuild/) and compiles a
-   development build. **The first run is slow** — it compiles every native
+   development build. **The first run is slow**: it compiles every native
    dependency from scratch. Later runs are incremental.
 
 4. **Day to day:**
@@ -65,10 +72,10 @@ run it locally you need:
 
    Once a development build is installed, `expo start` is all a JavaScript
    change needs. Rebuild only when something native changes: a dependency with
-   native code, anything in `app.json`, or anything in `plugins/`.
+   native code, or anything in `app.json`, including its `plugins` list.
 
 `/ios` and `/android` are generated output and are gitignored. Edit `app.json`
-and `plugins/` instead; prebuild rebuilds the native projects from them.
+instead; prebuild rebuilds the native projects from it.
 
 ## 2. Local Quality Checks
 
@@ -91,17 +98,49 @@ We follow the **Feature Branch Workflow**.
     - Target the `main` branch.
     - **Description:** Link the GitHub Issue (e.g., "Closes #42").
     - **Screenshots:** Attach a screenshot or video of the feature running on a **physical device**.
-4.  **Code Review:**
-    - Assign at least one team member to review.
-    - Address all comments.
-    - **Requirement:** All CI checks must pass (lint, typecheck, tests).
+4.  **Code Review:** the review loop below, then merge with a merge commit.
+    The branch is deleted on merge.
+
+### The review loop
+
+The ruleset requires no approving review while the project has one maintainer,
+and green CI is not a review, so this loop is the review. A teammate's review is
+welcome on top of it, never instead of it.
+
+Every PR runs three reviews against `origin/main`:
+
+| Review | Asks |
+| --- | --- |
+| `mattpocock-skills:code-review` | Does the diff follow the repo's standards and the linked issue? |
+| `correctness-review` (`.claude/skills/`) | What input or sequence breaks it? |
+| `app-security-review` (`.claude/skills/`) | Can health data, the database key or the lock leak or fail open? |
+
+All three run on docs-only diffs and dependency bumps too: the privacy policy is
+docs, a workflow is configuration, and a dependency is supply chain.
+
+Repeat until a pass raises nothing you have not answered. Answered means fixed,
+or declined in writing with the reason. A fix is new code, so the loop ends when
+each of the three reviews has a clean pass on the newest commit that is not a
+clean update from `main`. A clean update leaves the PR's three-dot diff
+unchanged and needs no new pass; one that resolved a conflict does. Update a
+branch with a merge, never a rebase, so the commit the passes saw stays in it. Verify a
+finding before acting on it: reviewers are sometimes confidently wrong. Record
+each review's pass count, the commit the last passes saw, and every decline in
+the PR.
+
+### What blocks a merge
+
+- **`Lint, typecheck and test`** is a required check on `main`, and the branch
+  must be up to date with `main` before it merges. The same check runs again on
+  `main` after every merge.
+- Force pushes to `main` and deleting it are refused.
 
 ## 4. Definition of Done (DoD)
 
 - [ ] Runs without errors on a simulator, emulator or device.
 - [ ] `npm run lint`, `npm run typecheck` and `npm test` all pass.
 - [ ] Feature satisfies the Acceptance Criteria in the linked Issue.
-- [ ] PR has 1 approval.
+- [ ] The review loop is recorded in the PR.
 
 ## 5. Reporting Bugs
 
