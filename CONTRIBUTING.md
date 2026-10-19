@@ -158,7 +158,7 @@ first column stops you locally; the last stops the merge.
 | Generated files, signing material and shipped migrations stay untouched | | `guard-edits` | |
 | No branch rename through the API (it closes the PR the branch heads) | | `guard-gh` | |
 | A migration's journal entry, `.sql` file, import and snapshot agree | `pre-commit`, when `drizzle/` is staged | | `Checks` |
-| Every modal answers hardware Back | | | `Checks`: `components/__tests__/modalBack.test.ts` |
+| Every modal answers hardware Back, or is listed with the reason it does not | `pre-push`, with the tests | | `Checks`: `components/__tests__/modalBack.test.ts` |
 | Biome clean | `pre-commit`, staged files | `after-edit` | `Checks` |
 | ESLint, typecheck and tests green | `pre-push` (typecheck, tests) | | `Checks` |
 

@@ -1,37 +1,54 @@
 /**
- * Every modal answers hardware Back.
+ * Every modal answers hardware Back, or is listed with the reason it does not.
  *
- * A Paper `Modal` hands Back to its `onDismiss`; with none, or with a no-op,
- * it swallows Back and strands the user on Android, which is what #275, #277
- * and #278 fixed. A React Native `Modal` needs `onRequestClose` for the same
- * reason. jest-expo runs as iOS, where `BackHandler` does nothing, so a render
- * test cannot see this; like `db/__tests__/expoSqliteImport.test.ts`, this
- * reads the source instead. `components/settings/__tests__/hardwareBack.test.tsx`
+ * A Paper `Modal`, and a Paper `Dialog`, which renders one, hands Back to its
+ * `onDismiss`; with none, a no-op, or `dismissable={false}`, it swallows Back
+ * and strands the user on Android, which is what #275, #277 and #278 fixed.
+ * A React Native `Modal` needs a real `onRequestClose` for the same reason.
+ * jest-expo runs as iOS, where `BackHandler` does nothing, so a render test
+ * cannot see this; like `db/__tests__/expoSqliteImport.test.ts`, this reads
+ * the source instead. `components/settings/__tests__/hardwareBack.test.tsx`
  * shows how to drive Back itself when a modal's behaviour needs testing.
+ *
+ * What it cannot see: a component imported under another name, and a handler
+ * passed through a `{...props}` spread, which it trusts.
  */
 import fs from "node:fs";
 import path from "node:path";
 
 const ROOT = path.resolve(__dirname, "../..");
 const SCANNED = ["app", "components", "assets/src"];
+const NO_OP =
+  /=\{\s*(?:undefined|\(\)\s*=>\s*(?:\{\s*(?:\/\*[\s\S]*?\*\/|\/\/[^\n]*\n)?\s*\}|undefined|null|void 0))\s*\}/;
+const PAPER_IMPORT = /import\s*\{([^}]*)\}\s*from\s*["']react-native-paper["']/;
 
 /**
- * Known to swallow Back today, each waiting on a decision about what Back
- * should do there. The last test fails once an entry is fixed, so the list
- * cannot outlive the defect.
+ * Swallowing Back on purpose. Each entry is a file and the problem the
+ * scanner reports there, once per occurrence.
+ */
+const BY_DESIGN = [
+  // The lock screen: Back must not dismiss a lock.
+  "components/PasswordAuthenticationView.tsx: a Paper modal with dismissable={false}",
+  "components/PasswordAuthenticationView.tsx: a Paper modal with dismissable={false}",
+  "components/PasswordAuthenticationView.tsx: a Paper modal with dismissable={false}",
+];
+
+/**
+ * Swallowing Back today, each waiting on a decision about what Back should do
+ * there. The last test fails once one is fixed, so the list cannot outlive
+ * the defect.
  *
+ * - The authentication choice dialogs: Back could cancel, as their Cancel
+ *   buttons do.
  * - The onboarding tour's spotlight: Back could skip the tour, as its Skip
  *   button does, or step back one stop.
  */
-const KNOWN = new Map([
-  [
-    "assets/src/tour/SpotlightOverlay.tsx",
-    "a React Native Modal with no onRequestClose",
-  ],
-]);
-const NO_OP = /onDismiss=\{\s*\(\)\s*=>\s*(?:\{\s*\}|undefined|null)\s*\}/;
-const PAPER_MODAL_IMPORT =
-  /import\s*\{[^}]*\bModal\b[^}]*\}\s*from\s*["']react-native-paper["']/;
+const KNOWN = [
+  "components/settings/AuthenticationSettings.tsx: a Paper modal with no onDismiss",
+  "components/settings/AuthenticationSettings.tsx: a Paper modal with no onDismiss",
+  "components/settings/AuthenticationSettings.tsx: a Paper modal with no onDismiss",
+  "assets/src/tour/SpotlightOverlay.tsx: a React Native Modal with no onRequestClose",
+];
 
 function sourceFiles(directory: string): string[] {
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -43,22 +60,25 @@ function sourceFiles(directory: string): string[] {
 }
 
 /**
- * The opening `<Modal ...>` tags in `source`. Braces are tracked so an arrow
- * function's `=>` inside an attribute does not end the tag.
+ * The opening tags of element `name` in `source`: `<Modal ...>` but not
+ * `<ModalWrapper>` or `<Dialog.Title>`. Quotes are tracked at every depth and
+ * braces are counted, so `=>` or `"}"` inside an attribute does not end the
+ * tag.
  */
-function modalTags(source: string): string[] {
+function openingTags(source: string, name: string): string[] {
   const tags: string[] = [];
-  let from = source.indexOf("<Modal");
-  while (from !== -1) {
+  const start = new RegExp(`<${name}(?=[\\s/>])`, "g");
+  for (const match of source.matchAll(start)) {
     let depth = 0;
     let quote = "";
-    let end = from;
+    let end = match.index;
     for (; end < source.length; end++) {
       const char = source[end];
       if (quote) {
-        if (char === quote) quote = "";
-      } else if (char === '"' || char === "'") {
-        if (depth === 0) quote = char;
+        if (char === "\\") end++;
+        else if (char === quote) quote = "";
+      } else if (char === '"' || char === "'" || char === "`") {
+        quote = char;
       } else if (char === "{") {
         depth++;
       } else if (char === "}") {
@@ -67,75 +87,119 @@ function modalTags(source: string): string[] {
         break;
       }
     }
-    tags.push(source.slice(from, end + 1));
-    from = source.indexOf("<Modal", end);
+    tags.push(source.slice(match.index, end + 1));
   }
   return tags;
 }
 
 /** Why `tag` swallows Back, or null when it answers it. */
-function backProblem(tag: string, isPaper: boolean): string | null {
-  if (isPaper) {
-    if (!/\bonDismiss=\{/.test(tag)) return "a Paper Modal with no onDismiss";
-    if (NO_OP.test(tag)) return "a Paper Modal whose onDismiss does nothing";
-    return null;
+function backProblem(tag: string, paper: boolean): string | null {
+  const spread = /\{\s*\.\.\./.test(tag);
+  if (paper) {
+    if (/\bdismissable=\{\s*false\s*\}/.test(tag)) {
+      return "a Paper modal with dismissable={false}";
+    }
+    const handler = /\bonDismiss(=\{[\s\S]*)?$/.exec(tag)?.[1] ?? null;
+    if (!/\bonDismiss=\{/.test(tag)) {
+      return spread ? null : "a Paper modal with no onDismiss";
+    }
+    return handler && NO_OP.test(tag.slice(tag.indexOf("onDismiss")))
+      ? "a Paper modal whose onDismiss does nothing"
+      : null;
   }
-  return /\bonRequestClose=\{/.test(tag)
-    ? null
-    : "a React Native Modal with no onRequestClose";
+  if (!/\bonRequestClose=\{/.test(tag)) {
+    return spread ? null : "a React Native Modal with no onRequestClose";
+  }
+  return NO_OP.test(tag.slice(tag.indexOf("onRequestClose")))
+    ? "a React Native Modal whose onRequestClose does nothing"
+    : null;
 }
 
-describe("modalTags and backProblem", () => {
-  it("reads a tag whose attributes hold arrow functions", () => {
-    const [tag] = modalTags(
-      "<Modal visible={open} onDismiss={() => setOpen(false)}>\n<Text />",
-    );
-    expect(tag).toBe("<Modal visible={open} onDismiss={() => setOpen(false)}>");
-    expect(backProblem(tag, true)).toBeNull();
-  });
-
-  it("flags a Paper Modal that swallows Back", () => {
-    expect(backProblem("<Modal visible onDismiss={() => {}}>", true)).toBe(
-      "a Paper Modal whose onDismiss does nothing",
-    );
-    expect(backProblem("<Modal visible>", true)).toBe(
-      "a Paper Modal with no onDismiss",
-    );
-  });
-
-  it("flags a React Native Modal with no onRequestClose", () => {
-    expect(backProblem('<Modal visible animationType="fade">', false)).toBe(
-      "a React Native Modal with no onRequestClose",
-    );
-  });
-});
-
-function problemsInApp(): Map<string, string> {
-  const found = new Map<string, string>();
-  for (const file of SCANNED.flatMap((dir) =>
-    sourceFiles(path.join(ROOT, dir)),
-  )) {
-    const source = fs.readFileSync(file, "utf8");
-    const isPaper = PAPER_MODAL_IMPORT.test(source);
-    for (const tag of modalTags(source)) {
-      const problem = backProblem(tag, isPaper);
-      if (problem) found.set(path.relative(ROOT, file), problem);
+function problemsIn(source: string): string[] {
+  const paperNames = PAPER_IMPORT.exec(source)?.[1] ?? "";
+  const paperModal = /\bModal\b/.test(paperNames);
+  const paperDialog = /\bDialog\b/.test(paperNames);
+  const found: string[] = [];
+  for (const tag of openingTags(source, "Modal")) {
+    const problem = backProblem(tag, paperModal);
+    if (problem) found.push(problem);
+  }
+  if (paperDialog) {
+    for (const tag of openingTags(source, "Dialog")) {
+      const problem = backProblem(tag, true);
+      if (problem) found.push(problem);
     }
   }
   return found;
 }
 
-it("every modal in the app answers hardware Back", () => {
-  const unexpected = [...problemsInApp()].filter(
-    ([file, problem]) => KNOWN.get(file) !== problem,
-  );
-  expect(unexpected).toEqual([]);
+function problemsInApp(): string[] {
+  return SCANNED.flatMap((dir) => sourceFiles(path.join(ROOT, dir)))
+    .flatMap((file) =>
+      problemsIn(fs.readFileSync(file, "utf8")).map(
+        (problem) => `${path.relative(ROOT, file)}: ${problem}`,
+      ),
+    )
+    .sort();
+}
+
+describe("the scanner", () => {
+  const paper = 'import { Dialog, Modal } from "react-native-paper";\n';
+  const native = 'import { Modal } from "react-native";\n';
+
+  it("passes a Paper modal whose onDismiss does something", () => {
+    expect(
+      problemsIn(`${paper}<Modal visible onDismiss={() => setOpen(false)}>`),
+    ).toEqual([]);
+  });
+
+  it("flags each way a Paper modal swallows Back", () => {
+    expect(
+      problemsIn(
+        `${paper}<Modal visible><Dialog visible onDismiss={() => {}}><Dialog visible dismissable={false} onDismiss={close}><Dialog.Title>`,
+      ),
+    ).toEqual([
+      "a Paper modal with no onDismiss",
+      "a Paper modal whose onDismiss does nothing",
+      "a Paper modal with dismissable={false}",
+    ]);
+  });
+
+  it("flags a React Native Modal with no handler or a no-op", () => {
+    expect(
+      problemsIn(
+        `${native}<Modal transparent><Modal onRequestClose={() => undefined}>`,
+      ),
+    ).toEqual([
+      "a React Native Modal with no onRequestClose",
+      "a React Native Modal whose onRequestClose does nothing",
+    ]);
+  });
+
+  it("reads past braces and quotes inside attributes", () => {
+    expect(
+      problemsIn(
+        `${native}<Modal label={"}"} style={{ a: 1 }}>\n<View onRequestClose={x} />`,
+      ),
+    ).toEqual(["a React Native Modal with no onRequestClose"]);
+  });
+
+  it("ignores components whose names start with Modal", () => {
+    expect(problemsIn(`${native}<ModalWrapper visible>`)).toEqual([]);
+  });
 });
 
-it("every known exception still needs its fix", () => {
-  const found = problemsInApp();
-  const fixed = [...KNOWN].filter(
-    ([file, problem]) => found.get(file) !== problem,
-  );
-  expect(fixed).toEqual([]);
+it("every modal in the app answers Back, or is listed", () => {
+  const listed = [...BY_DESIGN, ...KNOWN];
+  const unlisted = problemsInApp().filter((problem) => {
+    const at = listed.indexOf(problem);
+    if (at === -1) return true;
+    listed.splice(at, 1);
+    return false;
+  });
+  expect(unlisted).toEqual([]);
+});
+
+it("every listed exception is still there", () => {
+  expect(problemsInApp()).toEqual([...BY_DESIGN, ...KNOWN].sort());
 });

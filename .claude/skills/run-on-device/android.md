@@ -35,12 +35,18 @@ on loopback), then write `debug_http_host` as `10.0.2.2:<port>` into
 ## The database
 
 Emulator images have no `sqlite3`. Copy the database out and back through
-`run-as`; SELinux stops `run-as` reading `/data/local/tmp` directly.
+`run-as`; SELinux stops `run-as` reading `/data/local/tmp` directly. Keep copies
+under `$TMPDIR`, never in the checkout: they hold health data, and `*.db` is
+gitignored only as a backstop.
 
 ```bash
-adb exec-out run-as com.capucity.ephira cat files/SQLite/ephira.encrypted.db > copy.db
-cat copy.db | adb shell run-as com.capucity.ephira sh -c 'cat > files/SQLite/ephira.encrypted.db'
+adb exec-out run-as com.capucity.ephira cat files/SQLite/ephira.encrypted.db > "$TMPDIR/ephira-copy.db"
+adb shell run-as com.capucity.ephira mkdir -p files/SQLite
+cat "$TMPDIR/ephira-copy.db" | adb shell run-as com.capucity.ephira sh -c 'cat > files/SQLite/ephira.encrypted.db'
 ```
+
+`files/SQLite` exists only once the app has opened a database, hence the
+`mkdir -p` before pushing into a fresh install.
 
 ## 16 KB pages
 
