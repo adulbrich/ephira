@@ -77,21 +77,30 @@ function realpathOr(path) {
  *
  * The hooks import scripts and run binaries from the root they resolve. A
  * session can `cd` into any clone, so resolving the root from `cwd` alone
- * would run whatever code that clone ships. The root must be one of the
- * checkouts the project's own repository lists, which a directory elsewhere
- * cannot join without writing into this repository's `.git`.
+ * would run whatever code that clone ships. Two checks, because each alone
+ * has a gap: the root must share this repository's git directory, and it
+ * must be a live checkout the repository lists (a stale, prunable entry does
+ * not count, since another directory could since have taken its path).
  */
 export function trustedRoot(cwd) {
   const project = process.env.CLAUDE_PROJECT_DIR;
   const root = project ? git(cwd, ["rev-parse", "--show-toplevel"]) : "";
-  if (!root) {
+  if (!(root && commonDir(cwd) && commonDir(cwd) === commonDir(project))) {
     return null;
   }
-  const listed = git(project, ["worktree", "list", "--porcelain"])
-    .split("\n")
-    .filter((line) => line.startsWith("worktree "))
-    .map((line) => realpathOr(line.slice("worktree ".length)));
-  return listed.includes(realpathOr(root)) ? root : null;
+  const live = git(project, ["worktree", "list", "--porcelain"])
+    .split("\n\n")
+    .filter((entry) => !/^prunable\b/m.test(entry))
+    .map((entry) => /^worktree (.+)$/m.exec(entry)?.[1])
+    .filter(Boolean)
+    .map(realpathOr);
+  return live.includes(realpathOr(root)) ? root : null;
+}
+
+function commonDir(dir) {
+  return realpathOr(
+    git(dir, ["rev-parse", "--path-format=absolute", "--git-common-dir"]),
+  );
 }
 
 /**
