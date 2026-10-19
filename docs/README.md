@@ -82,3 +82,16 @@ All commands are run from the root of the project, from a terminal:
 | `npm run preview`         | Preview your build locally, before deploying     |
 | `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
 | `npm run astro -- --help` | Get help using the Astro CLI                     |
+
+## Deploys
+
+Vercel deploys this site from every push: previews from pull requests,
+production from `main`. Before it installs anything, `vercel.json` runs
+`ignored-build-step.sh`, which cancels the deployment when the website is the
+same as at the branch's last successful deployment or, before it has one, the
+same as on `main`. Its header says what counts as the website.
+
+A dashboard Redeploy runs that step too, and cancels. To force a rebuild,
+untick "Use project's Ignore Build Step" in the Redeploy dialog. The footer's
+year is rendered at build time, so after New Year it stays behind until the
+next website change or a forced Redeploy.
