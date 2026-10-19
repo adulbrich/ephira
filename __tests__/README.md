@@ -54,6 +54,12 @@ another zone, see the boundaries runner in `.claude/skills/correctness-review/`.
 
 ## Rendering components
 
+When a component's behaviour lives in its effects, render it with
+`@testing-library/react-native` against the same in-memory database.
+`components/dayView/__tests__/DayView.test.tsx` is the example.
+
+- **Wrap it in `PaperProvider`.** It hosts the `Portal`s this app renders its
+  Snackbar and modals into.
 - **React Native Testing Library's `render`, `fireEvent` and `act` return
   promises.** Await them; an unawaited `render` leaves `screen` throwing
   "`render` function has not been called".
@@ -62,6 +68,4 @@ another zone, see the boundaries runner in `.claude/skills/correctness-review/`.
 - **jest-expo runs as iOS**, where `BackHandler` does nothing.
   `components/settings/__tests__/hardwareBack.test.tsx` replays Android's Back
   dispatch for a modal that needs it; `components/__tests__/modalBack.test.ts`
-  checks every modal answers Back at all.
-- `components/dayView/__tests__/DayView.test.tsx` is the pattern for a component
-  over the in-memory database.
+  checks every modal answers Back, or is listed with the reason it does not.
