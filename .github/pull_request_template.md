@@ -7,12 +7,14 @@ Closes #
 ## Screenshots
 
 <!-- Required when the diff touches app/, components/, assets/ or a theme
-     (pr-text checks it). One image per changed screen; iOS and Android when the
-     change is platform-specific. Keep one of the two lines below. -->
+     (pr-text checks it). One image per changed screen, from a simulator, an
+     emulator or a device; iOS and Android when the change is
+     platform-specific. Write one of these outside this comment:
 
-![screen on iOS](url) ![screen on Android](url)
+     ![screen on iOS](link) ![screen on Android](link)
 
-Screenshots: none, because ...
+     Screenshots: none, because <reason> -->
+
 
 ## Review loop
 

@@ -8,13 +8,11 @@
 # commit through.
 pre-commit:
   commands:
-    # Biome on the staged files; `npm run format` applies the safe fixes.
+    # Each tool picks its own files from the staged list: Biome by
+    # `files.includes`, the prose check by its extension list.
     biome:
-      glob: "*.{js,jsx,mjs,cjs,ts,tsx,json,jsonc,css}"
       run: npx biome check --no-errors-on-unmatched {staged_files}
-    # No emdash, no emoji, in prose, comments and string literals alike.
     prose:
-      glob: "*.{astro,cjs,css,js,json,jsonc,md,mjs,sh,sql,ts,tsx,txt,yaml,yml}"
       run: node scripts/check-prose.mjs {staged_files}
     # The ruleset refuses a push to main; this stops the commit that would
     # need untangling first.
@@ -24,8 +22,6 @@ pre-commit:
 
 commit-msg:
   commands:
-    # Conventional subject, lowercase imperative, the prose rule, and never a
-    # claude.ai/code/session link.
     message:
       run: node scripts/check-commit-message.mjs {1}
 

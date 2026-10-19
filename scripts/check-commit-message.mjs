@@ -1,15 +1,13 @@
 /**
  * The commit-message rule in AGENTS.md, as a check: a Conventional Commits
- * subject with a lowercase imperative, the prose rule over the whole message,
- * and never a `claude.ai/code/session` link.
+ * subject with a lowercase imperative, plus the published-text rules from
+ * `check-prose.mjs` (no emdash, no emoji, no session link) over the whole
+ * message.
  *
  * One implementation, three callers. lefthook runs it at `commit-msg`, CI runs
  * it over every commit a pull request adds (`--range`), and the Claude Code
  * `guard-git` hook runs it on the text of a `git commit` before the commit
  * exists, so `--no-verify` does not get a bad message past an agent.
- *
- * The session link is checked first: the repo is public, and a link that
- * reaches a merged commit on `main` stays in its history for good.
  *
  * Usage:
  *   node scripts/check-commit-message.mjs <file>          the COMMIT_EDITMSG path
@@ -21,7 +19,11 @@
  */
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { findProseViolations, gitLines } from "./check-prose.mjs";
+import {
+  describeViolation,
+  findPublishedViolations,
+  gitLines,
+} from "./check-prose.mjs";
 
 const TYPES = [
   "feat",
@@ -54,7 +56,6 @@ const SUBJECT = new RegExp(
 const EXEMPT_SUBJECT =
   /^(?:Merge |Revert |fixup! |squash! |(?:chore|build)\(deps(?:-dev)?\): Bump )/;
 
-const SESSION_LINK = "claude.ai/code/session";
 const SCISSORS = /^# -{8,} >8 -{8,}$/m;
 
 function stripCommentary(message) {
@@ -71,13 +72,7 @@ function stripCommentary(message) {
  * means the message passes.
  */
 export function checkCommitMessage(message) {
-  const problems = [];
-
-  if (message.includes(SESSION_LINK)) {
-    problems.push(
-      `contains a ${SESSION_LINK} link; drop it, keep the Co-Authored-By trailer`,
-    );
-  }
+  const problems = findPublishedViolations(message).map(describeViolation);
 
   const subject =
     message.split("\n").find((line) => line.trim().length > 0) ?? "";
@@ -87,10 +82,6 @@ export function checkCommitMessage(message) {
     problems.push(
       `subject "${subject}" is not "type(scope): lowercase imperative" with type one of ${TYPES.join(", ")}`,
     );
-  }
-
-  for (const { line, kind, snippet } of findProseViolations(message)) {
-    problems.push(`line ${line} has an ${kind}: ${snippet}`);
   }
 
   return problems;

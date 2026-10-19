@@ -2,10 +2,10 @@
  * The prose rule in AGENTS.md, as a check: no emdash and no emoji in anything
  * tracked, be it docs, comments, string literals or the website's copy.
  *
- * One implementation, four callers. lefthook runs it on staged files at
- * pre-commit, CI runs it over the whole tree (`--all`), the Claude Code
- * `after-edit` hook runs it on each edited file, and the commit-message check
- * and the `gh` hook import `findProseViolations` for the text they guard.
+ * One implementation, five callers. lefthook runs it on staged files at
+ * pre-commit, CI runs it over the whole tree (`--all`), `pr-text` runs it on
+ * the PR title and body (`--stdin --published`), and the Claude Code
+ * `after-edit` hook, the commit-message check and the `gh` hook import it.
  *
  * "Emoji" means a character that renders as an emoji by default (Unicode's
  * Emoji_Presentation), or any pictograph forced into emoji form by U+FE0F. The
@@ -18,12 +18,13 @@
  *   node scripts/check-prose.mjs <file>...     check the named files
  *   node scripts/check-prose.mjs --all         check every tracked text file
  *   node scripts/check-prose.mjs --stdin       check stdin as one string
+ *   node scripts/check-prose.mjs --stdin --published   and the session link
  */
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
 const EMDASH = "\u2014";
-const EMOJI = /\p{Emoji_Presentation}|\p{Extended_Pictographic}️/u;
+const EMOJI = /\p{Emoji_Presentation}|\p{Extended_Pictographic}\u{FE0F}/u;
 
 /**
  * Extensions that are prose or source. Anything else `git ls-files` reports
@@ -66,6 +67,36 @@ const EXCLUDED_FILES = new Set(["package-lock.json", "docs/package-lock.json"]);
 const HARNESS_FOOTER = /\u{1F916} Generated with \[Claude Code\]\([^)]*\)/gu;
 
 /**
+ * Published text (a commit message, a PR or issue body, a comment) also never
+ * carries a Claude Code session link: the repo is public, and a link on main
+ * stays in its history. Files are exempt, since AGENTS.md names the rule.
+ */
+const SESSION_LINK = "claude.ai/code/session";
+
+/**
+ * Every hit in published `text`: the prose rule plus the session link.
+ */
+export function findPublishedViolations(text) {
+  const violations = findProseViolations(text);
+  const at = text.split("\n").findIndex((line) => line.includes(SESSION_LINK));
+  if (at !== -1) {
+    violations.unshift({
+      line: at + 1,
+      kind: "session link",
+      snippet: text.split("\n")[at].trim(),
+    });
+  }
+  return violations;
+}
+
+/** One violation as a line a writer can act on. */
+export function describeViolation({ line, kind, snippet }) {
+  const excerpt =
+    snippet.length > 100 ? `${snippet.slice(0, 100)}...` : snippet;
+  return `line ${line}, ${kind}: ${excerpt}`;
+}
+
+/**
  * Every hit in `text`, as `{ line, kind, snippet }`, where `kind` is `emdash`
  * or `emoji`.
  */
@@ -105,10 +136,8 @@ export function gitLines(args) {
 }
 
 function report(label, violations) {
-  for (const { line, kind, snippet } of violations) {
-    const excerpt =
-      snippet.length > 100 ? `${snippet.slice(0, 100)}...` : snippet;
-    process.stderr.write(`${label}:${line}: ${kind}: ${excerpt}\n`);
+  for (const violation of violations) {
+    process.stderr.write(`${label}: ${describeViolation(violation)}\n`);
   }
 }
 
@@ -135,7 +164,10 @@ function main(argv) {
   const [mode] = argv;
   let failed;
   if (mode === "--stdin") {
-    const violations = findProseViolations(readFileSync(0, "utf8"));
+    const text = readFileSync(0, "utf8");
+    const violations = argv.includes("--published")
+      ? findPublishedViolations(text)
+      : findProseViolations(text);
     report("text", violations);
     failed = violations.length > 0;
   } else if (mode === "--all") {

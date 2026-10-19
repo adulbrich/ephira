@@ -2,8 +2,8 @@
 
 ## Always
 
-A tool enforces each of these, so a refusal names the rule you hit.
-`CONTRIBUTING.md`, "The gates", maps each rule to its hook, script and check.
+Tools enforce these where they can, so a refusal names the rule you hit.
+`CONTRIBUTING.md`, "The gates", says which hook, script and check covers which.
 
 - **Punctuate with commas, colons, parentheses or a new sentence, and use words
   for a status mark:** no emdash and no emoji in commits, comments, string

@@ -161,7 +161,7 @@ function ruleBroken(sub, args, alreadyBranched) {
   );
 }
 
-function branches(sub, args) {
+function createsBranch(sub, args) {
   return (
     (sub === "checkout" && args.some((t) => t === "-b" || t === "-B")) ||
     (sub === "switch" && args.some((t) => t === "-c" || t === "-C")) ||
@@ -202,7 +202,7 @@ for (const segment of detectable.split(SEGMENT)) {
   if (reason) {
     deny(reason);
   }
-  if (branches(call.sub, call.args)) {
+  if (createsBranch(call.sub, call.args)) {
     branched = true;
   }
   if (call.sub === "commit") {

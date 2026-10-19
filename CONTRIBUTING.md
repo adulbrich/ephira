@@ -126,7 +126,8 @@ Every PR runs three reviews against `origin/main`:
 | `app-security-review` (`.claude/skills/`) | Can health data, the database key or the lock leak or fail open? |
 
 All three run on docs-only diffs and dependency bumps too: the privacy policy is
-docs, a workflow is configuration, and a dependency is supply chain.
+docs, a workflow is configuration, and a dependency is supply chain. Dependabot
+rewrites its own PR body, so on its PRs the record goes in a comment.
 
 Repeat until a pass raises nothing you have not answered. Answered means fixed,
 or declined in writing with the reason. A fix is new code, so the loop ends when
@@ -147,7 +148,7 @@ first column stops you locally; the last stops the merge.
 | --- | --- | --- | --- |
 | Conventional subject; no emdash, emoji or session link in a commit message | `commit-msg` | `guard-git` reads the message first | `Checks` walks the PR's commits |
 | No emdash or emoji in tracked text | `pre-commit`, staged files | `after-edit`, the edited file | `Checks`: `npm run check:prose` |
-| No session link, emdash or emoji in PR or issue text | (never sees it) | `guard-gh` refuses the command | `pr-text`, the PR title and body |
+| No session link, emdash or emoji in PR, issue, review, comment or release text | (never sees it) | `guard-gh` refuses the command, body files included | `pr-text`, the PR title and body |
 | A UI change carries a screenshot, or a reason | | `guard-gh` warns | `pr-text` |
 | The PR body records the review loop's pass counts and last commit | | `guard-gh` warns | `pr-text` (the record, not the reviews) |
 | Stage by name; never commit on `main` | `pre-commit` branch check | `guard-git` | the ruleset refuses a push to `main` |
@@ -159,7 +160,9 @@ first column stops you locally; the last stops the merge.
 `Checks` reports as **`Lint, typecheck and test`**. It and `pr-text` are
 required on `main`, the branch must be up to date with `main` before it merges,
 and `Checks` runs again on `main` after every merge. The hooks live in
-`.claude/hooks/` and the scripts in `scripts/`; `npm install` installs lefthook.
+`.claude/hooks/` and the scripts in `scripts/`. `npm install` installs the
+lefthook hooks; where it cannot (no git, say), it says so and carries on, and
+`npx lefthook install` does it by hand.
 
 Skipping locally (`LEFTHOOK=0 git commit`, or `--no-verify`) moves the failure
 to the hooks and CI rather than removing it.

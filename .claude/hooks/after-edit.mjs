@@ -5,16 +5,15 @@
  *
  * PostToolUse cannot block, but stderr on exit 2 is shown to the model, which
  * is the point: the finding lefthook would make at pre-commit, a few minutes
- * earlier and one file at a time. Biome decides which files it covers
- * (`files.includes` in biome.jsonc); `--no-errors-on-unmatched` keeps an
- * excluded path from reading as a failure. Each rule runs only if its tool
- * exists in this checkout, so a missing script skips that rule, not both.
+ * earlier and one file at a time. `check-prose.mjs` decides which paths the
+ * prose rule covers, and Biome decides which files it handles
+ * (`files.includes` in biome.jsonc); `--no-errors-on-unmatched` lets it pass
+ * over the rest quietly. Each rule runs only if its tool exists in this
+ * checkout, so a missing one skips that rule, not both.
  */
 import { spawnSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { loadScript, readInput, repoRelative, trustedRoot } from "./lib.mjs";
-
-const BIOME_EXTENSIONS = /\.(?:[cm]?jsx?|tsx?|jsonc?|css)$/;
 
 const input = readInput();
 // Null outside this repository, whose scripts and Biome binary are not ours
@@ -26,33 +25,35 @@ if (!path || path.startsWith("../") || !existsSync(`${root}/${path}`)) {
   process.exit(0);
 }
 
-let failed = false;
+const problems = [];
 
 const prose = await loadScript(root, "check-prose.mjs");
 if (prose?.isCheckedPath(path)) {
-  const result = spawnSync(
-    process.execPath,
-    ["scripts/check-prose.mjs", path],
-    { cwd: root, encoding: "utf8" },
-  );
-  if (result.status !== 0) {
-    failed = true;
-    process.stderr.write(result.stderr);
+  const text = readFileSync(`${root}/${path}`, "utf8");
+  for (const violation of prose.findProseViolations(text)) {
+    problems.push(`${path}: ${prose.describeViolation(violation)}`);
+  }
+  if (problems.length > 0) {
+    problems.push(
+      "Prose rule: no emdash and no emoji. Use a colon, a comma, parentheses or a new sentence (AGENTS.md).",
+    );
   }
 }
 
 const biome = `${root}/node_modules/.bin/biome`;
-if (BIOME_EXTENSIONS.test(path) && existsSync(biome)) {
+if (existsSync(biome)) {
   const result = spawnSync(biome, ["check", "--no-errors-on-unmatched", path], {
     cwd: root,
     encoding: "utf8",
   });
   if (result.status !== 0) {
-    failed = true;
-    process.stderr.write(
+    problems.push(
       `Biome reports on ${path} (\`npm run format\` applies the safe fixes):\n${result.stdout}${result.stderr}`,
     );
   }
 }
 
-process.exit(failed ? 2 : 0);
+if (problems.length > 0) {
+  process.stderr.write(`${problems.join("\n")}\n`);
+  process.exit(2);
+}

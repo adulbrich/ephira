@@ -19,8 +19,10 @@ permissions:
 
 jobs:
   pr-text:
-    # Dependabot bodies embed upstream release notes. A skipped job satisfies
-    # a required check.
+    # Dependabot bodies embed upstream release notes, and Dependabot rewrites
+    # its own body, so a review-loop record there would not last: its PRs
+    # record the loop in a comment instead (CONTRIBUTING.md). A skipped job
+    # satisfies a required check.
     if: github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
@@ -37,29 +39,16 @@ jobs:
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BODY: ${{ github.event.pull_request.body }}
         run: |
-          text="$(printf '%s\n\n%s\n' "$PR_TITLE" "$PR_BODY")"
-          case "$text" in
-            *claude.ai/code/session*)
-              echo "pull request text: contains a claude.ai/code/session link; never publish one (AGENTS.md)" >&2
-              exit 1
-              ;;
-          esac
-          printf '%s' "$text" | node scripts/check-prose.mjs --stdin
-      # The record of the review loop, not proof the reviews ran.
-      - name: Review loop recorded
-        env:
-          PR_BODY: ${{ github.event.pull_request.body }}
-        run: |
-          printf '%s\n' "$PR_BODY" > "$RUNNER_TEMP/pr-body.md"
-          node scripts/check-pr-review-loop.mjs --body "$RUNNER_TEMP/pr-body.md"
-      # The file list comes from the API, paginated, so a large diff is not
-      # truncated. The repository and PR number are set by GitHub, not typed
-      # by anyone, so they are safe to interpolate.
-      - name: Screenshots
+          printf '%s\n\n%s\n' "$PR_TITLE" "$PR_BODY" | node scripts/check-prose.mjs --stdin --published
+      # A screenshot for a UI change, and the review-loop record. The file
+      # list comes from the API, paginated, so a large diff is not truncated.
+      # The repository and PR number are set by GitHub, not typed by anyone,
+      # so they are safe to interpolate.
+      - name: Screenshots and review loop
         env:
           GH_TOKEN: ${{ github.token }}
           PR_BODY: ${{ github.event.pull_request.body }}
         run: |
           printf '%s\n' "$PR_BODY" > "$RUNNER_TEMP/pr-body.md"
           gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" --paginate --jq '.[].filename' \
-            | node scripts/check-pr-screenshots.mjs --files-stdin --body "$RUNNER_TEMP/pr-body.md"
+            | node scripts/check-pr-body.mjs --files-stdin --body "$RUNNER_TEMP/pr-body.md"

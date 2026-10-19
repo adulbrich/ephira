@@ -2,25 +2,32 @@
  * PreToolUse on Bash: the text a `gh` command would publish gets the checks a
  * commit message gets, before it reaches the remote.
  *
- * This is the one place the session-link rule can be enforced for PR and
- * issue text: the repo is public, and lefthook never sees `gh` text. The
- * prose rule applies too. The screenshots and review-loop rules only warn: a
- * `--body-file` may not exist yet in every flow, and the `pr-text` workflow is
- * the gate that refuses. Ported from eecs-capstone.
+ * This is the one place the published-text rules (no session link, no emdash,
+ * no emoji) can be enforced for PR, issue, review, comment and release text:
+ * the repo is public, and lefthook never sees `gh` text. The text checked is
+ * the command line plus any body or notes file it names. The rules come from
+ * `scripts/check-prose.mjs`, loaded from the session's checkout when it is
+ * this repository and from the hook's own checkout anywhere else, so a
+ * session elsewhere is still guarded.
+ *
+ * The PR-body rules (a screenshot for a UI change, the review-loop record)
+ * only warn: the `pr-text` workflow is the gate that refuses. Ported from
+ * eecs-capstone.
  */
 import { existsSync, readFileSync } from "node:fs";
 import { isAbsolute, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { deny, git, loadScript, readInput, trustedRoot } from "./lib.mjs";
 
 const PUBLISHES =
   /\bgh\s+(?:(?:pr|issue)\s+(?:create|edit|comment|review|close|merge)|release\s+(?:create|edit))\b/;
 const API_WITH_BODY = /\bgh\s+api\b[\s\S]*\bbody\b/;
-const BODIED = /\bgh\s+pr\s+(?:create|edit)\b/;
-const BODY_FLAG =
-  /(?:^|\s)(?:-b|--body)(?:=|\s+)(?:"((?:[^"\\]|\\.)*)"|'([^']*)')/;
-const BODY_FILE_FLAG =
-  /(?:^|\s)(?:-F|--body-file)(?:=|\s+)(?:"([^"]+)"|'([^']+)'|(\S+))/;
-const SESSION_LINK = "claude.ai/code/session";
+const PR_BODY = /\bgh\s+pr\s+(?:create|edit)\b/;
+const FILE_FLAG =
+  /(?:^|\s)(?:-F|--body-file|--notes-file)(?:=|\s+)(?:"([^"]+)"|'([^']+)'|(\S+))/;
+const INLINE_FLAG =
+  /(?:^|\s)(?:-b|--body|-n|--notes)(?:=|\s+)(?:"((?:[^"\\]|\\.)*)"|'([^']*)')/;
+const HOOK_CHECKOUT = fileURLToPath(new URL("../..", import.meta.url));
 
 const input = readInput();
 const command = input.tool_input?.command ?? "";
@@ -31,38 +38,30 @@ if (!(PUBLISHES.test(command) || API_WITH_BODY.test(command))) {
 }
 
 /**
- * The body a `gh pr create` or `gh pr edit` would send, from `--body` or
- * `--body-file`, or null when the command carries neither.
+ * The body or notes the command sends from a file, or inline, or null. A
+ * file of `-` is stdin, whose heredoc is already part of the command line.
  */
-function prBody(text) {
-  const file = BODY_FILE_FLAG.exec(text);
+function bodyOf(text) {
+  const file = FILE_FLAG.exec(text);
   if (file) {
     const given = file[1] ?? file[2] ?? file[3];
+    if (given === "-") {
+      return null;
+    }
     const path = isAbsolute(given) ? given : join(cwd, given);
     return existsSync(path) ? readFileSync(path, "utf8") : null;
   }
-  const inline = BODY_FLAG.exec(text);
+  const inline = INLINE_FLAG.exec(text);
   return inline ? (inline[1] ?? inline[2]) : null;
 }
 
-// Null outside this repository: the session-link rule still applies, the
-// rules that need the repo's scripts are skipped.
 const root = trustedRoot(cwd);
-const body = BODIED.test(command) ? prBody(command) : null;
+const prose = await loadScript(root ?? HOOK_CHECKOUT, "check-prose.mjs");
+const body = bodyOf(command);
 const published = body === null ? command : `${command}\n${body}`;
-const problems = [];
-
-if (published.includes(SESSION_LINK)) {
-  problems.push(
-    `contains a ${SESSION_LINK} link; never publish one (AGENTS.md)`,
-  );
-}
-
-const prose = await loadScript(root, "check-prose.mjs");
-for (const { line, kind, snippet } of prose?.findProseViolations(published) ??
-  []) {
-  problems.push(`line ${line} has an ${kind}: ${snippet}`);
-}
+const problems = prose
+  ? prose.findPublishedViolations(published).map(prose.describeViolation)
+  : [];
 
 if (problems.length > 0) {
   deny(
@@ -70,15 +69,14 @@ if (problems.length > 0) {
   );
 }
 
-const screenshots = await loadScript(root, "check-pr-screenshots.mjs");
-const reviewLoop = await loadScript(root, "check-pr-review-loop.mjs");
-if (body !== null) {
+const prBody = await loadScript(root, "check-pr-body.mjs");
+if (body !== null && prBody && PR_BODY.test(command)) {
   const changed = git(root, ["diff", "--name-only", "origin/main...HEAD"])
     .split("\n")
     .filter(Boolean);
   const found = [
-    screenshots?.checkPrScreenshots(body, changed),
-    reviewLoop?.checkReviewLoop(body),
+    prBody.checkPrScreenshots(body, changed),
+    prBody.checkReviewLoop(body),
   ].filter(Boolean);
   if (found.length > 0) {
     const warning = `pr-text will fail this pull request: ${found.join("; ")} (CONTRIBUTING.md, "The gates").`;
