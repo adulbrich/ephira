@@ -68,3 +68,11 @@ All commands are run from the root of the project, from a terminal:
 | `npm run preview`         | Preview your build locally, before deploying     |
 | `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
 | `npm run astro -- --help` | Get help using the Astro CLI                     |
+
+## Deploys
+
+Vercel deploys this site from every push: previews from pull requests,
+production from `main`. Before it installs anything, `vercel.json` runs
+`ignored-build-step.sh`, which cancels the deployment when nothing but the app
+or the documentation here changed since the branch's last successful one. The
+script names those documentation folders; a new one goes on its list.
