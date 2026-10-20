@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { deleteAllAppData } from "@/services/deleteAllAppData";
+import {
+  DeletionIncomplete,
+  deleteAllAppData,
+} from "@/services/deleteAllAppData";
 import { ThemedView } from "@/components/ThemedView";
 import {
   ActivityIndicator,
@@ -31,20 +34,31 @@ function DeleteDataModal({ onDismiss }: { onDismiss: () => void }) {
   const handleDeleteData = async () => {
     setLoading(true);
     let deleted = true;
+    // Whether the screens behind Settings now hold rows that are gone. The
+    // database step runs even when an earlier step failed.
+    let databaseDeleted = true;
     try {
       await deleteAllAppData();
-    } catch {
+    } catch (error) {
       deleted = false;
+      databaseDeleted =
+        error instanceof DeletionIncomplete && error.databaseDeleted;
     }
 
-    // The database goes last and may be empty even when an earlier step
-    // failed, so after any attempt the stores let go of what they drew from
-    // it. A day view left open would otherwise save its deleted day back.
+    // The stores outlive every screen, so they let go of what they drew from
+    // the database, and read back what it still holds, after any attempt.
     await forgetDeletedData();
     setLoading(false);
 
+    // Start again from the first screen, as a launch does, whenever the
+    // database went: screens that read once on mount (the lock setting,
+    // pregnancy Home, notification settings) would go on showing what was
+    // deleted, and write it back on their next save.
+    if (databaseDeleted) useAppRestart.getState().restart();
+
     if (!deleted) {
-      // The confirmation stays typed, so trying again is one tap.
+      // When the database is untouched the confirmation stays typed, so
+      // trying again is one tap.
       Alert.alert(
         "Data not deleted",
         "Not all data could be deleted. Try again.",
@@ -54,10 +68,6 @@ function DeleteDataModal({ onDismiss }: { onDismiss: () => void }) {
     setInputValue("");
     setButtonDisabled(true);
     Alert.alert("Data deleted", "All data has been deleted from this device.");
-    // Start again from the first screen, as a launch does. The tabs stay
-    // mounted behind Settings, and screens that read once on mount (the lock
-    // setting, pregnancy Home) would go on showing what was deleted.
-    useAppRestart.getState().restart();
   };
 
   return (

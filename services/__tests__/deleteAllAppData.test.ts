@@ -1,13 +1,18 @@
 /**
  * Delete Data against the in-memory database, with stand-ins for the two
  * native modules that keep state of their own: the notification centre, and
- * the file system the exports are written to.
+ * the file system the exports are written to. One test also makes the
+ * catalogue reseed fail, through a spy.
  */
 import { birthControlOptions } from "@/constants/BirthControlTypes";
 import { medicationOptions } from "@/constants/Medications";
 import { moodOptions } from "@/constants/Moods";
 import { symptomOptions } from "@/constants/Symptoms";
-import { loadCatalogue, onCatalogueInvalidated } from "@/db/catalogue";
+import {
+  invalidateCatalogue,
+  loadCatalogue,
+  onCatalogueInvalidated,
+} from "@/db/catalogue";
 import * as database from "@/db/database";
 import { getAllDays, insertDay } from "@/db/operations/days";
 import {
@@ -63,6 +68,7 @@ async function leaveDataEverywhere() {
 
 beforeEach(() => {
   resetTestDatabase();
+  invalidateCatalogue();
   mockScheduled.clear();
   mockPresented.clear();
   mockFiles.clear();
@@ -183,11 +189,26 @@ describe("deleteAllAppData", () => {
     await leaveDataEverywhere();
     mockCancelAll.mockRejectedValueOnce(new Error("notifications unavailable"));
 
-    await expect(deleteAllAppData()).rejects.toThrow();
+    await expect(deleteAllAppData()).rejects.toMatchObject({
+      failed: ["scheduled notifications"],
+      databaseDeleted: true,
+    });
 
     expect(await getAllPregnancyDays()).toEqual([]);
     expect([...mockPresented]).toEqual([]);
     expect([...mockFiles]).toEqual([]);
+  });
+
+  it("says when the database itself was not deleted", async () => {
+    await leaveDataEverywhere();
+    jest
+      .spyOn(database, "deleteAllDataInDatabase")
+      .mockRejectedValueOnce(new Error("disk I/O error"));
+
+    await expect(deleteAllAppData()).rejects.toMatchObject({
+      failed: ["database"],
+      databaseDeleted: false,
+    });
   });
 
   it("finishes the job when tried again after a failure", async () => {

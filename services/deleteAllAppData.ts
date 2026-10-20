@@ -7,6 +7,23 @@ import { EXPORT_FILES } from "@/services/exportFiles";
 /** What a step deletes, for the error, and the call that deletes it. */
 type Step = [name: string, run: () => Promise<unknown>];
 
+const DATABASE_STEP = "database";
+
+/**
+ * Some steps failed. The database step runs whatever the others did, so
+ * whether it went through is what the caller needs: if it did, every screen
+ * still holding what it read is out of date.
+ */
+export class DeletionIncomplete extends Error {
+  readonly databaseDeleted: boolean;
+
+  constructor(readonly failed: string[]) {
+    super(`Could not delete the ${failed.join(", ")}`);
+    this.name = "DeletionIncomplete";
+    this.databaseDeleted = !failed.includes(DATABASE_STEP);
+  }
+}
+
 /**
  * Deletes the user's data from this device: every row in the database, the
  * notifications the app has scheduled or is showing, and the files exports
@@ -47,7 +64,7 @@ async function deleteEverything(): Promise<void> {
         () => FileSystem.deleteAsync(uri, { idempotent: true }),
       ],
     ),
-    ["database", deleteAllDataInDatabase],
+    [DATABASE_STEP, deleteAllDataInDatabase],
     // Again: a prediction refresh that read the flow before the database went
     // can have scheduled since the first cancel. One still scheduling now can
     // land after this too; nothing on either screen that deletes starts one.
@@ -67,8 +84,9 @@ async function deleteEverything(): Promise<void> {
     }
   }
 
-  // Not a deletion, so not a failure of one: if it fails, the next launch
-  // seeds the catalogue instead, as it does on a fresh install.
+  // Not a deletion, so not reported as a failed one. If it fails, the next
+  // launch seeds the catalogue instead, and like any launch that seeds it
+  // deletes the entries logged against the old one: anything logged since.
   try {
     await seedCatalogueOnce();
   } catch (error) {
@@ -76,7 +94,5 @@ async function deleteEverything(): Promise<void> {
   }
   invalidateCatalogue();
 
-  if (failed.length > 0) {
-    throw new Error(`Could not delete the ${failed.join(", ")}`);
-  }
+  if (failed.length > 0) throw new DeletionIncomplete(failed);
 }

@@ -7,6 +7,8 @@ import {
 import { Alert } from "react-native";
 import { PaperProvider } from "react-native-paper";
 import DeleteData from "@/components/settings/DeleteData";
+import { insertSetting } from "@/db/operations/settings";
+import { DeletionIncomplete } from "@/services/deleteAllAppData";
 import { useAppRestart } from "@/stores/app-restart";
 import { resetTestDatabase } from "@/__tests__/helpers/testDatabase";
 import {
@@ -15,11 +17,13 @@ import {
 } from "@/db/preferences";
 import {
   useCalendarFilters,
+  useData,
   useDatabaseChangeNotifier,
   usePredictedCycle,
   usePredictionChoice,
   useSelectedDate,
   useThemeColor,
+  useTrackingMode,
 } from "@/stores/calendar-storage";
 import {
   useContractionTimerStore,
@@ -33,8 +37,16 @@ jest.mock("@/db/operations/setup", () =>
 
 const mockDeleteAllAppData = jest.fn();
 jest.mock("@/services/deleteAllAppData", () => ({
+  ...jest.requireActual("@/services/deleteAllAppData"),
   deleteAllAppData: () => mockDeleteAllAppData(),
 }));
+
+/** A delete whose database step went through, though another step failed. */
+const databaseGoneButNotAll = () =>
+  new DeletionIncomplete(["scheduled notifications"]);
+
+/** A delete that rolled back: the database holds everything it held. */
+const databaseKept = () => new DeletionIncomplete(["database"]);
 
 async function confirmDelete() {
   await render(<DeleteData />, { wrapper: PaperProvider });
@@ -53,6 +65,12 @@ function holdDataOnScreen() {
   useSelectedDate.getState().setDate("2026-03-01");
   usePregnancySelectedDate.getState().setDate("2026-05-01");
   usePregnancySelectedDate.getState().setNotes("first kicks");
+  usePregnancySelectedDate.getState().setKicks(4);
+  usePregnancySelectedDate.getState().setSymptoms(["Nausea"]);
+  usePregnancySelectedDate.getState().setMoods(["Calm"]);
+  useData
+    .getState()
+    .setData([{ id: 1, date: "2026-03-01", flow_intensity: 3 }]);
   usePregnancyAppointments.getState().setAppointments([
     {
       id: 1,
@@ -62,7 +80,11 @@ function holdDataOnScreen() {
       notes: null,
     },
   ]);
-  useContractionTimerStore.setState({ lastDurationMs: 45_000 });
+  useContractionTimerStore.setState({
+    isRunning: true,
+    startAt: 1,
+    lastDurationMs: 45_000,
+  });
   // Preferences, which Settings writes back whole on the next change: a
   // filter can name a custom symptom.
   useCalendarFilters.getState().setSelectedFilters(["Flow", "Vertigo"]);
@@ -73,6 +95,10 @@ function holdDataOnScreen() {
   usePredictedCycle
     .getState()
     .setPredictedCycle([{ date: "2026-03-29", confidence: 80 }]);
+  usePredictedCycle
+    .getState()
+    .setPredictedMarkedDates({ "2026-03-29": { periods: [] } });
+  useTrackingMode.getState().setTrackingMode("pregnancy");
   useDatabaseChangeNotifier.getState().setDatabaseChange("before");
 }
 
@@ -80,10 +106,22 @@ function holdDataOnScreen() {
 function expectScreensToLetGo() {
   expect(useSelectedDate.getState().date).toBe("");
   expect(usePregnancySelectedDate.getState().date).toBe("");
-  expect(usePregnancySelectedDate.getState().notes).toBe("");
+  expect(usePregnancySelectedDate.getState()).toMatchObject({
+    notes: "",
+    kicks: 0,
+    symptoms: [],
+    moods: [],
+  });
+  expect(useData.getState().data).toEqual([]);
   expect(usePregnancyAppointments.getState().appointments).toEqual([]);
-  expect(useContractionTimerStore.getState().lastDurationMs).toBeNull();
+  expect(useContractionTimerStore.getState()).toMatchObject({
+    isRunning: false,
+    startAt: null,
+    lastDurationMs: null,
+  });
   expect(usePredictedCycle.getState().predictedCycle).toEqual([]);
+  expect(usePredictedCycle.getState().predictedMarkedDates).toEqual({});
+  expect(useTrackingMode.getState().trackingMode).toBe("cycle");
   expect(useCalendarFilters.getState().selectedFilters).toEqual([
     ...DEFAULT_CALENDAR_FILTERS,
   ]);
@@ -134,15 +172,42 @@ describe("Delete Data", () => {
     expect(useAppRestart.getState().restarting).toBe(true);
   });
 
-  it("stays put after a failure, so trying again is one tap", async () => {
-    mockDeleteAllAppData.mockRejectedValue(new Error("notifications"));
+  it("starts again after a failure that still emptied the database", async () => {
+    // Settings screens read once on mount would otherwise write what they
+    // hold back into the emptied tables.
+    mockDeleteAllAppData.mockRejectedValue(databaseGoneButNotAll());
+    await confirmDelete();
+
+    expect(useAppRestart.getState().restarting).toBe(true);
+  });
+
+  it("stays put when the database was not deleted, so trying again is one tap", async () => {
+    mockDeleteAllAppData.mockRejectedValue(databaseKept());
     await confirmDelete();
 
     expect(useAppRestart.getState().restarting).toBe(false);
   });
 
+  it("keeps the preferences a rolled-back delete left in place", async () => {
+    await insertSetting("theme", "pink");
+    await insertSetting("trackingMode", "pregnancy");
+    await insertSetting("cyclePredictions", "false");
+    await insertSetting("calendarFilters", JSON.stringify(["Flow", "Vertigo"]));
+    mockDeleteAllAppData.mockRejectedValue(databaseKept());
+
+    await confirmDelete();
+
+    expect(useThemeColor.getState().themeColor).toBe("pink");
+    expect(useTrackingMode.getState().trackingMode).toBe("pregnancy");
+    expect(usePredictionChoice.getState().predictionChoice).toBe(false);
+    expect(useCalendarFilters.getState().selectedFilters).toEqual([
+      "Flow",
+      "Vertigo",
+    ]);
+  });
+
   it("has them let go after a failure too, since the database may be gone", async () => {
-    mockDeleteAllAppData.mockRejectedValue(new Error("notifications"));
+    mockDeleteAllAppData.mockRejectedValue(databaseGoneButNotAll());
     holdDataOnScreen();
 
     await confirmDelete();
@@ -179,7 +244,7 @@ describe("Delete Data", () => {
   });
 
   it("says so when it is not, and lets the user try again", async () => {
-    mockDeleteAllAppData.mockRejectedValue(new Error("disk I/O error"));
+    mockDeleteAllAppData.mockRejectedValue(databaseKept());
 
     const modal = await confirmDelete();
 

@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react-native";
 import { PaperProvider } from "react-native-paper";
 import PasswordAuthenticationView from "@/components/PasswordAuthenticationView";
 import { usePregnancySelectedDate } from "@/stores/pregnancy-storage";
+import { resetTestDatabase } from "@/__tests__/helpers/testDatabase";
 
 jest.mock("@/db/operations/setup", () =>
   jest.requireActual("@/__tests__/helpers/testDatabase"),
@@ -21,7 +22,10 @@ async function resetPassword() {
   await fireEvent.press(screen.getByText("Reset Password"));
 }
 
-beforeEach(() => mockDeleteAllAppData.mockReset());
+beforeEach(() => {
+  resetTestDatabase();
+  mockDeleteAllAppData.mockReset();
+});
 
 describe("Forgot Password reset", () => {
   it("asks for a restart once the data is gone", async () => {
