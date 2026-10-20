@@ -11,6 +11,7 @@ export const SettingsKeys = {
   pregnancyCalendarFilters: "pregnancyCalendarFilters",
   pregnancyStartDate: "pregnancyStartDate",
   pregnancyGestationOffsetDays: "pregnancyGestationOffsetDays",
+  theme: "theme",
 };
 
 export const TRACKING_MODES = {

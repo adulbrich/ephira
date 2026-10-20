@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { deleteAllDataInDatabase } from "@/db/database";
+import { deleteAllAppData } from "@/services/deleteAllAppData";
+import {
+  DeletionIncomplete,
+  databaseMayBeGone,
+} from "@/services/deletionIncomplete";
 import { ThemedView } from "@/components/ThemedView";
 import {
   ActivityIndicator,
@@ -14,7 +18,72 @@ import {
   Button,
 } from "react-native-paper";
 import { StyleSheet, Dimensions, Alert, View } from "react-native";
-import { useSelectedDate } from "@/stores/calendar-storage";
+import { useAppRestart } from "@/stores/app-restart";
+import { forgetDeletedData } from "@/stores/forget-deleted-data";
+
+/**
+ * Deletes everything, then lets the app go on as after a launch whenever the
+ * database went, and says how it went. Outside the modal, because the restart
+ * can close the modal before the user answers the alert, and its Try Again
+ * has to work from wherever the app is by then. `retrying` is true for a run
+ * started from that Try Again, in a chain begun by a run that emptied the
+ * database.
+ */
+async function deleteAndStartAgain(retrying = false): Promise<void> {
+  let deleted = true;
+  // Whether the screens behind Settings may now hold rows that are gone.
+  let screensOutOfDate = true;
+  // Whether the lock is known to be gone with the database, on this run or
+  // on the one this retries, so that no lock can sit under the alert.
+  let lockGone = true;
+  try {
+    await deleteAllAppData();
+  } catch (error) {
+    deleted = false;
+    screensOutOfDate = databaseMayBeGone(error);
+    lockGone =
+      retrying ||
+      (error instanceof DeletionIncomplete && error.databaseDeleted);
+  }
+
+  if (screensOutOfDate) {
+    // The stores outlive every screen, so they let go of what they drew from
+    // the database and read back what a launch reads. Then the app starts
+    // again from the first screen, as a launch does: screens that read once
+    // on mount (the lock setting, pregnancy Home, notification settings)
+    // would go on showing what was deleted, and write it back on their next
+    // save. After a rollback the database kept everything, so there is
+    // nothing to let go of. The exports and reminders removed before the
+    // database step stay removed. Reminders come back at the next refresh,
+    // or within moments if the cycle calendar is mounted with predictions
+    // shown and the rollback came after the keyed delete on days: the update
+    // hook reported that delete, so the calendar reads the kept flow again.
+    await forgetDeletedData();
+    useAppRestart.getState().restart();
+  }
+
+  if (deleted) {
+    Alert.alert("Data deleted", "All data has been deleted from this device.");
+  } else {
+    // Try Again only when no lock can be left under the alert, which can
+    // outlive a trip to the background and sit above the lock view, where a
+    // retry would delete behind it. After a first run's rollback the lock is
+    // still there, and so is this screen with the confirmation typed.
+    Alert.alert(
+      "Data not deleted",
+      "Not all data could be deleted.",
+      lockGone
+        ? [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Try Again",
+              onPress: () => void deleteAndStartAgain(true),
+            },
+          ]
+        : undefined,
+    );
+  }
+}
 
 function DeleteDataModal({ onDismiss }: { onDismiss: () => void }) {
   const theme = useTheme();
@@ -23,20 +92,16 @@ function DeleteDataModal({ onDismiss }: { onDismiss: () => void }) {
   const [inputValue, setInputValue] = useState("");
   const [buttonDisabled, setButtonDisabled] = useState(true);
   const [loading, setLoading] = useState(false);
-  const { setDate } = useSelectedDate();
-
   const onDismissModal = () => {
     onDismiss();
   };
 
   const handleDeleteData = async () => {
     setLoading(true);
-    await deleteAllDataInDatabase();
-    setInputValue("");
-    setButtonDisabled(true);
-    Alert.alert("Data deleted", "All data has been deleted from this device.");
+    await deleteAndStartAgain();
+    // Only a rollback leaves this screen open, with the confirmation typed;
+    // every other outcome restarts the app, which closes it.
     setLoading(false);
-    setDate("");
   };
 
   return (

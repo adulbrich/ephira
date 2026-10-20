@@ -44,7 +44,3 @@ export const insertSetting = async (name: string, value: string) => {
 export const deleteSetting = async (name: string) => {
   await db.delete(settings).where(eq(settings.name, name));
 };
-
-export const deleteAllSettings = async () => {
-  await db.delete(settings);
-};
