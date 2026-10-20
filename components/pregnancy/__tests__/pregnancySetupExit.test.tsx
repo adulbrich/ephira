@@ -1,3 +1,8 @@
+/**
+ * Leaving pregnancy setup (#311). It renders the pregnancy home screen, not
+ * the dialog alone, because the screen decides what Cancel and Back do; a
+ * test under `app/` would be a route.
+ */
 import {
   fireEvent,
   render,

@@ -166,6 +166,8 @@ export default function PregnancyHome() {
           visible={setupVisible}
           dismissable={!!startDateIso}
           onDismiss={() => {
+            // A save in flight would land its start date after the switch.
+            if (saving) return;
             // With no start date there is no pregnancy to show, so leaving
             // setup leaves the mode. Cycle is the only other one.
             if (startDateIso) setSetupVisible(false);

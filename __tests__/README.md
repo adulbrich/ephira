@@ -3,7 +3,7 @@
 `npm test` runs Jest once; `npm run test:watch` while you work. Tests live in
 `__tests__/` folders beside the code they cover and are named `*.test.ts` or
 `*.test.tsx`; anything else under `__tests__/` is a helper, not a suite. This
-folder holds the root-level suites and the shared test database helper.
+folder holds the root-level suites and the shared helpers.
 
 ## Code that touches the database
 
@@ -66,6 +66,11 @@ When a component's behaviour lives in its effects, render it with
 - **Paper reuses testIDs**: every `IconButton` is `icon-button` and every `Modal`
   is `modal`. Scope queries with `within(screen.getByTestId("modal"))`.
 - **jest-expo runs as iOS**, where `BackHandler` does nothing.
-  `components/settings/__tests__/hardwareBack.test.tsx` replays Android's Back
-  dispatch for a modal that needs it; `components/__tests__/modalBack.test.ts`
-  checks every modal answers Back, or is listed with the reason it does not.
+  `recordBackPresses` in `helpers/backHandler.ts` replays Android's Back
+  dispatch for a modal that needs it
+  (`components/settings/__tests__/hardwareBack.test.tsx` uses it);
+  `components/__tests__/modalBack.test.ts` checks every modal answers Back, or
+  is listed with the reason it does not.
+- **A screen under `app/` is tested from the `__tests__/` folder of the
+  component it drives**, since expo-router would treat a test file under `app/`
+  as a route.
