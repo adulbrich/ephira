@@ -38,8 +38,9 @@ import Layout from "../layouts/Layout.astro";
       To delete your data, go to <strong>Settings › Data › Delete Data</strong>,
       type in <em>delete data</em> and press <strong>Delete Data</strong>. This
       deletes the days you log, the symptoms, moods and medications you add,
-      and your settings, including the app lock. Uninstalling the app deletes
-      your data too.
+      and your settings, including the app lock. <strong class="font-serif">ephira</strong> 1.5.0 keeps pregnancy
+      mode's data and the history of your period predictions; uninstalling the
+      app deletes those too.
     </p>
     <p>
       <strong class="font-serif">ephira</strong> encrypts your data with a key
@@ -49,9 +50,9 @@ import Layout from "../layouts/Layout.astro";
     </p>
     <ul>
       <li>
-        If your phone's secure key storage fails when ephira first sets up
-        encryption, ephira keeps your data unencrypted, without telling you, and
-        tries again to encrypt it at each launch.
+        If ephira cannot set up encryption, for example because your phone's
+        secure key storage fails, it keeps your data unencrypted, without
+        telling you, and tries again at each launch.
       </li>
       <li>
         On iPhone, a PDF exported with ephira 1.5.0 or earlier is kept where

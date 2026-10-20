@@ -10,8 +10,8 @@ import {
 } from "react-native-paper";
 import type { CyclePhaseDefinition } from "@/constants/CyclePhases";
 
-// An in-app browser keeps the app active on iOS, so the lock does not drop the
-// user back on Home, as PrivacyPolicy does.
+// An in-app browser, as in PrivacyPolicy: on iOS reading a source does not
+// lock the app.
 const handleOpenUrl = (url: string) => {
   WebBrowser.openBrowserAsync(url);
 };

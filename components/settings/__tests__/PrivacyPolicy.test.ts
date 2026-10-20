@@ -1,12 +1,19 @@
-import { existsSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { PRIVACY_POLICY_URL } from "@/components/settings/PrivacyPolicy";
 
+const DOCS = join(__dirname, "../../../docs");
+
 // The website's page is the app's only copy of the policy, so a renamed route
-// would leave the app linking to nothing.
-it("links to a page the website builds", () => {
-  const { pathname } = new URL(PRIVACY_POLICY_URL);
-  expect(
-    existsSync(join(__dirname, "../../../docs/src/pages", `${pathname}.astro`)),
-  ).toBe(true);
+// or a changed domain would leave the app linking to nothing.
+it("links to the policy page on the website's own domain", () => {
+  const url = new URL(PRIVACY_POLICY_URL);
+  const config = readFileSync(join(DOCS, "astro.config.mjs"), "utf8");
+  const site = config.match(/site:\s*["']([^"']+)["']/)?.[1];
+
+  expect(site && new URL(site).origin).toBe(url.origin);
+  expect(readdirSync(join(DOCS, "src/pages"))).toContain(
+    `${url.pathname.slice(1)}.astro`,
+  );
+  expect(url.pathname).not.toBe("/index");
 });
