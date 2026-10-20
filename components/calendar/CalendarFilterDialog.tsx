@@ -257,7 +257,7 @@ export default function CalendarFilterDialog({
                 }}
               />
               {/* The switch shows while predictions are on and there is data
-                  to draw, or the filter was selected when the dialog opened.
+                  to draw, or the filter is in the applied list.
                   The calendar's note needs a forecast instead: a selected
                   filter must stay removable, and the switch must not vanish
                   under the finger that turns it off. */}
