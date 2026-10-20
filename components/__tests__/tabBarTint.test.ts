@@ -1,6 +1,6 @@
 /**
- * Every tab bar names both of its tints, and both read in every theme, light
- * and dark.
+ * Every tab bar sets both of its tints from the Paper theme, and both read
+ * against the bar in every theme, light and dark.
  *
  * A tab bar without its own inactive tint falls back to React Navigation's
  * theme, which this app never sets, so it stays light: in dark mode the
@@ -8,10 +8,13 @@
  * against it. A render test of a layout would mostly exercise mocks of its
  * database wait and the splash screen, so, like `modalBack.test.ts`, this reads
  * the source: which Paper colour each layout passes, then that colour against
- * the theme's background.
+ * the theme's background. Android's bar is that background; iOS's is a blur of
+ * the screen behind it, which the background only approximates.
  *
- * The background stands in for the iOS bar, a blur that follows the same
- * system appearance the Paper theme does; Android's bar is the background.
+ * What it cannot see: a tint set through a variable or a spread, a tab icon
+ * that ignores the colour it is handed, and a `//` inside a string, which it
+ * strips as a comment. It does not compare the active tint with the inactive
+ * one: in dark mode they differ in hue, not lightness.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -21,7 +24,10 @@ import { themeButtonColors } from "@/constants/Colors";
 const ROOT = path.resolve(__dirname, "../..");
 /** WCAG AA for text, since the same tint colours each tab's label. */
 const MINIMUM_CONTRAST = 4.5;
-const TINT = /(tabBar(?:Active|Inactive)TintColor):\s*theme\.colors\.(\w+)/g;
+const COMMENT = /\/\*[\s\S]*?\*\/|\/\/.*$/gm;
+/** A tint option and the expression it is set to, up to the next `,` or `}`. */
+const TINT = /\b(tabBar(?:Active|Inactive)TintColor)\s*:\s*([^,\n}]+)/g;
+const PAPER_COLOUR = /^theme\.colors\.(\w+)$/;
 
 function tabLayouts(dir: string): string[] {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -34,18 +40,34 @@ function tabLayouts(dir: string): string[] {
   });
 }
 
+/** Every tint the source sets, with the Paper colour key when it is one. */
+function tints(source: string) {
+  return [...source.replace(COMMENT, "").matchAll(TINT)].map(
+    ([, option, value]) => ({
+      option,
+      value: value.trim(),
+      key: PAPER_COLOUR.exec(value.trim())?.[1],
+    }),
+  );
+}
+
 /** `#RRGGBB` or an opaque `rgb()`/`rgba()`, as Paper and the themes write them. */
 function channels(color: string): number[] {
   const hex = /^#([0-9a-f]{6})$/i.exec(color);
-  if (hex) {
-    return [0, 2, 4].map((i) => parseInt(hex[1].slice(i, i + 2), 16));
-  }
-  const rgb = /^rgba?\(([^)]*)\)$/.exec(color);
-  const parts = rgb?.[1].split(",").map(Number);
-  if (!parts || parts.length < 3 || (parts.length === 4 && parts[3] !== 1)) {
+  if (hex) return [0, 2, 4].map((i) => parseInt(hex[1].slice(i, i + 2), 16));
+  const parts = /^rgba?\(([^)]*)\)$/
+    .exec(color)?.[1]
+    .split(",")
+    .map((part) => part.trim());
+  const rgb = parts
+    ?.slice(0, 3)
+    .map((part) => (/^\d{1,3}$/.test(part) ? Number(part) : Number.NaN));
+  const opaque =
+    parts?.length === 3 || (parts?.length === 4 && Number(parts[3]) === 1);
+  if (!rgb || !opaque || rgb.some((value) => !(value <= 255))) {
     throw new Error(`cannot measure ${color}: not an opaque colour`);
   }
-  return parts.slice(0, 3);
+  return rgb;
 }
 
 function luminance(color: string): number {
@@ -68,6 +90,42 @@ const cases = (
   (["light", "dark"] as const).map((mode) => ({ name, mode })),
 );
 
+describe("the measure", () => {
+  it("reads a tint and skips one in a comment", () => {
+    expect(
+      tints(`
+        tabBarActiveTintColor: theme.colors.primary,
+        // tabBarInactiveTintColor: theme.colors.outline,
+        tabBarInactiveTintColor: "#1C1C1E",
+      `),
+    ).toEqual([
+      {
+        option: "tabBarActiveTintColor",
+        value: "theme.colors.primary",
+        key: "primary",
+      },
+      {
+        option: "tabBarInactiveTintColor",
+        value: '"#1C1C1E"',
+        key: undefined,
+      },
+    ]);
+  });
+
+  it("puts black on white at 21:1 and refuses what it cannot measure", () => {
+    expect(contrast("#000000", "#FFFFFF")).toBeCloseTo(21);
+    expect(contrast("#777777", "#FFFFFF")).toBeLessThan(MINIMUM_CONTRAST);
+    for (const color of [
+      "rgba(28, 28, 30, 0.5)",
+      "rgb(11%, 11%, 12%)",
+      "rgb(, , )",
+      "#fff",
+    ]) {
+      expect(() => channels(color)).toThrow("not an opaque colour");
+    }
+  });
+});
+
 describe("tab bar tints", () => {
   it("finds the tab layouts", () => {
     expect(layouts).toEqual(
@@ -79,23 +137,20 @@ describe("tab bar tints", () => {
   });
 
   describe.each(layouts)("%s", (layout) => {
-    const tints = Object.fromEntries(
-      [...fs.readFileSync(path.join(ROOT, layout), "utf8").matchAll(TINT)].map(
-        ([, option, color]) => [option, color],
-      ),
-    );
+    const set = tints(fs.readFileSync(path.join(ROOT, layout), "utf8"));
 
-    it("sets both tints from the Paper theme", () => {
-      expect(Object.keys(tints).sort()).toEqual([
+    it("sets both tints, each from the Paper theme", () => {
+      expect([...new Set(set.map((tint) => tint.option))].sort()).toEqual([
         "tabBarActiveTintColor",
         "tabBarInactiveTintColor",
       ]);
+      expect(set.filter((tint) => tint.key === undefined)).toEqual([]);
     });
 
     it.each(cases)("reads in $name, $mode", ({ name, mode }) => {
       const { colors } = getTheme(name, mode === "dark");
-      const unreadable = Object.entries(tints)
-        .map(([option, key]) => {
+      const unreadable = set
+        .map(({ option, key }) => {
           const color = colors[key as keyof typeof colors];
           if (typeof color !== "string") {
             throw new Error(`${option}: theme.colors.${key} is not a colour`);
@@ -106,7 +161,7 @@ describe("tab bar tints", () => {
             contrast: contrast(color, colors.background),
           };
         })
-        .filter((tint) => tint.contrast < MINIMUM_CONTRAST);
+        .filter((tint) => !(tint.contrast >= MINIMUM_CONTRAST));
 
       expect(unreadable).toEqual([]);
     });
