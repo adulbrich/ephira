@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { deleteAllDataInDatabase } from "@/db/database";
+import { deleteAllAppData } from "@/services/deleteAllAppData";
 import { ThemedView } from "@/components/ThemedView";
 import {
   ActivityIndicator,
@@ -31,11 +31,21 @@ function DeleteDataModal({ onDismiss }: { onDismiss: () => void }) {
 
   const handleDeleteData = async () => {
     setLoading(true);
-    await deleteAllDataInDatabase();
+    try {
+      await deleteAllAppData();
+    } catch {
+      // The confirmation stays typed, so trying again is one tap.
+      Alert.alert(
+        "Data not deleted",
+        "Not all data could be deleted from this device. Try again.",
+      );
+      return;
+    } finally {
+      setLoading(false);
+    }
     setInputValue("");
     setButtonDisabled(true);
     Alert.alert("Data deleted", "All data has been deleted from this device.");
-    setLoading(false);
     setDate("");
   };
 

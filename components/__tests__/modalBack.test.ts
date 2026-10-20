@@ -36,7 +36,8 @@ const BY_DESIGN = [
   // The lock screen's password prompt: Back must not dismiss a lock.
   "components/PasswordAuthenticationView.tsx: a Paper modal with dismissable={false}",
   // The lock screen's data-deletion notice: while data is deleted, and after,
-  // there is nothing to go back to; it asks for a restart.
+  // there is nothing to go back to; it asks for a restart, or offers to try
+  // again.
   "components/PasswordAuthenticationView.tsx: a Paper modal with dismissable={false}",
 ];
 

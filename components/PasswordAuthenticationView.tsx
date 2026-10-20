@@ -8,7 +8,7 @@ import {
   useTheme,
   ActivityIndicator,
 } from "react-native-paper";
-import { deleteAllDataInDatabase } from "@/db/database";
+import { deleteAllAppData } from "@/services/deleteAllAppData";
 
 function ForgotPassword({
   onCancel,
@@ -59,7 +59,15 @@ function ForgotPassword({
   );
 }
 
-function DeleteDataDialog({ loading }: { loading: boolean }) {
+function DeleteDataDialog({
+  loading,
+  failed,
+  onRetry,
+}: {
+  loading: boolean;
+  failed: boolean;
+  onRetry: () => void;
+}) {
   return (
     <Portal>
       <Dialog visible dismissable={false}>
@@ -69,12 +77,23 @@ function DeleteDataDialog({ loading }: { loading: boolean }) {
         <Dialog.Content>
           {loading ? (
             <ActivityIndicator />
+          ) : failed ? (
+            <Text style={{ marginBottom: 16 }}>
+              Some data could not be deleted. Try again.
+            </Text>
           ) : (
             <Text style={{ marginBottom: 16 }}>
               Data and password have been deleted. Please restart the app.
             </Text>
           )}
         </Dialog.Content>
+        {/* Retried here, because after a restart the lock may be gone and
+            Forgot Password with it, if the database went but a file did not. */}
+        {!loading && failed && (
+          <Dialog.Actions>
+            <Button onPress={onRetry}>Try Again</Button>
+          </Dialog.Actions>
+        )}
       </Dialog>
     </Portal>
   );
@@ -91,16 +110,29 @@ export default function PasswordAuthenticationView({
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [deleteData, setDeleteData] = useState<boolean>(false);
+  const [deleteFailed, setDeleteFailed] = useState<boolean>(false);
 
   const handleResetPassword = async () => {
     setDeleteData(true);
     setLoading(true);
-    await deleteAllDataInDatabase();
-    setLoading(false);
+    try {
+      await deleteAllAppData();
+      setDeleteFailed(false);
+    } catch {
+      setDeleteFailed(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (deleteData) {
-    return <DeleteDataDialog loading={loading} />;
+    return (
+      <DeleteDataDialog
+        loading={loading}
+        failed={deleteFailed}
+        onRetry={handleResetPassword}
+      />
+    );
   }
 
   if (showForgotPassword) {

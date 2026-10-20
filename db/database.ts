@@ -7,12 +7,7 @@ import { deleteAllMoodEntries } from "@/db/operations/moodEntries";
 import { deleteAllMoods, insertMood } from "@/db/operations/moods";
 import { deleteAllSymptomEntries } from "@/db/operations/symptomEntries";
 import { deleteAllSymptoms, insertSymptom } from "@/db/operations/symptoms";
-import { deleteAllDays } from "@/db/operations/days";
-import {
-  deleteAllSettings,
-  getSetting,
-  updateSetting,
-} from "@/db/operations/settings";
+import { getSetting, updateSetting } from "@/db/operations/settings";
 import { symptomOptions } from "@/constants/Symptoms";
 import { moodOptions } from "@/constants/Moods";
 import { medicationOptions } from "@/constants/Medications";
@@ -20,7 +15,8 @@ import { birthControlOptions } from "@/constants/BirthControlTypes";
 import { SettingsKeys } from "@/constants/Settings";
 import { getDrizzleDatabase } from "@/db/operations/setup";
 import * as schema from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
+import type { SQLiteTable } from "drizzle-orm/sqlite-core";
 import type { ExportData } from "@/constants/Interfaces";
 
 const db = getDrizzleDatabase();
@@ -151,21 +147,48 @@ export async function getAllDataAsJson() {
   }
 }
 
-export async function deleteAllDataInDatabase() {
-  try {
-    await deleteAllMedicationEntries();
-    await deleteAllMedications();
-    await deleteAllMoodEntries();
-    await deleteAllMoods();
-    await deleteAllSymptomEntries();
-    await deleteAllSymptoms();
-    await deleteAllDays();
-    await deleteAllSettings();
+/**
+ * Every table that holds what the user stored, children before parents, since
+ * foreign keys are on in tests.
+ *
+ * A list rather than every table in sqlite_master: the device also has
+ * drizzle's __drizzle_migrations, and emptying it would make the next launch
+ * run every migration again. db/__tests__/deleteAllData.test.ts fails when a
+ * table in db/schema.ts is missing here.
+ */
+const TABLES_CHILDREN_FIRST: SQLiteTable[] = [
+  schema.medicationEntries,
+  schema.moodEntries,
+  schema.symptomEntries,
+  schema.medications,
+  schema.moods,
+  schema.symptoms,
+  schema.days,
+  schema.predictionSnapshots,
+  schema.pregnancyDays,
+  schema.pregnancyAppointments,
+  schema.settings,
+];
 
-    console.log("All database data has been deleted successfully.");
-  } catch (error) {
-    console.error("Error deleting database data:", error);
-  }
+/**
+ * Deletes every row the app has stored, or none, and rejects if it could not.
+ *
+ * One transaction, so a failure or a kill part-way leaves the database as it
+ * was. Before it was one, a kill after the catalogue went but before settings
+ * did left databaseInitialSetup saying a catalogue had been seeded, and none
+ * ever was again. The callback is synchronous because both drivers are: the
+ * expo-sqlite one commits as soon as the callback returns, awaited or not.
+ *
+ * VACUUM afterwards rebuilds the file without the free pages the deleted rows
+ * would otherwise stay in until something overwrote them.
+ */
+export async function deleteAllDataInDatabase() {
+  db.transaction((tx) => {
+    for (const table of TABLES_CHILDREN_FIRST) tx.delete(table).run();
+    // The highest id each table has issued, which still counts what there was.
+    tx.run(sql`DELETE FROM sqlite_sequence`);
+  });
+  db.run(sql`VACUUM`);
 }
 
 // This is used the first time the app is opened to insert the default
