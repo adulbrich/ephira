@@ -1,7 +1,7 @@
 ---
 import Question from "../components/Question.astro";
 import Shot from "../components/Shot.astro";
-import StoreBadges from "../components/StoreBadges.astro";
+import Download from "../components/Download.astro";
 import Layout from "../layouts/Layout.astro";
 
 import calendar from "../assets/screens/calendar.webp";
@@ -27,7 +27,7 @@ const tour = [
     title: "Today at a glance",
     body: "Where you are in your cycle and your latest period, on one screen.",
     src: home,
-    alt: "The home screen: a ring showing the cycle so far, today's date, and the five most recent flow days",
+    alt: "The home screen: the current cycle phase, a ring of this month's flow days with today marked, and the five most recent flow days",
   },
   {
     title: "Your month, marked",
@@ -61,7 +61,7 @@ const tour = [
   },
   {
     title: "Lock it",
-    body: "Your phone's Face ID, fingerprint or passcode, or a password just for ephira.",
+    body: "Your phone's own unlock, passcode included, or a password just for ephira.",
     src: lock,
     alt: "The lock screen in dark mode, asking for the ephira password",
   },
@@ -82,11 +82,11 @@ const tour = [
 const faq = [
   {
     question: "Where is my data stored?",
-    answer: "On your phone, in a database encrypted with SQLCipher. The key stays on that phone, so no other phone can open the database, not even one restored from your backup. A backup made before ephira began encrypting can still hold a readable copy.",
+    answer: "On your phone, in a database encrypted with SQLCipher. Its key never leaves that phone, so a backup restores your data only to the phone it came from. A backup made before ephira began encrypting can still hold a readable copy.",
   },
   {
     question: "Do I need an account?",
-    answer: "No. Install it and start logging. The optional lock uses your phone's Face ID, fingerprint or passcode, or a password you set in the app.",
+    answer: "No. Install it and start logging. The optional lock uses your phone's own unlock, passcode included, or a password you set in the app.",
   },
   {
     question: "What happens when I change phones?",
@@ -94,7 +94,7 @@ const faq = [
   },
   {
     question: "When do predictions start?",
-    answer: "Once you have logged two periods of three or more flow days, turn on Cycle Predictions in Settings.",
+    answer: "Once you have logged two periods of three or more consecutive flow days, turn on Cycle Predictions in Settings.",
   },
   {
     question: "How do I delete my data?",
@@ -121,7 +121,7 @@ const faq = [
         What you log is encrypted with a key that never leaves your phone. There is no account to
         make and no server to trust.
       </p>
-      <StoreBadges id="download" class="mt-8" />
+      <Download id="download" class="mt-8" />
     </div>
     <aside
       aria-labelledby="receipt"
