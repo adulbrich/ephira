@@ -118,3 +118,29 @@ describe("exportPDF", () => {
     expect(pages[0]).not.toContain("Kicks");
   });
 });
+
+describe("text the PDF's font cannot draw", () => {
+  it("is replaced rather than failing the whole export", async () => {
+    // Helvetica draws WinAnsi only. One emoji in a note used to make pdf-lib
+    // throw, and the user got "Something went wrong" instead of a PDF. The
+    // JSON and CSV exports keep the text as written.
+    const [cycle, pregnancy] = await pagesOfText({
+      ...data,
+      dailyData: {
+        "2026-06-01": { ...cycleDay, notes: "cramps \u{1F622} all day" },
+      },
+      pregnancyDays: {
+        "2026-09-15": {
+          symptoms: [],
+          moods: [],
+          notes: "kicked \u{1F495} hard, café",
+        },
+      },
+      pregnancyAppointments: { "2026-10-05": [{ title: "УЗИ" }] },
+    });
+
+    expect(cycle).toContain("cramps ? all day");
+    expect(pregnancy).toContain("kicked ? hard, café");
+    expect(pregnancy).toContain("???");
+  });
+});

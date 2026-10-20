@@ -9,10 +9,11 @@ import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import type { ExportData, ExportDayEntry } from "../../constants/Interfaces";
 import {
-  appointmentDetail,
+  appointmentsDetail,
   birthControlDetail,
   dayLabel,
   groupEntriesByMonth,
+  kicksText,
   pregnancyEntries,
   type PregnancyExportEntry,
 } from "@/services/exportRows";
@@ -26,6 +27,23 @@ const columnWidths = [50, 50, 110, 110, 120, 120];
 const tableWidth = columnWidths.reduce((a, b) => a + b, 0);
 const flowMap = ["", "Spotting", "Light", "Medium", "Heavy"];
 const lightGray = rgb(0.95, 0.95, 0.95);
+
+/**
+ * `text` with each character the font cannot encode replaced by "?".
+ *
+ * The standard fonts draw WinAnsi only, and pdf-lib throws on anything else, so
+ * one emoji in a note, or a month name in a non-Latin script, used to fail the
+ * whole export. The PDF is a copy to read; the JSON and CSV keep the text as
+ * written. Whitespace stays: wrapText splits on it before anything is drawn.
+ */
+function drawable(text: string, encodable: Set<number>): string {
+  let out = "";
+  for (const char of text) {
+    const codePoint = char.codePointAt(0) ?? 0;
+    out += /\s/.test(char) || encodable.has(codePoint) ? char : "?";
+  }
+  return out;
+}
 
 // wrap text to fit within the specified number of characters
 function wrapText(text: string, maxChars: number): string[] {
@@ -158,10 +176,10 @@ function cycleRow(entry: ExportDayEntry): string[] {
 function pregnancyRow({ date, day, appointments }: PregnancyExportEntry) {
   return [
     dayLabel(date),
-    day?.kicks === undefined ? "" : String(day.kicks),
+    kicksText(day),
     day?.moods.join(", ") ?? "",
     day?.symptoms.join(", ") ?? "",
-    appointments.map(appointmentDetail).join("; "),
+    appointmentsDetail(appointments),
     day?.notes ?? "",
   ];
 }
@@ -176,6 +194,7 @@ export async function exportPDF(data: ExportData) {
     const pdfDoc = await PDFDocument.create();
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const encodable = new Set(font.getCharacterSet());
 
     let page = pdfDoc.addPage();
     const { width, height } = page.getSize();
@@ -220,7 +239,7 @@ export async function exportPDF(data: ExportData) {
 
       y -= lineHeight * 2;
 
-      page.drawText(monthLabel, {
+      page.drawText(drawable(monthLabel, encodable), {
         x: margin,
         y,
         size: fontSize + 2,
@@ -275,7 +294,7 @@ export async function exportPDF(data: ExportData) {
 
         let rowNum = 0;
         for (const entry of monthEntries) {
-          const row = toRow(entry);
+          const row = toRow(entry).map((cell) => drawable(cell, encodable));
           const rowHeight = getRowHeight(row);
 
           // check if we need to add a new page, if so, add page and headers
