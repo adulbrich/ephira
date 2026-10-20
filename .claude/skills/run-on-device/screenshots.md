@@ -16,17 +16,19 @@ data.
      medication entries, so a seed must not run on that launch.
    - Write a throwaway module named `*.local.ts`, which `.gitignore` keeps out of
      commits, outside `app/`, where expo-router would read it as a route
-     (`db/seed.local.ts` works). It calls the `db/operations` insert helpers,
-     which upsert by date and by entry, so running it again finishes a seed a
-     reload cut short and changes nothing after one that completed.
+     (`db/seed.local.ts` works). It calls the Day, Entry and Catalogue insert
+     helpers in `db/operations` with fixed dates, never ones counted from today.
+     Those helpers update a row that already exists (an Entry matches on its
+     Day and Catalogue item), so running it again finishes a seed a reload cut
+     short and changes nothing after one that completed.
    - Call it in `app/_layout.tsx`'s setup effect after the first-launch block,
      behind one shared promise (`running ??= seed()`), because that effect can
      run twice. Relaunch to seed, then relaunch again before capturing: the
      insert helpers signal no change, so screens that loaded during the seed
      show partial data.
-   - Remove the call when you are done. A commit that keeps it fails CI's
-     typecheck (an `import`) or the release build (a `require`), since the
-     module it names is not in the repository.
+   - Remove the call when you are done. A commit that keeps it fails CI: an
+     `import` of a module the repository lacks fails typecheck, and a `require`
+     fails ESLint's `no-require-imports`.
 3. **Clean the status bar.**
    `xcrun simctl status_bar <udid> override --time 9:41 --batteryState charged --batteryLevel 100`.
    A relaunch through another app can leave a "Settings" breadcrumb in the status
