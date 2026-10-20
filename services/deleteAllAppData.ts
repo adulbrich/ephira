@@ -35,6 +35,12 @@ export async function deleteAllAppData(): Promise<void> {
       ],
     ),
     ["database", deleteAllDataInDatabase],
+    // Again: a prediction refresh that read the flow before the database went
+    // can have scheduled since the first cancel. None can after it.
+    [
+      "notifications scheduled during the delete",
+      Notifications.cancelAllScheduledNotificationsAsync,
+    ],
   ];
 
   const failed: string[] = [];

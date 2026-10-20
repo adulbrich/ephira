@@ -183,14 +183,18 @@ const TABLES_CHILDREN_FIRST: SQLiteTable[] = [
  * ever was again. The callback is synchronous because both drivers are: the
  * expo-sqlite one commits as soon as the callback returns, awaited or not.
  *
- * VACUUM afterwards rebuilds the file without the free pages the deleted rows
- * would otherwise stay in until something overwrote them. It rewrites the
- * whole file through the journal, so a nearly full disk refuses it; the delete
- * stands then, and the rows stay in free pages, encrypted, until later writes
- * reuse them. Reporting that as a failed delete would be wrong, and a retry on
- * the same disk would fail the same way.
+ * secure_delete is on, so SQLite overwrites what it deletes with zeros instead
+ * of leaving it in free pages. VACUUM afterwards
+ * rebuilds the file, which also drops what earlier, ordinary deletes left
+ * there. It rewrites the whole file through the journal, so a nearly full disk
+ * refuses it; the delete stands then, and is not reported as failed, since a
+ * retry on the same disk would fail the same way.
  */
 export async function deleteAllDataInDatabase() {
+  // SQLCipher builds have it on already; this does not rely on that. all, not
+  // run: the pragma answers with a row, expo-sqlite's run stops at that row,
+  // and a statement left mid-step makes SQLite refuse the VACUUM below.
+  db.all(sql`PRAGMA secure_delete = ON`);
   db.transaction((tx) => {
     for (const table of TABLES_CHILDREN_FIRST) {
       // A DELETE with no WHERE empties the table without visiting its rows,

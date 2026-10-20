@@ -112,6 +112,19 @@ describe("deleteAllAppData", () => {
     expect(catalogueInvalidated).toHaveBeenCalled();
   });
 
+  it("cancels what a prediction refresh scheduled while it ran", async () => {
+    // A refresh that read the flow before the delete can schedule after the
+    // first cancel and before the database goes.
+    await leaveDataEverywhere();
+    mockDeleteFile.mockImplementationOnce(async () => {
+      mockScheduled.add("Period Coming Soon");
+    });
+
+    await deleteAllAppData();
+
+    expect([...mockScheduled]).toEqual([]);
+  });
+
   it("finishes when no export was ever made", async () => {
     await expect(deleteAllAppData()).resolves.toBeUndefined();
   });

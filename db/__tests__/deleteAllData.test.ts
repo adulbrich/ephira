@@ -116,6 +116,18 @@ const messages = (error: unknown): string[] => {
   return [String(message), ...messages(cause)];
 };
 
+/** Fails VACUUM as a nearly full disk does, and runs every other statement. */
+function failVacuum() {
+  const db = getTestDatabase();
+  const run = db.run.bind(db);
+  jest.spyOn(db, "run").mockImplementation((query) => {
+    if (JSON.stringify(query).includes("VACUUM")) {
+      throw new Error("database or disk is full");
+    }
+    return run(query);
+  });
+}
+
 /** Tables a seeded database left empty, which would make the test vacuous. */
 const emptyTables = (counts: Record<string, number>) =>
   Object.entries(counts)
@@ -215,14 +227,25 @@ describe("deleteAllDataInDatabase", () => {
     // refuses it. The rows are gone by then, and a retry on the same disk
     // would fail the same way.
     seedEveryTable();
-    jest.spyOn(getTestDatabase(), "run").mockImplementationOnce(() => {
-      throw new Error("database or disk is full");
-    });
+    failVacuum();
 
     await expect(deleteAllDataInDatabase()).resolves.toBeUndefined();
 
     const counts = rowCounts();
     expect(emptyTables(counts).sort()).toEqual(Object.keys(counts).sort());
+  });
+
+  it("leaves no deleted row readable in the file when VACUUM fails", async () => {
+    const marker = "a note only this test writes";
+    getTestDatabase()
+      .insert(schema.pregnancyDays)
+      .values({ date: "2026-05-01", notes: marker.repeat(50) })
+      .run();
+    failVacuum();
+
+    await deleteAllDataInDatabase();
+
+    expect(getDatabase().serialize().includes(marker)).toBe(false);
   });
 
   it("keeps the record of which migrations have run", async () => {
