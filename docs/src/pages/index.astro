@@ -1,4 +1,5 @@
 ---
+import Question from "../components/Question.astro";
 import Shot from "../components/Shot.astro";
 import StoreBadges from "../components/StoreBadges.astro";
 import Layout from "../layouts/Layout.astro";
@@ -60,7 +61,7 @@ const tour = [
   },
   {
     title: "Lock it",
-    body: "Face ID or fingerprint, or a password just for ephira.",
+    body: "Your phone's Face ID, fingerprint or passcode, or a password just for ephira.",
     src: lock,
     alt: "The lock screen in dark mode, asking for the ephira password",
   },
@@ -72,7 +73,7 @@ const tour = [
   },
   {
     title: "Take it with you",
-    body: "Your flow, symptoms, moods, medications and notes, as CSV, PDF or JSON.",
+    body: "Your flow, symptoms, moods, medications, birth control and notes, as CSV, PDF or JSON.",
     src: exportData,
     alt: "Exporting data as a PDF, with the share sheet open on a 6 KB file",
   },
@@ -80,24 +81,24 @@ const tour = [
 
 const faq = [
   {
-    q: "Where is my data stored?",
-    a: "On your phone only, in a database encrypted with SQLCipher (AES-256). The key never leaves your phone.",
+    question: "Where is my data stored?",
+    answer: "On your phone, in a database encrypted with SQLCipher. The key stays on that phone, so no other phone can open the database, not even one restored from your backup. A backup made before ephira began encrypting can still hold a readable copy.",
   },
   {
-    q: "Do I need an account?",
-    a: "No. Install it and start logging. The optional lock uses your phone's Face ID or fingerprint, or a password you set in the app.",
+    question: "Do I need an account?",
+    answer: "No. Install it and start logging. The optional lock uses your phone's Face ID, fingerprint or passcode, or a password you set in the app.",
   },
   {
-    q: "What happens when I change phones?",
-    a: "Your data does not move to a new phone, and the app cannot import an export. Export first to keep a copy of your flow, symptoms, moods, medications and notes.",
+    question: "What happens when I change phones?",
+    answer: "Your data does not move to a new phone, and the app cannot import an export. Export first to keep a copy of your flow, symptoms, moods, medications, birth control and notes.",
   },
   {
-    q: "When do predictions start?",
-    a: "After two complete cycles, from your own logged history. You can turn them off in Settings.",
+    question: "When do predictions start?",
+    answer: "Once you have logged two periods of three or more flow days, turn on Cycle Predictions in Settings.",
   },
   {
-    q: "How do I delete my data?",
-    a: "In Settings, open Data and choose Delete Data. Uninstalling the app deletes its data too.",
+    question: "How do I delete my data?",
+    answer: "In Settings, open Data and choose Delete Data. Uninstalling the app deletes its data too.",
   },
 ];
 ---
@@ -117,11 +118,10 @@ const faq = [
         The period tracker with nothing to sync.
       </h1>
       <p class="mt-5 max-w-lg text-lg text-white/70">
-        Everything you log is encrypted and stays on your phone. There is no account to make and
-        no server to trust.
+        What you log is encrypted with a key that never leaves your phone. There is no account to
+        make and no server to trust.
       </p>
-      {/* Apple's badge license allows one App Store badge per layout. */}
-      <StoreBadges id="download" class="mt-8 scroll-mt-28" />
+      <StoreBadges id="download" class="mt-8" />
     </div>
     <aside
       aria-labelledby="receipt"
@@ -154,9 +154,10 @@ const faq = [
     <ol
       tabindex="0"
       aria-label="Screenshots of ephira"
-      class="mt-8 flex snap-x snap-mandatory scroll-px-5 gap-5 overflow-x-auto px-5 pt-3 pb-6 focus-visible:outline-2 focus-visible:outline-cream md:scroll-px-[max(2rem,calc((100%_-_72rem)/2_+_2rem))] md:px-[max(2rem,calc((100%_-_72rem)/2_+_2rem))]"
+      class="mt-8 flex snap-x snap-mandatory scroll-px-5 gap-5 overflow-x-auto px-5 pt-3 pb-6 focus-visible:outline-2 focus-visible:outline-cream md:[--gutter:max(2rem,calc((100%_-_72rem)/2_+_2rem))] md:scroll-px-(--gutter) md:px-(--gutter)"
     >
       {
+        /* sizes names the li's widths: w-52 is 208px, md:w-60 is 240px. */
         tour.map((item, i) => (
           <li class="w-52 shrink-0 snap-start md:w-60">
             <Shot
@@ -177,36 +178,14 @@ const faq = [
     <h2 id="faq" class="font-serif text-3xl font-bold text-cream md:text-4xl">Questions</h2>
     <div class="mt-8 divide-y divide-white/10 border-y border-white/10">
       {
-        faq.map(({ q, a }) => (
-          <details class="group py-5">
-            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-medium text-white [&::-webkit-details-marker]:hidden">
-              {q}
-              <span
-                aria-hidden="true"
-                class="text-2xl leading-none text-cream transition group-open:rotate-45"
-              >
-                +
-              </span>
-            </summary>
-            <p class="mt-3 text-white/70">{a}</p>
-          </details>
+        faq.map(({ question, answer }) => (
+          <Question question={question}>{answer}</Question>
         ))
       }
-      <details class="group py-5">
-        <summary
-          class="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-medium text-white [&::-webkit-details-marker]:hidden"
-        >
-          Can I check any of this?
-          <span
-            aria-hidden="true"
-            class="text-2xl leading-none text-cream transition group-open:rotate-45">+</span
-          >
-        </summary>
-        <p class="mt-3 text-white/70">
-          Yes. ephira is MIT licensed and the whole source is on
-          <a class="text-cream underline" href="https://github.com/adulbrich/ephira">GitHub</a>.
-        </p>
-      </details>
+      <Question question="Can I check any of this?">
+        Yes. ephira is MIT licensed and the whole source is on
+        <a class="text-cream underline" href="https://github.com/adulbrich/ephira">GitHub</a>.
+      </Question>
     </div>
   </section>
 </Layout>

@@ -11,8 +11,8 @@ Two unrelated things share this directory, and the name says only one of them.
 
 An architecture decision record goes in `adr/`, numbered in sequence, when a
 decision would otherwise be re-litigated. Implementation plans go in `plans/`,
-and the instructions the agent skills read go in `agents/`. Documentation never
-goes under `src/`: that is the website.
+and the instructions the agent skills read go in `agents/`. The website's rules
+are in `AGENTS.md`. Documentation never goes under `src/`: that is the website.
 
 The rest of this file is about the website.
 
@@ -43,6 +43,7 @@ Inside of your Astro project, you'll see the following folders and files:
 │   ├── components/
 │   │   ├── Footer.astro
 │   │   ├── Header.astro
+│   │   ├── Question.astro
 │   │   ├── Shot.astro
 │   │   └── StoreBadges.astro
 │   ├── layouts/
@@ -72,35 +73,13 @@ dropped the Astro integration in favour of a Vite plugin, which does not inject
 the stylesheet for you: remove that import and every page still builds and still
 deploys, with no styles at all.
 
-The brand colours live once, in `global.css`'s `@theme` block, and pages use
-them as utilities (`bg-plum-950`, `text-cream`). Add a colour there rather than
-writing its hex into a class.
-
 ## Screenshots
 
 The landing page shows stills, not video: the screen recordings it used to
 autoplay cost a visitor about 47 MB. `src/assets/screens/` holds one WebP per
 screen at 959 px wide, and `Shot.astro` asks Astro for 360 and 720 px AVIF and
-WebP copies, so a phone downloads only what fits its screen. Anything under
-`public/` skips that step and ships byte for byte, so images go in `src/assets`.
-
-They were captured on an iOS simulator with fictional demo data. No seed script
-is committed: the data came from a throwaway module that calls the
-`db/operations` insert helpers, imported in `app/_layout.tsx` right after
-`setupEntryTypes()` and guarded to run once per JavaScript context, because that
-effect fires twice and a second run hits the unique index on `symptoms.name`. To
-retake one,
-use the `run-on-device` skill, set a clean status bar first, and capture with
-`simctl` rather than a window screenshot:
-
-```sh
-xcrun simctl status_bar <udid> override --time 9:41 --batteryState charged --batteryLevel 100
-xcrun simctl io <udid> screenshot shot.png
-sips -Z 2077 shot.png --out shot-small.png
-cwebp -q 88 shot-small.png -o src/assets/screens/<name>.webp
-```
-
-Never use real data in a screenshot: the repository and the site are public.
+WebP copies, so a phone downloads only what fits its screen. To retake one, follow
+the `run-on-device` skill's `screenshots.md`.
 
 ## Commands
 

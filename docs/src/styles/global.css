@@ -17,3 +17,9 @@
   --color-paper: #f8f3ea;
   --color-ink: #2b2430;
 }
+
+/* The sticky header covers the top of the viewport, so whatever scrolls into
+ * view there, an anchor target or a focused element, stops below it. */
+html {
+  scroll-padding-top: 5rem;
+}

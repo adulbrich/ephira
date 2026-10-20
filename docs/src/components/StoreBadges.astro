@@ -1,7 +1,9 @@
 ---
 // Both badges are served from this site. Apple's badge used to be hotlinked,
 // which sent every visitor's address to two Apple hosts before they had
-// clicked anything; the SVG is Apple's own, downloaded unchanged.
+// clicked anything; the SVG is Apple's own, downloaded unchanged. Apple's
+// badge license allows one App Store badge per layout, so a page renders this
+// component once.
 import { Picture } from "astro:assets";
 import appStore from "../assets/app-store-badge.svg";
 import googlePlay from "../assets/google-play-badge.png";

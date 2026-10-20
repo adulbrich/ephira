@@ -10,17 +10,13 @@ interface Props {
   alt: string;
   sizes: string;
   eager?: boolean;
-  class?: string;
 }
 
-const { src, alt, sizes, eager = false, class: className } = Astro.props;
+const { src, alt, sizes, eager = false } = Astro.props;
 ---
 
 <div
-  class:list={[
-    "rounded-[2.1rem] bg-black p-1.5 shadow-2xl shadow-black/40 ring-1 ring-white/10",
-    className,
-  ]}
+  class="rounded-[2.1rem] bg-black p-1.5 shadow-2xl shadow-black/40 ring-1 ring-white/10"
 >
   <Picture
     src={src}
