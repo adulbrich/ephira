@@ -11,6 +11,7 @@ import type { ExportData, ExportDayEntry } from "../../constants/Interfaces";
 import {
   appointmentDetail,
   birthControlDetail,
+  dayLabel,
   groupEntriesByMonth,
   pregnancyEntries,
   type PregnancyExportEntry,
@@ -131,13 +132,6 @@ const pregnancyColumns = [
   "Appointments",
   "Notes",
 ];
-
-function dayLabel(date: string): string {
-  return new Date(date).toLocaleString("default", {
-    weekday: "short",
-    day: "2-digit",
-  });
-}
 
 function cycleRow(entry: ExportDayEntry): string[] {
   const medList = entry.medications.map((m) => m.name).join(", ");

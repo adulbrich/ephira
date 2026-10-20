@@ -2,6 +2,7 @@ import {
   appointmentDetail,
   birthControlDetail,
   csvField,
+  dayLabel,
   groupEntriesByMonth,
   pregnancyEntries,
   toCsv,
@@ -410,5 +411,19 @@ describe("pregnancyEntries", () => {
       "2026-08",
       "2026-07",
     ]);
+  });
+});
+
+describe("dayLabel", () => {
+  it("labels the day of the date it is given", () => {
+    // The PDF built this from `new Date(date)`, which is midnight UTC, and
+    // formatted it in the phone's zone. West of Greenwich that instant is
+    // still the day before, so every row carried the previous day's label.
+    // Jest runs in Berlin, east of it, so this case alone cannot show that;
+    // run it under TZ=America/Los_Angeles with the boundaries runner in
+    // .claude/skills/correctness-review to see it.
+    expect(dayLabel("2026-08-01")).toMatch(/\b01\b/);
+    expect(dayLabel("2026-08-31")).toMatch(/\b31\b/);
+    expect(dayLabel("2026-03-29")).toMatch(/\b29\b/); // Berlin's DST change
   });
 });

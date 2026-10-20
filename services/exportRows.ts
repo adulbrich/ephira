@@ -306,3 +306,25 @@ export function groupEntriesByMonth<T extends { date: string }>(
       entries: [...monthEntries].sort((a, b) => a.date.localeCompare(b.date)),
     }));
 }
+
+const DAY_LABEL_OPTIONS: Intl.DateTimeFormatOptions = {
+  weekday: "short",
+  day: "2-digit",
+  timeZone: "UTC",
+};
+
+/**
+ * A date as a PDF row labels it, such as "01 Sat".
+ *
+ * `new Date("2026-08-01")` is midnight UTC, and the label used to be formatted
+ * in the phone's zone. Anywhere west of Greenwich that instant is still 31
+ * July, so every row printed in the Americas carried the day before its own.
+ * Read and formatted in UTC, like the month label above, a date is the same
+ * day everywhere.
+ */
+export function dayLabel(date: string): string {
+  return new Date(`${date}T00:00:00Z`).toLocaleString(
+    undefined,
+    DAY_LABEL_OPTIONS,
+  );
+}
