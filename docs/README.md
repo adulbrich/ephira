@@ -41,11 +41,11 @@ Inside of your Astro project, you'll see the following folders and files:
 │   ├── assets/
 │   │   └── screens/
 │   ├── components/
+│   │   ├── Download.astro
 │   │   ├── Footer.astro
 │   │   ├── Header.astro
 │   │   ├── Question.astro
-│   │   ├── Shot.astro
-│   │   └── StoreBadges.astro
+│   │   └── Shot.astro
 │   ├── layouts/
 │   │   └── Layout.astro
 │   ├── pages/
@@ -77,7 +77,7 @@ deploys, with no styles at all.
 
 The landing page shows stills, not video: the screen recordings it used to
 autoplay cost a visitor about 47 MB. `src/assets/screens/` holds one WebP per
-screen at 959 px wide, and `Shot.astro` asks Astro for 360 and 720 px AVIF and
+screen, and `Shot.astro` asks Astro for 360 and 720 px AVIF and
 WebP copies, so a phone downloads only what fits its screen. To retake one, follow
 the `run-on-device` skill's `screenshots.md`.
 
