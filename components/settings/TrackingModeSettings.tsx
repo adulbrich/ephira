@@ -1,14 +1,29 @@
 import { useEffect, useState } from "react";
 import { Alert } from "react-native";
 import { List, Text, useTheme } from "react-native-paper";
-import { useRouter } from "expo-router";
+import { router } from "expo-router";
 import { getSetting, updateSetting } from "@/db/database";
-import { SettingsKeys, TRACKING_MODES } from "@/constants/Settings";
+import {
+  SettingsKeys,
+  TRACKING_MODES,
+  type TrackingModeType,
+} from "@/constants/Settings";
 import { useTrackingMode } from "@/stores/calendar-storage";
+
+/**
+ * Stores `mode` and opens its tabs. The stored mode is what `app/index.tsx`
+ * opens on the next launch.
+ */
+export async function switchTrackingMode(mode: TrackingModeType) {
+  await updateSetting(SettingsKeys.trackingMode, mode);
+  useTrackingMode.getState().setTrackingMode(mode);
+  router.replace(
+    mode === TRACKING_MODES.PREGNANCY ? "/(pregnancy-tabs)" : "/(tabs)",
+  );
+}
 
 export default function TrackingModeSettings() {
   const theme = useTheme();
-  const router = useRouter();
   const { setTrackingMode } = useTrackingMode();
   const [localMode, setLocalMode] = useState<string>(TRACKING_MODES.CYCLE);
 
@@ -39,16 +54,7 @@ export default function TrackingModeSettings() {
         {
           text: "Switch",
           style: "default",
-          onPress: async () => {
-            await updateSetting(SettingsKeys.trackingMode, targetMode);
-            setLocalMode(targetMode);
-            setTrackingMode(targetMode);
-            if (targetMode === TRACKING_MODES.PREGNANCY) {
-              router.replace("/(pregnancy-tabs)");
-            } else {
-              router.replace("/(tabs)");
-            }
-          },
+          onPress: () => switchTrackingMode(targetMode),
         },
       ],
     );

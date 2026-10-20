@@ -1,56 +1,19 @@
 import {
-  act,
   fireEvent,
   render,
   screen,
   waitFor,
 } from "@testing-library/react-native";
-import { BackHandler } from "react-native";
 import { PaperProvider } from "react-native-paper";
 import CustomEntries from "@/components/settings/CustomEntries";
 import EntryVisibilitySettings from "@/components/settings/EntryVisibilitySettings";
 import { addCatalogueItem } from "@/db/catalogue";
+import { recordBackPresses } from "@/__tests__/helpers/backHandler";
 import { resetTestDatabase } from "@/__tests__/helpers/testDatabase";
 
 jest.mock("@/db/operations/setup", () =>
   jest.requireActual("@/__tests__/helpers/testDatabase"),
 );
-
-type BackPressHandler = Parameters<typeof BackHandler.addEventListener>[1];
-
-/**
- * Android's Back dispatch, which the jest preset does not have.
- *
- * jest-expo runs as iOS, where `BackHandler` is a no-op. Android calls the
- * newest `hardwareBackPress` subscriber first and stops at the first that
- * returns true (`BackHandler.android.js`). That order is what lets an open
- * Paper Dialog, which subscribes when it opens, take Back before the modal
- * it sits in. Android's fallback when nothing handles Back, leaving the app,
- * is not reproduced: every case here has a Paper Modal open, and it always
- * handles Back.
- */
-function recordBackPresses() {
-  const handlers: BackPressHandler[] = [];
-  jest
-    .spyOn(BackHandler, "addEventListener")
-    .mockImplementation((_eventName, handler) => {
-      if (!handlers.includes(handler)) handlers.push(handler);
-      return {
-        remove: () => {
-          const index = handlers.indexOf(handler);
-          if (index !== -1) handlers.splice(index, 1);
-        },
-      };
-    });
-
-  return () =>
-    act(async () => {
-      const event = {} as Parameters<BackPressHandler>[0];
-      for (let i = handlers.length - 1; i >= 0; i--) {
-        if (handlers[i]?.(event)) return;
-      }
-    });
-}
 
 /**
  * Paper's IconButton gives every icon button the same testID, and these have

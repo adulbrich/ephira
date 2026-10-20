@@ -11,8 +11,7 @@
  * shows how to drive Back itself when a modal's behaviour needs testing.
  *
  * What it cannot see: a component imported under another name, a
- * `dismissable` that is not a literal (the pregnancy setup dialog's depends
- * on whether a start date exists), and a handler passed through a
+ * `dismissable` that is not a literal, and a handler passed through a
  * `{...props}` spread, which it trusts.
  */
 import fs from "node:fs";

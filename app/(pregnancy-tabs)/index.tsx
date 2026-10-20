@@ -11,6 +11,8 @@ import {
   getBabySizeForWeek,
   PREGNANCY_WEEKS,
 } from "@/constants/Pregnancy";
+import { switchTrackingMode } from "@/components/settings/TrackingModeSettings";
+import { TRACKING_MODES } from "@/constants/Settings";
 import { usePregnancySetup } from "@/hooks/usePregnancySetup";
 import { startOfLocalDay } from "@/utils/dates";
 import { loadPregnancyAnchor } from "@/db/pregnancyAnchor";
@@ -164,9 +166,11 @@ export default function PregnancyHome() {
           visible={setupVisible}
           dismissable={!!startDateIso}
           onDismiss={() => {
+            // With no start date there is no pregnancy to show, so leaving
+            // setup leaves the mode. Cycle is the only other one.
             if (startDateIso) setSetupVisible(false);
+            else switchTrackingMode(TRACKING_MODES.CYCLE);
           }}
-          startDateIso={startDateIso}
           setupMethod={setupMethod}
           setSetupMethod={setSetupMethod}
           notSurePath={notSurePath}
