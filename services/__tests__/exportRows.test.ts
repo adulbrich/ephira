@@ -1,10 +1,17 @@
 import {
+  appointmentDetail,
   birthControlDetail,
   csvField,
   groupEntriesByMonth,
+  pregnancyEntries,
   toCsv,
+  toJson,
 } from "@/services/exportRows";
-import type { ExportData, ExportDayEntry } from "@/constants/Interfaces";
+import type {
+  ExportData,
+  ExportDayEntry,
+  ExportPregnancyDay,
+} from "@/constants/Interfaces";
 
 const entry = (
   date: string,
@@ -27,6 +34,17 @@ const headers: ExportData["headers"] = {
   medications: ["Ibuprofen"],
   birth_control: ["Pill"],
 };
+
+const exportOf = (
+  dailyData: ExportData["dailyData"],
+  more: Partial<ExportData> = {},
+): ExportData => ({
+  headers,
+  dailyData,
+  pregnancyDays: {},
+  pregnancyAppointments: {},
+  ...more,
+});
 
 describe("csvField", () => {
   it("quotes a plain value", () => {
@@ -85,7 +103,7 @@ describe("birthControlDetail", () => {
 
 describe("toCsv", () => {
   it("writes a header row from the Catalogue names", () => {
-    const [header] = toCsv({ headers, dailyData: {} }).split("\n");
+    const [header] = toCsv(exportOf({})).split("\n");
 
     expect(header).toBe(
       "date,flow_intensity,notes,symptom.Cramps,mood.Happy,medication.Ibuprofen,birth_control.Pill,birth_control.Pill.notes",
@@ -93,16 +111,15 @@ describe("toCsv", () => {
   });
 
   it("marks what was logged and leaves the rest blank", () => {
-    const csv = toCsv({
-      headers,
-      dailyData: {
+    const csv = toCsv(
+      exportOf({
         "2026-08-01": entry("2026-08-01", {
           flow_intensity: 3,
           symptoms: ["Cramps"],
           medications: [{ name: "Ibuprofen" }],
         }),
-      },
-    });
+      }),
+    );
     const row = csv.split("\n")[1].split(",");
 
     expect(row[1]).toBe("3");
@@ -114,12 +131,11 @@ describe("toCsv", () => {
 
   it("survives a note containing a quote and a comma", () => {
     // Before escaping, this row gained columns and the file no longer parsed.
-    const csv = toCsv({
-      headers,
-      dailyData: {
+    const csv = toCsv(
+      exportOf({
         "2026-08-01": entry("2026-08-01", { notes: 'said "ok", then left' }),
-      },
-    });
+      }),
+    );
     const row = csv.split("\n")[1];
 
     expect(row).toContain('"said ""ok"", then left"');
@@ -127,16 +143,15 @@ describe("toCsv", () => {
   });
 
   it("puts the birth control detail in its own field", () => {
-    const csv = toCsv({
-      headers,
-      dailyData: {
+    const csv = toCsv(
+      exportOf({
         "2026-08-01": entry("2026-08-01", {
           birth_control: [
             { name: "Pill", time_taken: "08:00", notes: "with food" },
           ],
         }),
-      },
-    });
+      }),
+    );
 
     expect(csv.split("\n")[1]).toContain('"Time: 08:00, Notes: with food"');
   });
@@ -200,5 +215,200 @@ describe("groupEntriesByMonth", () => {
 
   it("returns nothing for no entries", () => {
     expect(groupEntriesByMonth([])).toEqual([]);
+  });
+});
+
+const pregnancyDay = (
+  overrides: Partial<ExportPregnancyDay> = {},
+): ExportPregnancyDay => ({ symptoms: [], moods: [], ...overrides });
+
+describe("appointmentDetail", () => {
+  it("gives the title alone when nothing else is recorded", () => {
+    expect(appointmentDetail({ title: "Checkup" })).toBe("Checkup");
+  });
+
+  it("puts the type in parentheses", () => {
+    expect(appointmentDetail({ title: "Checkup", type: "OB Visit" })).toBe(
+      "Checkup (OB Visit)",
+    );
+  });
+
+  it("puts the notes after a colon", () => {
+    expect(
+      appointmentDetail({ title: "Checkup", notes: "bring results" }),
+    ).toBe("Checkup: bring results");
+  });
+
+  it("gives all three", () => {
+    expect(
+      appointmentDetail({
+        title: "Anatomy scan",
+        type: "Ultrasound",
+        notes: "20 weeks",
+      }),
+    ).toBe("Anatomy scan (Ultrasound): 20 weeks");
+  });
+});
+
+describe("toJson", () => {
+  it("writes cycle days exactly as the export always has", () => {
+    // The file used to be JSON.stringify(dailyData, null, 2). Without
+    // pregnancy data it still is, byte for byte.
+    const dailyData = {
+      "2026-08-01": entry("2026-08-01", {
+        flow_intensity: 2,
+        moods: ["Happy"],
+      }),
+      "2026-08-02": entry("2026-08-02"),
+    };
+
+    expect(toJson(exportOf(dailyData))).toBe(
+      JSON.stringify(dailyData, null, 2),
+    );
+  });
+
+  it("orders dates across cycle days, pregnancy days and appointments", () => {
+    const json = toJson(
+      exportOf(
+        {
+          "2026-08-01": entry("2026-08-01"),
+          "2026-08-10": entry("2026-08-10"),
+        },
+        {
+          pregnancyDays: { "2026-08-05": pregnancyDay({ kicks: 4 }) },
+          pregnancyAppointments: { "2026-07-01": [{ title: "Checkup" }] },
+        },
+      ),
+    );
+
+    expect(Object.keys(JSON.parse(json))).toEqual([
+      "2026-07-01",
+      "2026-08-01",
+      "2026-08-05",
+      "2026-08-10",
+    ]);
+  });
+
+  it("gives a date with only pregnancy data no cycle fields", () => {
+    const json = toJson(
+      exportOf(
+        {},
+        {
+          pregnancyDays: { "2026-08-05": pregnancyDay({ kicks: 4 }) },
+          pregnancyAppointments: { "2026-08-05": [{ title: "Checkup" }] },
+        },
+      ),
+    );
+
+    expect(JSON.parse(json)).toEqual({
+      "2026-08-05": {
+        date: "2026-08-05",
+        pregnancy: { kicks: 4, symptoms: [], moods: [] },
+        appointments: [{ title: "Checkup" }],
+      },
+    });
+  });
+});
+
+describe("toCsv with pregnancy data", () => {
+  it("adds only the appointments column when there are no pregnancy days", () => {
+    const [header, row] = toCsv(
+      exportOf(
+        {},
+        {
+          pregnancyAppointments: {
+            "2026-08-05": [{ title: "Checkup" }, { title: "Scan" }],
+          },
+        },
+      ),
+    ).split("\n");
+
+    expect(header).toBe(
+      "date,flow_intensity,notes,symptom.Cramps,mood.Happy,medication.Ibuprofen,birth_control.Pill,birth_control.Pill.notes,appointments",
+    );
+    expect(row).toBe('2026-08-05,,,,,,,,"Checkup; Scan"');
+  });
+
+  it("leaves the cycle cells blank on a date with no cycle day", () => {
+    // A 0 under flow_intensity would claim a logged day that does not exist.
+    const [, row] = toCsv(
+      exportOf({}, { pregnancyDays: { "2026-08-05": pregnancyDay() } }),
+    ).split("\n");
+
+    // Seven blank cycle cells, a blank kicks cell, then the pregnancy notes.
+    expect(row).toBe('2026-08-05,,,,,,,,,""');
+  });
+
+  it("names pregnancy columns in the order they were first logged", () => {
+    const [header] = toCsv(
+      exportOf(
+        {},
+        {
+          pregnancyDays: {
+            "2026-08-01": pregnancyDay({
+              symptoms: ["Nausea"],
+              moods: ["Calm"],
+            }),
+            "2026-08-02": pregnancyDay({
+              symptoms: ["Heartburn", "Nausea"],
+              moods: ["Happy"],
+            }),
+          },
+        },
+      ),
+    ).split("\n");
+
+    expect(header.split(",").slice(8)).toEqual([
+      "pregnancy.kicks",
+      "pregnancy.symptom.Nausea",
+      "pregnancy.symptom.Heartburn",
+      "pregnancy.mood.Calm",
+      "pregnancy.mood.Happy",
+      "pregnancy.notes",
+    ]);
+  });
+});
+
+describe("pregnancyEntries", () => {
+  it("joins pregnancy days and appointments by date, oldest first", () => {
+    const day = pregnancyDay({ kicks: 4 });
+
+    expect(
+      pregnancyEntries(
+        exportOf(
+          { "2026-08-03": entry("2026-08-03") },
+          {
+            pregnancyDays: { "2026-08-05": day, "2026-08-01": day },
+            pregnancyAppointments: {
+              "2026-08-05": [{ title: "Checkup" }],
+              "2026-08-02": [{ title: "Scan" }],
+            },
+          },
+        ),
+      ),
+    ).toEqual([
+      { date: "2026-08-01", day, appointments: [] },
+      { date: "2026-08-02", appointments: [{ title: "Scan" }] },
+      { date: "2026-08-05", day, appointments: [{ title: "Checkup" }] },
+    ]);
+  });
+
+  it("groups into months like the cycle days do", () => {
+    const entries = pregnancyEntries(
+      exportOf(
+        {},
+        {
+          pregnancyDays: {
+            "2026-07-31": pregnancyDay(),
+            "2026-08-01": pregnancyDay(),
+          },
+        },
+      ),
+    );
+
+    expect(groupEntriesByMonth(entries).map((g) => g.key)).toEqual([
+      "2026-08",
+      "2026-07",
+    ]);
   });
 });

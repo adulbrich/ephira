@@ -7,8 +7,14 @@ import {
 } from "pdf-lib";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
-import type { ExportData } from "../../constants/Interfaces";
-import { birthControlDetail, groupEntriesByMonth } from "@/services/exportRows";
+import type { ExportData, ExportDayEntry } from "../../constants/Interfaces";
+import {
+  appointmentDetail,
+  birthControlDetail,
+  groupEntriesByMonth,
+  pregnancyEntries,
+  type PregnancyExportEntry,
+} from "@/services/exportRows";
 
 const fontSize = 10;
 const verticalPadding = 2;
@@ -109,7 +115,69 @@ async function shareFinishedPdf(pdfDoc: PDFDocument) {
   });
 }
 
-export async function exportPDF(dailyData: ExportData["dailyData"]) {
+const cycleColumns = [
+  "Date",
+  "Flow",
+  "Moods",
+  "Symptoms",
+  "Medications",
+  "Notes",
+];
+const pregnancyColumns = [
+  "Date",
+  "Kicks",
+  "Moods",
+  "Symptoms",
+  "Appointments",
+  "Notes",
+];
+
+function dayLabel(date: string): string {
+  return new Date(date).toLocaleString("default", {
+    weekday: "short",
+    day: "2-digit",
+  });
+}
+
+function cycleRow(entry: ExportDayEntry): string[] {
+  const medList = entry.medications.map((m) => m.name).join(", ");
+
+  const bcList = entry.birth_control
+    .map((bc) => {
+      const detail = birthControlDetail(bc);
+      return `${bc.name}${detail ? ` (${detail})` : ""}`;
+    })
+    .join(", ");
+
+  const combinedMedList = [medList, bcList].filter(Boolean).join(", ");
+
+  return [
+    dayLabel(entry.date),
+    flowMap[entry.flow_intensity ?? 0],
+    entry.moods.join(", "),
+    entry.symptoms.join(", "),
+    combinedMedList,
+    entry.notes ?? "",
+  ];
+}
+
+function pregnancyRow({ date, day, appointments }: PregnancyExportEntry) {
+  return [
+    dayLabel(date),
+    day?.kicks === undefined ? "" : String(day.kicks),
+    day?.moods.join(", ") ?? "",
+    day?.symptoms.join(", ") ?? "",
+    appointments.map(appointmentDetail).join("; "),
+    day?.notes ?? "",
+  ];
+}
+
+/**
+ * The export as a PDF: cycle Days by month, then pregnancy mode's days and
+ * appointments by month under their own heading, from a new page. The website
+ * offers the PDF as the copy to hand a provider, so it carries both.
+ */
+export async function exportPDF(data: ExportData) {
   try {
     const pdfDoc = await PDFDocument.create();
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -139,6 +207,18 @@ export async function exportPDF(dailyData: ExportData["dailyData"]) {
       pageNum++;
     };
 
+    const drawSectionTitle = (title: string) => {
+      y -= lineHeight * 2;
+
+      page.drawText(title, {
+        x: margin,
+        y,
+        size: fontSize + 6,
+        font: boldFont,
+        color: rgb(0.1, 0.1, 0.1),
+      });
+    };
+
     const drawMonthLabel = (monthLabel: string) => {
       if (y < margin + 5 * lineHeight) {
         addPage();
@@ -158,20 +238,18 @@ export async function exportPDF(dailyData: ExportData["dailyData"]) {
     };
 
     // draw the column headers with a line underneath
-    const drawColumnHeaders = () => {
+    const drawColumnHeaders = (columns: string[]) => {
       let x = margin;
-      ["Date", "Flow", "Moods", "Symptoms", "Medications", "Notes"].forEach(
-        (header, i) => {
-          page.drawText(header, {
-            x,
-            y,
-            size: fontSize,
-            font,
-            color: rgb(0.2, 0.2, 0.2),
-          });
-          x += columnWidths[i];
-        },
-      );
+      columns.forEach((header, i) => {
+        page.drawText(header, {
+          x,
+          y,
+          size: fontSize,
+          font,
+          color: rgb(0.2, 0.2, 0.2),
+        });
+        x += columnWidths[i];
+      });
       y -= lineHeight;
       page.drawLine({
         start: { x: margin - 2, y: y + fontSize + 2 },
@@ -188,67 +266,58 @@ export async function exportPDF(dailyData: ExportData["dailyData"]) {
     // months are added newest first, e.g. May 2025 -> March 2025. The grouping
     // and the ordering are in services/exportRows.ts, keyed on the date rather
     // than on a localised month name.
-    for (const { label: monthLabel, entries } of groupEntriesByMonth(
-      Object.values(dailyData),
-    )) {
-      // add month header & column headers
-      drawMonthLabel(monthLabel);
-      drawColumnHeaders();
+    const drawMonths = <T extends { date: string }>(
+      entries: T[],
+      columns: string[],
+      toRow: (entry: T) => string[],
+    ) => {
+      for (const {
+        label: monthLabel,
+        entries: monthEntries,
+      } of groupEntriesByMonth(entries)) {
+        // add month header & column headers
+        drawMonthLabel(monthLabel);
+        drawColumnHeaders(columns);
 
-      let rowNum = 0;
-      for (const entry of entries) {
-        const entryDate = new Date(entry.date);
+        let rowNum = 0;
+        for (const entry of monthEntries) {
+          const row = toRow(entry);
+          const rowHeight = getRowHeight(row);
 
-        const dayLabel = entryDate.toLocaleString("default", {
-          weekday: "short",
-          day: "2-digit",
-        });
+          // check if we need to add a new page, if so, add page and headers
+          if (y - rowHeight < margin + lineHeight) {
+            addPage();
+            drawMonthLabel(`${monthLabel} (continued)`);
+            drawColumnHeaders(columns);
+          }
 
-        const medList = entry.medications.map((m) => m.name).join(", ");
+          // alternating rows will have a light gray background
+          if (rowNum % 2 === 1) {
+            page.drawRectangle({
+              x: margin - 2,
+              y: y - rowHeight + lineHeight - verticalPadding * 2,
+              width: tableWidth,
+              height: rowHeight,
+              color: lightGray,
+            });
+          }
 
-        const bcList = entry.birth_control
-          .map((bc) => {
-            const detail = birthControlDetail(bc);
-            return `${bc.name}${detail ? ` (${detail})` : ""}`;
-          })
-          .join(", ");
+          drawRowText(page, row, y, font);
 
-        const combinedMedList = [medList, bcList].filter(Boolean).join(", ");
-
-        const row = [
-          dayLabel,
-          flowMap[entry.flow_intensity ?? 0],
-          entry.moods.join(", "),
-          entry.symptoms.join(", "),
-          combinedMedList,
-          entry.notes ?? "",
-        ];
-
-        const rowHeight = getRowHeight(row);
-
-        // check if we need to add a new page, if so, add page and headers
-        if (y - rowHeight < margin + lineHeight) {
-          addPage();
-          drawMonthLabel(`${monthLabel} (continued)`);
-          drawColumnHeaders();
+          y -= rowHeight;
+          rowNum++;
         }
-
-        // alternating rows will have a light gray background
-        if (rowNum % 2 === 1) {
-          page.drawRectangle({
-            x: margin - 2,
-            y: y - rowHeight + lineHeight - verticalPadding * 2,
-            width: tableWidth,
-            height: rowHeight,
-            color: lightGray,
-          });
-        }
-
-        drawRowText(page, row, y, font);
-
-        y -= rowHeight;
-        rowNum++;
       }
+    };
+
+    const cycleDays = Object.values(data.dailyData);
+    drawMonths(cycleDays, cycleColumns, cycleRow);
+
+    const pregnancy = pregnancyEntries(data);
+    if (pregnancy.length > 0) {
+      if (cycleDays.length > 0) addPage();
+      drawSectionTitle("Pregnancy");
+      drawMonths(pregnancy, pregnancyColumns, pregnancyRow);
     }
 
     drawPageNumber();

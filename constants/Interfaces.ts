@@ -70,9 +70,34 @@ export interface ExportDayEntry {
   }[];
 }
 
+/** What pregnancy mode logged for one date, from `pregnancy_days`. */
+export interface ExportPregnancyDay {
+  /** Absent when none was stored; 0 when the user logged none. */
+  kicks?: number;
+  symptoms: string[];
+  moods: string[];
+  notes?: string;
+}
+
+/** One row of `pregnancy_appointments`. Its date is the key it is filed under. */
+export interface ExportAppointment {
+  title: string;
+  type?: string;
+  notes?: string;
+}
+
 export interface ExportData {
   headers: ExportDataHeaders;
+  /** Cycle Days, keyed by date. */
   dailyData: Record<string, ExportDayEntry>;
+  /**
+   * Pregnancy mode's days, keyed by date. Kept apart from `dailyData` because
+   * the two are different tables with different fields (docs/adr/0001); the
+   * formats decide how to lay them side by side.
+   */
+  pregnancyDays: Record<string, ExportPregnancyDay>;
+  /** Appointments keyed by date, oldest first within a date. */
+  pregnancyAppointments: Record<string, ExportAppointment[]>;
 }
 
 export interface PredictedDate {

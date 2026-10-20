@@ -15,8 +15,7 @@ import {
   Button,
 } from "react-native-paper";
 import { StyleSheet, Dimensions, View } from "react-native";
-import type { ExportData as ExportDataInterface } from "@/constants/Interfaces";
-import { toCsv } from "@/services/exportRows";
+import { toCsv, toJson } from "@/services/exportRows";
 import { exportPDF } from "@/components/settings/PdfBuilder";
 
 const exportDescriptions: Record<string, string> = {
@@ -75,13 +74,10 @@ function ExportDataModal({ onDismiss }: { onDismiss: () => void }) {
           break;
         }
         case "pdf":
-          await exportPDF(exportData.dailyData);
+          await exportPDF(exportData);
           break;
         case "json":
-          await exportCsvOrJson(
-            JSON.stringify(exportData.dailyData, null, 2),
-            "json",
-          );
+          await exportCsvOrJson(toJson(exportData), "json");
           break;
       }
     } catch (error) {
