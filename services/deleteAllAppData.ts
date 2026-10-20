@@ -15,7 +15,7 @@ type Step = [name: string, run: () => Promise<unknown>];
 
 /**
  * Returns the app to a fresh install: a new database file under a new key
- * (docs/adr/0005), so everything the user logged, their custom entries,
+ * (docs/adr/0005), so everything the user logged, their custom Catalogue items,
  * every setting and the app lock go, and the default catalogue comes back.
  * It also removes the notifications the app has scheduled or is showing, the
  * files exports leave behind, and the flag saying the walkthrough was seen.
@@ -57,8 +57,10 @@ async function deleteEverything(): Promise<void> {
       "pdf export an older build left in Documents",
       () => FileSystem.deleteAsync(LEGACY_PDF_EXPORT, { idempotent: true }),
     ],
-    ["walkthrough flag", () => setHasSeenWalkthrough(false)],
     [DATABASE_STEP, replaceDatabase],
+    // After the database, so a kill before it does not replay the walkthrough
+    // over the data and the lock.
+    ["walkthrough flag", () => setHasSeenWalkthrough(false)],
     // Again: a prediction refresh that read the flow before the database went
     // can have scheduled since the first cancel. One still scheduling now can
     // land after this too.

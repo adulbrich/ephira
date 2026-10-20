@@ -63,7 +63,7 @@ async function deleteAndStartAgain(retrying = false): Promise<void> {
   if (deleted) {
     Alert.alert(
       "Data deleted",
-      "Your logged data, custom entries, settings and app lock have been deleted from this device.",
+      "Your logged data, pregnancy data, custom entries, settings and app lock have been deleted from this device.",
     );
   } else {
     // Try Again only when no lock can be left under the alert, which can

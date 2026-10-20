@@ -51,10 +51,11 @@ const databaseGoneButNotAll = () =>
 /** A delete that rolled back: the database holds everything it held. */
 const databaseKept = () => new DeletionIncomplete([DATABASE_STEP]);
 
-/** The failure alert's Try Again button, as Alert.alert was handed it. */
+/** What the success alert says goes. */
 const DELETED_MESSAGE =
-  "Your logged data, custom entries, settings and app lock have been deleted from this device.";
+  "Your logged data, pregnancy data, custom entries, settings and app lock have been deleted from this device.";
 
+/** The failure alert's Try Again button, as Alert.alert was handed it. */
 function tryAgainButton() {
   const call = jest
     .mocked(Alert.alert)
