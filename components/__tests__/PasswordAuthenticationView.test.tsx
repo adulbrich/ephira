@@ -1,9 +1,4 @@
-import {
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react-native";
+import { fireEvent, render, screen } from "@testing-library/react-native";
 import { PaperProvider } from "react-native-paper";
 import PasswordAuthenticationView from "@/components/PasswordAuthenticationView";
 
@@ -64,11 +59,11 @@ describe("Forgot Password reset", () => {
       }),
     );
     // Not awaited: React Native Testing Library would wait for the retry.
+    // One macrotask lets React commit the loading state inside that press.
     const pressing = fireEvent.press(screen.getByText("Try Again"));
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
-    await waitFor(() =>
-      expect(screen.queryByText("Try Again")).not.toBeOnTheScreen(),
-    );
+    expect(screen.queryByText("Try Again")).not.toBeOnTheScreen();
     finish();
     await pressing;
   });
