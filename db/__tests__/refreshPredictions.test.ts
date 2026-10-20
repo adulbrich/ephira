@@ -1,6 +1,7 @@
 import { insertDay } from "@/db/operations/days";
 import { predictionSnapshots } from "@/db/schema";
 import { refreshPredictions } from "@/services/cyclePredictions";
+import { loadPredictionAvailability } from "@/services/predictionAvailability";
 import {
   getTestDatabase,
   resetTestDatabase,
@@ -83,6 +84,7 @@ describe("refreshPredictions", () => {
       await insertDay(date, 0, REFERENCE_DAY);
     }
 
+    expect((await loadPredictionAvailability()).hasEnough).toBe(false);
     expect(await refreshPredictions(REFERENCE_DAY)).toEqual([]);
     expect(stored()).toEqual([]);
     expect(mockScheduleNotifications).toHaveBeenLastCalledWith([]);
@@ -163,7 +165,7 @@ describe("refreshPredictions", () => {
     expect(mockScheduleNotifications).toHaveBeenCalledWith(predictions);
   });
 
-  it("schedules no notifications when there is nothing to predict", async () => {
+  it("clears reminders when there is nothing to predict", async () => {
     await refreshPredictions(REFERENCE_DAY);
 
     expect(mockScheduleNotifications).toHaveBeenCalledWith([]);

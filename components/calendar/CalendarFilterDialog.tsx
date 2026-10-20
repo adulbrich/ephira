@@ -257,10 +257,13 @@ export default function CalendarFilterDialog({
                 }}
               />
               {/* The switch shows while predictions are on and there is data
-                  to draw, or the filter is selected, so it can be turned off */}
+                  to draw, or the filter was selected when the dialog opened.
+                  The calendar's note needs a forecast instead: a selected
+                  filter must stay removable, and the switch must not vanish
+                  under the finger that turns it off. */}
               {usePredictionChoice().predictionChoice === true &&
                 (hasEnoughCycleData ||
-                  tempSelectedFilters.includes(PREDICTION_FILTER)) && (
+                  selectedFilters.includes(PREDICTION_FILTER)) && (
                   <List.Item
                     style={styles.listItem}
                     key={PREDICTION_FILTER}
