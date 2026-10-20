@@ -20,7 +20,7 @@ This file is maintained lazily: terms are added when a design decision actually 
 
 **Cycle**: a run of consecutive Days with flow, bounded either by the `is_cycle_start` / `is_cycle_end` markers the user sets or by gaps between logged flow. There is exactly one definition of how flow groups into Cycles, and it lives in `services/cyclePredictionLogic.ts`. Days with no flow are not part of a Cycle and do not bridge two of them. A Cycle counts towards prediction only once it reaches `MIN_CONSECUTIVE_DAYS`, and that same count is what gates predictions everywhere they are gated.
 
-**Prediction**: a forecast of a future Day with flow, carrying a confidence. Predictions are derived, never authored.
+**Prediction**: a forecast of a future Day with flow, carrying a confidence. Predictions are derived, never authored. Whether they are shown takes two answers. The stored Prediction choice (`cyclePredictions`) records only what the user set: it is on until they turn it off, and data never writes it. Prediction Availability gates what is shown: with fewer complete Cycles than `MIN_CYCLES_FOR_PREDICTION`, `refreshPredictions` forecasts nothing, so every screen shows no Prediction whatever the choice, and Predictions appear once the Cycles exist unless the user turned them off.
 
 **Prediction Snapshot**: a record of what was predicted, and when, kept so that accuracy can be measured after the fact. Identified by `(prediction_made_date, predicted_date)`. Its purpose is a time series: overwriting history would make the accuracy metric measure something else. `(prediction_made_date, predicted_date)` is a unique index, so that identity is enforced by the schema rather than by the code that writes it. Within a single day the stored generation is reconciled to what is currently forecast: confidence updates in place, and a date no longer forecast is retracted. Once a Snapshot's outcome has been measured it is never retracted and its outcome is never rewritten, because that is the history the metric reads.
 
@@ -32,7 +32,7 @@ This file is maintained lazily: terms are added when a design decision actually 
 
 **Selected Filters**: which filters the calendar is drawing, as one list. Flow comes first, a name whose Catalogue item is gone is not in it, and the list the store holds and the list on disk are the same list. Changing it is one operation, in `db/selectedFilters.ts`, because four screens each used to change it their own way and three of them wrote the list from before the change. The Prediction filter is named there too.
 
-**Prediction Availability**: whether the logged Cycles support predicting, counted through the one definition of a Cycle, together with what the user is told about it. Derived. When it turns false it revokes a Prediction choice the user made, and that revocation takes the same path as the user turning it off themselves.
+**Prediction Availability**: whether the logged Cycles support predicting, counted through the one definition of a Cycle, together with what the user is told about it. Derived, and read only: when it turns false the forecast is empty, and the Prediction choice is left as the user set it.
 
 **Flow Ring**: the home screen's month ring. Given the Days and a reference day it yields the Days in that month with flow, how full the ring is against `MAX_FLOW_LENGTH`, where the marker for the reference day sits, and the gradient stops. Derived, and dated by the local calendar day: formatting a locally built month bound as UTC shifted the whole window by a day anywhere east of Greenwich.
 

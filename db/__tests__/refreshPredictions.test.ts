@@ -57,6 +57,19 @@ describe("refreshPredictions", () => {
     expect(await refreshPredictions(REFERENCE_DAY)).toEqual([]);
   });
 
+  it("predicts nothing until enough complete cycles are logged", async () => {
+    // One complete cycle is enough for generatePredictions to forecast, but
+    // not for Prediction Availability. The screens gate on the choice, so
+    // this is where availability has to hold.
+    for (const date of ["2026-03-01", "2026-03-02", "2026-03-03"]) {
+      await insertDay(date, 3, REFERENCE_DAY);
+    }
+
+    expect(await refreshPredictions(REFERENCE_DAY)).toEqual([]);
+    expect(stored()).toEqual([]);
+    expect(mockScheduleNotifications).not.toHaveBeenCalled();
+  });
+
   it("returns future predictions and stores them", async () => {
     await logTwoCycles();
 

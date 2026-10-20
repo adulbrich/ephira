@@ -1,7 +1,7 @@
 import {
   applyPredictionChoice,
+  loadPredictionAvailability,
   predictionAvailability,
-  reconcilePredictionChoice,
 } from "@/services/predictionAvailability";
 import { insertDay } from "@/db/operations/days";
 import { getAllDays } from "@/db/database";
@@ -150,56 +150,30 @@ describe("applyPredictionChoice", () => {
   });
 });
 
-describe("reconcilePredictionChoice", () => {
-  it("leaves a supported choice alone", async () => {
-    await logTwoCycles();
-    const filters = await changeFilters(["Flow"], { add: PREDICTION_FILTER });
+describe("loadPredictionAvailability", () => {
+  it("reads availability without touching the choice or the filters", async () => {
+    // Issue #305: a new install has nothing logged, and reading availability
+    // used to save the choice as off.
+    const availability = await loadPredictionAvailability();
 
-    const result = await reconcilePredictionChoice({
-      choice: true,
-      filters,
-      referenceDay: REFERENCE_DAY,
-    });
-
-    expect(result.revoked).toBe(false);
-    expect(result.availability.hasEnough).toBe(true);
+    expect(availability.hasEnough).toBe(false);
     expect(await loadCyclePredictionChoice()).toBe(true);
-    expect(await loadCalendarFilters()).toEqual(["Flow", PREDICTION_FILTER]);
+    expect(await loadCalendarFilters()).toEqual(["Flow", "Any Birth Control"]);
   });
 
-  it("revokes the choice durably when the data stops supporting it", async () => {
-    // The rule that silently takes away something the user turned on. It ran
-    // inside a render effect and there was nowhere to assert it.
+  it("leaves a choice the user made when the data stops supporting it", async () => {
     await logTwoCycles();
-    const filters = await applyPredictionChoice({
+    await applyPredictionChoice({
       choice: true,
       filters: ["Flow"],
       referenceDay: REFERENCE_DAY,
-    }).then((r) => r.filters);
+    });
 
     await clearAllFlow();
 
-    const result = await reconcilePredictionChoice({
-      choice: true,
-      filters,
-      referenceDay: REFERENCE_DAY,
-    });
-
-    expect(result.revoked).toBe(true);
-    expect(result.availability.hasEnough).toBe(false);
-    // Both halves survive a restart, which is the part that used to be missed.
-    expect(await loadCyclePredictionChoice()).toBe(false);
-    expect(await loadCalendarFilters()).toEqual(["Flow"]);
-  });
-
-  it("does not revoke a choice the user has already turned off", async () => {
-    const result = await reconcilePredictionChoice({
-      choice: false,
-      filters: ["Flow"],
-      referenceDay: REFERENCE_DAY,
-    });
-
-    expect(result.revoked).toBe(false);
-    expect(result.availability.hasEnough).toBe(false);
+    expect((await loadPredictionAvailability()).hasEnough).toBe(false);
+    // Too little data gates what is shown; the choice is the user's.
+    expect(await loadCyclePredictionChoice()).toBe(true);
+    expect(await loadCalendarFilters()).toEqual(["Flow", PREDICTION_FILTER]);
   });
 });

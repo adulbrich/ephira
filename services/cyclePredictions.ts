@@ -1,7 +1,10 @@
 import { loadFlowDays } from "@/db/flowDays";
 import { savePredictions } from "@/db/operations/predictionSnapshots";
 import type { PredictedDate } from "@/constants/Interfaces";
-import { generatePredictions } from "@/services/cyclePredictionLogic";
+import {
+  generatePredictions,
+  hasEnoughCyclesForPrediction,
+} from "@/services/cyclePredictionLogic";
 import { NotificationService } from "@/services/notificationService";
 
 /**
@@ -17,6 +20,10 @@ import { NotificationService } from "@/services/notificationService";
  * for the prediction and the date the resulting snapshots are stamped with,
  * which keeps those two from disagreeing across a timezone boundary.
  *
+ * Availability gates it: with fewer complete Cycles than prediction needs it
+ * forecasts nothing, whatever the user chose. Every screen gets its forecast
+ * here, so this is the one place that gate has to hold.
+ *
  * Notification scheduling is best effort: a user who declined the permission
  * still gets their predictions.
  */
@@ -25,7 +32,7 @@ export async function refreshPredictions(
 ): Promise<PredictedDate[]> {
   const flowDays = await loadFlowDays();
 
-  if (flowDays.length === 0) return [];
+  if (!hasEnoughCyclesForPrediction(flowDays)) return [];
 
   const predictions = generatePredictions(flowDays, {
     referenceDate: referenceDay,
