@@ -1,41 +1,40 @@
 /**
- * Every tab bar sets both of its tints from the Paper theme, and both read
- * against the bar in every theme, light and dark.
+ * Every tab bar sets both of its tints for the whole bar from the Paper theme,
+ * and both read against the bar in every theme, light and dark.
  *
  * A tab bar without its own inactive tint falls back to React Navigation's
  * theme, which this app never sets and so stays light: in dark mode the
  * inactive icons were rgb(28, 28, 30) at half opacity on a dark bar, 1:1
  * against it. A render test of a layout would mostly exercise mocks of its
  * database wait and the splash screen, so, like `modalBack.test.ts`, this reads
- * the source: which Paper colour each layout passes, then that colour against
- * the theme's background. Android's bar is that background; iOS's is a blur of
- * the screen behind it, which the background only approximates.
+ * the source, parsed as TypeScript. Both tints must be properties of
+ * `<Tabs screenOptions={{ }}>` spelled `theme.colors.<key>`; a tint named
+ * anywhere else in the layout fails. Each colour is then measured against the
+ * theme's background. Android's bar is that background; iOS's is a blur of the
+ * screen behind it, which the background only approximates.
  *
  * What it cannot see:
  * - a tab bar outside a `_layout.tsx` under `app/`, or not written as `<Tabs`;
- * - what overrides the two tints from elsewhere: a spread after them, a route
- *   file's own `<Tabs.Screen options>`, a `tabBarLabelStyle` colour, or an icon
- *   or label that ignores the colour it is handed;
- * - `theme.colors` read from React Navigation's `theme`, the argument of an
- *   options function, which it takes for Paper's;
- * - a bar painted other than `colors.background`;
- * - a comment marker inside a string, which it takes for a comment, so it
- *   can skip what follows.
- * A tint set to anything but `theme.colors.<key>` is refused, not missed. It
- * does not compare the active tint with the inactive one: in dark mode they
+ * - a route file's own `<Tabs.Screen options>`, which overrides the tints while
+ *   that tab is focused;
+ * - a `tabBarLabelStyle` colour, or an icon or label that ignores the colour it
+ *   is handed;
+ * - a spread inside `screenOptions`;
+ * - a bar painted other than `colors.background`.
+ *
+ * It does not compare the active tint with the inactive one: in dark mode they
  * differ in hue, not lightness.
  */
 import fs from "node:fs";
 import path from "node:path";
+import ts from "typescript";
 import { getTheme } from "@/components/ThemeHandler";
 import { themeButtonColors } from "@/constants/Colors";
 
 const ROOT = path.resolve(__dirname, "../..");
 /** WCAG AA for text, since the same tint colours each tab's label. */
 const MINIMUM_CONTRAST = 4.5;
-const COMMENT = /\/\*[\s\S]*?\*\/|\/\/.*$/gm;
-/** A tint option and the expression it is set to, up to the next `,` or `}`. */
-const TINT = /\b(tabBar(?:Active|Inactive)TintColor)\s*:\s*([^,}]+)/g;
+const TINT_OPTIONS = ["tabBarActiveTintColor", "tabBarInactiveTintColor"];
 const PAPER_COLOR = /^theme\.colors\.(\w+)$/;
 
 function tabLayouts(dir: string): string[] {
@@ -49,15 +48,78 @@ function tabLayouts(dir: string): string[] {
   });
 }
 
-/** Every tint the source sets, with the Paper colour key when it is one. */
+/** The object literal in a `<Tabs screenOptions={{ }}>` attribute. */
+function barOptions(node: ts.Node): ts.ObjectLiteralExpression | undefined {
+  if (!ts.isJsxAttribute(node) || node.name.getText() !== "screenOptions") {
+    return undefined;
+  }
+  const element = node.parent.parent;
+  const onTabs =
+    (ts.isJsxOpeningElement(element) || ts.isJsxSelfClosingElement(element)) &&
+    element.tagName.getText() === "Tabs";
+  let value =
+    node.initializer && ts.isJsxExpression(node.initializer)
+      ? node.initializer.expression
+      : undefined;
+  while (
+    value &&
+    (ts.isParenthesizedExpression(value) ||
+      ts.isAsExpression(value) ||
+      ts.isSatisfiesExpression(value))
+  ) {
+    value = value.expression;
+  }
+  return onTabs && value && ts.isObjectLiteralExpression(value)
+    ? value
+    : undefined;
+}
+
+/**
+ * Every tint the source names, wherever it is: the Paper colour key when the
+ * value is `theme.colors.<key>`, and whether it is set for the whole bar.
+ */
 function tints(source: string) {
-  return [...source.replace(COMMENT, "").matchAll(TINT)].map(
-    ([, option, value]) => ({
-      option,
-      value: value.trim(),
-      key: PAPER_COLOR.exec(value.trim())?.[1],
-    }),
+  const file = ts.createSourceFile(
+    "layout.tsx",
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TSX,
   );
+  const bars = new Set<ts.Node>();
+  const found: {
+    option: string;
+    value: string | undefined;
+    key: string | undefined;
+    wholeBar: boolean;
+  }[] = [];
+  const findBars = (node: ts.Node) => {
+    const options = barOptions(node);
+    if (options) bars.add(options);
+    ts.forEachChild(node, findBars);
+  };
+  const findTints = (node: ts.Node) => {
+    if (
+      (ts.isPropertyAssignment(node) ||
+        ts.isShorthandPropertyAssignment(node)) &&
+      (ts.isIdentifier(node.name) || ts.isStringLiteral(node.name)) &&
+      TINT_OPTIONS.includes(node.name.text)
+    ) {
+      const value = ts.isPropertyAssignment(node)
+        ? node.initializer.getText(file).replace(/\s+/g, "")
+        : undefined;
+      found.push({
+        option: node.name.text,
+        value,
+        key: value === undefined ? undefined : PAPER_COLOR.exec(value)?.[1],
+        wholeBar: bars.has(node.parent),
+      });
+    }
+    ts.forEachChild(node, findTints);
+  };
+  findBars(file);
+  findTints(file);
+  return found;
 }
 
 /** `#RRGGBB` or an opaque `rgb()`/`rgba()`, as Paper and the themes write them. */
@@ -100,33 +162,67 @@ const cases = (
 );
 
 describe("the measure", () => {
-  it("reads a tint and skips one in a comment", () => {
+  it("reads every tint, and only those in screenOptions cover the bar", () => {
     expect(
       tints(`
-        tabBarActiveTintColor: theme.colors.primary,
-        // tabBarInactiveTintColor: theme.colors.outline,
-        tabBarInactiveTintColor: "#1C1C1E",
+        const tabBarInactiveTintColor = "#1C1C1E";
+        <Tabs
+          screenOptions={{
+            tabBarActiveTintColor: theme.colors.primary,
+            // tabBarInactiveTintColor: theme.colors.outline,
+            tabBarAccessibilityLabel: "Files/*",
+            tabBarInactiveTintColor: theme.colors.onSurfaceVariant
+              .concat("80"),
+          }}
+        >
+          <Tabs.Screen options={{ tabBarInactiveTintColor: theme.colors.x }} />
+          <Tabs.Screen options={{ tabBarInactiveTintColor }} />
+          <Tabs.Screen options={{ "tabBarActiveTintColor": "#1C1C1E" }} />
+        </Tabs>;
       `),
     ).toEqual([
       {
         option: "tabBarActiveTintColor",
         value: "theme.colors.primary",
         key: "primary",
+        wholeBar: true,
       },
       {
         option: "tabBarInactiveTintColor",
+        value: 'theme.colors.onSurfaceVariant.concat("80")',
+        key: undefined,
+        wholeBar: true,
+      },
+      {
+        option: "tabBarInactiveTintColor",
+        value: "theme.colors.x",
+        key: "x",
+        wholeBar: false,
+      },
+      {
+        option: "tabBarInactiveTintColor",
+        value: undefined,
+        key: undefined,
+        wholeBar: false,
+      },
+      {
+        option: "tabBarActiveTintColor",
         value: '"#1C1C1E"',
         key: undefined,
+        wholeBar: false,
       },
     ]);
   });
 
-  it("reads a value the formatter wrapped onto a second line", () => {
-    const [wrapped] = tints(`
-      tabBarInactiveTintColor: theme.colors.onSurfaceVariant
-        .concat("80"),
+  it("does not count screenOptions written as a function", () => {
+    const [tint] = tints(`
+      <Tabs
+        screenOptions={({ theme }) => ({
+          tabBarActiveTintColor: theme.colors.primary,
+        })}
+      />;
     `);
-    expect(wrapped.key).toBeUndefined();
+    expect(tint.wholeBar).toBe(false);
   });
 
   it("puts black on white at 21:1 and refuses what it cannot measure", () => {
@@ -156,11 +252,16 @@ describe("tab bar tints", () => {
   describe.each(layouts)("%s", (layout) => {
     const layoutTints = tints(fs.readFileSync(path.join(ROOT, layout), "utf8"));
 
-    it("sets both tints, each from the Paper theme", () => {
+    it("sets both tints for the whole bar, each from the Paper theme", () => {
       expect(
-        [...new Set(layoutTints.map((tint) => tint.option))].sort(),
-      ).toEqual(["tabBarActiveTintColor", "tabBarInactiveTintColor"]);
-      expect(layoutTints.filter((tint) => tint.key === undefined)).toEqual([]);
+        layoutTints
+          .filter((tint) => tint.wholeBar)
+          .map((tint) => tint.option)
+          .sort(),
+      ).toEqual(TINT_OPTIONS);
+      expect(
+        layoutTints.filter((tint) => !tint.wholeBar || tint.key === undefined),
+      ).toEqual([]);
     });
 
     it.each(cases)("reads in $name, $mode", ({ name, mode }) => {
