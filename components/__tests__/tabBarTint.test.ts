@@ -124,10 +124,17 @@ function scan(source: string) {
   };
   const findTints = (node: ts.Node) => {
     // Any named member of an object literal or a class: a property, a
-    // shorthand, a method, an accessor or a field. Type members are not values.
+    // shorthand, a method, an accessor, a field or a constructor parameter
+    // property. Members of an interface or a type literal are not values.
+    const member =
+      ((ts.isObjectLiteralElementLike(node) && !ts.isSpreadAssignment(node)) ||
+        ts.isClassElement(node)) &&
+      !ts.isInterfaceDeclaration(node.parent) &&
+      !ts.isTypeLiteralNode(node.parent);
     const name =
-      (ts.isObjectLiteralElementLike(node) && !ts.isSpreadAssignment(node)) ||
-      ts.isClassElement(node)
+      member ||
+      (ts.isParameter(node) &&
+        ts.isParameterPropertyDeclaration(node, node.parent))
         ? node.name
         : undefined;
     if (name) {
@@ -265,15 +272,18 @@ describe("the measure", () => {
     });
   });
 
-  it("reads a tint declared as a setter or a class field, not as a type", () => {
+  it("reads a tint declared on an object or a class, not on a type", () => {
     const { tints } = scan(`
       type Options = { tabBarActiveTintColor: string };
+      interface Getter { get tabBarActiveTintColor(): string }
       <Tabs.Screen options={{ set tabBarInactiveTintColor(value: string) {} }} />;
       class Fields { tabBarActiveTintColor = "#1C1C1E"; }
+      class Built { constructor(public tabBarInactiveTintColor = "#1C1C1E") {} }
     `);
     expect(tints.map(({ option, bar, key }) => [option, bar, key])).toEqual([
       ["tabBarInactiveTintColor", undefined, undefined],
       ["tabBarActiveTintColor", undefined, undefined],
+      ["tabBarInactiveTintColor", undefined, undefined],
     ]);
   });
 
