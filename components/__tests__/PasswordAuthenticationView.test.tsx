@@ -67,6 +67,21 @@ describe("Forgot Password reset", () => {
     ).toBeOnTheScreen();
   });
 
+  it.each([
+    ["another step failed", new DeletionIncomplete(["csv export"])],
+    ["the failure does not say what it left", new Error("unexpected")],
+  ])(
+    "has the stores let go when the database may be gone: %s",
+    async (_case, failure) => {
+      mockDeleteAllAppData.mockRejectedValue(failure);
+      usePregnancySelectedDate.getState().setNotes("first kicks");
+
+      await resetPassword();
+
+      expect(usePregnancySelectedDate.getState().notes).toBe("");
+    },
+  );
+
   it("says so when the data is not gone, and tries again on request", async () => {
     mockDeleteAllAppData.mockRejectedValueOnce(new Error("disk I/O error"));
 

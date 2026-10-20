@@ -22,10 +22,9 @@ import { forgetDeletedData } from "@/stores/forget-deleted-data";
  * Deletes everything, then lets the app go on as after a launch whenever the
  * database went, and says how it went. Outside the modal, because the restart
  * can close the modal before the user answers the alert, and its Try Again
- * has to work from wherever the app is by then. Resolves to whether all of it
- * was deleted.
+ * has to work from wherever the app is by then.
  */
-async function deleteAndStartAgain(): Promise<boolean> {
+async function deleteAndStartAgain(): Promise<void> {
   let deleted = true;
   // Whether the screens behind Settings may now hold rows that are gone.
   let databaseDeleted = true;
@@ -43,7 +42,9 @@ async function deleteAndStartAgain(): Promise<boolean> {
     // on mount (the lock setting, pregnancy Home, notification settings)
     // would go on showing what was deleted, and write it back on their next
     // save. After a rollback the database kept everything, and a reset would
-    // only send the screens to refresh, and reschedule reminders, from it.
+    // only send the screens to refresh, and reschedule reminders, from it
+    // while the user retries. The reminders and exports removed before the
+    // database step stay removed; reminders return at the next refresh.
     await forgetDeletedData();
     useAppRestart.getState().restart();
   }
@@ -66,7 +67,6 @@ async function deleteAndStartAgain(): Promise<boolean> {
         : undefined,
     );
   }
-  return deleted;
 }
 
 function DeleteDataModal({ onDismiss }: { onDismiss: () => void }) {
@@ -82,13 +82,10 @@ function DeleteDataModal({ onDismiss }: { onDismiss: () => void }) {
 
   const handleDeleteData = async () => {
     setLoading(true);
-    const deleted = await deleteAndStartAgain();
-    // A no-op when the restart has already closed this screen.
+    await deleteAndStartAgain();
+    // Only a rollback leaves this screen open, with the confirmation typed;
+    // every other outcome restarts the app, which closes it.
     setLoading(false);
-    if (deleted) {
-      setInputValue("");
-      setButtonDisabled(true);
-    }
   };
 
   return (
