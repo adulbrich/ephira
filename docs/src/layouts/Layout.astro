@@ -1,38 +1,31 @@
 ---
+import "../styles/global.css";
+import Footer from "../components/Footer.astro";
+import Header from "../components/Header.astro";
+
 interface Props {
   title: string;
   description: string;
 }
+
 const { title, description } = Astro.props;
-import "../styles/global.css";
-import Header from "../components/Header.astro";
-import Footer from "../components/Footer.astro";
 ---
 
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <title>{title} | ephira</title>
-	<meta name="description" content={description} />
+    <meta name="description" content={description} />
   </head>
-  <body class="bg-[#312935] min-h-screen flex flex-col">
+  <body class="flex min-h-screen flex-col bg-plum-950 text-white/90">
     <Header />
-    <main class="p-12 grow">
+    <main class="grow">
       <slot />
     </main>
-	<Footer/>
+    <Footer />
   </body>
 </html>
-
-<style>
-  html,
-  body {
-    margin: 0;
-    width: 100%;
-    height: 100%;
-  }
-</style>

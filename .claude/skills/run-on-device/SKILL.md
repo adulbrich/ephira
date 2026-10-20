@@ -5,7 +5,8 @@ description: Run ephira on an iOS simulator or Android emulator and drive it, fr
 
 Ephira needs a development build; Expo Go cannot run it (`CONTRIBUTING.md`, section
 1). The app id is `com.capucity.ephira` on both platforms. Platform steps live in
-[ios.md](ios.md) and [android.md](android.md); read the one you need.
+[ios.md](ios.md) and [android.md](android.md); read the one you need. Stills for
+the website follow [screenshots.md](screenshots.md).
 
 ## 1. Get a build installed
 
