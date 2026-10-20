@@ -2,8 +2,12 @@
  * Delete Data against the in-memory database, with stand-ins for the two
  * native modules that keep state of their own: the notification centre, and
  * the file system the exports are written to. Two tests make a database step
- * fail through a spy: the delete itself, and the catalogue reseed.
+ * fail through a spy: the file replacement, and the catalogue reseed. The
+ * replacement itself, file by file and key by key, is tested in
+ * db/__tests__/databaseFile.test.ts.
  */
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getHasSeenWalkthrough } from "@/assets/src/onboarding/onboarding-storage";
 import { birthControlOptions } from "@/constants/BirthControlTypes";
 import { medicationOptions } from "@/constants/Medications";
 import { moodOptions } from "@/constants/Moods";
@@ -14,6 +18,7 @@ import {
   onCatalogueInvalidated,
 } from "@/db/catalogue";
 import * as database from "@/db/database";
+import * as setup from "@/db/operations/setup";
 import { getAllDays, insertDay } from "@/db/operations/days";
 import {
   getAllPregnancyDays,
@@ -29,6 +34,11 @@ import { resetTestDatabase } from "@/__tests__/helpers/testDatabase";
 
 jest.mock("@/db/operations/setup", () =>
   jest.requireActual("@/__tests__/helpers/testDatabase"),
+);
+jest.mock("@react-native-async-storage/async-storage", () =>
+  jest.requireActual(
+    "@react-native-async-storage/async-storage/jest/async-storage-mock",
+  ),
 );
 
 const mockScheduled = new Set<string>();
@@ -61,6 +71,7 @@ async function leaveDataEverywhere() {
   await upsertPregnancyDay("2026-05-01", 4, [], [], "first kicks");
   await insertSymptom("Vertigo", true);
   await insertSetting("password", "hash");
+  await AsyncStorage.setItem("ephira.hasSeenWalkthrough", "true");
   mockScheduled.add("Period Expected Tomorrow");
   mockPresented.add("Period Coming Soon");
   for (const uri of Object.values(EXPORT_FILES)) mockFiles.add(uri);
@@ -89,6 +100,8 @@ describe("deleteAllAppData", () => {
     expect([...mockScheduled]).toEqual([]);
     expect([...mockPresented]).toEqual([]);
     expect([...mockFiles]).toEqual([]);
+    // A fresh install shows the walkthrough.
+    expect(await getHasSeenWalkthrough()).toBe(false);
   });
 
   it("removes each export where this build and older ones wrote it", async () => {
@@ -221,7 +234,7 @@ describe("deleteAllAppData", () => {
   it("says when the database itself was not deleted", async () => {
     await leaveDataEverywhere();
     jest
-      .spyOn(database, "deleteAllDataInDatabase")
+      .spyOn(setup, "replaceDatabase")
       .mockRejectedValueOnce(new Error("disk I/O error"));
 
     await expect(deleteAllAppData()).rejects.toMatchObject({

@@ -1,7 +1,9 @@
 import * as FileSystem from "expo-file-system/legacy";
 import * as Notifications from "expo-notifications";
+import { setHasSeenWalkthrough } from "@/assets/src/onboarding/onboarding-storage";
 import { invalidateCatalogue } from "@/db/catalogue";
-import { deleteAllDataInDatabase, seedCatalogueOnce } from "@/db/database";
+import { seedCatalogueOnce } from "@/db/database";
+import { replaceDatabase } from "@/db/operations/setup";
 import {
   DATABASE_STEP,
   DeletionIncomplete,
@@ -12,13 +14,13 @@ import { EXPORT_FILES, LEGACY_PDF_EXPORT } from "@/services/exportFiles";
 type Step = [name: string, run: () => Promise<unknown>];
 
 /**
- * Deletes the user's data from this device: every row in the database, the
- * notifications the app has scheduled or is showing, and the files exports
- * leave behind. Settings › Data › Delete Data and the Forgot Password reset
- * both run it, and the privacy policy promises what it does. It leaves the
- * database key (docs/adr/0005) and the flag saying the walkthrough was seen,
- * and the database as a fresh install has it: the default catalogue and
- * nothing the user entered.
+ * Returns the app to a fresh install: a new database file under a new key
+ * (docs/adr/0005), so everything the user logged, their custom entries,
+ * every setting and the app lock go, and the default catalogue comes back.
+ * It also removes the notifications the app has scheduled or is showing, the
+ * files exports leave behind, and the flag saying the walkthrough was seen.
+ * Settings › Data › Delete Data and the Forgot Password reset both run it,
+ * and the privacy policy promises what it does.
  *
  * Every step runs even when an earlier one fails, and each is safe to repeat,
  * so trying again after a rejection finishes the job. The database goes last,
@@ -55,12 +57,11 @@ async function deleteEverything(): Promise<void> {
       "pdf export an older build left in Documents",
       () => FileSystem.deleteAsync(LEGACY_PDF_EXPORT, { idempotent: true }),
     ],
-    [DATABASE_STEP, deleteAllDataInDatabase],
+    ["walkthrough flag", () => setHasSeenWalkthrough(false)],
+    [DATABASE_STEP, replaceDatabase],
     // Again: a prediction refresh that read the flow before the database went
     // can have scheduled since the first cancel. One still scheduling now can
-    // land after this too. The refreshes the delete itself prompts, through
-    // the live queries' change events, reach JavaScript only after the
-    // commit, which is synchronous, and find no flow to schedule from.
+    // land after this too.
     [
       "notifications scheduled during the delete",
       Notifications.cancelAllScheduledNotificationsAsync,

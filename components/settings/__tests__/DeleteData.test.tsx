@@ -52,6 +52,9 @@ const databaseGoneButNotAll = () =>
 const databaseKept = () => new DeletionIncomplete([DATABASE_STEP]);
 
 /** The failure alert's Try Again button, as Alert.alert was handed it. */
+const DELETED_MESSAGE =
+  "Your logged data, custom entries, settings and app lock have been deleted from this device.";
+
 function tryAgainButton() {
   const call = jest
     .mocked(Alert.alert)
@@ -157,15 +160,25 @@ beforeEach(() => {
 afterEach(() => jest.restoreAllMocks());
 
 describe("Delete Data", () => {
-  it("says the data is gone once it is", async () => {
+  it("says before it starts that the settings and the app lock go too", async () => {
+    // Delete Data returns the app to a fresh install: a user who reads only
+    // "data" would not expect the lock to be off afterwards.
+    await render(<DeleteData />, { wrapper: PaperProvider });
+    await fireEvent.press(screen.getByText("Delete all data from this device"));
+
+    expect(
+      within(screen.getByTestId("modal")).getByText(
+        /every setting, and the app lock and its password/,
+      ),
+    ).toBeOnTheScreen();
+  });
+
+  it("says the data, the settings and the lock are gone once they are", async () => {
     mockDeleteAllAppData.mockResolvedValue(undefined);
 
     await confirmDelete();
 
-    expect(Alert.alert).toHaveBeenCalledWith(
-      "Data deleted",
-      "All data has been deleted from this device.",
-    );
+    expect(Alert.alert).toHaveBeenCalledWith("Data deleted", DELETED_MESSAGE);
   });
 
   it("has the open screens let go of what they hold", async () => {
@@ -238,10 +251,7 @@ describe("Delete Data", () => {
     await settle();
 
     expect(mockDeleteAllAppData).toHaveBeenCalledTimes(2);
-    expect(Alert.alert).toHaveBeenCalledWith(
-      "Data deleted",
-      "All data has been deleted from this device.",
-    );
+    expect(Alert.alert).toHaveBeenCalledWith("Data deleted", DELETED_MESSAGE);
   });
 
   it("offers to try again once more when a retry from the alert fails unknowably", async () => {

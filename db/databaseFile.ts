@@ -140,6 +140,40 @@ export function discardUnreadableDatabase<C>(files: DatabaseFiles<C>): void {
 }
 
 /**
+ * For Delete Data: closes the database, deletes every file the launch
+ * sequence knows, and stores a new key, so the next openDatabaseFile creates
+ * an empty file as a fresh install does. A table added later goes with the
+ * file, and the old key no longer opens a copy a backup kept.
+ *
+ * The key changes only once every file is gone. A kill at any point leaves
+ * either a file the stored key opens, which the next launch resolves as it
+ * would any other, or no file, which it treats as a fresh install. A kill
+ * between the deletes and the key write leaves the old key for that install
+ * to reuse. Throws when a file cannot be deleted, with the key unchanged; a
+ * key that cannot be stored is not thrown, since the data has gone by then.
+ */
+export function deleteDatabase<C>(
+  files: DatabaseFiles<C>,
+  connection: C,
+): void {
+  files.close(connection);
+  // The plaintext file last: on the fallback it holds the data, and a delete
+  // that stops before it leaves that data whole for the next launch.
+  for (const name of [
+    ENCRYPTED_DATABASE,
+    PENDING_DATABASE,
+    PLAINTEXT_DATABASE,
+  ]) {
+    files.remove(name);
+  }
+  try {
+    storeNewKey(files);
+  } catch (error) {
+    console.warn("Could not replace the database key", error);
+  }
+}
+
+/**
  * Opens the encrypted file. Returns undefined for the two cases where it is
  * not the truth, both with a plaintext file beside it: a leftover export that
  * cannot be deleted (the copy may be partial), and an empty file. An upgrade
@@ -286,12 +320,15 @@ function openVerified<C>(
 function usableKey<C>(files: DatabaseFiles<C>): string {
   const stored = files.readKey();
   if (stored !== null && isDatabaseKey(stored)) return stored;
+  return storeNewKey(files);
+}
 
+/** A new random key, stored and read back before anything is encrypted with it. */
+function storeNewKey<C>(files: DatabaseFiles<C>): string {
   const key = Array.from(files.randomBytes(KEY_BYTES), (byte) =>
     byte.toString(16).padStart(2, "0"),
   ).join("");
   files.writeKey(key);
-  // Prove the store keeps it before anything is encrypted with it.
   if (files.readKey() !== key) {
     throw new Error("The key store did not keep the database key");
   }

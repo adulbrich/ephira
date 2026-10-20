@@ -52,18 +52,19 @@ async function deleteAndStartAgain(retrying = false): Promise<void> {
     // again from the first screen, as a launch does: screens that read once
     // on mount (the lock setting, pregnancy Home, notification settings)
     // would go on showing what was deleted, and write it back on their next
-    // save. After a rollback the database kept everything, so there is
-    // nothing to let go of. The exports and reminders removed before the
-    // database step stay removed. Reminders come back at the next refresh,
-    // or within moments if the cycle calendar is mounted with predictions
-    // shown and the rollback came after the keyed delete on days: the update
-    // hook reported that delete, so the calendar reads the kept flow again.
+    // save. When the database step failed the old file is open again with
+    // everything in it, so there is nothing to let go of. The exports and
+    // reminders removed before it stay removed; reminders come back at the
+    // next refresh.
     await forgetDeletedData();
     useAppRestart.getState().restart();
   }
 
   if (deleted) {
-    Alert.alert("Data deleted", "All data has been deleted from this device.");
+    Alert.alert(
+      "Data deleted",
+      "Your logged data, custom entries, settings and app lock have been deleted from this device.",
+    );
   } else {
     // Try Again only when no lock can be left under the alert, which can
     // outlive a trip to the background and sit above the lock view, where a
@@ -129,8 +130,14 @@ function DeleteDataModal({ onDismiss }: { onDismiss: () => void }) {
           ) : (
             <ThemedView style={{ paddingLeft: 15, paddingRight: 15, gap: 10 }}>
               <Text>
+                This deletes everything the app keeps on this device: your
+                logged data, pregnancy data, custom entries, every setting, and
+                the app lock and its password. The app starts again as if newly
+                installed.
+              </Text>
+              <Text>
                 Data is stored only on this device and cannot be recovered once
-                deleted, are you sure you want to delete it?
+                deleted. Are you sure you want to delete it?
               </Text>
               <TextInput
                 mode="outlined"

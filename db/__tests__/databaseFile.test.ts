@@ -12,6 +12,7 @@ import {
   type DatabaseFiles,
   type OpenedDatabase,
   WrongKeyError,
+  deleteDatabase,
   discardUnreadableDatabase,
   isDatabaseKey,
   openDatabaseFile,
@@ -849,6 +850,114 @@ describe("a process killed after any step of an upgrade", () => {
         "2026-10-01",
       ]);
       expectOnlyOpen(relaunched, opened);
+    }
+  });
+});
+
+describe("deleteDatabase, for Delete Data", () => {
+  /** A device on its encrypted file, opened as at launch. */
+  function launched(files: Record<string, FakeFile>, key: string | null) {
+    const device = new FakeDevice(files, key);
+    const opened = openDatabaseFile(device);
+    expect(opened.status).toBe("ready");
+    return { device, connection: opened.connection };
+  }
+
+  it("leaves no file, and a new key the next open creates an empty file with", () => {
+    const { device, connection } = launched(
+      { [ENCRYPTED_DATABASE]: encryptedDatabase() },
+      KEY,
+    );
+
+    deleteDatabase(device, connection);
+
+    expect(device.names()).toEqual([]);
+    expect(device.connections.size).toBe(0);
+    expect(device.storedKey).toBe(GENERATED_KEY);
+
+    const reopened = openDatabaseFile(device);
+
+    expect(reopened.status).toBe("ready");
+    expect(device.names()).toEqual([ENCRYPTED_DATABASE]);
+    expect(device.file(ENCRYPTED_DATABASE)).toEqual(emptyFile(GENERATED_KEY));
+    expectOnlyOpen(device, reopened);
+  });
+
+  it("leaves no plaintext file when the app was on the plaintext fallback", () => {
+    const device = new FakeDevice({ [PLAINTEXT_DATABASE]: legacyDatabase() });
+    device.failing.add("writeKey");
+    const { connection } = openDatabaseFile(device);
+    expect(connection.name).toBe(PLAINTEXT_DATABASE);
+    device.restart();
+
+    deleteDatabase(device, connection);
+    const reopened = openDatabaseFile(device);
+
+    expect(device.names()).toEqual([ENCRYPTED_DATABASE]);
+    expect(device.file(ENCRYPTED_DATABASE)).toEqual(emptyFile(GENERATED_KEY));
+    expectOnlyOpen(device, reopened);
+  });
+
+  it.each([ENCRYPTED_DATABASE, PENDING_DATABASE, PLAINTEXT_DATABASE])(
+    "throws, keeps the key, and opens what is left when %s cannot be deleted",
+    (name) => {
+      const { device, connection } = launched(
+        { [ENCRYPTED_DATABASE]: encryptedDatabase() },
+        KEY,
+      );
+      device.failing.add(`remove:${name}`);
+
+      expect(() => deleteDatabase(device, connection)).toThrow();
+
+      expect(device.storedKey).toBe(KEY);
+      device.restart();
+      const reopened = openDatabaseFile(device);
+      expect(reopened.status).toBe("ready");
+      expect(device.file(reopened.connection.name).days).toEqual(
+        name === ENCRYPTED_DATABASE ? ["2026-10-01"] : [],
+      );
+    },
+  );
+
+  it("still deletes the data when the key store refuses the new key", () => {
+    // The files are gone by then, so the new file takes the old key.
+    const { device, connection } = launched(
+      { [ENCRYPTED_DATABASE]: encryptedDatabase() },
+      KEY,
+    );
+    device.failing.add("writeKey");
+
+    expect(() => deleteDatabase(device, connection)).not.toThrow();
+
+    expect(device.names()).toEqual([]);
+    device.restart();
+    const reopened = openDatabaseFile(device);
+    expect(reopened.status).toBe("ready");
+    expect(device.file(ENCRYPTED_DATABASE)).toEqual(emptyFile(KEY));
+  });
+
+  it("leaves, if killed after any step, a device whose next launch opens the old data or a fresh file", () => {
+    const { device, connection } = launched(
+      { [ENCRYPTED_DATABASE]: encryptedDatabase() },
+      KEY,
+    );
+    const states: ReturnType<FakeDevice["snapshot"]>[] = [];
+    device.onEffect = () => states.push(device.snapshot());
+
+    deleteDatabase(device, connection);
+
+    // At least: delete the file, store the key.
+    expect(states.length).toBeGreaterThanOrEqual(2);
+    for (const state of states) {
+      const relaunched = new FakeDevice(state.files, state.storedKey);
+
+      const opened = openDatabaseFile(relaunched);
+
+      expect(opened.status).toBe("ready");
+      expect(opened.connection.name).toBe(ENCRYPTED_DATABASE);
+      expect([[], ["2026-10-01"]]).toContainEqual(
+        relaunched.file(ENCRYPTED_DATABASE).days,
+      );
     }
   });
 });

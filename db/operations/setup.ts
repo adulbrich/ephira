@@ -12,12 +12,15 @@ import { File } from "expo-file-system";
 import * as SecureStore from "expo-secure-store";
 import * as SQLite from "expo-sqlite";
 import { drizzle } from "drizzle-orm/expo-sqlite";
+import { migrate } from "drizzle-orm/expo-sqlite/migrator";
+import migrations from "@/drizzle/migrations";
 import * as schema from "@/db/schema";
 import {
   type DatabaseFiles,
   type DatabaseStatus,
   type OpenedDatabase,
   WrongKeyError,
+  deleteDatabase,
   discardUnreadableDatabase as discardFrom,
   isDatabaseKey,
   openDatabaseFile,
@@ -99,7 +102,20 @@ const openOnce = () => {
   return opened;
 };
 
-export const getDatabase = () => openOnce().connection;
+/**
+ * What every module holds instead of the connection itself. Each one under
+ * db/operations captured its handle at import, and replaceDatabase swaps the
+ * connection underneath them.
+ */
+const database = new Proxy({} as SQLite.SQLiteDatabase, {
+  get: (_target, property) => {
+    const { connection } = openOnce();
+    const value = Reflect.get(connection, property);
+    return typeof value === "function" ? value.bind(connection) : value;
+  },
+});
+
+export const getDatabase = () => database;
 
 /**
  * Whether the database opened. Anything but "ready" means getDatabase() is an
@@ -111,6 +127,29 @@ export const getDatabaseStatus = (): DatabaseStatus => openOnce().status;
 export const discardUnreadableDatabase = () => discardFrom(files);
 
 const db = drizzle(getDatabase(), { schema });
+
+/**
+ * Delete Data's database step: a new empty file under a new key, migrated
+ * as a launch migrates it. Rejects, with the old database open again, when a
+ * file could not be deleted.
+ */
+export async function replaceDatabase() {
+  const { connection } = openOnce();
+  opened = undefined;
+  try {
+    deleteDatabase(files, connection);
+  } finally {
+    openOnce();
+  }
+  // The shell's useMigrations ran at launch and does not run again. A failure
+  // here is not a failed delete: the data is gone, and the next launch
+  // migrates the file.
+  try {
+    await migrate(db, migrations);
+  } catch (error) {
+    console.error("Could not migrate the new database:", error);
+  }
+}
 
 export const getDrizzleDatabase = () => {
   return db;
