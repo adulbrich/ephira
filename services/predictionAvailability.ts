@@ -5,7 +5,7 @@ import {
   hasEnoughCyclesForPrediction,
 } from "@/services/cyclePredictionLogic";
 import { refreshPredictions } from "@/services/cyclePredictions";
-import { getAllDays } from "@/db/database";
+import { loadFlowDays } from "@/db/flowDays";
 import { PREDICTION_FILTER, changeFilters } from "@/db/selectedFilters";
 import { insertSetting } from "@/db/operations/settings";
 import { SettingsKeys } from "@/constants/Settings";
@@ -58,13 +58,12 @@ export function predictionAvailability(
 }
 
 /**
- * Apply a change of choice, whoever made it.
+ * Apply the user's choice: the durable preference, the filter list and the
+ * forecast move together.
  *
- * The durable preference, the filter list and the forecast move together. The
- * user's toggle and the data revoking the choice used to be two code paths
- * that did different subsets of this, which is how the toggle came to write
- * the preference while the revocation wrote it and then left the filter behind
- * in the store only.
+ * Only the user writes the choice. Data never does: too few complete Cycles
+ * makes the forecast empty (see `refreshPredictions`), it does not turn the
+ * choice off.
  */
 export async function applyPredictionChoice({
   choice,
@@ -91,42 +90,7 @@ export async function applyPredictionChoice({
   return { choice, filters: nextFilters, predictions };
 }
 
-/**
- * Read availability and revoke the choice if the data no longer supports it.
- *
- * Revocation is a real consequence -- it silently takes away something the
- * user turned on -- so it goes through the same write path as the toggle
- * rather than a private copy of half of it.
- */
-export async function reconcilePredictionChoice({
-  choice,
-  filters,
-  referenceDay,
-}: {
-  choice: boolean;
-  filters: string[];
-  referenceDay: Date;
-}): Promise<
-  | { availability: PredictionAvailability; revoked: false }
-  | {
-      availability: PredictionAvailability;
-      revoked: true;
-      filters: string[];
-    }
-> {
-  const allDays = await getAllDays();
-  const availability = predictionAvailability(
-    allDays.filter((day) => day.flow_intensity) as DayData[],
-  );
-
-  if (availability.hasEnough || !choice)
-    return { availability, revoked: false };
-
-  const applied = await applyPredictionChoice({
-    choice: false,
-    filters,
-    referenceDay,
-  });
-
-  return { availability, revoked: true, filters: applied.filters };
+/** Prediction Availability for the Days logged now. */
+export async function loadPredictionAvailability(): Promise<PredictionAvailability> {
+  return predictionAvailability(await loadFlowDays());
 }

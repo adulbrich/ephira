@@ -19,6 +19,7 @@ import {
   useCalendarFilters,
   useThemeColor,
   usePredictionChoice,
+  usePredictedCycle,
 } from "@/stores/calendar-storage";
 import CalendarHeader from "@/components/calendar/CalendarHeader";
 import CustomDay from "@/components/calendar/CustomDay";
@@ -40,6 +41,7 @@ export default function FlowCalendar() {
   const { date, setDate } = useSelectedDate();
   const { selectedFilters } = useCalendarFilters();
   const { predictionChoice } = usePredictionChoice();
+  const { predictedCycle } = usePredictedCycle();
   // can also be used like this
   // const selectedDate = useSelectedDate().date
 
@@ -194,7 +196,8 @@ export default function FlowCalendar() {
                     ))}
                   </View>
                   {selectedFilters.includes(PREDICTION_FILTER) &&
-                    predictionChoice && (
+                    predictionChoice &&
+                    predictedCycle.length > 0 && (
                       <View
                         style={{
                           padding: 8,

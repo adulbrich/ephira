@@ -12,13 +12,15 @@ import {
   usePredictionChoice,
   usePredictedCycle,
   useCalendarFilters,
+  useDatabaseChangeNotifier,
 } from "@/stores/calendar-storage";
 import { refreshPredictions } from "@/services/cyclePredictions";
 import { startOfLocalDay } from "@/utils/dates";
 import { useState, useEffect } from "react";
 import {
   applyPredictionChoice,
-  reconcilePredictionChoice,
+  loadPredictionAvailability,
+  type PredictionAvailability,
 } from "@/services/predictionAvailability";
 import {
   getPredictionAccuracy,
@@ -32,12 +34,13 @@ export default function CyclePredictions() {
   const { predictionChoice, setPredictionChoice } = usePredictionChoice();
   const { setPredictedCycle } = usePredictedCycle();
   const { setSelectedFilters, selectedFilters } = useCalendarFilters();
+  const { databaseChange } = useDatabaseChangeNotifier();
 
-  const [dataStatus, setDataStatus] = useState<{
-    cycleCount: number;
-    hasEnoughData: boolean;
-    message: string;
-  }>({ cycleCount: 0, hasEnoughData: false, message: "Checking..." });
+  const [dataStatus, setDataStatus] = useState<PredictionAvailability>({
+    cycleCount: 0,
+    hasEnough: false,
+    message: "Checking...",
+  });
 
   const [accuracyStats, setAccuracyStats] = useState<{
     totalChecked: number;
@@ -64,36 +67,21 @@ export default function CyclePredictions() {
     }
   }, [predictionChoice]);
 
-  // Availability, and revoking the choice when the data stops supporting it,
-  // are one operation in services/predictionAvailability.ts. This screen reads
-  // the answer and renders it.
+  // Availability is read, never written: too little data empties the
+  // forecast but leaves the user's choice alone (CONTEXT.md, Prediction).
   useEffect(() => {
     let stale = false;
 
-    reconcilePredictionChoice({
-      choice: predictionChoice,
-      filters: selectedFilters,
-      referenceDay: startOfLocalDay(),
-    })
-      .then((result) => {
-        if (stale) return;
-        setDataStatus({
-          cycleCount: result.availability.cycleCount,
-          hasEnoughData: result.availability.hasEnough,
-          message: result.availability.message,
-        });
-        if (result.revoked) {
-          setPredictionChoice(false);
-          setPredictedCycle([]);
-          setSelectedFilters(result.filters);
-        }
+    loadPredictionAvailability()
+      .then((availability) => {
+        if (!stale) setDataStatus(availability);
       })
       .catch((error) => {
         console.error("Error checking data quality:", error);
         if (stale) return;
         setDataStatus({
           cycleCount: 0,
-          hasEnoughData: false,
+          hasEnough: false,
           message: "Error checking data quality",
         });
       });
@@ -101,21 +89,16 @@ export default function CyclePredictions() {
     return () => {
       stale = true;
     };
-  }, [
-    predictionChoice,
-    selectedFilters,
-    setPredictionChoice,
-    setPredictedCycle,
-    setSelectedFilters,
-  ]);
+  }, [databaseChange]);
 
-  // Keep the forecast in step with the data while predictions are on.
+  // Keep the forecast in step with the data while predictions are on. It
+  // re-runs when availability changes; refreshPredictions empties the forecast
+  // when there is too little data.
   useEffect(() => {
     if (!predictionChoice) {
       setPredictedCycle([]);
       return;
     }
-    if (!dataStatus.hasEnoughData) return;
 
     let stale = false;
     refreshPredictions(startOfLocalDay())
@@ -129,10 +112,9 @@ export default function CyclePredictions() {
     return () => {
       stale = true;
     };
-  }, [predictionChoice, dataStatus.hasEnoughData, setPredictedCycle]);
+  }, [predictionChoice, dataStatus.hasEnough, setPredictedCycle]);
 
   const handleOptionChange = async () => {
-    // The same write path the data uses when it revokes the choice.
     const result = await applyPredictionChoice({
       choice: !predictionChoice,
       filters: selectedFilters,
@@ -149,11 +131,9 @@ export default function CyclePredictions() {
       <List.Section>
         <List.Accordion
           title={
-            !dataStatus.hasEnoughData
-              ? "Cycle Predictions (Disabled)"
-              : predictionChoice
-                ? "Cycle Predictions (Enabled)"
-                : "Cycle Predictions (Disabled)"
+            predictionChoice
+              ? "Cycle Predictions (Enabled)"
+              : "Cycle Predictions (Disabled)"
           }
           titleStyle={{
             fontSize: 20,
@@ -163,7 +143,7 @@ export default function CyclePredictions() {
             <Card
               mode="outlined"
               style={{
-                backgroundColor: dataStatus.hasEnoughData
+                backgroundColor: dataStatus.hasEnough
                   ? theme.colors.primaryContainer
                   : theme.colors.surfaceVariant,
                 marginBottom: 10,
@@ -174,7 +154,7 @@ export default function CyclePredictions() {
                   Data Status
                 </Text>
                 <Text>{dataStatus.message}</Text>
-                {!dataStatus.hasEnoughData && dataStatus.cycleCount > 0 && (
+                {!dataStatus.hasEnough && dataStatus.cycleCount > 0 && (
                   <Text
                     style={{ marginTop: 5, fontSize: 12, fontStyle: "italic" }}
                   >
@@ -233,11 +213,10 @@ export default function CyclePredictions() {
               onPress={async () => {
                 await handleOptionChange();
               }}
-              disabled={!dataStatus.hasEnoughData}
             >
               {predictionChoice ? "Enabled" : "Disabled"}
             </Button>
-            {!dataStatus.hasEnoughData && (
+            {!dataStatus.hasEnough && (
               <Text
                 style={{
                   fontSize: 12,
@@ -245,13 +224,13 @@ export default function CyclePredictions() {
                   color: theme.colors.error,
                 }}
               >
-                You need at least{" "}
+                Predictions start once you have{" "}
                 {CYCLE_PREDICTION_CONSTANTS.MIN_CYCLES_FOR_PREDICTION} complete
-                cycles to enable predictions.
+                cycles.
               </Text>
             )}
 
-            {predictionChoice && dataStatus.hasEnoughData && (
+            {predictionChoice && dataStatus.hasEnough && (
               <Card
                 mode="outlined"
                 style={{

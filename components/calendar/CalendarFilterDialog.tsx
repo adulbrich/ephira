@@ -10,7 +10,6 @@ import {
 } from "react-native-paper";
 import { ScrollView, View, Platform, StyleSheet } from "react-native";
 import { useState, useEffect } from "react";
-import { getAllDays } from "@/db/database";
 import {
   useCalendarFilters,
   useDatabaseChangeNotifier,
@@ -22,8 +21,7 @@ import { anyMedicationOption } from "@/constants/Medications";
 import { anyBirthControlOption } from "@/constants/BirthControlTypes";
 import { PREDICTION_FILTER, changeFilters } from "@/db/selectedFilters";
 import { useCatalogue } from "@/hooks/useCatalogue";
-import { hasEnoughCyclesForPrediction } from "@/services/cyclePredictionLogic";
-import type { DayData } from "@/constants/Interfaces";
+import { loadPredictionAvailability } from "@/services/predictionAvailability";
 const flowOption = "Flow";
 const notesOption = "Notes";
 const StartEndOption = "Cycle Start/End";
@@ -145,14 +143,9 @@ export default function CalendarFilterDialog({
   useEffect(() => {
     let stale = false;
 
-    getAllDays()
-      .then((allDays) => {
-        if (stale) return;
-        setHasEnoughCycleData(
-          hasEnoughCyclesForPrediction(
-            allDays.filter((day) => day.flow_intensity) as DayData[],
-          ),
-        );
+    loadPredictionAvailability()
+      .then((availability) => {
+        if (!stale) setHasEnoughCycleData(availability.hasEnough);
       })
       .catch((error) => {
         console.error("Error checking cycle data:", error);
@@ -263,9 +256,14 @@ export default function CalendarFilterDialog({
                   );
                 }}
               />
-              {/* Add PREDICTION_FILTER switch if predictionChoice is true AND user has enough cycle data */}
+              {/* The switch shows while predictions are on and there is data
+                  to draw, or the filter is in the applied list.
+                  The calendar's note needs a forecast instead: a selected
+                  filter must stay removable, and the switch must not vanish
+                  under the finger that turns it off. */}
               {usePredictionChoice().predictionChoice === true &&
-                hasEnoughCycleData && (
+                (hasEnoughCycleData ||
+                  selectedFilters.includes(PREDICTION_FILTER)) && (
                   <List.Item
                     style={styles.listItem}
                     key={PREDICTION_FILTER}
