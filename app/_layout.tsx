@@ -27,7 +27,7 @@ import {
   getDatabaseStatus,
   getDrizzleDatabase,
   getSetting,
-  seedEntryTypesOnce,
+  seedCatalogueOnce,
 } from "@/db/database";
 import { readAuthenticationChoiceSync } from "@/db/authenticationChoice";
 import { appLockAction } from "@/services/appLock";
@@ -213,7 +213,7 @@ function AppShell() {
     if (!success) return;
 
     const initializeDatabase = async () => {
-      await seedEntryTypesOnce();
+      await seedCatalogueOnce();
 
       if (loaded) {
         checkAuthentication();

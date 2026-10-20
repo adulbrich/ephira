@@ -223,7 +223,7 @@ export async function deleteAllDataInDatabase() {
  * it is seeded the app offers nothing to log, and an entry logged under a name
  * the stale cache still showed is deleted by setupEntryTypes at the next launch.
  */
-export async function seedEntryTypesOnce() {
+export async function seedCatalogueOnce() {
   const isDatabaseSetup = await getSetting(SettingsKeys.databaseInitialSetup);
   if (isDatabaseSetup?.value === "0000") return;
   await setupEntryTypes();

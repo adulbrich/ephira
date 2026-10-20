@@ -3,6 +3,9 @@
  * native modules that keep state of their own: the notification centre, and
  * the file system the exports are written to.
  */
+import { birthControlOptions } from "@/constants/BirthControlTypes";
+import { medicationOptions } from "@/constants/Medications";
+import { moodOptions } from "@/constants/Moods";
 import { symptomOptions } from "@/constants/Symptoms";
 import { onCatalogueInvalidated } from "@/db/catalogue";
 import { getAllDays, insertDay } from "@/db/operations/days";
@@ -10,6 +13,8 @@ import {
   getAllPregnancyDays,
   upsertPregnancyDay,
 } from "@/db/operations/pregnancyDays";
+import { getAllMedications } from "@/db/operations/medications";
+import { getAllMoods } from "@/db/operations/moods";
 import { getAllSettings, insertSetting } from "@/db/operations/settings";
 import { getAllSymptoms, insertSymptom } from "@/db/operations/symptoms";
 import { deleteAllAppData } from "@/services/deleteAllAppData";
@@ -103,9 +108,13 @@ describe("deleteAllAppData", () => {
 
     await deleteAllAppData();
 
-    expect((await getAllSymptoms()).map((symptom) => symptom.name)).toEqual(
-      symptomOptions,
-    );
+    const names = (rows: { name: string }[]) => rows.map((row) => row.name);
+    expect(names(await getAllSymptoms())).toEqual(symptomOptions);
+    expect(names(await getAllMoods())).toEqual(moodOptions);
+    expect(names(await getAllMedications())).toEqual([
+      ...medicationOptions,
+      ...birthControlOptions,
+    ]);
     expect((await getAllSettings()).map((setting) => setting.name)).toEqual([
       "databaseInitialSetup",
     ]);

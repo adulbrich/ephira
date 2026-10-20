@@ -1,7 +1,7 @@
 import * as FileSystem from "expo-file-system/legacy";
 import * as Notifications from "expo-notifications";
 import { invalidateCatalogue } from "@/db/catalogue";
-import { deleteAllDataInDatabase, seedEntryTypesOnce } from "@/db/database";
+import { deleteAllDataInDatabase, seedCatalogueOnce } from "@/db/database";
 import { EXPORT_FILES } from "@/services/exportFiles";
 
 /** What a step deletes, for the error, and the call that deletes it. */
@@ -56,7 +56,7 @@ export async function deleteAllAppData(): Promise<void> {
   // Not a deletion, so not a failure of one: if it fails, the next launch
   // seeds the catalogue instead, as it does on a fresh install.
   try {
-    await seedEntryTypesOnce();
+    await seedCatalogueOnce();
   } catch (error) {
     console.error("Delete Data could not reseed the catalogue:", error);
   }
