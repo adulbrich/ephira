@@ -18,3 +18,12 @@ export class DeletionIncomplete extends Error {
     this.databaseDeleted = !failed.includes(DATABASE_STEP);
   }
 }
+
+/**
+ * Whether a failed Delete Data may have emptied the database, so that screens
+ * still holding what they read are out of date. Only a failure that names the
+ * database step says it cannot have: anything else is taken to have.
+ */
+export function databaseMayBeGone(error: unknown): boolean {
+  return !(error instanceof DeletionIncomplete) || error.databaseDeleted;
+}

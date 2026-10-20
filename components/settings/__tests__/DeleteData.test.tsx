@@ -232,7 +232,7 @@ describe("Delete Data", () => {
   });
 
   it("leaves the stores alone when the delete rolled back", async () => {
-    // Nothing changed, so there is nothing to let go of; a reset would only
+    // The database kept everything, so there is nothing to let go of; a reset would only
     // send the screens to refresh, and reschedule reminders, from kept data.
     mockDeleteAllAppData.mockRejectedValue(databaseKept());
     holdDataOnScreen();
@@ -248,7 +248,7 @@ describe("Delete Data", () => {
     expect(useDatabaseChangeNotifier.getState().databaseChange).toBe("before");
   });
 
-  it("has them let go after a failure too, since the database may be gone", async () => {
+  it("has them let go after a failure that still emptied the database", async () => {
     mockDeleteAllAppData.mockRejectedValue(databaseGoneButNotAll());
     holdDataOnScreen();
 
@@ -276,7 +276,7 @@ describe("Delete Data", () => {
     const pressing = fireEvent.press(
       modal.getByRole("button", { name: "Delete Data" }),
     );
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await settle();
 
     expect(
       modal.queryByRole("button", { name: "Delete Data" }),
@@ -285,7 +285,10 @@ describe("Delete Data", () => {
     await pressing;
   });
 
-  it("says so when it is not, and lets the user try again", async () => {
+  it("says so after a rollback, and leaves the retry to this screen", async () => {
+    // The alert can outlive a trip to the background and sit above the lock,
+    // where a Try Again would delete behind it. After a rollback the lock is
+    // still there, and so is this screen with the confirmation typed.
     mockDeleteAllAppData.mockRejectedValue(databaseKept());
 
     const modal = await confirmDelete();
@@ -293,7 +296,7 @@ describe("Delete Data", () => {
     expect(Alert.alert).toHaveBeenCalledWith(
       "Data not deleted",
       "Not all data could be deleted.",
-      expect.arrayContaining([expect.objectContaining({ text: "Try Again" })]),
+      undefined,
     );
     expect(Alert.alert).not.toHaveBeenCalledWith(
       "Data deleted",

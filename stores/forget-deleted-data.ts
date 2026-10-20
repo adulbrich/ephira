@@ -22,11 +22,15 @@ import {
 
 /**
  * Empties what the stores drew from the data Delete Data has deleted. Its
- * callers run it whenever the database step went through, which it does even
- * when another step failed. The stores outlive every screen, so remounting
- * the screens does not reach them. Preferences are read back as a launch reads them: left as they were,
+ * callers run it unless the failure says the database step rolled back: the
+ * step runs even when another failed. The stores outlive every screen, so
+ * remounting the screens does not reach them.
+ *
+ * Preferences are read back as a launch reads them. Left as they were,
  * Settings would write them whole into the emptied table on the next change,
- * and a calendar filter can name a custom symptom.
+ * and a calendar filter can name a custom symptom. Nothing else rehydrates
+ * them: the shell does so once, when migrations finish, and the lock path
+ * has no restart.
  */
 export async function forgetDeletedData() {
   useSelectedDate.getState().setDate("");
@@ -47,8 +51,8 @@ export async function forgetDeletedData() {
     lastDurationMs: null,
   });
 
-  // Read back with the loaders a launch uses, which fall back to the default
-  // on a failed read.
+  // The loaders a launch uses, which fall back to the default on a failed
+  // read and write the JSON defaults down as a launch does.
   const [mode, theme, predictionChoice, calendarFilters] = await Promise.all([
     loadTrackingMode(),
     loadThemeColor(),

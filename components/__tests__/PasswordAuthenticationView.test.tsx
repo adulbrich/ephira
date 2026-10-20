@@ -53,7 +53,7 @@ describe("Forgot Password reset", () => {
     expect(usePregnancySelectedDate.getState().notes).toBe("");
   });
 
-  it("leaves the stores alone when nothing was deleted", async () => {
+  it("leaves the stores alone, and says so, when the database kept everything", async () => {
     mockDeleteAllAppData.mockRejectedValue(
       new DeletionIncomplete([DATABASE_STEP]),
     );
@@ -62,6 +62,9 @@ describe("Forgot Password reset", () => {
     await resetPassword();
 
     expect(usePregnancySelectedDate.getState().notes).toBe("first kicks");
+    expect(
+      screen.getByText("Not all data could be deleted. Try again."),
+    ).toBeOnTheScreen();
   });
 
   it("says so when the data is not gone, and tries again on request", async () => {

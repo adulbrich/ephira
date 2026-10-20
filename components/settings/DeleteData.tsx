@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { deleteAllAppData } from "@/services/deleteAllAppData";
-import { DeletionIncomplete } from "@/services/deletionIncomplete";
+import { databaseMayBeGone } from "@/services/deletionIncomplete";
 import { ThemedView } from "@/components/ThemedView";
 import {
   ActivityIndicator,
@@ -27,15 +27,13 @@ import { forgetDeletedData } from "@/stores/forget-deleted-data";
  */
 async function deleteAndStartAgain(): Promise<boolean> {
   let deleted = true;
-  // Whether the screens behind Settings may now hold rows that are gone. Only
-  // a failure that names the database step says they cannot.
+  // Whether the screens behind Settings may now hold rows that are gone.
   let databaseDeleted = true;
   try {
     await deleteAllAppData();
   } catch (error) {
     deleted = false;
-    databaseDeleted =
-      !(error instanceof DeletionIncomplete) || error.databaseDeleted;
+    databaseDeleted = databaseMayBeGone(error);
   }
 
   if (databaseDeleted) {
@@ -44,8 +42,8 @@ async function deleteAndStartAgain(): Promise<boolean> {
     // again from the first screen, as a launch does: screens that read once
     // on mount (the lock setting, pregnancy Home, notification settings)
     // would go on showing what was deleted, and write it back on their next
-    // save. After a rollback nothing changed, and a reset would only send the
-    // screens to refresh, and reschedule reminders, from the kept data.
+    // save. After a rollback the database kept everything, and a reset would
+    // only send the screens to refresh, and reschedule reminders, from it.
     await forgetDeletedData();
     useAppRestart.getState().restart();
   }
@@ -53,10 +51,20 @@ async function deleteAndStartAgain(): Promise<boolean> {
   if (deleted) {
     Alert.alert("Data deleted", "All data has been deleted from this device.");
   } else {
-    Alert.alert("Data not deleted", "Not all data could be deleted.", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Try Again", onPress: () => void deleteAndStartAgain() },
-    ]);
+    // Try Again only once the restart has closed this screen. The alert can
+    // outlive a trip to the background and sit above the lock, where a retry
+    // would delete behind it; after a rollback the lock is still there, and
+    // so is this screen with the confirmation typed.
+    Alert.alert(
+      "Data not deleted",
+      "Not all data could be deleted.",
+      databaseDeleted
+        ? [
+            { text: "Cancel", style: "cancel" },
+            { text: "Try Again", onPress: () => void deleteAndStartAgain() },
+          ]
+        : undefined,
+    );
   }
   return deleted;
 }

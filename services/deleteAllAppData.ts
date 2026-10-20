@@ -54,7 +54,9 @@ async function deleteEverything(): Promise<void> {
     [DATABASE_STEP, deleteAllDataInDatabase],
     // Again: a prediction refresh that read the flow before the database went
     // can have scheduled since the first cancel. One still scheduling now can
-    // land after this too; nothing on either screen that deletes starts one.
+    // land after this too. None starts here: a delete runs from a screen with
+    // no refresh, or after a restart onto an empty database, which a refresh
+    // finds no flow in.
     [
       "notifications scheduled during the delete",
       Notifications.cancelAllScheduledNotificationsAsync,

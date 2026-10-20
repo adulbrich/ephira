@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from "react-native-paper";
 import { deleteAllAppData } from "@/services/deleteAllAppData";
-import { DeletionIncomplete } from "@/services/deletionIncomplete";
+import { databaseMayBeGone } from "@/services/deletionIncomplete";
 import { forgetDeletedData } from "@/stores/forget-deleted-data";
 
 function ForgotPassword({
@@ -124,8 +124,7 @@ export default function PasswordAuthenticationView({
       setDeleteFailed(false);
     } catch (error) {
       setDeleteFailed(true);
-      databaseDeleted =
-        !(error instanceof DeletionIncomplete) || error.databaseDeleted;
+      databaseDeleted = databaseMayBeGone(error);
     }
     // Once the lock is gone a trip to the background unlocks, and the screens
     // that mount then would start from what the stores still hold. After a
