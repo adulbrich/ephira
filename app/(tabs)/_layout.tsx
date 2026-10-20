@@ -58,6 +58,9 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: theme.colors.primary,
+        // React Navigation's default reads its own theme, which stays light,
+        // so in dark mode the inactive icons came out near-black on a dark bar.
+        tabBarInactiveTintColor: theme.colors.onSurfaceVariant,
         headerShown: false,
 
         // Keep your existing default behavior
