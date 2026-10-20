@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { View, StyleSheet } from "react-native";
 import { Card, Text, Button, Chip, useTheme } from "react-native-paper";
-import type { CyclePhaseDefinition } from "@/constants/CyclePhases";
+import {
+  getAdjustedPhaseBoundaries,
+  type CyclePhaseDefinition,
+} from "@/constants/CyclePhases";
 import PhaseInfoModal from "./PhaseInfoModal";
 
 interface PhaseCardProps {
@@ -18,23 +21,14 @@ export default function PhaseCard({
   const theme = useTheme();
   const [modalVisible, setModalVisible] = useState(false);
 
-  // Calculate actual day range for this cycle length
-  const getDayRange = () => {
-    if (phase.id === "menstrual") {
-      return `Days 1-${phase.typicalDays.end}`;
-    } else if (phase.id === "follicular") {
-      const start = phase.typicalDays.start;
-      const end = Math.round(cycleLength * 0.46);
-      return `Days ${start}-${end}`;
-    } else if (phase.id === "ovulation") {
-      const start = Math.round(cycleLength * 0.46) + 1;
-      const end = Math.round(cycleLength * 0.57);
-      return `Days ${start}-${end}`;
-    } else {
-      const start = Math.round(cycleLength * 0.57) + 1;
-      return `Days ${start}-${cycleLength}`;
-    }
-  };
+  const { menstrualEnd, follicularEnd, ovulationEnd } =
+    getAdjustedPhaseBoundaries(cycleLength);
+  const [start, end] = {
+    menstrual: [1, menstrualEnd],
+    follicular: [menstrualEnd + 1, follicularEnd],
+    ovulation: [follicularEnd + 1, ovulationEnd],
+    luteal: [ovulationEnd + 1, cycleLength],
+  }[phase.id];
 
   // Show first 3 symptoms as preview
   const previewSymptoms = phase.commonSymptoms.slice(0, 3);
@@ -73,7 +67,7 @@ export default function PhaseCard({
                 { color: theme.colors.onSurfaceVariant },
               ]}
             >
-              {getDayRange()}
+              {`Days ${start}-${end}`}
             </Text>
           </View>
 
