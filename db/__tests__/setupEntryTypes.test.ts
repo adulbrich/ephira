@@ -1,4 +1,4 @@
-import { setupEntryTypes } from "@/db/database";
+import { seedCatalogueOnce, setupEntryTypes } from "@/db/database";
 import { getSetting, insertSetting } from "@/db/operations/settings";
 import { SettingsKeys } from "@/constants/Settings";
 import {
@@ -199,5 +199,44 @@ describe("the legacy calendar filter conversion", () => {
     await setupEntryTypes();
 
     expect(await getSetting(SettingsKeys.calendarFilters)).toBeUndefined();
+  });
+});
+
+describe("seedCatalogueOnce", () => {
+  beforeEach(() => resetTestDatabase());
+
+  it("seeds an empty database, then leaves what the user adds alone", async () => {
+    // Launch runs it every time. Seeding again would run setupEntryTypes,
+    // which deletes every custom item and every entry logged against one.
+    await seedCatalogueOnce();
+    expect((await getSetting(SettingsKeys.databaseInitialSetup))?.value).toBe(
+      "0000",
+    );
+
+    const db = getTestDatabase();
+    const [day] = db
+      .insert(days)
+      .values({ date: "2026-03-01" })
+      .returning()
+      .all();
+    const [vertigo] = db
+      .insert(symptoms)
+      .values({ name: "Vertigo" })
+      .returning()
+      .all();
+    db.insert(symptomEntries)
+      .values({ day_id: day.id, symptom_id: vertigo.id })
+      .run();
+
+    await seedCatalogueOnce();
+
+    expect(
+      db
+        .select()
+        .from(symptoms)
+        .all()
+        .map((symptom) => symptom.name),
+    ).toContain("Vertigo");
+    expect(db.select().from(symptomEntries).all()).toHaveLength(1);
   });
 });

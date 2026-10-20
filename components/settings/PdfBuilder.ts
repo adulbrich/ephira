@@ -18,6 +18,7 @@ import {
   pregnancyEntries,
   type PregnancyExportEntry,
 } from "@/services/exportRows";
+import { EXPORT_FILES, LEGACY_PDF_EXPORT } from "@/services/exportFiles";
 
 const fontSize = 10;
 const verticalPadding = 2;
@@ -128,24 +129,21 @@ function drawRowText(
  * logging: a failed export used to be indistinguishable from a successful one
  * from the user's side.
  *
- * The file goes to the cache, as the CSV and JSON exports do. It used to go to
- * Documents, which iOS backs up, so a backup held every Day in plaintext beside
- * a database it cannot read. A copy an older export left there is removed by
- * the next PDF export and stays until one runs: neither launch nor Delete Data
- * removes it.
+ * The file goes to `EXPORT_FILES.pdf`, in the cache with the CSV and JSON. It
+ * used to go to Documents, which iOS backs up, so a backup held every Day in
+ * plaintext beside a database it cannot read. A copy an older build left there
+ * (`LEGACY_PDF_EXPORT`) is removed by the next PDF export, or by Delete Data.
  */
 async function shareFinishedPdf(pdfDoc: PDFDocument) {
   const pdfBase64 = await pdfDoc.saveAsBase64();
   try {
-    await FileSystem.deleteAsync(`${FileSystem.documentDirectory}ephira.pdf`, {
-      idempotent: true,
-    });
+    await FileSystem.deleteAsync(LEGACY_PDF_EXPORT, { idempotent: true });
   } catch {
     // The user is waiting for this export, not for that cleanup; the next
     // export tries again.
     console.warn("Could not remove the PDF an older export left in Documents");
   }
-  const pdfPath = `${FileSystem.cacheDirectory}ephira.pdf`;
+  const pdfPath = EXPORT_FILES.pdf;
   await FileSystem.writeAsStringAsync(pdfPath, pdfBase64, {
     encoding: FileSystem.EncodingType.Base64,
   });

@@ -17,6 +17,7 @@ import {
 import { StyleSheet, Dimensions, View } from "react-native";
 import { toCsv, toJson } from "@/services/exportRows";
 import { exportPDF } from "@/components/settings/PdfBuilder";
+import { EXPORT_FILES } from "@/services/exportFiles";
 
 const exportDescriptions: Record<string, string> = {
   csv: "CSV (Comma-Separated Values) files are ideal if you'd like to work with your data in spreadsheet programs like Microsoft Excel or Google Sheets. The file contains the raw data in a simple table format and has the smallest file size of the export options.",
@@ -30,13 +31,12 @@ const exportDescriptions: Record<string, string> = {
 const exportContents =
   "Each format also includes any pregnancy days and appointments, whichever tracking mode is on.";
 
-async function exportCsvOrJson(data: string, fileType: string) {
-  const fileName = `ephira_data.${fileType}`;
+async function exportCsvOrJson(data: string, fileType: "csv" | "json") {
   const mimeType = fileType === "csv" ? "text/csv" : "application/json";
   const UTI =
     fileType === "csv" ? "public.comma-separated-values-text" : "public.json";
   try {
-    const fileUri = FileSystem.cacheDirectory + fileName;
+    const fileUri = EXPORT_FILES[fileType];
 
     await FileSystem.writeAsStringAsync(fileUri, data, {
       encoding: FileSystem.EncodingType.UTF8,

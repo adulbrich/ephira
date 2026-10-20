@@ -1,11 +1,14 @@
 import {
   DEFAULT_CALENDAR_FILTERS,
+  DEFAULT_THEME_COLOR,
   loadCalendarFilters,
   loadCyclePredictionChoice,
+  loadThemeColor,
+  loadTrackingMode,
 } from "@/db/preferences";
 import { getSetting, insertSetting } from "@/db/operations/settings";
 import * as settingsOperations from "@/db/operations/settings";
-import { SettingsKeys } from "@/constants/Settings";
+import { SettingsKeys, TRACKING_MODES } from "@/constants/Settings";
 import { resetTestDatabase } from "@/__tests__/helpers/testDatabase";
 
 jest.mock("@/db/operations/setup", () =>
@@ -82,6 +85,36 @@ describe("loadCalendarFilters", () => {
   });
 });
 
+describe("loadThemeColor", () => {
+  it("returns what the user chose", async () => {
+    await insertSetting(SettingsKeys.theme, "pink");
+
+    expect(await loadThemeColor()).toBe("pink");
+  });
+
+  it("defaults for a user who has never chosen, or stored nothing", async () => {
+    expect(await loadThemeColor()).toBe(DEFAULT_THEME_COLOR);
+
+    await insertSetting(SettingsKeys.theme, "");
+    expect(await loadThemeColor()).toBe(DEFAULT_THEME_COLOR);
+  });
+});
+
+describe("loadTrackingMode", () => {
+  it("returns the mode on record", async () => {
+    await insertSetting(SettingsKeys.trackingMode, TRACKING_MODES.PREGNANCY);
+
+    expect(await loadTrackingMode()).toBe(TRACKING_MODES.PREGNANCY);
+  });
+
+  it("defaults to cycle tracking, for no mode or an empty one", async () => {
+    expect(await loadTrackingMode()).toBe(TRACKING_MODES.CYCLE);
+
+    await insertSetting(SettingsKeys.trackingMode, "");
+    expect(await loadTrackingMode()).toBe(TRACKING_MODES.CYCLE);
+  });
+});
+
 describe("when the database cannot be read", () => {
   // The app shell calls these before anything has rendered. A rejection there
   // is an uncaught error with nowhere to go, which is what happened on a fresh
@@ -108,5 +141,12 @@ describe("when the database cannot be read", () => {
     failing();
 
     await expect(loadCyclePredictionChoice()).resolves.toBe(true);
+  });
+
+  it("falls back to the default theme and mode rather than rejecting", async () => {
+    failing();
+
+    await expect(loadThemeColor()).resolves.toBe(DEFAULT_THEME_COLOR);
+    await expect(loadTrackingMode()).resolves.toBe(TRACKING_MODES.CYCLE);
   });
 });
