@@ -7,8 +7,7 @@ import {
 import { Alert } from "react-native";
 import { PaperProvider } from "react-native-paper";
 import DeleteData from "@/components/settings/DeleteData";
-import { SettingsKeys, TRACKING_MODES } from "@/constants/Settings";
-import { insertSetting } from "@/db/operations/settings";
+import { TRACKING_MODES } from "@/constants/Settings";
 import {
   DATABASE_STEP,
   DeletionIncomplete,
@@ -232,27 +231,21 @@ describe("Delete Data", () => {
     expect(useAppRestart.getState().restarting).toBe(false);
   });
 
-  it("keeps the preferences a rolled-back delete left in place", async () => {
-    await insertSetting(SettingsKeys.theme, "pink");
-    await insertSetting(SettingsKeys.trackingMode, TRACKING_MODES.PREGNANCY);
-    await insertSetting(SettingsKeys.cyclePredictions, "false");
-    await insertSetting(
-      SettingsKeys.calendarFilters,
-      JSON.stringify(["Flow", "Vertigo"]),
-    );
+  it("leaves the stores alone when the delete rolled back", async () => {
+    // Nothing changed, so there is nothing to let go of; a reset would only
+    // send the screens to refresh, and reschedule reminders, from kept data.
     mockDeleteAllAppData.mockRejectedValue(databaseKept());
+    holdDataOnScreen();
 
     await confirmDelete();
 
     expect(useThemeColor.getState().themeColor).toBe("pink");
-    expect(useTrackingMode.getState().trackingMode).toBe(
-      TRACKING_MODES.PREGNANCY,
-    );
-    expect(usePredictionChoice.getState().predictionChoice).toBe(false);
     expect(useCalendarFilters.getState().selectedFilters).toEqual([
       "Flow",
       "Vertigo",
     ]);
+    expect(useContractionTimerStore.getState().isRunning).toBe(true);
+    expect(useDatabaseChangeNotifier.getState().databaseChange).toBe("before");
   });
 
   it("has them let go after a failure too, since the database may be gone", async () => {

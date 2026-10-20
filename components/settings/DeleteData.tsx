@@ -38,15 +38,17 @@ async function deleteAndStartAgain(): Promise<boolean> {
       !(error instanceof DeletionIncomplete) || error.databaseDeleted;
   }
 
-  // The stores outlive every screen, so they let go of what they drew from
-  // the database, and read back what it still holds, after any attempt.
-  await forgetDeletedData();
-
-  // Start again from the first screen, as a launch does: screens that read
-  // once on mount (the lock setting, pregnancy Home, notification settings)
-  // would go on showing what was deleted, and write it back on their next
-  // save.
-  if (databaseDeleted) useAppRestart.getState().restart();
+  if (databaseDeleted) {
+    // The stores outlive every screen, so they let go of what they drew from
+    // the database and read back what a launch reads. Then the app starts
+    // again from the first screen, as a launch does: screens that read once
+    // on mount (the lock setting, pregnancy Home, notification settings)
+    // would go on showing what was deleted, and write it back on their next
+    // save. After a rollback nothing changed, and a reset would only send the
+    // screens to refresh, and reschedule reminders, from the kept data.
+    await forgetDeletedData();
+    useAppRestart.getState().restart();
+  }
 
   if (deleted) {
     Alert.alert("Data deleted", "All data has been deleted from this device.");

@@ -21,10 +21,10 @@ import {
 } from "@/stores/pregnancy-storage";
 
 /**
- * Empties what the stores drew from the data Delete Data has deleted, or may
- * have: the database goes last, and can be empty when an earlier step failed.
- * The stores outlive every screen, so remounting the screens does not reach
- * them. Preferences are read back as a launch reads them: left as they were,
+ * Empties what the stores drew from the data Delete Data has deleted. Its
+ * callers run it whenever the database step went through, which it does even
+ * when another step failed. The stores outlive every screen, so remounting
+ * the screens does not reach them. Preferences are read back as a launch reads them: left as they were,
  * Settings would write them whole into the emptied table on the next change,
  * and a calendar filter can name a custom symptom.
  */
@@ -47,8 +47,8 @@ export async function forgetDeletedData() {
     lastDurationMs: null,
   });
 
-  // Read back, not assumed: a delete that rolled back kept them. The loaders
-  // are the ones a launch uses, and fall back to the default on a failed read.
+  // Read back with the loaders a launch uses, which fall back to the default
+  // on a failed read.
   const [mode, theme, predictionChoice, calendarFilters] = await Promise.all([
     loadTrackingMode(),
     loadThemeColor(),

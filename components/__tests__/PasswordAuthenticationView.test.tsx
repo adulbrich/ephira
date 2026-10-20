@@ -1,6 +1,10 @@
 import { fireEvent, render, screen } from "@testing-library/react-native";
 import { PaperProvider } from "react-native-paper";
 import PasswordAuthenticationView from "@/components/PasswordAuthenticationView";
+import {
+  DATABASE_STEP,
+  DeletionIncomplete,
+} from "@/services/deletionIncomplete";
 import { usePregnancySelectedDate } from "@/stores/pregnancy-storage";
 import { resetTestDatabase } from "@/__tests__/helpers/testDatabase";
 
@@ -47,6 +51,17 @@ describe("Forgot Password reset", () => {
     await resetPassword();
 
     expect(usePregnancySelectedDate.getState().notes).toBe("");
+  });
+
+  it("leaves the stores alone when nothing was deleted", async () => {
+    mockDeleteAllAppData.mockRejectedValue(
+      new DeletionIncomplete([DATABASE_STEP]),
+    );
+    usePregnancySelectedDate.getState().setNotes("first kicks");
+
+    await resetPassword();
+
+    expect(usePregnancySelectedDate.getState().notes).toBe("first kicks");
   });
 
   it("says so when the data is not gone, and tries again on request", async () => {

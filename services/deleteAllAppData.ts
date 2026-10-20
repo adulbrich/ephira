@@ -73,7 +73,7 @@ async function deleteEverything(): Promise<void> {
 
   // Not a deletion, so not reported as a failed one. If it fails, the next
   // launch seeds the catalogue instead, and like any launch that seeds it
-  // deletes the entries logged against the old one: anything logged since.
+  // deletes every symptom, mood and medication entry: those logged since.
   try {
     await seedCatalogueOnce();
   } catch (error) {
