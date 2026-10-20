@@ -41,7 +41,8 @@ const lightGray = rgb(0.95, 0.95, 0.95);
  */
 function drawableText(text: string, encodable: Set<number>): string {
   let out = "";
-  for (const char of text) {
+  // NFC first: a pasted "e" plus a combining accent is one drawable "\u00e9".
+  for (const char of text.normalize("NFC")) {
     if (encodable.has(char.codePointAt(0) ?? 0)) out += char;
     else out += /\s/.test(char) ? " " : "?";
   }

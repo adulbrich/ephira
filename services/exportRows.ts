@@ -342,6 +342,8 @@ const MONTH_LABEL_OPTIONS: Intl.DateTimeFormatOptions = {
   month: "long",
   year: "numeric",
   timeZone: "UTC",
+  calendar: "gregory",
+  numberingSystem: "latn",
 };
 
 /** A month group's key as a PDF heading, such as "August 2026". */
@@ -357,6 +359,8 @@ const DAY_LABEL_OPTIONS: Intl.DateTimeFormatOptions = {
   weekday: "short",
   day: "2-digit",
   timeZone: "UTC",
+  calendar: "gregory",
+  numberingSystem: "latn",
 };
 
 /**

@@ -147,7 +147,8 @@ describe("text the PDF's font cannot draw", () => {
         "2026-09-15": {
           symptoms: [],
           moods: [],
-          notes: "kicked \u{1F495} hard, café",
+          // A pasted accent can arrive as "e" plus a combining mark.
+          notes: "kicked \u{1F495} hard, cafe\u0301",
         },
       },
       pregnancyAppointments: { "2026-10-05": [{ title: "УЗИ" }] },
