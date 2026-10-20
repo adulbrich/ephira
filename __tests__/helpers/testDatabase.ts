@@ -103,6 +103,9 @@ export const discardUnreadableDatabase = () => undefined;
  */
 export const replaceDatabase = async () => resetTestDatabase();
 
+/** The test schema is at head already. */
+export const migrateDatabase = async () => undefined;
+
 /** The same handle, for tests that want to assert against it directly. */
 export const getTestDatabase = () => open().database;
 

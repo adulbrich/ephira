@@ -3,7 +3,7 @@ import * as Notifications from "expo-notifications";
 import { setHasSeenWalkthrough } from "@/assets/src/onboarding/onboarding-storage";
 import { invalidateCatalogue } from "@/db/catalogue";
 import { seedCatalogueOnce } from "@/db/database";
-import { replaceDatabase } from "@/db/operations/setup";
+import { migrateDatabase, replaceDatabase } from "@/db/operations/setup";
 import {
   DATABASE_STEP,
   DeletionIncomplete,
@@ -58,6 +58,9 @@ async function deleteEverything(): Promise<void> {
       () => FileSystem.deleteAsync(LEGACY_PDF_EXPORT, { idempotent: true }),
     ],
     [DATABASE_STEP, replaceDatabase],
+    // Not the database step: if it fails, the data is already gone, the app
+    // restarts as after a delete, and Try Again replaces the file again.
+    ["tables of the new database", migrateDatabase],
     // After the database, so a kill before it does not replay the walkthrough
     // over the data and the lock.
     ["walkthrough flag", () => setHasSeenWalkthrough(false)],

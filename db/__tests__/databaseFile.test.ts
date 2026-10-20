@@ -860,16 +860,16 @@ describe("deleteDatabase, for Delete Data", () => {
     const device = new FakeDevice(files, key);
     const opened = openDatabaseFile(device);
     expect(opened.status).toBe("ready");
-    return { device, connection: opened.connection };
+    return { device, opened };
   }
 
   it("leaves no file, and a new key the next open creates an empty file with", () => {
-    const { device, connection } = launched(
+    const { device, opened } = launched(
       { [ENCRYPTED_DATABASE]: encryptedDatabase() },
       KEY,
     );
 
-    deleteDatabase(device, connection);
+    deleteDatabase(device, opened);
 
     expect(device.names()).toEqual([]);
     expect(device.connections.size).toBe(0);
@@ -886,11 +886,11 @@ describe("deleteDatabase, for Delete Data", () => {
   it("leaves no plaintext file when the app was on the plaintext fallback", () => {
     const device = new FakeDevice({ [PLAINTEXT_DATABASE]: legacyDatabase() });
     device.failing.add("writeKey");
-    const { connection } = openDatabaseFile(device);
-    expect(connection.name).toBe(PLAINTEXT_DATABASE);
+    const opened = openDatabaseFile(device);
+    expect(opened.connection.name).toBe(PLAINTEXT_DATABASE);
     device.restart();
 
-    deleteDatabase(device, connection);
+    deleteDatabase(device, opened);
     const reopened = openDatabaseFile(device);
 
     expect(device.names()).toEqual([ENCRYPTED_DATABASE]);
@@ -899,35 +899,89 @@ describe("deleteDatabase, for Delete Data", () => {
   });
 
   it.each([ENCRYPTED_DATABASE, PENDING_DATABASE, PLAINTEXT_DATABASE])(
-    "throws, keeps the key, and opens what is left when %s cannot be deleted",
+    "throws, and keeps the key and the old data, when %s cannot be deleted",
     (name) => {
-      const { device, connection } = launched(
+      const { device, opened } = launched(
         { [ENCRYPTED_DATABASE]: encryptedDatabase() },
         KEY,
       );
       device.failing.add(`remove:${name}`);
 
-      expect(() => deleteDatabase(device, connection)).toThrow();
+      expect(() => deleteDatabase(device, opened)).toThrow();
 
       expect(device.storedKey).toBe(KEY);
       device.restart();
       const reopened = openDatabaseFile(device);
       expect(reopened.status).toBe("ready");
-      expect(device.file(reopened.connection.name).days).toEqual(
-        name === ENCRYPTED_DATABASE ? ["2026-10-01"] : [],
-      );
+      expect(reopened.connection.name).toBe(ENCRYPTED_DATABASE);
+      expect(device.file(ENCRYPTED_DATABASE).days).toEqual(["2026-10-01"]);
     },
   );
 
+  it("deletes a stale ephira.db before the encrypted file, and keeps both when it cannot", () => {
+    // An upgrade that could not delete the plaintext file leaves it beside
+    // the encrypted one. Deleting the encrypted file first would make the
+    // next open upgrade that old history into the live database, unlocked.
+    const device = new FakeDevice(
+      {
+        [ENCRYPTED_DATABASE]: encryptedDatabase(),
+        [PLAINTEXT_DATABASE]: { ...legacyDatabase(), days: ["2025-01-01"] },
+      },
+      KEY,
+    );
+    device.failing.add(`remove:${PLAINTEXT_DATABASE}`);
+    const opened = openDatabaseFile(device);
+    expect(opened.connection.name).toBe(ENCRYPTED_DATABASE);
+
+    expect(() => deleteDatabase(device, opened)).toThrow();
+
+    expect(device.names()).toEqual([PLAINTEXT_DATABASE, ENCRYPTED_DATABASE]);
+    expect(device.storedKey).toBe(KEY);
+    const reopened = openDatabaseFile(device);
+    expect(reopened.connection).toEqual({ name: ENCRYPTED_DATABASE, key: KEY });
+    expect(device.file(ENCRYPTED_DATABASE).days).toEqual(["2026-10-01"]);
+  });
+
+  it("deletes the stale ephira.db too when it can", () => {
+    const device = new FakeDevice(
+      {
+        [ENCRYPTED_DATABASE]: encryptedDatabase(),
+        [PLAINTEXT_DATABASE]: legacyDatabase(),
+      },
+      KEY,
+    );
+    device.failing.add(`remove:${PLAINTEXT_DATABASE}`);
+    const opened = openDatabaseFile(device);
+    device.restart();
+
+    deleteDatabase(device, opened);
+
+    expect(device.names()).toEqual([]);
+    expect(device.storedKey).toBe(GENERATED_KEY);
+  });
+
+  it("touches no file when the random source gives no key", () => {
+    const { device, opened } = launched(
+      { [ENCRYPTED_DATABASE]: encryptedDatabase() },
+      KEY,
+    );
+    device.randomBytes = () => new Uint8Array(16);
+
+    expect(() => deleteDatabase(device, opened)).toThrow();
+
+    expect(device.names()).toEqual([ENCRYPTED_DATABASE]);
+    expect(device.storedKey).toBe(KEY);
+  });
+
   it("still deletes the data when the key store refuses the new key", () => {
     // The files are gone by then, so the new file takes the old key.
-    const { device, connection } = launched(
+    const { device, opened } = launched(
       { [ENCRYPTED_DATABASE]: encryptedDatabase() },
       KEY,
     );
     device.failing.add("writeKey");
 
-    expect(() => deleteDatabase(device, connection)).not.toThrow();
+    expect(() => deleteDatabase(device, opened)).not.toThrow();
 
     expect(device.names()).toEqual([]);
     device.restart();
@@ -936,28 +990,37 @@ describe("deleteDatabase, for Delete Data", () => {
     expect(device.file(ENCRYPTED_DATABASE)).toEqual(emptyFile(KEY));
   });
 
-  it("leaves, if killed after any step, a device whose next launch opens the old data or a fresh file", () => {
-    const { device, connection } = launched(
-      { [ENCRYPTED_DATABASE]: encryptedDatabase() },
-      KEY,
-    );
-    const states: ReturnType<FakeDevice["snapshot"]>[] = [];
-    device.onEffect = () => states.push(device.snapshot());
-
-    deleteDatabase(device, connection);
-
-    // At least: delete the file, store the key.
-    expect(states.length).toBeGreaterThanOrEqual(2);
-    for (const state of states) {
-      const relaunched = new FakeDevice(state.files, state.storedKey);
-
-      const opened = openDatabaseFile(relaunched);
-
-      expect(opened.status).toBe("ready");
-      expect(opened.connection.name).toBe(ENCRYPTED_DATABASE);
-      expect([[], ["2026-10-01"]]).toContainEqual(
-        relaunched.file(ENCRYPTED_DATABASE).days,
+  it.each([
+    ["alone", {}],
+    ["beside a stale ephira.db", { [PLAINTEXT_DATABASE]: legacyDatabase() }],
+  ])(
+    "leaves, if killed after any step, a device whose next launch opens the old data or a fresh file: encrypted file %s",
+    (_, stale) => {
+      const device = new FakeDevice(
+        { [ENCRYPTED_DATABASE]: encryptedDatabase(), ...stale },
+        KEY,
       );
-    }
-  });
+      device.failing.add(`remove:${PLAINTEXT_DATABASE}`);
+      const opened = openDatabaseFile(device);
+      device.restart();
+      const states: ReturnType<FakeDevice["snapshot"]>[] = [];
+      device.onEffect = () => states.push(device.snapshot());
+
+      deleteDatabase(device, opened);
+
+      // At least: delete the file, store the key.
+      expect(states.length).toBeGreaterThanOrEqual(2);
+      for (const state of states) {
+        const relaunched = new FakeDevice(state.files, state.storedKey);
+
+        const opened = openDatabaseFile(relaunched);
+
+        expect(opened.status).toBe("ready");
+        expect(opened.connection.name).toBe(ENCRYPTED_DATABASE);
+        expect([[], ["2026-10-01"]]).toContainEqual(
+          relaunched.file(ENCRYPTED_DATABASE).days,
+        );
+      }
+    },
+  );
 });

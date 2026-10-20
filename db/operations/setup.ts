@@ -129,27 +129,25 @@ export const discardUnreadableDatabase = () => discardFrom(files);
 const db = drizzle(getDatabase(), { schema });
 
 /**
- * Delete Data's database step: a new empty file under a new key, migrated
- * as a launch migrates it. Rejects, with the old database open again, when a
- * file could not be deleted.
+ * Delete Data's database step: a new empty file under a new key. Rejects,
+ * with the old database open again, when a file could not be deleted.
  */
 export async function replaceDatabase() {
-  const { connection } = openOnce();
+  const current = openOnce();
   opened = undefined;
   try {
-    deleteDatabase(files, connection);
+    deleteDatabase(files, current);
   } finally {
     openOnce();
   }
-  // The shell's useMigrations ran at launch and does not run again. A failure
-  // here is not a failed delete: the data is gone, and the next launch
-  // migrates the file.
-  try {
-    await migrate(db, migrations);
-  } catch (error) {
-    console.error("Could not migrate the new database:", error);
-  }
 }
+
+/**
+ * Creates the tables in the file replaceDatabase left, as a launch does; the
+ * shell's useMigrations ran at launch and does not run again. Its own step,
+ * because a failure here comes after the data has gone.
+ */
+export const migrateDatabase = () => migrate(db, migrations);
 
 export const getDrizzleDatabase = () => {
   return db;

@@ -243,6 +243,24 @@ describe("deleteAllAppData", () => {
     });
   });
 
+  it("says the data went, and runs again, when the new file's tables are not created", async () => {
+    await leaveDataEverywhere();
+    const replace = jest.spyOn(setup, "replaceDatabase");
+    jest
+      .spyOn(setup, "migrateDatabase")
+      .mockRejectedValueOnce(new Error("disk full"));
+
+    // Not the database step, so the app restarts and offers Try Again.
+    await expect(deleteAllAppData()).rejects.toMatchObject({
+      failed: ["tables of the new database"],
+      databaseDeleted: true,
+    });
+
+    await deleteAllAppData();
+
+    expect(replace).toHaveBeenCalledTimes(2);
+  });
+
   it("finishes the job when tried again after a failure", async () => {
     await leaveDataEverywhere();
     mockCancelAll.mockRejectedValueOnce(new Error("notifications unavailable"));
