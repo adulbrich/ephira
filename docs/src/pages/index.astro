@@ -19,8 +19,11 @@ const receipt = [
   ["Cloud sync", "none"],
   ["Usage data", "none"],
   ["Ads", "none"],
-  ["Encryption key", "stays on phone"],
+  ["Encryption key", "locked to phone"],
 ];
+
+// What Export Data writes, named in the tour and in the FAQ.
+const exported = "flow, symptoms, moods, medications, birth control and notes";
 
 const tour = [
   {
@@ -73,7 +76,7 @@ const tour = [
   },
   {
     title: "Take it with you",
-    body: "Your flow, symptoms, moods, medications, birth control and notes, as CSV, PDF or JSON.",
+    body: `Your ${exported}, as CSV, PDF or JSON.`,
     src: exportData,
     alt: "Exporting data as a PDF, with the share sheet open on a 6 KB file",
   },
@@ -82,7 +85,7 @@ const tour = [
 const faq = [
   {
     question: "Where is my data stored?",
-    answer: "On your phone, in a database encrypted with SQLCipher. Its key never leaves that phone, so a backup restores your data only to the phone it came from. A backup made before ephira began encrypting can still hold a readable copy.",
+    answer: "On your phone, in a database encrypted with SQLCipher. Its key is locked to that phone, so a backup restores your data only to the phone it came from. A backup made before ephira began encrypting can still hold a readable copy.",
   },
   {
     question: "Do I need an account?",
@@ -90,7 +93,7 @@ const faq = [
   },
   {
     question: "What happens when I change phones?",
-    answer: "Your data does not move to a new phone, and the app cannot import an export. Export first to keep a copy of your flow, symptoms, moods, medications, birth control and notes.",
+    answer: `Your data does not move to a new phone, and the app cannot import an export. Export first to keep a copy of your ${exported}.`,
   },
   {
     question: "When do predictions start?",
@@ -118,7 +121,7 @@ const faq = [
         The period tracker with nothing to sync.
       </h1>
       <p class="mt-5 max-w-lg text-lg text-white/70">
-        What you log is encrypted with a key that never leaves your phone. There is no account to
+        What you log is encrypted with a key locked to your phone. There is no account to
         make and no server to trust.
       </p>
       <Download id="download" class="mt-8" />
