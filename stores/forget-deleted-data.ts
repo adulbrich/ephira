@@ -28,9 +28,9 @@ import {
  *
  * Preferences are read back as a launch reads them. Left as they were,
  * Settings would write them whole into the emptied table on the next change,
- * and a calendar filter can name a custom symptom. Nothing else rehydrates
- * them: the shell does so once, when migrations finish, and the lock path
- * has no restart.
+ * and a calendar filter can name a custom symptom. The shell hydrates these
+ * stores only once, when migrations finish, and the lock path has no restart,
+ * so a remount alone would not.
  */
 export async function forgetDeletedData() {
   useSelectedDate.getState().setDate("");

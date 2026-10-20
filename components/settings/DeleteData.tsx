@@ -51,10 +51,11 @@ async function deleteAndStartAgain(retrying = false): Promise<void> {
     // again from the first screen, as a launch does: screens that read once
     // on mount (the lock setting, pregnancy Home, notification settings)
     // would go on showing what was deleted, and write it back on their next
-    // save. After a rollback the database kept everything, and a reset would
-    // only send the screens to refresh, and reschedule reminders, from it
-    // while the user retries. The reminders and exports removed before the
-    // database step stay removed; reminders return at the next refresh.
+    // save. After a rollback the database kept everything, so there is
+    // nothing to let go of. The exports removed before the database step stay
+    // removed. The reminders come back within moments: the update hook
+    // reported the keyed deletes before the rollback, so live screens read
+    // the kept flow again and schedule from it.
     await forgetDeletedData();
     useAppRestart.getState().restart();
   }
