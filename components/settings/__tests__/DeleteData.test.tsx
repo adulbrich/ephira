@@ -7,6 +7,7 @@ import {
 import { Alert } from "react-native";
 import { PaperProvider } from "react-native-paper";
 import DeleteData from "@/components/settings/DeleteData";
+import { useAppRestart } from "@/stores/app-restart";
 import {
   useDatabaseChangeNotifier,
   usePredictedCycle,
@@ -21,11 +22,6 @@ import {
 jest.mock("@/db/operations/setup", () =>
   jest.requireActual("@/__tests__/helpers/testDatabase"),
 );
-
-const mockReplace = jest.fn();
-jest.mock("expo-router", () => ({
-  router: { replace: (...args: unknown[]) => mockReplace(...args) },
-}));
 
 const mockDeleteAllAppData = jest.fn();
 jest.mock("@/services/deleteAllAppData", () => ({
@@ -80,7 +76,7 @@ function expectScreensToLetGo() {
 
 beforeEach(() => {
   mockDeleteAllAppData.mockReset();
-  mockReplace.mockReset();
+  useAppRestart.getState().finishRestart();
   jest.spyOn(Alert, "alert").mockImplementation(() => {});
 });
 afterEach(() => jest.restoreAllMocks());
@@ -110,18 +106,16 @@ describe("Delete Data", () => {
     // Screens holding state of their own (the lock setting, pregnancy Home)
     // read it once on mount; mounting them again is what makes them re-read.
     mockDeleteAllAppData.mockResolvedValue(undefined);
-
     await confirmDelete();
 
-    expect(mockReplace).toHaveBeenCalledWith("/");
+    expect(useAppRestart.getState().restarting).toBe(true);
   });
 
   it("stays put after a failure, so trying again is one tap", async () => {
     mockDeleteAllAppData.mockRejectedValue(new Error("notifications"));
-
     await confirmDelete();
 
-    expect(mockReplace).not.toHaveBeenCalled();
+    expect(useAppRestart.getState().restarting).toBe(false);
   });
 
   it("has them let go after a failure too, since the database may be gone", async () => {

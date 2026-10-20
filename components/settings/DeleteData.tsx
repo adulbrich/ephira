@@ -14,7 +14,7 @@ import {
   Button,
 } from "react-native-paper";
 import { StyleSheet, Dimensions, Alert, View } from "react-native";
-import { router } from "expo-router";
+import { useAppRestart } from "@/stores/app-restart";
 import { forgetDeletedData } from "@/stores/forget-deleted-data";
 
 function DeleteDataModal({ onDismiss }: { onDismiss: () => void }) {
@@ -57,7 +57,7 @@ function DeleteDataModal({ onDismiss }: { onDismiss: () => void }) {
     // Start again from the first screen, as a launch does. The tabs stay
     // mounted behind Settings, and screens that read once on mount (the lock
     // setting, pregnancy Home) would go on showing what was deleted.
-    router.replace("/");
+    useAppRestart.getState().restart();
   };
 
   return (

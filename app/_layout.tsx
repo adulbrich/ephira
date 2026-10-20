@@ -34,6 +34,7 @@ import { appLockAction } from "@/services/appLock";
 import DatabaseUnavailable from "@/components/DatabaseUnavailable";
 import DatabaseMigrationError from "@/components/DatabaseMigrationError";
 import PasswordAuthenticationView from "@/components/PasswordAuthenticationView";
+import { useAppRestart } from "@/stores/app-restart";
 import { getTheme } from "@/components/ThemeHandler";
 import {
   useCalendarFilters,
@@ -142,6 +143,13 @@ function AppShell() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isPasswordModalVisible, setIsPasswordModalVisible] = useState(false);
   const router = useRouter();
+  // Delete Data starts the app again from app/index.tsx: no navigator for one
+  // commit, then a new one, as after the lock.
+  const restarting = useAppRestart((state) => state.restarting);
+  const finishRestart = useAppRestart((state) => state.finishRestart);
+  useEffect(() => {
+    if (restarting) finishRestart();
+  }, [restarting, finishRestart]);
 
   const checkAuthentication = useCallback(async () => {
     try {
@@ -286,12 +294,14 @@ function AppShell() {
           <SafeAreaView
             style={{ flex: 1, backgroundColor: theme.colors.background }}
           >
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="index" />
-              <Stack.Screen name="(onboarding)" />
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="(pregnancy-tabs)" />
-            </Stack>
+            {restarting ? null : (
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="index" />
+                <Stack.Screen name="(onboarding)" />
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="(pregnancy-tabs)" />
+              </Stack>
+            )}
 
             <StatusBar style="auto" />
           </SafeAreaView>
