@@ -14,10 +14,6 @@ import {
 } from "@/stores/calendar-storage";
 import { usePregnancySelectedDate } from "@/stores/pregnancy-storage";
 
-jest.mock("@/db/operations/setup", () =>
-  jest.requireActual("@/__tests__/helpers/testDatabase"),
-);
-
 const mockDeleteAllAppData = jest.fn();
 jest.mock("@/services/deleteAllAppData", () => ({
   deleteAllAppData: () => mockDeleteAllAppData(),
