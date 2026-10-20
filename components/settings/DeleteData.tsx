@@ -26,7 +26,8 @@ import { forgetDeletedData } from "@/stores/forget-deleted-data";
  * database went, and says how it went. Outside the modal, because the restart
  * can close the modal before the user answers the alert, and its Try Again
  * has to work from wherever the app is by then. `retrying` is true for a run
- * started from that Try Again, which follows a run that emptied the database.
+ * started from that Try Again, in a chain begun by a run that emptied the
+ * database.
  */
 async function deleteAndStartAgain(retrying = false): Promise<void> {
   let deleted = true;
@@ -52,10 +53,11 @@ async function deleteAndStartAgain(retrying = false): Promise<void> {
     // on mount (the lock setting, pregnancy Home, notification settings)
     // would go on showing what was deleted, and write it back on their next
     // save. After a rollback the database kept everything, so there is
-    // nothing to let go of. The exports removed before the database step stay
-    // removed. The reminders come back within moments: the update hook
-    // reported the keyed deletes before the rollback, so live screens read
-    // the kept flow again and schedule from it.
+    // nothing to let go of. The exports and reminders removed before the
+    // database step stay removed. Reminders come back at the next refresh,
+    // or within moments if the cycle calendar is mounted with predictions
+    // shown and the rollback came after the keyed delete on days: the update
+    // hook reported that delete, so the calendar reads the kept flow again.
     await forgetDeletedData();
     useAppRestart.getState().restart();
   }

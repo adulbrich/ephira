@@ -244,6 +244,24 @@ describe("Delete Data", () => {
     );
   });
 
+  it("offers to try again once more when a retry from the alert fails unknowably", async () => {
+    // The chain began with a run that emptied the database and the lock, so
+    // even a failure that says nothing leaves no lock under the alert.
+    mockDeleteAllAppData
+      .mockRejectedValueOnce(databaseGoneButNotAll())
+      .mockRejectedValueOnce(new Error("unexpected"));
+    await confirmDelete();
+    const firstTryAgain = tryAgainButton();
+    jest.mocked(Alert.alert).mockClear();
+    useAppRestart.getState().finishRestart();
+
+    firstTryAgain?.onPress?.();
+    await settle();
+
+    expect(useAppRestart.getState().restarting).toBe(true);
+    expect(tryAgainButton()).toBeDefined();
+  });
+
   it("stays put when the database was not deleted, so trying again is one tap", async () => {
     mockDeleteAllAppData.mockRejectedValue(databaseKept());
     await confirmDelete();

@@ -54,9 +54,9 @@ async function deleteEverything(): Promise<void> {
     [DATABASE_STEP, deleteAllDataInDatabase],
     // Again: a prediction refresh that read the flow before the database went
     // can have scheduled since the first cancel. One still scheduling now can
-    // land after this too. The refreshes the delete itself starts (live
-    // queries, the databaseChange bump) all read after the commit, which is
-    // synchronous, and find no flow to schedule from.
+    // land after this too. The refreshes the delete itself prompts, through
+    // the live queries' change events, reach JavaScript only after the
+    // commit, which is synchronous, and find no flow to schedule from.
     [
       "notifications scheduled during the delete",
       Notifications.cancelAllScheduledNotificationsAsync,
