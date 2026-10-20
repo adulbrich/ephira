@@ -39,6 +39,9 @@ Inside of your Astro project, you'll see the following folders and files:
 │   └── favicon.svg
 ├── src/
 │   ├── assets/
+│   │   ├── app-store-badge.svg
+│   │   ├── logo.png
+│   │   ├── logo_x10.png
 │   │   └── screens/
 │   ├── components/
 │   │   ├── Download.astro
@@ -103,6 +106,4 @@ same as at the branch's last successful deployment or, before it has one, the
 same as on `main`. Its header says what counts as the website.
 
 A dashboard Redeploy runs that step too, and cancels. To force a rebuild,
-untick "Use project's Ignore Build Step" in the Redeploy dialog. The footer's
-year is rendered at build time, so after New Year it stays behind until the
-next website change or a forced Redeploy.
+untick "Use project's Ignore Build Step" in the Redeploy dialog.

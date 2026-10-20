@@ -7,9 +7,9 @@ lives here.
   use them as utilities (`bg-plum-950`, `text-cream`). Add a colour there rather
   than writing its hex into a class.
 - **Images a page renders go in `src/assets`, not `public/`.** Astro gives each
-  file it imports a hashed name, and `<Picture>` serves resized AVIF and WebP
-  copies; `public/` ships byte for byte at a fixed path, which suits only files
-  linked by one, like `favicon.svg`.
+  file it imports a hashed name, and `Shot.astro` asks `<Picture>` for resized
+  AVIF and WebP copies; `public/` ships byte for byte at a fixed path, which
+  suits only files linked by one, like `favicon.svg`.
 - **A screenshot shows fictional data only.** The repository and the site are
   public. Retake one with the `run-on-device` skill's `screenshots.md`.
 - **Every claim on a page is true of the build its store links install.** The
