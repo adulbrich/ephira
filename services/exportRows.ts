@@ -345,9 +345,9 @@ function readableLabel(
   options: Intl.DateTimeFormatOptions,
   canDraw: CanDraw,
 ): string {
-  const all = { ...options, ...LABEL_OPTIONS };
-  const label = instant.toLocaleString(undefined, all);
-  return canDraw(label) ? label : instant.toLocaleString("en", all);
+  const formatOptions = { ...options, ...LABEL_OPTIONS };
+  const label = instant.toLocaleString(undefined, formatOptions);
+  return canDraw(label) ? label : instant.toLocaleString("en", formatOptions);
 }
 
 const MONTH_LABEL_OPTIONS: Intl.DateTimeFormatOptions = {

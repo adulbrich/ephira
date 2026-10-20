@@ -30,7 +30,7 @@ const flowMap = ["", "Spotting", "Light", "Medium", "Heavy"];
 const lightGray = rgb(0.95, 0.95, 0.95);
 
 /** Whether the font can draw one character. */
-function encodes(encodable: Set<number>, char: string): boolean {
+function encodes(char: string, encodable: Set<number>): boolean {
   return encodable.has(char.codePointAt(0) ?? 0);
 }
 
@@ -47,7 +47,7 @@ function drawableText(text: string, encodable: Set<number>): string {
   let out = "";
   // NFC first: a pasted "e" plus a combining accent is one drawable "\u00e9".
   for (const char of text.normalize("NFC")) {
-    if (encodes(encodable, char)) out += char;
+    if (encodes(char, encodable)) out += char;
     else out += /\s/.test(char) ? " " : "?";
   }
   return out;
@@ -130,8 +130,9 @@ function drawRowText(
  *
  * The file goes to the cache, as the CSV and JSON exports do. It used to go to
  * Documents, which iOS backs up, so a backup held every Day in plaintext beside
- * a database it cannot read. The next PDF export removes a copy an older one
- * left there; without one it stays, since neither launch nor Delete Data does.
+ * a database it cannot read. A copy an older export left there is removed by
+ * the next PDF export and stays until one runs: neither launch nor Delete Data
+ * removes it.
  */
 async function shareFinishedPdf(pdfDoc: PDFDocument) {
   const pdfBase64 = await pdfDoc.saveAsBase64();
@@ -218,7 +219,7 @@ export async function exportPDF(data: ExportData) {
     const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
     const encodable = new Set(font.getCharacterSet());
     const canDraw = (label: string) =>
-      [...label].every((char) => encodes(encodable, char));
+      [...label].every((char) => encodes(char, encodable));
 
     let page = pdfDoc.addPage();
     const { width, height } = page.getSize();
