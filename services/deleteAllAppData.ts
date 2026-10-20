@@ -27,8 +27,8 @@ type Step = [name: string, run: () => Promise<unknown>];
  * so trying again after a rejection finishes the job. The database goes after
  * the notifications and exports, so a kill before it leaves the data and the
  * lock in place to try again with, rather than an empty database and
- * reminders still due to fire. Only setting up the new file, a last cancel
- * and the walkthrough flag follow it.
+ * reminders still due to fire. Only setting up the new file, a last cancel,
+ * the walkthrough flag and the Catalogue reseed follow it.
  *
  * One runs at a time, and a call while one runs joins it: two overlapping
  * runs can interleave one's delete with the other's reseed and leave an empty
@@ -61,6 +61,8 @@ async function deleteEverything(): Promise<void> {
       () => FileSystem.deleteAsync(LEGACY_PDF_EXPORT, { idempotent: true }),
     ],
     [DATABASE_STEP, replaceDatabase],
+    // Next, before anything else touches the database: its first use opens
+    // the new file, and a failure to open must land in this step.
     // Not the database step: if it fails, the data is already gone, the app
     // restarts as after a delete, and Try Again replaces the file again.
     ["tables of the new database", migrateDatabase],

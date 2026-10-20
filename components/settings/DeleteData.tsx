@@ -21,6 +21,10 @@ import { StyleSheet, Dimensions, Alert, View } from "react-native";
 import { useAppRestart } from "@/stores/app-restart";
 import { forgetDeletedData } from "@/stores/forget-deleted-data";
 
+/** What Delete Data removes, as both its alerts name it. */
+const DELETED =
+  "Your logged data, pregnancy data, custom entries, settings and app lock";
+
 /**
  * Deletes everything, then lets the app go on as after a launch whenever the
  * database went, and says how it went. Outside the modal, because the restart
@@ -33,11 +37,9 @@ async function deleteAndStartAgain(retrying = false): Promise<void> {
   let deleted = true;
   // Whether the screens behind Settings may now hold rows that are gone.
   let screensOutOfDate = true;
-  // Whether the lock is known to be gone with the database, on this run or
-  // on the one this retries, so that no lock can sit under the alert.
-  let lockGone = true;
-  // Whether the database is known to be gone, on this run or on the one this
-  // retries, though a later step failed.
+  // After a failure: whether the database, and the lock with it, is known to
+  // be gone, on this run or on the one this retries, so that no lock can sit
+  // under the alert.
   let dataGone = false;
   try {
     await deleteAllAppData();
@@ -47,7 +49,6 @@ async function deleteAndStartAgain(retrying = false): Promise<void> {
     dataGone =
       retrying ||
       (error instanceof DeletionIncomplete && error.databaseDeleted);
-    lockGone = dataGone;
   }
 
   if (screensOutOfDate) {
@@ -67,7 +68,7 @@ async function deleteAndStartAgain(retrying = false): Promise<void> {
   if (deleted) {
     Alert.alert(
       "Data deleted",
-      "Your logged data, pregnancy data, custom entries, settings and app lock have been deleted from this device.",
+      `${DELETED} have been deleted from this device.`,
     );
   } else {
     // Try Again only when no lock can be left under the alert, which can
@@ -77,13 +78,13 @@ async function deleteAndStartAgain(retrying = false): Promise<void> {
     const [title, message] = dataGone
       ? [
           "Delete Data did not finish",
-          "Your logged data, pregnancy data, custom entries, settings and app lock have been deleted, but not every step finished.",
+          `${DELETED} have been deleted, but not every step finished.`,
         ]
       : ["Data not deleted", "Not all data could be deleted."];
     Alert.alert(
       title,
       message,
-      lockGone
+      dataGone
         ? [
             { text: "Cancel", style: "cancel" },
             {
