@@ -210,7 +210,7 @@ describe("Delete Data", () => {
     // The data went, so the alert does not say it was not deleted.
     expect(Alert.alert).toHaveBeenCalledWith(
       "Delete Data did not finish",
-      "Your logged data was deleted, but not every step finished.",
+      "Your logged data, pregnancy data, custom entries, settings and app lock have been deleted, but not every step finished.",
       expect.anything(),
     );
     expect(tryAgainButton()).toBeDefined();
@@ -241,6 +241,12 @@ describe("Delete Data", () => {
 
     expect(mockDeleteAllAppData).toHaveBeenCalledTimes(2);
     expect(tryAgainButton()).toBeDefined();
+    // The data went on the first run, so the retry does not say otherwise.
+    expect(Alert.alert).toHaveBeenCalledWith(
+      "Delete Data did not finish",
+      expect.any(String),
+      expect.anything(),
+    );
   });
 
   it("offers to try again from the alert, since the restart closed this screen", async () => {

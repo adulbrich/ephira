@@ -171,7 +171,7 @@ export function deleteDatabase<C>(
   try {
     storeKey(files, key);
   } catch (error) {
-    console.warn("Could not replace the database key", error);
+    console.warn("Could not confirm the new database key", error);
   }
 }
 

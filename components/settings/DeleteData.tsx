@@ -36,16 +36,18 @@ async function deleteAndStartAgain(retrying = false): Promise<void> {
   // Whether the lock is known to be gone with the database, on this run or
   // on the one this retries, so that no lock can sit under the alert.
   let lockGone = true;
-  // Whether this run is known to have deleted the database, though a later
-  // step failed.
+  // Whether the database is known to be gone, on this run or on the one this
+  // retries, though a later step failed.
   let dataGone = false;
   try {
     await deleteAllAppData();
   } catch (error) {
     deleted = false;
     screensOutOfDate = databaseMayBeGone(error);
-    dataGone = error instanceof DeletionIncomplete && error.databaseDeleted;
-    lockGone = retrying || dataGone;
+    dataGone =
+      retrying ||
+      (error instanceof DeletionIncomplete && error.databaseDeleted);
+    lockGone = dataGone;
   }
 
   if (screensOutOfDate) {
@@ -72,11 +74,15 @@ async function deleteAndStartAgain(retrying = false): Promise<void> {
     // outlive a trip to the background and sit above the lock view, where a
     // retry would delete behind it. After a first run's rollback the lock is
     // still there, and so is this screen with the confirmation typed.
+    const [title, message] = dataGone
+      ? [
+          "Delete Data did not finish",
+          "Your logged data, pregnancy data, custom entries, settings and app lock have been deleted, but not every step finished.",
+        ]
+      : ["Data not deleted", "Not all data could be deleted."];
     Alert.alert(
-      dataGone ? "Delete Data did not finish" : "Data not deleted",
-      dataGone
-        ? "Your logged data was deleted, but not every step finished."
-        : "Not all data could be deleted.",
+      title,
+      message,
       lockGone
         ? [
             { text: "Cancel", style: "cancel" },

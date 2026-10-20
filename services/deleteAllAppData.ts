@@ -27,8 +27,8 @@ type Step = [name: string, run: () => Promise<unknown>];
  * so trying again after a rejection finishes the job. The database goes after
  * the notifications and exports, so a kill before it leaves the data and the
  * lock in place to try again with, rather than an empty database and
- * reminders still due to fire. Only setting up the new file, the walkthrough
- * flag and a last cancel follow it.
+ * reminders still due to fire. Only setting up the new file, a last cancel
+ * and the walkthrough flag follow it.
  *
  * One runs at a time, and a call while one runs joins it: two overlapping
  * runs can interleave one's delete with the other's reseed and leave an empty
@@ -44,7 +44,6 @@ export function deleteAllAppData(): Promise<void> {
 let running: Promise<void> | undefined;
 
 async function deleteEverything(): Promise<void> {
-  const failed: string[] = [];
   const steps: Step[] = [
     [
       "scheduled notifications",
@@ -65,14 +64,6 @@ async function deleteEverything(): Promise<void> {
     // Not the database step: if it fails, the data is already gone, the app
     // restarts as after a delete, and Try Again replaces the file again.
     ["tables of the new database", migrateDatabase],
-    // After the database, and only once it went, so a kill or a failed delete
-    // does not replay the walkthrough over the data and the lock.
-    [
-      "walkthrough flag",
-      async () => {
-        if (!failed.includes(DATABASE_STEP)) await setHasSeenWalkthrough(false);
-      },
-    ],
     // Again: a prediction refresh that read the flow before the database went
     // can have scheduled since the first cancel. One still scheduling now can
     // land after this too.
@@ -82,12 +73,24 @@ async function deleteEverything(): Promise<void> {
     ],
   ];
 
+  const failed: string[] = [];
   for (const [name, run] of steps) {
     try {
       await run();
     } catch (error) {
       console.error(`Delete Data could not delete the ${name}:`, error);
       failed.push(name);
+    }
+  }
+
+  // Only once the database went, so a kill or a failed delete does not replay
+  // the walkthrough over the data and the lock.
+  if (!failed.includes(DATABASE_STEP)) {
+    try {
+      await setHasSeenWalkthrough(false);
+    } catch (error) {
+      console.error("Delete Data could not clear the walkthrough flag:", error);
+      failed.push("walkthrough flag");
     }
   }
 

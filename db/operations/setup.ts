@@ -129,23 +129,26 @@ export const discardUnreadableDatabase = () => discardFrom(files);
 const db = drizzle(getDatabase(), { schema });
 
 /**
- * Delete Data's database step: a new empty file under a new key. Rejects,
- * with the old database open again, when a file could not be deleted.
+ * Delete Data's database step: deletes the files and stores a new key. Rejects,
+ * with the old database open again, when the new key is not one or a file
+ * could not be deleted; nothing has gone then.
  */
 export async function replaceDatabase() {
   const current = openOnce();
   opened = undefined;
   try {
     deleteDatabase(files, current);
-  } finally {
+  } catch (error) {
     openOnce();
+    throw error;
   }
 }
 
 /**
- * Creates the tables in the file replaceDatabase left, as a launch does; the
- * shell's useMigrations ran at launch and does not run again. Its own step,
- * because a failure here comes after the data has gone.
+ * Opens the new file and creates its tables, as a launch does; the shell's
+ * useMigrations ran at launch and does not run again. Its own step, because a
+ * failure here comes after the data has gone. The open is the first use of
+ * the proxy after replaceDatabase.
  */
 export const migrateDatabase = () => migrate(db, migrations);
 
