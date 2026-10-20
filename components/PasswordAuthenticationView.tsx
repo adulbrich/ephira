@@ -8,7 +8,9 @@ import {
   useTheme,
   ActivityIndicator,
 } from "react-native-paper";
-import { deleteAllDataInDatabase } from "@/db/database";
+import { deleteAllAppData } from "@/services/deleteAllAppData";
+import { databaseMayBeGone } from "@/services/deletionIncomplete";
+import { forgetDeletedData } from "@/stores/forget-deleted-data";
 
 function ForgotPassword({
   onCancel,
@@ -59,7 +61,15 @@ function ForgotPassword({
   );
 }
 
-function DeleteDataDialog({ loading }: { loading: boolean }) {
+function DeleteDataDialog({
+  loading,
+  failed,
+  onRetry,
+}: {
+  loading: boolean;
+  failed: boolean;
+  onRetry: () => void;
+}) {
   return (
     <Portal>
       <Dialog visible dismissable={false}>
@@ -69,12 +79,24 @@ function DeleteDataDialog({ loading }: { loading: boolean }) {
         <Dialog.Content>
           {loading ? (
             <ActivityIndicator />
+          ) : failed ? (
+            <Text style={{ marginBottom: 16 }}>
+              Not all data could be deleted. Try again.
+            </Text>
           ) : (
             <Text style={{ marginBottom: 16 }}>
               Data and password have been deleted. Please restart the app.
             </Text>
           )}
         </Dialog.Content>
+        {/* Retried here: the database goes even when another step fails, and
+            the lock with it, so a trip to the background or a restart may
+            open the app with Forgot Password gone. */}
+        {!loading && failed && (
+          <Dialog.Actions>
+            <Button onPress={onRetry}>Try Again</Button>
+          </Dialog.Actions>
+        )}
       </Dialog>
     </Portal>
   );
@@ -91,16 +113,34 @@ export default function PasswordAuthenticationView({
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [deleteData, setDeleteData] = useState<boolean>(false);
+  const [deleteFailed, setDeleteFailed] = useState<boolean>(false);
 
   const handleResetPassword = async () => {
     setDeleteData(true);
     setLoading(true);
-    await deleteAllDataInDatabase();
+    let storesOutOfDate = true;
+    try {
+      await deleteAllAppData();
+      setDeleteFailed(false);
+    } catch (error) {
+      setDeleteFailed(true);
+      storesOutOfDate = databaseMayBeGone(error);
+    }
+    // Once the lock is gone a trip to the background unlocks, and the screens
+    // that mount then would start from what the stores still hold. After a
+    // rollback the lock and the data are both still there.
+    if (storesOutOfDate) await forgetDeletedData();
     setLoading(false);
   };
 
   if (deleteData) {
-    return <DeleteDataDialog loading={loading} />;
+    return (
+      <DeleteDataDialog
+        loading={loading}
+        failed={deleteFailed}
+        onRetry={handleResetPassword}
+      />
+    );
   }
 
   if (showForgotPassword) {

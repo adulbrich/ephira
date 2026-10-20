@@ -1,5 +1,5 @@
 import { getSetting, insertSetting } from "@/db/operations/settings";
-import { SettingsKeys } from "@/constants/Settings";
+import { SettingsKeys, TRACKING_MODES } from "@/constants/Settings";
 
 /**
  * Durable preferences, with their defaults.
@@ -18,6 +18,39 @@ export const DEFAULT_CYCLE_PREDICTION_CHOICE = true;
 
 /** What a new user sees on the calendar before they choose. */
 export const DEFAULT_CALENDAR_FILTERS = ["Flow", "Any Birth Control"] as const;
+
+/** The colour a new user starts with. */
+export const DEFAULT_THEME_COLOR = "purple";
+
+/**
+ * Reads a stored string setting, or the fallback when there is none, it is
+ * empty, or it cannot be read.
+ *
+ * Unlike the JSON preferences below, the default is not written down. These
+ * never have been, and every reader already takes a missing theme or mode to
+ * mean the default, so there is no second reader to disagree with.
+ */
+async function loadStringSetting(
+  key: string,
+  fallback: string,
+): Promise<string> {
+  try {
+    return (await getSetting(key))?.value || fallback;
+  } catch (error) {
+    console.error(`Could not load the ${key} preference:`, error);
+    return fallback;
+  }
+}
+
+/** The theme colour the user chose, or the one a new user starts with. */
+export function loadThemeColor(): Promise<string> {
+  return loadStringSetting(SettingsKeys.theme, DEFAULT_THEME_COLOR);
+}
+
+/** The tracking mode on record, which is cycle tracking until chosen. */
+export function loadTrackingMode(): Promise<string> {
+  return loadStringSetting(SettingsKeys.trackingMode, TRACKING_MODES.CYCLE);
+}
 
 /**
  * Reads a stored JSON setting, writing the default down if there is none.
