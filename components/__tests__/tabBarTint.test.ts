@@ -3,7 +3,7 @@
  * against the bar in every theme, light and dark.
  *
  * A tab bar without its own inactive tint falls back to React Navigation's
- * theme, which this app never sets, so it stays light: in dark mode the
+ * theme, which this app never sets and so stays light: in dark mode the
  * inactive icons were rgb(28, 28, 30) at half opacity on a dark bar, 1:1
  * against it. A render test of a layout would mostly exercise mocks of its
  * database wait and the splash screen, so, like `modalBack.test.ts`, this reads
@@ -11,10 +11,19 @@
  * the theme's background. Android's bar is that background; iOS's is a blur of
  * the screen behind it, which the background only approximates.
  *
- * What it cannot see: a tint set through a variable or a spread, a tab icon
- * that ignores the colour it is handed, and a `//` inside a string, which it
- * strips as a comment. It does not compare the active tint with the inactive
- * one: in dark mode they differ in hue, not lightness.
+ * What it cannot see:
+ * - a tab bar outside a `_layout.tsx` under `app/`, or not written as `<Tabs`;
+ * - what overrides the two tints from elsewhere: a spread after them, a route
+ *   file's own `<Tabs.Screen options>`, a `tabBarLabelStyle` colour, or an icon
+ *   or label that ignores the colour it is handed;
+ * - `theme.colors` read from React Navigation's `theme`, the argument of an
+ *   options function, which it takes for Paper's;
+ * - a bar painted other than `colors.background`;
+ * - a comment marker inside a string, which it takes for a comment, so it
+ *   can skip what follows.
+ * A tint set to anything but `theme.colors.<key>` is refused, not missed. It
+ * does not compare the active tint with the inactive one: in dark mode they
+ * differ in hue, not lightness.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -26,8 +35,8 @@ const ROOT = path.resolve(__dirname, "../..");
 const MINIMUM_CONTRAST = 4.5;
 const COMMENT = /\/\*[\s\S]*?\*\/|\/\/.*$/gm;
 /** A tint option and the expression it is set to, up to the next `,` or `}`. */
-const TINT = /\b(tabBar(?:Active|Inactive)TintColor)\s*:\s*([^,\n}]+)/g;
-const PAPER_COLOUR = /^theme\.colors\.(\w+)$/;
+const TINT = /\b(tabBar(?:Active|Inactive)TintColor)\s*:\s*([^,}]+)/g;
+const PAPER_COLOR = /^theme\.colors\.(\w+)$/;
 
 function tabLayouts(dir: string): string[] {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -46,7 +55,7 @@ function tints(source: string) {
     ([, option, value]) => ({
       option,
       value: value.trim(),
-      key: PAPER_COLOUR.exec(value.trim())?.[1],
+      key: PAPER_COLOR.exec(value.trim())?.[1],
     }),
   );
 }
@@ -112,6 +121,14 @@ describe("the measure", () => {
     ]);
   });
 
+  it("reads a value the formatter wrapped onto a second line", () => {
+    const [wrapped] = tints(`
+      tabBarInactiveTintColor: theme.colors.onSurfaceVariant
+        .concat("80"),
+    `);
+    expect(wrapped.key).toBeUndefined();
+  });
+
   it("puts black on white at 21:1 and refuses what it cannot measure", () => {
     expect(contrast("#000000", "#FFFFFF")).toBeCloseTo(21);
     expect(contrast("#777777", "#FFFFFF")).toBeLessThan(MINIMUM_CONTRAST);
@@ -137,19 +154,18 @@ describe("tab bar tints", () => {
   });
 
   describe.each(layouts)("%s", (layout) => {
-    const set = tints(fs.readFileSync(path.join(ROOT, layout), "utf8"));
+    const layoutTints = tints(fs.readFileSync(path.join(ROOT, layout), "utf8"));
 
     it("sets both tints, each from the Paper theme", () => {
-      expect([...new Set(set.map((tint) => tint.option))].sort()).toEqual([
-        "tabBarActiveTintColor",
-        "tabBarInactiveTintColor",
-      ]);
-      expect(set.filter((tint) => tint.key === undefined)).toEqual([]);
+      expect(
+        [...new Set(layoutTints.map((tint) => tint.option))].sort(),
+      ).toEqual(["tabBarActiveTintColor", "tabBarInactiveTintColor"]);
+      expect(layoutTints.filter((tint) => tint.key === undefined)).toEqual([]);
     });
 
     it.each(cases)("reads in $name, $mode", ({ name, mode }) => {
       const { colors } = getTheme(name, mode === "dark");
-      const unreadable = set
+      const unreadable = layoutTints
         .map(({ option, key }) => {
           const color = colors[key as keyof typeof colors];
           if (typeof color !== "string") {

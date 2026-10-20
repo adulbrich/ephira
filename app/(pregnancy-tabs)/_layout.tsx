@@ -45,8 +45,8 @@ export default function PregnancyTabLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: theme.colors.primary,
-        // React Navigation's default inactive tint reads its own theme, which this
-        // app never sets, so it stays light and disappears on a dark bar.
+        // The default inactive tint comes from React Navigation's theme, which this
+        // app never sets; that theme stays light, so the tint vanishes on a dark bar.
         tabBarInactiveTintColor: theme.colors.onSurfaceVariant,
         headerShown: false,
         tabBarButton: HapticTab,
