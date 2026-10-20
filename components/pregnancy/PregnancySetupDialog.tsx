@@ -25,7 +25,6 @@ type PregnancySetupDialogProps = {
   visible: boolean;
   dismissable: boolean;
   onDismiss: () => void;
-  startDateIso: string | null;
   setupMethod: SetupMethod | null;
   setSetupMethod: (method: SetupMethod | null) => void;
   notSurePath: NotSurePath | null;
@@ -54,7 +53,6 @@ export default function PregnancySetupDialog({
   visible,
   dismissable,
   onDismiss,
-  startDateIso,
   setupMethod,
   setSetupMethod,
   notSurePath,
@@ -95,6 +93,7 @@ export default function PregnancySetupDialog({
         <Dialog
           visible={visible}
           dismissable={dismissable}
+          dismissableBackButton
           onDismiss={onDismiss}
         >
           <Dialog.Title style={{ textAlign: "center" }}>
@@ -324,7 +323,7 @@ export default function PregnancySetupDialog({
             ) : null}
           </Dialog.Content>
           <Dialog.Actions>
-            {startDateIso ? <Button onPress={onDismiss}>Cancel</Button> : null}
+            <Button onPress={onDismiss}>Cancel</Button>
             <Button loading={saving} mode="contained" onPress={onSave}>
               Save
             </Button>
