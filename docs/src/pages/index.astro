@@ -1,148 +1,212 @@
 ---
+import Shot from "../components/Shot.astro";
+import StoreBadges from "../components/StoreBadges.astro";
 import Layout from "../layouts/Layout.astro";
-import { Picture } from "astro:assets";
-import googlePlayBadge from "../assets/google-play-badge.png";
+
+import calendar from "../assets/screens/calendar.webp";
+import customEntry from "../assets/screens/custom-entry.webp";
+import cycle from "../assets/screens/cycle.webp";
+import exportData from "../assets/screens/export.webp";
+import filter from "../assets/screens/filter.webp";
+import home from "../assets/screens/home.webp";
+import lock from "../assets/screens/lock.webp";
+import log from "../assets/screens/log.webp";
+import theme from "../assets/screens/theme.webp";
+
+const receipt = [
+  ["Account", "none"],
+  ["Cloud sync", "none"],
+  ["Usage data", "none"],
+  ["Ads", "none"],
+  ["Encryption key", "stays on phone"],
+];
+
+const tour = [
+  {
+    title: "Today at a glance",
+    body: "Where you are in your cycle and your latest period, on one screen.",
+    src: home,
+    alt: "The home screen: a ring showing the cycle so far, today's date, and the five most recent flow days",
+  },
+  {
+    title: "Your month, marked",
+    body: "Flow and the symptom you choose, under each day.",
+    src: calendar,
+    alt: "The October calendar with flow marked on the 3rd to the 7th and headaches on the 14th and 16th",
+  },
+  {
+    title: "Log in a tap",
+    body: "Flow, symptoms, moods, medications, birth control, intercourse and notes.",
+    src: log,
+    alt: "Logging a day: symptom chips with Headache and Vertigo selected",
+  },
+  {
+    title: "Know your cycle",
+    body: "Your phase, the day of your cycle, and when your next period should start.",
+    src: cycle,
+    alt: "The Cycle tab: ovulation phase, day 17 of 29, and the next period predicted in 13 days with high confidence",
+  },
+  {
+    title: "Add your own entries",
+    body: "Track a symptom, mood or medication the app did not think of.",
+    src: customEntry,
+    alt: "Custom Entries with two custom symptoms, Vertigo and Migraine aura",
+  },
+  {
+    title: "Choose what you see",
+    body: "Filter the calendar down to what matters to you.",
+    src: filter,
+    alt: "The Filter Calendar dialog with Flow, Headache and Cycle Prediction turned on",
+  },
+  {
+    title: "Lock it",
+    body: "Face ID or fingerprint, or a password just for ephira.",
+    src: lock,
+    alt: "The lock screen in dark mode, asking for the ephira password",
+  },
+  {
+    title: "Make it yours",
+    body: "Six colour themes, light or dark to match your phone.",
+    src: theme,
+    alt: "The home screen in the pink theme",
+  },
+  {
+    title: "Take it with you",
+    body: "Export everything as CSV, PDF or JSON, and choose where it goes.",
+    src: exportData,
+    alt: "Exporting data as a PDF, with the share sheet open on a 6 KB file",
+  },
+];
+
+const faq = [
+  {
+    q: "Where is my data stored?",
+    a: "On your phone only, in a database encrypted with SQLCipher (AES-256). The key never leaves your phone.",
+  },
+  {
+    q: "Do I need an account?",
+    a: "No. Install it and start logging. The optional lock uses your phone's Face ID or fingerprint, or a password you set in the app.",
+  },
+  {
+    q: "What happens when I change phones?",
+    a: "Your data does not move to a new phone. Export it first if you want to keep a copy.",
+  },
+  {
+    q: "When do predictions start?",
+    a: "After two complete cycles, from your own logged history. You can turn them off in Settings.",
+  },
+  {
+    q: "How do I delete everything?",
+    a: "In Settings, open Data and choose Delete Data. Uninstalling the app deletes it too.",
+  },
+];
 ---
 
 <Layout
   title="Private Period Tracking"
-  description="A secure, encrypted menstrual tracking app for iOS and Android."
+  description="An encrypted, open-source period tracker for iOS and Android. No account, no cloud, no ads."
 >
-  <section class="text-white max-w-4xl mx-auto py-16 px-6">
-    <h1 class="text-5xl font-serif font-bold text-center mb-6 tracking-tight">Ephira</h1>
-    <p class="text-center text-lg mb-10 text-[#f2e4bf]">
-      A secure, encrypted, local-first app for tracking menstrual cycles. No ads, no cloud, and no compromises.
-    </p>
-
-    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3 text-sm text-left">
-      <div class="bg-[#9892a0]/10 p-6 rounded-sm shadow-sm">
-        <div class="flex items-center justify-center gap-2 mb-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#f2e4bf]" viewBox="0 0 24 24" fill="none" width="24" height="24" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke="currentColor">
-            <path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6z"></path>
-            <path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0"></path>
-            <path d="M8 11v-4a4 4 0 1 1 8 0v4"></path>
-          </svg>
-          <h2 class="text-lg font-semibold text-[#f2e4bf]">Privacy First</h2>
-        </div>
-        <p>All data stays on your device and is encrypted. Optional Face ID or passcode adds extra security. No accounts required.</p>
-      </div>
-
-      <div class="bg-[#9892a0]/10 p-6 rounded-sm shadow-sm">
-        <div class="flex items-center justify-center gap-2 mb-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#f2e4bf]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" width="24" height="24" stroke-width="2">
-            <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
-            <path d="M16 3v4"></path>
-            <path d="M8 3v4"></path>
-            <path d="M4 11h16"></path>
-            <path d="M7 14h.013"></path>
-            <path d="M10.01 14h.005"></path>
-            <path d="M13.01 14h.005"></path>
-            <path d="M16.015 14h.005"></path>
-            <path d="M13.015 17h.005"></path>
-            <path d="M7.01 17h.005"></path>
-            <path d="M10.01 17h.005"></path>
-          </svg>
-          <h2 class="text-lg font-semibold text-[#f2e4bf]">Customizable Calendar</h2>
-        </div>
-        <p>Log flow, symptoms, moods, birth control, and medications. Add your own entries so you can easily track what you want, however you want.</p>
-      </div>
-
-      <div class="bg-[#9892a0]/10 p-6 rounded-sm shadow-sm">
-        <div class="flex items-center justify-center gap-2 mb-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#f2e4bf]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" width="24" height="24" stroke-width="2">
-            <path d="M7 8l-4 4l4 4"></path>
-            <path d="M17 8l4 4l-4 4"></path>
-            <path d="M14 4l-4 16"></path>
-          </svg>
-          <h2 class="text-lg font-semibold text-[#f2e4bf]">Open Source</h2>
-        </div>
-        <p>Ephira is licensed under MIT and our code is hosted publicly on <a href="https://github.com/adulbrich/ephira" class="underline">GitHub</a>, so you don't have to just take our word on it that your data is secure.</p>
-      </div>
-    </div>
-
-
-    <div class="my-12 text-center flex flex-col sm:flex-row justify-center items-center gap-6">
-      <a href="https://apps.apple.com/us/app/ephira/id6741593838?platform=iphone">
-        <img src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us"
-            alt="Download on the App Store" class="h-14 w-auto" />
-      </a>
-      <a href="https://play.google.com/store/apps/details?id=com.capucity.ephira">
-        <Picture src={googlePlayBadge} class="h-14 w-auto" formats={["avif", "webp"]} alt="Get it on Google Play Badge" />
-      </a>
-    </div>
-
-
-    <hr class="border-[#9892a0] my-12" />
-
-    <section class="space-y-8">
-      <h2 class="text-3xl font-bold font-serif text-[#f2e4bf]">Project Overview</h2>
-      <p>
-        Ephira is a local-only, open-source menstrual tracking app designed to prioritize user privacy and data security. It allows users to track their reproductive health without exposing sensitive data to cloud-based platforms or third parties. While there are many privacy-focused menstrual tracking apps out there, many back data up in the cloud or aren't open source.
+  <section
+    class="mx-auto grid max-w-6xl items-center gap-12 px-5 py-14 md:grid-cols-[1.2fr_1fr] md:px-8 md:py-24"
+  >
+    <div>
+      <p class="text-sm font-medium text-cream/80">Period tracker for iOS and Android</p>
+      <h1
+        class="mt-3 font-serif text-4xl leading-tight font-bold text-balance text-white md:text-6xl"
+      >
+        The period tracker with nothing to sync.
+      </h1>
+      <p class="mt-5 max-w-lg text-lg text-white/70">
+        Everything you log is encrypted and stays on your phone. There is no account to make and
+        no server to trust.
       </p>
+      {/* Apple's badge license allows one App Store badge per layout. */}
+      <StoreBadges id="download" class="mt-8 scroll-mt-28" />
+    </div>
+    <aside
+      aria-labelledby="receipt"
+      class="mx-auto w-full max-w-sm rotate-1 rounded-xl bg-paper p-6 font-mono text-sm text-ink shadow-2xl shadow-black/50"
+    >
+      <h2 id="receipt" class="text-center text-xs font-semibold tracking-widest uppercase">
+        What leaves your phone
+      </h2>
+      <dl class="mt-4 divide-y divide-dashed divide-ink/25 border-y border-dashed border-ink/25">
+        {
+          receipt.map(([item, value]) => (
+            <div class="flex justify-between gap-4 py-2.5">
+              <dt>{item}</dt>
+              <dd class="text-right">{value}</dd>
+            </div>
+          ))
+        }
+      </dl>
+      <p class="mt-3 flex justify-between font-semibold">
+        <span>Sent to us</span><span>nothing</span>
+      </p>
+    </aside>
+  </section>
 
-      <h3 class="text-xl font-semibold mt-8">Tech Stack & Implementation</h3>
-      <ul class="list-disc ml-6">
-        <li>Built with React Native and Expo for cross-platform iOS/Android support</li>
-        <li>Local data stored via SQLite and encrypted with SQLCipher (AES-256 Encryption)</li>
-        <li>Drizzle ORM for schema typing and ease of query development</li>
-        <li>React Native Paper for a cohesive and accessible user interface</li>
-      </ul>
+  <section class="border-y border-white/10 bg-plum-900 py-14" aria-labelledby="tour">
+    <div class="mx-auto flex max-w-6xl items-end justify-between px-5 md:px-8">
+      <h2 id="tour" class="font-serif text-3xl font-bold text-cream md:text-4xl">A look inside</h2>
+      <p class="text-sm text-white/50">Scroll sideways</p>
+    </div>
+    <ol
+      tabindex="0"
+      aria-label="Screenshots of ephira"
+      class="mt-8 flex snap-x snap-mandatory scroll-px-5 gap-5 overflow-x-auto px-5 pt-3 pb-6 focus-visible:outline-2 focus-visible:outline-cream md:scroll-px-[max(2rem,calc((100%_-_72rem)/2_+_2rem))] md:px-[max(2rem,calc((100%_-_72rem)/2_+_2rem))]"
+    >
+      {
+        tour.map((item, i) => (
+          <li class="w-52 shrink-0 snap-start md:w-60">
+            <Shot
+              src={item.src}
+              alt={item.alt}
+              sizes="(min-width: 768px) 240px, 208px"
+              eager={i < 2}
+            />
+            <h3 class="mt-5 font-semibold text-white">{item.title}</h3>
+            <p class="mt-1 text-sm text-white/65">{item.body}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
 
-      <h3 class="text-3xl font-bold font-serif text-[#f2e4bf]">Key Features</h3>
-
-      <div class="flex flex-col md:flex-row-reverse md:items-center gap-6">
-        <div class="md:w-1/2">
-          <h4 class="text-lg font-semibold text-[#f2e4bf] mb-2">App Locking with Passcode & Biometrics</h4>
-          <p>Protect your data with Face ID, fingerprint, or a custom password unique to Ephira. No account needed: your lock is local to your device.</p>
-        </div>
-        <video src="assets/feature-password.mp4" autoplay loop muted playsinline class="rounded-sm aspect-video w-full md:w-1/2 min-h-[600px] object-contain"></video>
-      </div>
-
-      <div class="flex flex-col md:flex-row md:items-center gap-6">
-        <div class="md:w-1/2">
-          <h4 class="text-lg font-semibold text-[#f2e4bf] mb-2">Customizable Calendar & Symptom Tracking</h4>
-          <p>Log menstrual flow, symptoms, moods, medications, birth control, and notes. Add your own custom entries and track exactly what matters to you with a smooth, visual calendar interface.</p>
-        </div>
-        <video src="assets/feature-custom-entries.mp4" autoplay loop muted playsinline class="rounded-sm aspect-video w-full md:w-1/2 min-h-[600px] object-contain"></video>
-      </div>
-
-      <div class="flex flex-col md:flex-row-reverse md:items-center gap-6">
-        <div class="md:w-1/2">
-          <h4 class="text-lg font-semibold text-[#f2e4bf] mb-2">Filter Calendar Legend</h4>
-          <p>Filter your calendar legend to only show the symptoms, moods, and medications you want to see. This makes it easy to focus on the data that matters most to you.</p>
-        </div>
-        <video src="assets/feature-filter-calendar.mp4" autoplay loop muted playsinline class="rounded-sm aspect-video w-full md:w-1/2 min-h-[600px] object-contain"></video>
-      </div>
-
-      <div class="flex flex-col md:flex-row md:items-center gap-6">
-        <div class="md:w-1/2">
-          <h4 class="text-lg font-semibold text-[#f2e4bf] mb-2">Cycle Insights & Predictions</h4>
-          <p>The Cycle tab gives you a personalized view of your menstrual health. Track your current phase (follicular, ovulation, luteal, or menstrual) and get predicted period start dates based on your logged history. View cycle statistics like average length and duration, and receive phase-specific wellness tips. Predictions kick in after 2 complete cycles and can be toggled on or off in Settings.</p>
-        </div>
-        <!-- MEDIA NEEDED: a screen recording or screenshot of the Cycle tab showing phase tracking, predictions, and stats -->
-        <div class="rounded-sm w-full md:w-1/2 min-h-[300px] bg-[#9892a0]/10 flex items-center justify-center text-[#9892a0] text-sm italic">
-          Cycle insights demo coming soon
-        </div>
-      </div>
-
-      <div class="flex flex-col md:flex-row-reverse md:items-center gap-6">
-        <div class="md:w-1/2">
-          <h4 class="text-lg font-semibold text-[#f2e4bf] mb-2">Custom Themes & Color Schemes</h4>
-          <p>Personalize your app with multiple themes and light/dark mode support based on your device settings.</p>
-        </div>
-        <img src="assets/feature-color-schemes.gif" alt="Color Scheme Demo" class="rounded-sm w-full md:w-1/2 max-h-[600px] object-contain" />
-      </div>
-
-      <div class="flex flex-col md:flex-row md:items-center gap-6">
-        <div class="md:w-1/2">
-          <h4 class="text-lg font-semibold text-[#f2e4bf] mb-2">Data Export</h4>
-          <p>Export your full health history as a PDF at any time from the Settings screen. Your data stays yours: take it with you or share it with a healthcare provider.</p>
-        </div>
-        <!-- MEDIA NEEDED: a screen recording or screenshot showing the export flow (Settings › Export Data, generating and viewing the PDF) -->
-        <div class="rounded-sm w-full md:w-1/2 min-h-[300px] bg-[#9892a0]/10 flex items-center justify-center text-[#9892a0] text-sm italic">
-          Data export demo coming soon
-        </div>
-      </div>
-    </section>
+  <section class="mx-auto max-w-3xl px-5 py-20 md:px-8" aria-labelledby="faq">
+    <h2 id="faq" class="font-serif text-3xl font-bold text-cream md:text-4xl">Questions</h2>
+    <div class="mt-8 divide-y divide-white/10 border-y border-white/10">
+      {
+        faq.map(({ q, a }) => (
+          <details class="group py-5">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-medium text-white [&::-webkit-details-marker]:hidden">
+              {q}
+              <span
+                aria-hidden="true"
+                class="text-2xl leading-none text-cream transition group-open:rotate-45"
+              >
+                +
+              </span>
+            </summary>
+            <p class="mt-3 text-white/70">{a}</p>
+          </details>
+        ))
+      }
+      <details class="group py-5">
+        <summary
+          class="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-medium text-white [&::-webkit-details-marker]:hidden"
+        >
+          Can I check any of this?
+          <span
+            aria-hidden="true"
+            class="text-2xl leading-none text-cream transition group-open:rotate-45">+</span
+          >
+        </summary>
+        <p class="mt-3 text-white/70">
+          Yes. ephira is MIT licensed and the whole source is on
+          <a class="text-cream underline" href="https://github.com/adulbrich/ephira">GitHub</a>.
+        </p>
+      </details>
+    </div>
   </section>
 </Layout>
