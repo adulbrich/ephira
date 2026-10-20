@@ -83,11 +83,10 @@ sub-agent prompts: the sub-agent has no other access to it.
   visibility. Find it: for each
   notification the diff adds or changes, write the text a person holding the locked
   phone reads.
-- **Privacy claims the code does not keep (1cdf378, #240).** The policy lives in
-  `components/settings/PrivacyPolicy.tsx` and `docs/src/pages/privacy.astro`. Find
-  it: a diff that changes what is stored, where, or what leaves the device must keep
-  both true; a diff to either must be true of the code. Name the sentence and the
-  code that contradicts it.
+- **Privacy claims the code does not keep (1cdf378, #240, #308).** The policy lives
+  only in `docs/src/pages/privacy.astro`; the app links to it. Find it: a diff that
+  changes what is stored, where, or what leaves the device must keep it true; a diff
+  to it must be true of the code. Name the sentence and the code that contradicts it.
 - **CI and supply chain (b4c94ed, #231, #237).** Workflow token permissions,
   untrusted event text in a `run:` line, a new dependency with native code or network
   access. Find it: for each workflow change, the permissions it grants and the inputs
