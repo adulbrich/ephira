@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { deleteAllAppData } from "@/services/deleteAllAppData";
-import { databaseMayBeGone } from "@/services/deletionIncomplete";
+import {
+  DeletionIncomplete,
+  databaseMayBeGone,
+} from "@/services/deletionIncomplete";
 import { ThemedView } from "@/components/ThemedView";
 import {
   ActivityIndicator,
@@ -22,20 +25,27 @@ import { forgetDeletedData } from "@/stores/forget-deleted-data";
  * Deletes everything, then lets the app go on as after a launch whenever the
  * database went, and says how it went. Outside the modal, because the restart
  * can close the modal before the user answers the alert, and its Try Again
- * has to work from wherever the app is by then.
+ * has to work from wherever the app is by then. `retrying` is true for a run
+ * started from that Try Again, which follows a run that emptied the database.
  */
-async function deleteAndStartAgain(): Promise<void> {
+async function deleteAndStartAgain(retrying = false): Promise<void> {
   let deleted = true;
   // Whether the screens behind Settings may now hold rows that are gone.
-  let databaseDeleted = true;
+  let screensOutOfDate = true;
+  // Whether the lock is known to be gone with the database, on this run or
+  // on the one this retries, so that no lock can sit under the alert.
+  let lockGone = true;
   try {
     await deleteAllAppData();
   } catch (error) {
     deleted = false;
-    databaseDeleted = databaseMayBeGone(error);
+    screensOutOfDate = databaseMayBeGone(error);
+    lockGone =
+      retrying ||
+      (error instanceof DeletionIncomplete && error.databaseDeleted);
   }
 
-  if (databaseDeleted) {
+  if (screensOutOfDate) {
     // The stores outlive every screen, so they let go of what they drew from
     // the database and read back what a launch reads. Then the app starts
     // again from the first screen, as a launch does: screens that read once
@@ -52,17 +62,20 @@ async function deleteAndStartAgain(): Promise<void> {
   if (deleted) {
     Alert.alert("Data deleted", "All data has been deleted from this device.");
   } else {
-    // Try Again only once the restart has closed this screen. The alert can
-    // outlive a trip to the background and sit above the lock, where a retry
-    // would delete behind it; after a rollback the lock is still there, and
-    // so is this screen with the confirmation typed.
+    // Try Again only when no lock can be left under the alert, which can
+    // outlive a trip to the background and sit above the lock view, where a
+    // retry would delete behind it. After a first run's rollback the lock is
+    // still there, and so is this screen with the confirmation typed.
     Alert.alert(
       "Data not deleted",
       "Not all data could be deleted.",
-      databaseDeleted
+      lockGone
         ? [
             { text: "Cancel", style: "cancel" },
-            { text: "Try Again", onPress: () => void deleteAndStartAgain() },
+            {
+              text: "Try Again",
+              onPress: () => void deleteAndStartAgain(true),
+            },
           ]
         : undefined,
     );

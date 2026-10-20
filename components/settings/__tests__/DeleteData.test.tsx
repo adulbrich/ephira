@@ -195,11 +195,31 @@ describe("Delete Data", () => {
     expect(useAppRestart.getState().restarting).toBe(true);
   });
 
-  it("starts again when the failure does not say what it left", async () => {
+  it("starts again when the failure does not say what it left, offering no retry", async () => {
+    // The restart is safe whatever the database holds; a retry is not, since
+    // the lock may still be there under the alert.
     mockDeleteAllAppData.mockRejectedValue(new Error("unexpected"));
     await confirmDelete();
 
     expect(useAppRestart.getState().restarting).toBe(true);
+    expect(tryAgainButton()).toBeUndefined();
+  });
+
+  it("offers to try again once more when a retry from the alert rolls back", async () => {
+    // The run it retries emptied the database, the lock with it, and closed
+    // this screen: the alert is the only way left to retry.
+    mockDeleteAllAppData
+      .mockRejectedValueOnce(databaseGoneButNotAll())
+      .mockRejectedValueOnce(databaseKept());
+    await confirmDelete();
+    const firstTryAgain = tryAgainButton();
+    jest.mocked(Alert.alert).mockClear();
+
+    firstTryAgain?.onPress?.();
+    await settle();
+
+    expect(mockDeleteAllAppData).toHaveBeenCalledTimes(2);
+    expect(tryAgainButton()).toBeDefined();
   });
 
   it("offers to try again from the alert, since the restart closed this screen", async () => {
@@ -232,8 +252,9 @@ describe("Delete Data", () => {
   });
 
   it("leaves the stores alone when the delete rolled back", async () => {
-    // The database kept everything, so there is nothing to let go of; a reset would only
-    // send the screens to refresh, and reschedule reminders, from kept data.
+    // The database kept everything, so there is nothing to let go of; a
+    // reset would only send the screens to refresh, and reschedule
+    // reminders, from the kept data.
     mockDeleteAllAppData.mockRejectedValue(databaseKept());
     holdDataOnScreen();
 

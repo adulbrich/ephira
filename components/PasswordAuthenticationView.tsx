@@ -118,18 +118,18 @@ export default function PasswordAuthenticationView({
   const handleResetPassword = async () => {
     setDeleteData(true);
     setLoading(true);
-    let databaseDeleted = true;
+    let screensOutOfDate = true;
     try {
       await deleteAllAppData();
       setDeleteFailed(false);
     } catch (error) {
       setDeleteFailed(true);
-      databaseDeleted = databaseMayBeGone(error);
+      screensOutOfDate = databaseMayBeGone(error);
     }
     // Once the lock is gone a trip to the background unlocks, and the screens
     // that mount then would start from what the stores still hold. After a
     // rollback the lock and the data are both still there.
-    if (databaseDeleted) await forgetDeletedData();
+    if (screensOutOfDate) await forgetDeletedData();
     setLoading(false);
   };
 
