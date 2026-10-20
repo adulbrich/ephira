@@ -72,7 +72,10 @@ export interface ExportDayEntry {
 
 /** What pregnancy mode logged for one date, from `pregnancy_days`. */
 export interface ExportPregnancyDay {
-  /** Absent when none was stored; 0 when the user logged none. */
+  /**
+   * Absent when the column is null. The day view saves its counter, which
+   * starts at 0, so 0 is also what a day where nobody counted kicks holds.
+   */
   kicks?: number;
   symptoms: string[];
   moods: string[];

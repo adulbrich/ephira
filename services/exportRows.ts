@@ -68,24 +68,36 @@ export function appointmentDetail(appointment: ExportAppointment): string {
 }
 
 /**
- * Every date the export holds anything for, oldest first.
+ * A date's appointments as one cell. The CSV and the PDF both give them one;
+ * the JSON keeps each one whole, since a title may itself hold "; ".
+ */
+export function appointmentsDetail(appointments: ExportAppointment[]): string {
+  return appointments.map(appointmentDetail).join("; ");
+}
+
+/** A pregnancy day's kicks as a cell: blank when none were stored. */
+export function kicksText(day: ExportPregnancyDay | undefined): string {
+  return day?.kicks === undefined ? "" : String(day.kicks);
+}
+
+/**
+ * The dates keyed in any of `records`, once each, oldest first.
  *
  * The plain sort orders `YYYY-MM-DD` by code unit, the same order SQLite's
  * `ORDER BY date` gave `dailyData`, so a file without pregnancy data keeps its
  * order exactly.
  */
-function exportDates({
-  dailyData,
-  pregnancyDays,
-  pregnancyAppointments,
-}: ExportData): string[] {
-  return [
-    ...new Set([
-      ...Object.keys(dailyData),
-      ...Object.keys(pregnancyDays),
-      ...Object.keys(pregnancyAppointments),
-    ]),
-  ].sort();
+function datesOf(...records: Record<string, unknown>[]): string[] {
+  return [...new Set(records.flatMap((record) => Object.keys(record)))].sort();
+}
+
+/** Every date the export holds anything for, oldest first. */
+function exportDates(data: ExportData): string[] {
+  return datesOf(
+    data.dailyData,
+    data.pregnancyDays,
+    data.pregnancyAppointments,
+  );
 }
 
 /**
@@ -116,8 +128,13 @@ export function toJson(data: ExportData): string {
   return JSON.stringify(byDate, null, 2);
 }
 
+/** The pregnancy Catalogue names that head the CSV's pregnancy columns. */
+type PregnancyHeaders = { symptoms: string[]; moods: string[] };
+
 /** The pregnancy Catalogue names logged, in the order first logged. */
-function pregnancyNames(pregnancyDays: ExportData["pregnancyDays"]) {
+function pregnancyHeadersOf(
+  pregnancyDays: ExportData["pregnancyDays"],
+): PregnancyHeaders {
   const symptoms = new Set<string>();
   const moods = new Set<string>();
 
@@ -153,43 +170,41 @@ export function toCsv(data: ExportData): string {
   const cycleWidth = headerRow.length;
   const hasPregnancyDays = Object.keys(pregnancyDays).length > 0;
   const hasAppointments = Object.keys(pregnancyAppointments).length > 0;
-  const pregnancy = pregnancyNames(pregnancyDays);
+  const pregnancyHeaders = pregnancyHeadersOf(pregnancyDays);
 
   if (hasPregnancyDays) {
     headerRow.push("pregnancy.kicks");
-    for (const symptom of pregnancy.symptoms) {
+    for (const symptom of pregnancyHeaders.symptoms) {
       headerRow.push(`pregnancy.symptom.${symptom}`);
     }
-    for (const mood of pregnancy.moods) {
+    for (const mood of pregnancyHeaders.moods) {
       headerRow.push(`pregnancy.mood.${mood}`);
     }
     headerRow.push("pregnancy.notes");
   }
+  const pregnancyWidth = headerRow.length - cycleWidth;
   if (hasAppointments) headerRow.push("appointments");
 
   const rows: string[] = [headerRow.map(csvHeader).join(",")];
+  const blank = (width: number) => Array<string>(width).fill("");
 
   for (const date of exportDates(data)) {
     const entry = dailyData[date];
-    const row: string[] = entry
+    const row = entry
       ? cycleCells(entry, headers)
-      : [date, ...Array<string>(cycleWidth - 1).fill("")];
+      : [date, ...blank(cycleWidth - 1)];
 
     if (hasPregnancyDays) {
       const day = pregnancyDays[date];
-      const width = pregnancy.symptoms.length + pregnancy.moods.length + 2;
       row.push(
-        ...(day ? pregnancyCells(day, pregnancy) : Array(width).fill("")),
+        ...(day
+          ? pregnancyCells(day, pregnancyHeaders)
+          : blank(pregnancyWidth)),
       );
     }
     if (hasAppointments) {
       const appointments = pregnancyAppointments[date];
-      // One cell for however many; the JSON export keeps each one whole.
-      row.push(
-        appointments
-          ? csvField(appointments.map(appointmentDetail).join("; "))
-          : "",
-      );
+      row.push(appointments ? csvField(appointmentsDetail(appointments)) : "");
     }
 
     rows.push(row.join(","));
@@ -231,19 +246,19 @@ function cycleCells(
 
 function pregnancyCells(
   day: ExportPregnancyDay,
-  names: { symptoms: string[]; moods: string[] },
+  headers: PregnancyHeaders,
 ): string[] {
   return [
-    day.kicks === undefined ? "" : String(day.kicks),
-    ...names.symptoms.map((symptom) =>
+    kicksText(day),
+    ...headers.symptoms.map((symptom) =>
       day.symptoms.includes(symptom) ? "x" : "",
     ),
-    ...names.moods.map((mood) => (day.moods.includes(mood) ? "x" : "")),
+    ...headers.moods.map((mood) => (day.moods.includes(mood) ? "x" : "")),
     csvField(day.notes),
   ];
 }
 
-/** One date of pregnancy mode: its logged day if any, and its appointments. */
+/** One date of pregnancy mode: its pregnancy day if any, and appointments. */
 export type PregnancyExportEntry = {
   date: string;
   day?: ExportPregnancyDay;
@@ -256,12 +271,7 @@ export function pregnancyEntries({
   pregnancyDays,
   pregnancyAppointments,
 }: ExportData): PregnancyExportEntry[] {
-  const dates = new Set([
-    ...Object.keys(pregnancyDays),
-    ...Object.keys(pregnancyAppointments),
-  ]);
-
-  return [...dates].sort().map((date) => ({
+  return datesOf(pregnancyDays, pregnancyAppointments).map((date) => ({
     date,
     day: pregnancyDays[date],
     appointments: pregnancyAppointments[date] ?? [],
@@ -269,7 +279,7 @@ export function pregnancyEntries({
 }
 
 /** The entries of one calendar month, with a label to print above them. */
-export type MonthGroup<T extends { date: string } = ExportDayEntry> = {
+export type MonthGroup<T extends { date: string }> = {
   /** `YYYY-MM`. Sorts correctly as a string and does not depend on a locale. */
   key: string;
   /** For display only. Never parsed back. */

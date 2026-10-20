@@ -64,7 +64,7 @@ async function seedCycleDays() {
 }
 
 async function seedPregnancy() {
-  // 2026-08-01 is also a cycle day; the rest are pregnancy only.
+  // 2026-08-01 is also a cycle Day; the rest are pregnancy only.
   await upsertPregnancyDay(
     "2026-08-01",
     12,
@@ -194,8 +194,8 @@ describe("an export from a phone with pregnancy data", () => {
             },
           },
           "2026-08-02": cycleDaysJson["2026-08-02"],
-          // A date with no cycle day carries no cycle fields: a flow of 0
-          // here would claim a logged day the database does not hold.
+          // A date with no cycle Day carries no cycle fields: a flow of 0
+          // here would claim a cycle Day the database does not hold.
           "2026-09-10": {
             date: "2026-09-10",
             pregnancy: { kicks: 0, symptoms: [], moods: ["Calm"] },

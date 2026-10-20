@@ -350,8 +350,8 @@ describe("toCsv with pregnancy data", () => {
     expect(row).toBe('2026-08-05,,,,,,,,"Checkup; Scan"');
   });
 
-  it("leaves the cycle cells blank on a date with no cycle day", () => {
-    // A 0 under flow_intensity would claim a logged day that does not exist.
+  it("leaves the cycle cells blank on a date with no cycle Day", () => {
+    // A 0 under flow_intensity would claim a cycle Day that does not exist.
     const [, row] = toCsv(
       exportOf({}, { pregnancyDays: { "2026-08-05": pregnancyDay() } }),
     ).split("\n");

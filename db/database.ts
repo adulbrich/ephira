@@ -152,9 +152,9 @@ export async function getAllDataAsJson() {
       }
     }
 
-    // Pregnancy mode's tables, whichever mode is on now: the export is
-    // everything this phone holds, and the privacy policy tells people to
-    // export before they change phones.
+    // Pregnancy mode's tables, whichever mode is on now: the privacy policy
+    // tells people to export before they change phones, and a mode switched
+    // off still has its rows. The Pregnancy Anchor in settings is not here.
     for (const day of await getAllPregnancyDays()) {
       exportData.pregnancyDays[day.date] = {
         kicks: day.kicks ?? undefined,
