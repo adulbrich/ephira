@@ -107,7 +107,10 @@ describe("loadTrackingMode", () => {
     expect(await loadTrackingMode()).toBe(TRACKING_MODES.PREGNANCY);
   });
 
-  it("defaults to cycle tracking", async () => {
+  it("defaults to cycle tracking, for no mode or an empty one", async () => {
+    expect(await loadTrackingMode()).toBe(TRACKING_MODES.CYCLE);
+
+    await insertSetting(SettingsKeys.trackingMode, "");
     expect(await loadTrackingMode()).toBe(TRACKING_MODES.CYCLE);
   });
 });

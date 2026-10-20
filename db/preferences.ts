@@ -23,8 +23,12 @@ export const DEFAULT_CALENDAR_FILTERS = ["Flow", "Any Birth Control"] as const;
 export const DEFAULT_THEME_COLOR = "purple";
 
 /**
- * Reads a stored string setting, or the fallback when there is none or it
- * cannot be read. Nothing is written down: a launch has never written these.
+ * Reads a stored string setting, or the fallback when there is none, it is
+ * empty, or it cannot be read.
+ *
+ * Unlike the JSON preferences below, the default is not written down. These
+ * never have been, and every reader already takes a missing theme or mode to
+ * mean the default, so there is no second reader to disagree with.
  */
 async function loadStringSetting(
   key: string,
