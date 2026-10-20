@@ -48,6 +48,18 @@ export function csvField(value: string | undefined | null): string {
   return `"${(value ?? "").replace(/"/g, '""')}"`;
 }
 
+/**
+ * One header field, quoted only when it has to be.
+ *
+ * Headers carry Catalogue names, and a custom entry is named by the user, so
+ * a comma in one used to split its header in two. RFC 4180 lets a field go
+ * bare when nothing in it needs quoting, so every header that never needed it
+ * stays exactly as files already written have it.
+ */
+function csvHeader(name: string): string {
+  return /[",\r\n]/.test(name) ? csvField(name) : name;
+}
+
 /** An appointment as one phrase: `Title (Type): notes`. */
 export function appointmentDetail(appointment: ExportAppointment): string {
   const type = appointment.type ? ` (${appointment.type})` : "";
@@ -155,7 +167,7 @@ export function toCsv(data: ExportData): string {
   }
   if (hasAppointments) headerRow.push("appointments");
 
-  const rows: string[] = [headerRow.join(",")];
+  const rows: string[] = [headerRow.map(csvHeader).join(",")];
 
   for (const date of exportDates(data)) {
     const entry = dailyData[date];

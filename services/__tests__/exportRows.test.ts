@@ -111,6 +111,26 @@ describe("toCsv", () => {
     );
   });
 
+  it("quotes a Catalogue name in the header only when it has to", () => {
+    // Custom entries are named by the user. A comma in one split its header
+    // into two, so every column after it was labelled with the wrong name.
+    const csv = toCsv({
+      ...exportOf(
+        {},
+        {
+          pregnancyDays: {
+            "2026-08-01": { symptoms: ["Sore, swollen feet"], moods: [] },
+          },
+        },
+      ),
+      headers: { ...headers, symptoms: ["Back pain, lower", 'The "bad" one'] },
+    });
+
+    expect(csv.split("\n")[0]).toBe(
+      'date,flow_intensity,notes,"symptom.Back pain, lower","symptom.The ""bad"" one",mood.Happy,medication.Ibuprofen,birth_control.Pill,birth_control.Pill.notes,pregnancy.kicks,"pregnancy.symptom.Sore, swollen feet",pregnancy.notes',
+    );
+  });
+
   it("marks what was logged and leaves the rest blank", () => {
     const csv = toCsv(
       exportOf({
