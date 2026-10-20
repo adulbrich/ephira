@@ -103,7 +103,7 @@ export default function PrivacyPolicy() {
                         color: theme.colors.tertiary,
                       }}
                     >
-                      Settings {">"} Delete Data
+                      Settings {">"} Data {">"} Delete Data
                     </Text>
                   </Text>
                 </View>
