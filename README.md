@@ -40,7 +40,7 @@ Stay aware of your cycle without sacrificing your privacy. Ephira is a secure pe
 
 **Track Your Health:** Log menstrual flow, symptoms, moods, medications, birth control, and notes.
 
-**Privacy First:** Data is encrypted and never leaves your device. It can be locked behind biometrics (Face ID/Fingerprint) or a custom password, and can be deleted at any time.
+**Privacy First:** Data is encrypted on your device and never sent to a server. It can be locked behind biometrics (Face ID/Fingerprint) or a custom password, and can be deleted at any time.
 
 **Open and Transparent:** Ephira is open source under the MIT license, and you can review the code at any time on GitHub.
 
