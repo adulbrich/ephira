@@ -3,7 +3,7 @@
 - **Status**: Accepted
 - **Date**: 2026-10-14
 - **Context commit**: 749b54f
-- **Amended**: 2026-10-15, during planning, implementation and code review. The commit point is a rename, "Start fresh" keeps the key, and only a key that does not open the file counts as unreadable; anything else asks for a restart. Code review added the partial-copy rule: an `ephira.encrypting.db` beside the encrypted file while `ephira.db` exists marks a copy that may be partial. See `docs/plans/2026-10-15-encrypt-the-database.md`. 2026-10-19: what Delete Data does about free pages and the key, under Consequences. 2026-10-20 (#309): Delete Data deletes the file and replaces the key, which closes the follow-up the 2026-10-19 entry left; see Consequences.
+- **Amended**: 2026-10-15, during planning, implementation and code review. The commit point is a rename, "Start fresh" keeps the key, and only a key that does not open the file counts as unreadable; anything else asks for a restart. Code review added the partial-copy rule: an `ephira.encrypting.db` beside the encrypted file while `ephira.db` exists marks a copy that may be partial. See `docs/plans/2026-10-15-encrypt-the-database.md`. 2026-10-19: what Delete Data did about free pages and the key. 2026-10-20 (#309): Delete Data deletes the file and replaces the key, which replaces the 2026-10-19 entry and closes the follow-up it left; see Consequences.
 
 ## Context
 

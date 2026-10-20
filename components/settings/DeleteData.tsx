@@ -36,14 +36,16 @@ async function deleteAndStartAgain(retrying = false): Promise<void> {
   // Whether the lock is known to be gone with the database, on this run or
   // on the one this retries, so that no lock can sit under the alert.
   let lockGone = true;
+  // Whether this run is known to have deleted the database, though a later
+  // step failed.
+  let dataGone = false;
   try {
     await deleteAllAppData();
   } catch (error) {
     deleted = false;
     screensOutOfDate = databaseMayBeGone(error);
-    lockGone =
-      retrying ||
-      (error instanceof DeletionIncomplete && error.databaseDeleted);
+    dataGone = error instanceof DeletionIncomplete && error.databaseDeleted;
+    lockGone = retrying || dataGone;
   }
 
   if (screensOutOfDate) {
@@ -71,8 +73,10 @@ async function deleteAndStartAgain(retrying = false): Promise<void> {
     // retry would delete behind it. After a first run's rollback the lock is
     // still there, and so is this screen with the confirmation typed.
     Alert.alert(
-      "Data not deleted",
-      "Not all data could be deleted.",
+      dataGone ? "Delete Data did not finish" : "Data not deleted",
+      dataGone
+        ? "Your logged data was deleted, but not every step finished."
+        : "Not all data could be deleted.",
       lockGone
         ? [
             { text: "Cancel", style: "cancel" },
@@ -100,8 +104,8 @@ function DeleteDataModal({ onDismiss }: { onDismiss: () => void }) {
   const handleDeleteData = async () => {
     setLoading(true);
     await deleteAndStartAgain();
-    // Only a rollback leaves this screen open, with the confirmation typed;
-    // every other outcome restarts the app, which closes it.
+    // Only a failed database delete leaves this screen open, with the
+    // confirmation typed; every other outcome restarts the app, which closes it.
     setLoading(false);
   };
 

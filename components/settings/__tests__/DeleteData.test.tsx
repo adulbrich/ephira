@@ -57,10 +57,10 @@ const DELETED_MESSAGE =
 
 /** The failure alert's Try Again button, as Alert.alert was handed it. */
 function tryAgainButton() {
-  const call = jest
+  const buttons = jest
     .mocked(Alert.alert)
-    .mock.calls.find(([title]) => title === "Data not deleted");
-  return call?.[2]?.find((button) => button.text === "Try Again");
+    .mock.calls.flatMap(([, , buttons]) => buttons ?? []);
+  return buttons.find((button) => button.text === "Try Again");
 }
 
 /** Lets a chain of resolved promises and database reads run out. */
@@ -207,6 +207,13 @@ describe("Delete Data", () => {
     await confirmDelete();
 
     expect(useAppRestart.getState().restarting).toBe(true);
+    // The data went, so the alert does not say it was not deleted.
+    expect(Alert.alert).toHaveBeenCalledWith(
+      "Delete Data did not finish",
+      "Your logged data was deleted, but not every step finished.",
+      expect.anything(),
+    );
+    expect(tryAgainButton()).toBeDefined();
   });
 
   it("starts again when the failure does not say what it left, offering no retry", async () => {

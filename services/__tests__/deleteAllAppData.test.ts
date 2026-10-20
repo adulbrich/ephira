@@ -6,8 +6,10 @@
  * replacement itself, file by file and key by key, is tested in
  * db/__tests__/databaseFile.test.ts.
  */
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getHasSeenWalkthrough } from "@/assets/src/onboarding/onboarding-storage";
+import {
+  getHasSeenWalkthrough,
+  setHasSeenWalkthrough,
+} from "@/assets/src/onboarding/onboarding-storage";
 import { birthControlOptions } from "@/constants/BirthControlTypes";
 import { medicationOptions } from "@/constants/Medications";
 import { moodOptions } from "@/constants/Moods";
@@ -71,7 +73,7 @@ async function leaveDataEverywhere() {
   await upsertPregnancyDay("2026-05-01", 4, [], [], "first kicks");
   await insertSymptom("Vertigo", true);
   await insertSetting("password", "hash");
-  await AsyncStorage.setItem("ephira.hasSeenWalkthrough", "true");
+  await setHasSeenWalkthrough(true);
   mockScheduled.add("Period Expected Tomorrow");
   mockPresented.add("Period Coming Soon");
   for (const uri of Object.values(EXPORT_FILES)) mockFiles.add(uri);
@@ -241,6 +243,8 @@ describe("deleteAllAppData", () => {
       failed: ["database"],
       databaseDeleted: false,
     });
+    // The data and the lock are still there, so no walkthrough over them.
+    expect(await getHasSeenWalkthrough()).toBe(true);
   });
 
   it("says the data went, and runs again, when the new file's tables are not created", async () => {

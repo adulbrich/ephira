@@ -14,18 +14,21 @@ import { EXPORT_FILES, LEGACY_PDF_EXPORT } from "@/services/exportFiles";
 type Step = [name: string, run: () => Promise<unknown>];
 
 /**
- * Returns the app to a fresh install: a new database file under a new key
- * (docs/adr/0005), so everything the user logged, their custom Catalogue items,
- * every setting and the app lock go, and the default catalogue comes back.
+ * Returns the app to a fresh install: a new database file (docs/adr/0005),
+ * under a new key unless the key store refuses it, when the old key stays.
+ * Everything the user logged, their custom Catalogue items, every setting and
+ * the app lock go, and the default Catalogue comes back.
  * It also removes the notifications the app has scheduled or is showing, the
  * files exports leave behind, and the flag saying the walkthrough was seen.
  * Settings › Data › Delete Data and the Forgot Password reset both run it,
  * and the privacy policy promises what it does.
  *
  * Every step runs even when an earlier one fails, and each is safe to repeat,
- * so trying again after a rejection finishes the job. The database goes last,
- * so a kill part-way leaves the data and the lock in place to try again with,
- * rather than an empty database and reminders still due to fire.
+ * so trying again after a rejection finishes the job. The database goes after
+ * the notifications and exports, so a kill before it leaves the data and the
+ * lock in place to try again with, rather than an empty database and
+ * reminders still due to fire. Only setting up the new file, the walkthrough
+ * flag and a last cancel follow it.
  *
  * One runs at a time, and a call while one runs joins it: two overlapping
  * runs can interleave one's delete with the other's reseed and leave an empty
@@ -41,6 +44,7 @@ export function deleteAllAppData(): Promise<void> {
 let running: Promise<void> | undefined;
 
 async function deleteEverything(): Promise<void> {
+  const failed: string[] = [];
   const steps: Step[] = [
     [
       "scheduled notifications",
@@ -61,9 +65,14 @@ async function deleteEverything(): Promise<void> {
     // Not the database step: if it fails, the data is already gone, the app
     // restarts as after a delete, and Try Again replaces the file again.
     ["tables of the new database", migrateDatabase],
-    // After the database, so a kill before it does not replay the walkthrough
-    // over the data and the lock.
-    ["walkthrough flag", () => setHasSeenWalkthrough(false)],
+    // After the database, and only once it went, so a kill or a failed delete
+    // does not replay the walkthrough over the data and the lock.
+    [
+      "walkthrough flag",
+      async () => {
+        if (!failed.includes(DATABASE_STEP)) await setHasSeenWalkthrough(false);
+      },
+    ],
     // Again: a prediction refresh that read the flow before the database went
     // can have scheduled since the first cancel. One still scheduling now can
     // land after this too.
@@ -73,7 +82,6 @@ async function deleteEverything(): Promise<void> {
     ],
   ];
 
-  const failed: string[] = [];
   for (const [name, run] of steps) {
     try {
       await run();
