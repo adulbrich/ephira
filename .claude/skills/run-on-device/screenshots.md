@@ -10,22 +10,23 @@ data.
    nothing typed into an earlier run (the 1.4.0 fixture in
    [upgrade.md](upgrade.md), say) shows up in a still.
 2. **Seed fictional data.** No seed script is committed.
-   - Launch the build once and finish the walkthrough, so the first-launch setup
-     is done. On a first launch that setup can run twice, and its
-     `setupEntryTypes()` clears symptom, mood and medication entries, so a seed
-     must not run alongside it.
+   - Launch the build once, which runs the first-launch setup, and finish the
+     walkthrough, so later launches open on the tabs. On a first launch that
+     setup can run twice, and its `setupEntryTypes()` clears symptom, mood and
+     medication entries, so a seed must not run on that launch.
    - Write a throwaway module named `*.local.ts`, which `.gitignore` keeps out of
      commits, outside `app/`, where expo-router would read it as a route
-     (`db/seed.local.ts` works). It calls the `db/operations` insert helpers and
-     returns early when the last Day it writes already exists, so a seed cut
-     short by a reload runs again.
+     (`db/seed.local.ts` works). It calls the `db/operations` insert helpers,
+     which upsert by date and by entry, so running it again finishes a seed a
+     reload cut short and changes nothing after one that completed.
    - Call it in `app/_layout.tsx`'s setup effect after the first-launch block,
      behind one shared promise (`running ??= seed()`), because that effect can
      run twice. Relaunch to seed, then relaunch again before capturing: the
      insert helpers signal no change, so screens that loaded during the seed
      show partial data.
    - Remove the call when you are done. A commit that keeps it fails CI's
-     typecheck, since the module it names is not in the repository.
+     typecheck (an `import`) or the release build (a `require`), since the
+     module it names is not in the repository.
 3. **Clean the status bar.**
    `xcrun simctl status_bar <udid> override --time 9:41 --batteryState charged --batteryLevel 100`.
    A relaunch through another app can leave a "Settings" breadcrumb in the status
