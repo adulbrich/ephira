@@ -1,4 +1,10 @@
-import { act, fireEvent, render, screen } from "@testing-library/react-native";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react-native";
 import { PaperProvider } from "react-native-paper";
 import CyclePredictions from "@/components/settings/CyclePrediction";
 import { insertDay } from "@/db/operations/days";
@@ -65,8 +71,9 @@ it("keeps predictions on for a new install that opens Settings, and shows them o
   });
 
   await screen.findByText("Great! You have 2 complete cycles logged.");
-  await act(async () => {
-    await new Promise((resolve) => setTimeout(resolve, 0));
-  });
-  expect(usePredictedCycle.getState().predictedCycle.length).toBeGreaterThan(0);
+  await waitFor(() =>
+    expect(usePredictedCycle.getState().predictedCycle.length).toBeGreaterThan(
+      0,
+    ),
+  );
 });

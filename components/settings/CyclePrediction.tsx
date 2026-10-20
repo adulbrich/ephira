@@ -20,6 +20,7 @@ import { useState, useEffect } from "react";
 import {
   applyPredictionChoice,
   loadPredictionAvailability,
+  type PredictionAvailability,
 } from "@/services/predictionAvailability";
 import {
   getPredictionAccuracy,
@@ -35,11 +36,11 @@ export default function CyclePredictions() {
   const { setSelectedFilters, selectedFilters } = useCalendarFilters();
   const { databaseChange } = useDatabaseChangeNotifier();
 
-  const [dataStatus, setDataStatus] = useState<{
-    cycleCount: number;
-    hasEnoughData: boolean;
-    message: string;
-  }>({ cycleCount: 0, hasEnoughData: false, message: "Checking..." });
+  const [dataStatus, setDataStatus] = useState<PredictionAvailability>({
+    cycleCount: 0,
+    hasEnough: false,
+    message: "Checking...",
+  });
 
   const [accuracyStats, setAccuracyStats] = useState<{
     totalChecked: number;
@@ -73,19 +74,14 @@ export default function CyclePredictions() {
 
     loadPredictionAvailability()
       .then((availability) => {
-        if (stale) return;
-        setDataStatus({
-          cycleCount: availability.cycleCount,
-          hasEnoughData: availability.hasEnough,
-          message: availability.message,
-        });
+        if (!stale) setDataStatus(availability);
       })
       .catch((error) => {
         console.error("Error checking data quality:", error);
         if (stale) return;
         setDataStatus({
           cycleCount: 0,
-          hasEnoughData: false,
+          hasEnough: false,
           message: "Error checking data quality",
         });
       });
@@ -95,13 +91,14 @@ export default function CyclePredictions() {
     };
   }, [databaseChange]);
 
-  // Keep the forecast in step with the data while predictions are on.
+  // Keep the forecast in step with the data while predictions are on. It
+  // re-runs when availability changes; refreshPredictions empties the forecast
+  // when there is too little data.
   useEffect(() => {
     if (!predictionChoice) {
       setPredictedCycle([]);
       return;
     }
-    if (!dataStatus.hasEnoughData) return;
 
     let stale = false;
     refreshPredictions(startOfLocalDay())
@@ -115,7 +112,7 @@ export default function CyclePredictions() {
     return () => {
       stale = true;
     };
-  }, [predictionChoice, dataStatus.hasEnoughData, setPredictedCycle]);
+  }, [predictionChoice, dataStatus.hasEnough, setPredictedCycle]);
 
   const handleOptionChange = async () => {
     const result = await applyPredictionChoice({
@@ -146,7 +143,7 @@ export default function CyclePredictions() {
             <Card
               mode="outlined"
               style={{
-                backgroundColor: dataStatus.hasEnoughData
+                backgroundColor: dataStatus.hasEnough
                   ? theme.colors.primaryContainer
                   : theme.colors.surfaceVariant,
                 marginBottom: 10,
@@ -157,7 +154,7 @@ export default function CyclePredictions() {
                   Data Status
                 </Text>
                 <Text>{dataStatus.message}</Text>
-                {!dataStatus.hasEnoughData && dataStatus.cycleCount > 0 && (
+                {!dataStatus.hasEnough && dataStatus.cycleCount > 0 && (
                   <Text
                     style={{ marginTop: 5, fontSize: 12, fontStyle: "italic" }}
                   >
@@ -219,7 +216,7 @@ export default function CyclePredictions() {
             >
               {predictionChoice ? "Enabled" : "Disabled"}
             </Button>
-            {!dataStatus.hasEnoughData && (
+            {!dataStatus.hasEnough && (
               <Text
                 style={{
                   fontSize: 12,
@@ -233,7 +230,7 @@ export default function CyclePredictions() {
               </Text>
             )}
 
-            {predictionChoice && dataStatus.hasEnoughData && (
+            {predictionChoice && dataStatus.hasEnough && (
               <Card
                 mode="outlined"
                 style={{

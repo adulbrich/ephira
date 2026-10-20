@@ -5,7 +5,7 @@ import {
   hasEnoughCyclesForPrediction,
 } from "@/services/cyclePredictionLogic";
 import { refreshPredictions } from "@/services/cyclePredictions";
-import { getAllDays } from "@/db/database";
+import { loadFlowDays } from "@/db/flowDays";
 import { PREDICTION_FILTER, changeFilters } from "@/db/selectedFilters";
 import { insertSetting } from "@/db/operations/settings";
 import { SettingsKeys } from "@/constants/Settings";
@@ -92,8 +92,5 @@ export async function applyPredictionChoice({
 
 /** Prediction Availability for the Days logged now. */
 export async function loadPredictionAvailability(): Promise<PredictionAvailability> {
-  const allDays = await getAllDays();
-  return predictionAvailability(
-    allDays.filter((day) => day.flow_intensity) as DayData[],
-  );
+  return predictionAvailability(await loadFlowDays());
 }

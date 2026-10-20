@@ -24,6 +24,11 @@ import { NotificationService } from "@/services/notificationService";
  * forecasts nothing, whatever the user chose. Every screen gets its forecast
  * here, so this is the one place that gate has to hold.
  *
+ * An empty forecast is reconciled like any other: today's unmeasured
+ * snapshots are retracted and the reminders scheduled from an earlier
+ * forecast are cleared. Returning early instead left both behind when the
+ * data stopped supporting them.
+ *
  * Notification scheduling is best effort: a user who declined the permission
  * still gets their predictions.
  */
@@ -32,13 +37,9 @@ export async function refreshPredictions(
 ): Promise<PredictedDate[]> {
   const flowDays = await loadFlowDays();
 
-  if (!hasEnoughCyclesForPrediction(flowDays)) return [];
-
-  const predictions = generatePredictions(flowDays, {
-    referenceDate: referenceDay,
-  });
-
-  if (predictions.length === 0) return [];
+  const predictions = hasEnoughCyclesForPrediction(flowDays)
+    ? generatePredictions(flowDays, { referenceDate: referenceDay })
+    : [];
 
   await savePredictions(predictions, referenceDay);
 

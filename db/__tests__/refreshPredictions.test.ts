@@ -67,7 +67,25 @@ describe("refreshPredictions", () => {
 
     expect(await refreshPredictions(REFERENCE_DAY)).toEqual([]);
     expect(stored()).toEqual([]);
-    expect(mockScheduleNotifications).not.toHaveBeenCalled();
+  });
+
+  it("retracts today's forecast and clears its reminders when the data stops supporting it", async () => {
+    await logTwoCycles();
+    expect((await refreshPredictions(REFERENCE_DAY)).length).toBeGreaterThan(0);
+
+    // Take the second cycle's flow back off, leaving one complete cycle.
+    for (const date of [
+      "2026-01-29",
+      "2026-01-30",
+      "2026-01-31",
+      "2026-02-01",
+    ]) {
+      await insertDay(date, 0, REFERENCE_DAY);
+    }
+
+    expect(await refreshPredictions(REFERENCE_DAY)).toEqual([]);
+    expect(stored()).toEqual([]);
+    expect(mockScheduleNotifications).toHaveBeenLastCalledWith([]);
   });
 
   it("returns future predictions and stores them", async () => {
@@ -145,10 +163,10 @@ describe("refreshPredictions", () => {
     expect(mockScheduleNotifications).toHaveBeenCalledWith(predictions);
   });
 
-  it("does not schedule notifications when there is nothing to predict", async () => {
+  it("schedules no notifications when there is nothing to predict", async () => {
     await refreshPredictions(REFERENCE_DAY);
 
-    expect(mockScheduleNotifications).not.toHaveBeenCalled();
+    expect(mockScheduleNotifications).toHaveBeenCalledWith([]);
   });
 
   it("still returns its predictions if scheduling notifications fails", async () => {

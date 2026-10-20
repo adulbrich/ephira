@@ -6,6 +6,7 @@ import {
 import { insertDay } from "@/db/operations/days";
 import { getAllDays } from "@/db/database";
 import {
+  DEFAULT_CALENDAR_FILTERS,
   loadCalendarFilters,
   loadCyclePredictionChoice,
 } from "@/db/preferences";
@@ -158,7 +159,7 @@ describe("loadPredictionAvailability", () => {
 
     expect(availability.hasEnough).toBe(false);
     expect(await loadCyclePredictionChoice()).toBe(true);
-    expect(await loadCalendarFilters()).toEqual(["Flow", "Any Birth Control"]);
+    expect(await loadCalendarFilters()).toEqual([...DEFAULT_CALENDAR_FILTERS]);
   });
 
   it("leaves a choice the user made when the data stops supporting it", async () => {
