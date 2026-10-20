@@ -1,6 +1,11 @@
 import { fireEvent, render, screen } from "@testing-library/react-native";
 import { PaperProvider } from "react-native-paper";
 import PasswordAuthenticationView from "@/components/PasswordAuthenticationView";
+import { usePregnancySelectedDate } from "@/stores/pregnancy-storage";
+
+jest.mock("@/db/operations/setup", () =>
+  jest.requireActual("@/__tests__/helpers/testDatabase"),
+);
 
 const mockDeleteAllAppData = jest.fn();
 jest.mock("@/services/deleteAllAppData", () => ({
@@ -27,6 +32,17 @@ describe("Forgot Password reset", () => {
     expect(
       screen.getByText(/Data and password have been deleted/),
     ).toBeOnTheScreen();
+  });
+
+  it("has the stores let go of what they drew from the data", async () => {
+    // A trip to the background unlocks once the lock is gone, and the screens
+    // that mount then would start from what the stores still hold.
+    mockDeleteAllAppData.mockResolvedValue(undefined);
+    usePregnancySelectedDate.getState().setNotes("first kicks");
+
+    await resetPassword();
+
+    expect(usePregnancySelectedDate.getState().notes).toBe("");
   });
 
   it("says so when the data is not gone, and tries again on request", async () => {

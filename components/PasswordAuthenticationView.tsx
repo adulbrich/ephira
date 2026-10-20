@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
 } from "react-native-paper";
 import { deleteAllAppData } from "@/services/deleteAllAppData";
+import { forgetDeletedData } from "@/stores/forget-deleted-data";
 
 function ForgotPassword({
   onCancel,
@@ -121,9 +122,11 @@ export default function PasswordAuthenticationView({
       setDeleteFailed(false);
     } catch {
       setDeleteFailed(true);
-    } finally {
-      setLoading(false);
     }
+    // Once the lock is gone a trip to the background unlocks, and the screens
+    // that mount then would start from what the stores still hold.
+    await forgetDeletedData();
+    setLoading(false);
   };
 
   if (deleteData) {

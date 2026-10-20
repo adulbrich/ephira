@@ -12,7 +12,20 @@ import {
   usePredictedCycle,
   useSelectedDate,
 } from "@/stores/calendar-storage";
-import { usePregnancySelectedDate } from "@/stores/pregnancy-storage";
+import {
+  useContractionTimerStore,
+  usePregnancyAppointments,
+  usePregnancySelectedDate,
+} from "@/stores/pregnancy-storage";
+
+jest.mock("@/db/operations/setup", () =>
+  jest.requireActual("@/__tests__/helpers/testDatabase"),
+);
+
+const mockReplace = jest.fn();
+jest.mock("expo-router", () => ({
+  router: { replace: (...args: unknown[]) => mockReplace(...args) },
+}));
 
 const mockDeleteAllAppData = jest.fn();
 jest.mock("@/services/deleteAllAppData", () => ({
@@ -31,10 +44,21 @@ async function confirmDelete() {
   return modal;
 }
 
-/** A day open in each mode, and a prediction drawn from the logged days. */
+/** A day open in each mode, and what the stores drew from the logged days. */
 function holdDataOnScreen() {
   useSelectedDate.getState().setDate("2026-03-01");
   usePregnancySelectedDate.getState().setDate("2026-05-01");
+  usePregnancySelectedDate.getState().setNotes("first kicks");
+  usePregnancyAppointments.getState().setAppointments([
+    {
+      id: 1,
+      date: "2026-05-02",
+      title: "Anatomy scan",
+      type: null,
+      notes: null,
+    },
+  ]);
+  useContractionTimerStore.setState({ lastDurationMs: 45_000 });
   usePredictedCycle
     .getState()
     .setPredictedCycle([{ date: "2026-03-29", confidence: 80 }]);
@@ -45,6 +69,9 @@ function holdDataOnScreen() {
 function expectScreensToLetGo() {
   expect(useSelectedDate.getState().date).toBe("");
   expect(usePregnancySelectedDate.getState().date).toBe("");
+  expect(usePregnancySelectedDate.getState().notes).toBe("");
+  expect(usePregnancyAppointments.getState().appointments).toEqual([]);
+  expect(useContractionTimerStore.getState().lastDurationMs).toBeNull();
   expect(usePredictedCycle.getState().predictedCycle).toEqual([]);
   expect(useDatabaseChangeNotifier.getState().databaseChange).not.toBe(
     "before",
@@ -53,6 +80,7 @@ function expectScreensToLetGo() {
 
 beforeEach(() => {
   mockDeleteAllAppData.mockReset();
+  mockReplace.mockReset();
   jest.spyOn(Alert, "alert").mockImplementation(() => {});
 });
 afterEach(() => jest.restoreAllMocks());
@@ -76,6 +104,24 @@ describe("Delete Data", () => {
     await confirmDelete();
 
     expectScreensToLetGo();
+  });
+
+  it("starts the app again from its first screen, as after a launch", async () => {
+    // Screens holding state of their own (the lock setting, pregnancy Home)
+    // read it once on mount; mounting them again is what makes them re-read.
+    mockDeleteAllAppData.mockResolvedValue(undefined);
+
+    await confirmDelete();
+
+    expect(mockReplace).toHaveBeenCalledWith("/");
+  });
+
+  it("stays put after a failure, so trying again is one tap", async () => {
+    mockDeleteAllAppData.mockRejectedValue(new Error("notifications"));
+
+    await confirmDelete();
+
+    expect(mockReplace).not.toHaveBeenCalled();
   });
 
   it("has them let go after a failure too, since the database may be gone", async () => {

@@ -36,7 +36,8 @@ export async function deleteAllAppData(): Promise<void> {
     ),
     ["database", deleteAllDataInDatabase],
     // Again: a prediction refresh that read the flow before the database went
-    // can have scheduled since the first cancel. None can after it.
+    // can have scheduled since the first cancel. One still scheduling now can
+    // land after this too; nothing on either screen that deletes starts one.
     [
       "notifications scheduled during the delete",
       Notifications.cancelAllScheduledNotificationsAsync,
