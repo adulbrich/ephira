@@ -62,8 +62,8 @@ async function deleteEverything(): Promise<void> {
     ],
     [DATABASE_STEP, replaceDatabase],
     // Next, before anything else touches the database: its first use opens
-    // the new file, and a failure to open must land in this step.
-    // Not the database step: if it fails, the data is already gone, the app
+    // the new file, and a failure to open must land in this step. It is not
+    // the database step: if it fails, the data is already gone, the app
     // restarts as after a delete, and Try Again replaces the file again.
     ["tables of the new database", migrateDatabase],
     // Again: a prediction refresh that read the flow before the database went
@@ -80,7 +80,7 @@ async function deleteEverything(): Promise<void> {
     try {
       await run();
     } catch (error) {
-      console.error(`Delete Data could not delete the ${name}:`, error);
+      console.error(`Delete Data failed at the ${name}:`, error);
       failed.push(name);
     }
   }

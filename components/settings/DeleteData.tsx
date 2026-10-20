@@ -21,8 +21,11 @@ import { StyleSheet, Dimensions, Alert, View } from "react-native";
 import { useAppRestart } from "@/stores/app-restart";
 import { forgetDeletedData } from "@/stores/forget-deleted-data";
 
-/** What Delete Data removes, as both its alerts name it. */
-const DELETED =
+/**
+ * What Delete Data removes, as both its alerts name it. The modal says the
+ * same in its own words.
+ */
+const WHAT_DELETE_DATA_REMOVES =
   "Your logged data, pregnancy data, custom entries, settings and app lock";
 
 /**
@@ -68,7 +71,7 @@ async function deleteAndStartAgain(retrying = false): Promise<void> {
   if (deleted) {
     Alert.alert(
       "Data deleted",
-      `${DELETED} have been deleted from this device.`,
+      `${WHAT_DELETE_DATA_REMOVES} have been deleted from this device.`,
     );
   } else {
     // Try Again only when no lock can be left under the alert, which can
@@ -78,7 +81,7 @@ async function deleteAndStartAgain(retrying = false): Promise<void> {
     const [title, message] = dataGone
       ? [
           "Delete Data did not finish",
-          `${DELETED} have been deleted, but not every step finished.`,
+          `${WHAT_DELETE_DATA_REMOVES} have been deleted, but not every step finished.`,
         ]
       : ["Data not deleted", "Not all data could be deleted."];
     Alert.alert(
