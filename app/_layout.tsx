@@ -20,7 +20,7 @@ import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import migrations from "@/drizzle/migrations";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
-import { AUTH_TYPES, SettingsKeys, TRACKING_MODES } from "@/constants/Settings";
+import { AUTH_TYPES, SettingsKeys } from "@/constants/Settings";
 import {
   discardUnreadableDatabase,
   getDatabase,
@@ -45,6 +45,8 @@ import {
 import {
   loadCalendarFilters,
   loadCyclePredictionChoice,
+  loadThemeColor,
+  loadTrackingMode,
 } from "@/db/preferences";
 import * as Notifications from "expo-notifications";
 import { takeNotificationRoute } from "@/services/notificationRouting";
@@ -92,25 +94,13 @@ function AppShell() {
   useEffect(() => {
     if (!success) return;
 
-    async function fetchThemeColor() {
-      const savedTheme = await getSetting("theme");
-      if (savedTheme?.value) {
-        setThemeColor(savedTheme.value);
-      } else {
-        setThemeColor("purple");
-      }
-    }
-    fetchThemeColor();
+    loadThemeColor().then(setThemeColor);
   }, [setThemeColor, success]);
 
   useEffect(() => {
     if (!success) return;
 
-    async function fetchTrackingMode() {
-      const saved = await getSetting(SettingsKeys.trackingMode);
-      setTrackingMode(saved?.value ?? TRACKING_MODES.CYCLE);
-    }
-    fetchTrackingMode();
+    loadTrackingMode().then(setTrackingMode);
   }, [setTrackingMode, success]);
 
   // Durable preferences hydrate in the shell, not on the screen that happens

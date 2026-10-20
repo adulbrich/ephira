@@ -1,8 +1,8 @@
-import { SettingsKeys, TRACKING_MODES } from "@/constants/Settings";
-import { getSetting } from "@/db/database";
 import {
   loadCalendarFilters,
   loadCyclePredictionChoice,
+  loadThemeColor,
+  loadTrackingMode,
 } from "@/db/preferences";
 import {
   useCalendarFilters,
@@ -47,18 +47,16 @@ export async function forgetDeletedData() {
     lastDurationMs: null,
   });
 
-  // Read back, not assumed: a delete that rolled back kept them. A read that
-  // fails falls back to the default rather than leave a spinner up.
+  // Read back, not assumed: a delete that rolled back kept them. The loaders
+  // are the ones a launch uses, and fall back to the default on a failed read.
   const [mode, theme, predictionChoice, calendarFilters] = await Promise.all([
-    getSetting(SettingsKeys.trackingMode).catch(() => undefined),
-    getSetting("theme").catch(() => undefined),
+    loadTrackingMode(),
+    loadThemeColor(),
     loadCyclePredictionChoice(),
     loadCalendarFilters(),
   ]);
-  useTrackingMode
-    .getState()
-    .setTrackingMode(mode?.value ?? TRACKING_MODES.CYCLE);
-  useThemeColor.getState().setThemeColor(theme?.value || "purple");
+  useTrackingMode.getState().setTrackingMode(mode);
+  useThemeColor.getState().setThemeColor(theme);
   usePredictionChoice.getState().setPredictionChoice(predictionChoice);
   useCalendarFilters.getState().setSelectedFilters(calendarFilters);
 
