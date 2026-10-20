@@ -1,8 +1,8 @@
 /**
  * Delete Data against the in-memory database, with stand-ins for the two
  * native modules that keep state of their own: the notification centre, and
- * the file system the exports are written to. One test also makes the
- * catalogue reseed fail, through a spy.
+ * the file system the exports are written to. Two tests make a database step
+ * fail through a spy: the delete itself, and the catalogue reseed.
  */
 import { birthControlOptions } from "@/constants/BirthControlTypes";
 import { medicationOptions } from "@/constants/Medications";

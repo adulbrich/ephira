@@ -2,27 +2,14 @@ import * as FileSystem from "expo-file-system/legacy";
 import * as Notifications from "expo-notifications";
 import { invalidateCatalogue } from "@/db/catalogue";
 import { deleteAllDataInDatabase, seedCatalogueOnce } from "@/db/database";
+import {
+  DATABASE_STEP,
+  DeletionIncomplete,
+} from "@/services/deletionIncomplete";
 import { EXPORT_FILES } from "@/services/exportFiles";
 
 /** What a step deletes, for the error, and the call that deletes it. */
 type Step = [name: string, run: () => Promise<unknown>];
-
-const DATABASE_STEP = "database";
-
-/**
- * Some steps failed. The database step runs whatever the others did, so
- * whether it went through is what the caller needs: if it did, every screen
- * still holding what it read is out of date.
- */
-export class DeletionIncomplete extends Error {
-  readonly databaseDeleted: boolean;
-
-  constructor(readonly failed: string[]) {
-    super(`Could not delete the ${failed.join(", ")}`);
-    this.name = "DeletionIncomplete";
-    this.databaseDeleted = !failed.includes(DATABASE_STEP);
-  }
-}
 
 /**
  * Deletes the user's data from this device: every row in the database, the

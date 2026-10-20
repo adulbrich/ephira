@@ -1,8 +1,6 @@
 import { useState } from "react";
-import {
-  DeletionIncomplete,
-  deleteAllAppData,
-} from "@/services/deleteAllAppData";
+import { deleteAllAppData } from "@/services/deleteAllAppData";
+import { DeletionIncomplete } from "@/services/deletionIncomplete";
 import { ThemedView } from "@/components/ThemedView";
 import {
   ActivityIndicator,
@@ -20,6 +18,47 @@ import { StyleSheet, Dimensions, Alert, View } from "react-native";
 import { useAppRestart } from "@/stores/app-restart";
 import { forgetDeletedData } from "@/stores/forget-deleted-data";
 
+/**
+ * Deletes everything, then lets the app go on as after a launch whenever the
+ * database went, and says how it went. Outside the modal, because the restart
+ * can close the modal before the user answers the alert, and its Try Again
+ * has to work from wherever the app is by then. Resolves to whether all of it
+ * was deleted.
+ */
+async function deleteAndStartAgain(): Promise<boolean> {
+  let deleted = true;
+  // Whether the screens behind Settings may now hold rows that are gone. Only
+  // a failure that names the database step says they cannot.
+  let databaseDeleted = true;
+  try {
+    await deleteAllAppData();
+  } catch (error) {
+    deleted = false;
+    databaseDeleted =
+      !(error instanceof DeletionIncomplete) || error.databaseDeleted;
+  }
+
+  // The stores outlive every screen, so they let go of what they drew from
+  // the database, and read back what it still holds, after any attempt.
+  await forgetDeletedData();
+
+  // Start again from the first screen, as a launch does: screens that read
+  // once on mount (the lock setting, pregnancy Home, notification settings)
+  // would go on showing what was deleted, and write it back on their next
+  // save.
+  if (databaseDeleted) useAppRestart.getState().restart();
+
+  if (deleted) {
+    Alert.alert("Data deleted", "All data has been deleted from this device.");
+  } else {
+    Alert.alert("Data not deleted", "Not all data could be deleted.", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Try Again", onPress: () => void deleteAndStartAgain() },
+    ]);
+  }
+  return deleted;
+}
+
 function DeleteDataModal({ onDismiss }: { onDismiss: () => void }) {
   const theme = useTheme();
   const { width, height } = Dimensions.get("window");
@@ -33,41 +72,13 @@ function DeleteDataModal({ onDismiss }: { onDismiss: () => void }) {
 
   const handleDeleteData = async () => {
     setLoading(true);
-    let deleted = true;
-    // Whether the screens behind Settings now hold rows that are gone. The
-    // database step runs even when an earlier step failed.
-    let databaseDeleted = true;
-    try {
-      await deleteAllAppData();
-    } catch (error) {
-      deleted = false;
-      databaseDeleted =
-        error instanceof DeletionIncomplete && error.databaseDeleted;
-    }
-
-    // The stores outlive every screen, so they let go of what they drew from
-    // the database, and read back what it still holds, after any attempt.
-    await forgetDeletedData();
+    const deleted = await deleteAndStartAgain();
+    // A no-op when the restart has already closed this screen.
     setLoading(false);
-
-    // Start again from the first screen, as a launch does, whenever the
-    // database went: screens that read once on mount (the lock setting,
-    // pregnancy Home, notification settings) would go on showing what was
-    // deleted, and write it back on their next save.
-    if (databaseDeleted) useAppRestart.getState().restart();
-
-    if (!deleted) {
-      // When the database is untouched the confirmation stays typed, so
-      // trying again is one tap.
-      Alert.alert(
-        "Data not deleted",
-        "Not all data could be deleted. Try again.",
-      );
-      return;
+    if (deleted) {
+      setInputValue("");
+      setButtonDisabled(true);
     }
-    setInputValue("");
-    setButtonDisabled(true);
-    Alert.alert("Data deleted", "All data has been deleted from this device.");
   };
 
   return (

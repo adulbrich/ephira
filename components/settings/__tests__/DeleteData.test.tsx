@@ -7,13 +7,18 @@ import {
 import { Alert } from "react-native";
 import { PaperProvider } from "react-native-paper";
 import DeleteData from "@/components/settings/DeleteData";
+import { SettingsKeys, TRACKING_MODES } from "@/constants/Settings";
 import { insertSetting } from "@/db/operations/settings";
-import { DeletionIncomplete } from "@/services/deleteAllAppData";
+import {
+  DATABASE_STEP,
+  DeletionIncomplete,
+} from "@/services/deletionIncomplete";
 import { useAppRestart } from "@/stores/app-restart";
 import { resetTestDatabase } from "@/__tests__/helpers/testDatabase";
 import {
   DEFAULT_CALENDAR_FILTERS,
   DEFAULT_CYCLE_PREDICTION_CHOICE,
+  DEFAULT_THEME_COLOR,
 } from "@/db/preferences";
 import {
   useCalendarFilters,
@@ -37,7 +42,6 @@ jest.mock("@/db/operations/setup", () =>
 
 const mockDeleteAllAppData = jest.fn();
 jest.mock("@/services/deleteAllAppData", () => ({
-  ...jest.requireActual("@/services/deleteAllAppData"),
   deleteAllAppData: () => mockDeleteAllAppData(),
 }));
 
@@ -46,7 +50,18 @@ const databaseGoneButNotAll = () =>
   new DeletionIncomplete(["scheduled notifications"]);
 
 /** A delete that rolled back: the database holds everything it held. */
-const databaseKept = () => new DeletionIncomplete(["database"]);
+const databaseKept = () => new DeletionIncomplete([DATABASE_STEP]);
+
+/** The failure alert's Try Again button, as Alert.alert was handed it. */
+function tryAgainButton() {
+  const call = jest
+    .mocked(Alert.alert)
+    .mock.calls.find(([title]) => title === "Data not deleted");
+  return call?.[2]?.find((button) => button.text === "Try Again");
+}
+
+/** Lets a chain of resolved promises and database reads run out. */
+const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 async function confirmDelete() {
   await render(<DeleteData />, { wrapper: PaperProvider });
@@ -121,14 +136,14 @@ function expectScreensToLetGo() {
   });
   expect(usePredictedCycle.getState().predictedCycle).toEqual([]);
   expect(usePredictedCycle.getState().predictedMarkedDates).toEqual({});
-  expect(useTrackingMode.getState().trackingMode).toBe("cycle");
+  expect(useTrackingMode.getState().trackingMode).toBe(TRACKING_MODES.CYCLE);
   expect(useCalendarFilters.getState().selectedFilters).toEqual([
     ...DEFAULT_CALENDAR_FILTERS,
   ]);
   expect(usePredictionChoice.getState().predictionChoice).toBe(
     DEFAULT_CYCLE_PREDICTION_CHOICE,
   );
-  expect(useThemeColor.getState().themeColor).toBe("purple");
+  expect(useThemeColor.getState().themeColor).toBe(DEFAULT_THEME_COLOR);
   expect(useDatabaseChangeNotifier.getState().databaseChange).not.toBe(
     "before",
   );
@@ -181,6 +196,35 @@ describe("Delete Data", () => {
     expect(useAppRestart.getState().restarting).toBe(true);
   });
 
+  it("starts again when the failure does not say what it left", async () => {
+    mockDeleteAllAppData.mockRejectedValue(new Error("unexpected"));
+    await confirmDelete();
+
+    expect(useAppRestart.getState().restarting).toBe(true);
+  });
+
+  it("offers to try again from the alert, since the restart closed this screen", async () => {
+    // Otherwise a reminder that failed to cancel fires on the lock screen
+    // unless the user finds their way back here and types it all again.
+    mockDeleteAllAppData
+      .mockRejectedValueOnce(databaseGoneButNotAll())
+      .mockResolvedValueOnce(undefined);
+    await confirmDelete();
+    expect(Alert.alert).not.toHaveBeenCalledWith(
+      "Data deleted",
+      expect.anything(),
+    );
+
+    tryAgainButton()?.onPress?.();
+    await settle();
+
+    expect(mockDeleteAllAppData).toHaveBeenCalledTimes(2);
+    expect(Alert.alert).toHaveBeenCalledWith(
+      "Data deleted",
+      "All data has been deleted from this device.",
+    );
+  });
+
   it("stays put when the database was not deleted, so trying again is one tap", async () => {
     mockDeleteAllAppData.mockRejectedValue(databaseKept());
     await confirmDelete();
@@ -189,16 +233,21 @@ describe("Delete Data", () => {
   });
 
   it("keeps the preferences a rolled-back delete left in place", async () => {
-    await insertSetting("theme", "pink");
-    await insertSetting("trackingMode", "pregnancy");
-    await insertSetting("cyclePredictions", "false");
-    await insertSetting("calendarFilters", JSON.stringify(["Flow", "Vertigo"]));
+    await insertSetting(SettingsKeys.theme, "pink");
+    await insertSetting(SettingsKeys.trackingMode, TRACKING_MODES.PREGNANCY);
+    await insertSetting(SettingsKeys.cyclePredictions, "false");
+    await insertSetting(
+      SettingsKeys.calendarFilters,
+      JSON.stringify(["Flow", "Vertigo"]),
+    );
     mockDeleteAllAppData.mockRejectedValue(databaseKept());
 
     await confirmDelete();
 
     expect(useThemeColor.getState().themeColor).toBe("pink");
-    expect(useTrackingMode.getState().trackingMode).toBe("pregnancy");
+    expect(useTrackingMode.getState().trackingMode).toBe(
+      TRACKING_MODES.PREGNANCY,
+    );
     expect(usePredictionChoice.getState().predictionChoice).toBe(false);
     expect(useCalendarFilters.getState().selectedFilters).toEqual([
       "Flow",
@@ -250,7 +299,8 @@ describe("Delete Data", () => {
 
     expect(Alert.alert).toHaveBeenCalledWith(
       "Data not deleted",
-      "Not all data could be deleted. Try again.",
+      "Not all data could be deleted.",
+      expect.arrayContaining([expect.objectContaining({ text: "Try Again" })]),
     );
     expect(Alert.alert).not.toHaveBeenCalledWith(
       "Data deleted",
