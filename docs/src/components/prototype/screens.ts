@@ -1,3 +1,5 @@
+// @ts-nocheck: the app's root tsconfig checks every .ts file in the repo, this
+// one included, and it has neither Astro's types nor its image imports.
 // PROTOTYPE: the screenshots the three landing page variants share. Every one
 // is a frame cut from the May 2025 Android screen recordings, status and
 // navigation bars cropped off, so each is marked stale until it is recaptured.
