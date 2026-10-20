@@ -12,8 +12,6 @@ it("links to the policy page on the website's own domain", () => {
   const site = config.match(/site:\s*["']([^"']+)["']/)?.[1];
 
   expect(site && new URL(site).origin).toBe(url.origin);
-  expect(readdirSync(join(DOCS, "src/pages"))).toContain(
-    `${url.pathname.slice(1)}.astro`,
-  );
-  expect(url.pathname).not.toBe("/index");
+  expect(url.pathname).toBe("/privacy");
+  expect(readdirSync(join(DOCS, "src/pages"))).toContain("privacy.astro");
 });

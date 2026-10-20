@@ -45,8 +45,8 @@ import Layout from "../layouts/Layout.astro";
     <p>
       <strong class="font-serif">ephira</strong> encrypts your data with a key
       that never leaves your phone, so a backup holds nothing readable without
-      that phone. Restoring a backup to the same iPhone brings back the data it
-      held. The exceptions:
+      that phone. Restoring an encrypted backup (iCloud, or an encrypted computer
+      backup) to the same iPhone brings back the data it held. The exceptions:
     </p>
     <ul>
       <li>
@@ -59,8 +59,9 @@ import Layout from "../layouts/Layout.astro";
         backups include it.
       </li>
       <li>
-        A backup made before ephira began encrypting may still hold a readable
-        copy until your phone replaces it.
+        A backup made before ephira finished encrypting your data, and deleting
+        the unencrypted copy, may still hold a readable copy until your phone
+        replaces it.
       </li>
     </ul>
     <p>
