@@ -27,8 +27,7 @@ import {
   getDatabaseStatus,
   getDrizzleDatabase,
   getSetting,
-  insertSetting,
-  setupEntryTypes,
+  seedEntryTypesOnce,
 } from "@/db/database";
 import { readAuthenticationChoiceSync } from "@/db/authenticationChoice";
 import { appLockAction } from "@/services/appLock";
@@ -214,13 +213,7 @@ function AppShell() {
     if (!success) return;
 
     const initializeDatabase = async () => {
-      const isDatabaseSetup = await getSetting(
-        SettingsKeys.databaseInitialSetup,
-      );
-      if (isDatabaseSetup?.value !== "0000") {
-        await setupEntryTypes();
-        await insertSetting(SettingsKeys.databaseInitialSetup, "0000");
-      }
+      await seedEntryTypesOnce();
 
       if (loaded) {
         checkAuthentication();

@@ -79,7 +79,7 @@ function DeleteDataDialog({
             <ActivityIndicator />
           ) : failed ? (
             <Text style={{ marginBottom: 16 }}>
-              Some data could not be deleted. Try again.
+              Not all data could be deleted. Try again.
             </Text>
           ) : (
             <Text style={{ marginBottom: 16 }}>
@@ -87,8 +87,9 @@ function DeleteDataDialog({
             </Text>
           )}
         </Dialog.Content>
-        {/* Retried here, because after a restart the lock may be gone and
-            Forgot Password with it, if the database went but a file did not. */}
+        {/* Retried here: the database goes even when another step fails, and
+            the lock with it, so a trip to the background or a restart may
+            open the app with Forgot Password gone. */}
         {!loading && failed && (
           <Dialog.Actions>
             <Button onPress={onRetry}>Try Again</Button>

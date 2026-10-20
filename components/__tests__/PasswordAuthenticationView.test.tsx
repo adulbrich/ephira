@@ -1,10 +1,11 @@
-import { fireEvent, render, screen } from "@testing-library/react-native";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react-native";
 import { PaperProvider } from "react-native-paper";
 import PasswordAuthenticationView from "@/components/PasswordAuthenticationView";
-
-jest.mock("@/db/operations/setup", () =>
-  jest.requireActual("@/__tests__/helpers/testDatabase"),
-);
 
 const mockDeleteAllAppData = jest.fn();
 jest.mock("@/services/deleteAllAppData", () => ({
@@ -14,9 +15,7 @@ jest.mock("@/services/deleteAllAppData", () => ({
 async function resetPassword() {
   await render(
     <PasswordAuthenticationView handlePasswordSubmit={jest.fn()} />,
-    {
-      wrapper: PaperProvider,
-    },
+    { wrapper: PaperProvider },
   );
   await fireEvent.press(screen.getByText("Forgot Password"));
   await fireEvent.press(screen.getByText("Reset Password"));
@@ -41,7 +40,9 @@ describe("Forgot Password reset", () => {
     await resetPassword();
 
     expect(screen.queryByText(/have been deleted/)).not.toBeOnTheScreen();
-    expect(screen.getByText(/could not be deleted/)).toBeOnTheScreen();
+    expect(
+      screen.getByText("Not all data could be deleted. Try again."),
+    ).toBeOnTheScreen();
 
     mockDeleteAllAppData.mockResolvedValueOnce(undefined);
     await fireEvent.press(screen.getByText("Try Again"));
@@ -50,5 +51,25 @@ describe("Forgot Password reset", () => {
     expect(
       screen.getByText(/Data and password have been deleted/),
     ).toBeOnTheScreen();
+  });
+
+  it("offers no second try while one is running", async () => {
+    mockDeleteAllAppData.mockRejectedValueOnce(new Error("disk I/O error"));
+    await resetPassword();
+
+    let finish = () => {};
+    mockDeleteAllAppData.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        finish = resolve;
+      }),
+    );
+    // Not awaited: React Native Testing Library would wait for the retry.
+    const pressing = fireEvent.press(screen.getByText("Try Again"));
+
+    await waitFor(() =>
+      expect(screen.queryByText("Try Again")).not.toBeOnTheScreen(),
+    );
+    finish();
+    await pressing;
   });
 });

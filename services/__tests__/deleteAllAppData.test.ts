@@ -3,11 +3,15 @@
  * native modules that keep state of their own: the notification centre, and
  * the file system the exports are written to.
  */
-import { insertDay } from "@/db/operations/days";
+import { symptomOptions } from "@/constants/Symptoms";
+import { onCatalogueInvalidated } from "@/db/catalogue";
+import { getAllDays, insertDay } from "@/db/operations/days";
 import {
   getAllPregnancyDays,
   upsertPregnancyDay,
 } from "@/db/operations/pregnancyDays";
+import { getAllSettings, insertSetting } from "@/db/operations/settings";
+import { getAllSymptoms, insertSymptom } from "@/db/operations/symptoms";
 import { deleteAllAppData } from "@/services/deleteAllAppData";
 import { EXPORT_FILES } from "@/services/exportFiles";
 import { resetTestDatabase } from "@/__tests__/helpers/testDatabase";
@@ -25,20 +29,27 @@ jest.mock("expo-notifications", () => ({
 }));
 
 const mockFiles = new Set<string>();
+const mockDeleteFile = jest.fn();
 jest.mock("expo-file-system/legacy", () => ({
   cacheDirectory: "file:///cache/",
   documentDirectory: "file:///documents/",
   deleteAsync: async (uri: string, options?: { idempotent?: boolean }) => {
+    await mockDeleteFile(uri);
     if (!mockFiles.delete(uri) && !options?.idempotent) {
       throw new Error(`No file at ${uri}`);
     }
   },
 }));
 
-/** A user who logged both modes, was reminded, and exported every format. */
-async function useTheApp() {
+/**
+ * A user who logged both modes, added a symptom, set a password, was reminded,
+ * and exported every format.
+ */
+async function leaveDataEverywhere() {
   await insertDay("2026-03-01", 3, new Date(2026, 2, 1));
   await upsertPregnancyDay("2026-05-01", 4, [], [], "first kicks");
+  await insertSymptom("Vertigo", true);
+  await insertSetting("password", "hash");
   mockScheduled.add("Period Expected Tomorrow");
   mockPresented.add("Period Coming Soon");
   for (const uri of Object.values(EXPORT_FILES)) mockFiles.add(uri);
@@ -50,11 +61,12 @@ beforeEach(() => {
   mockPresented.clear();
   mockFiles.clear();
   mockCancelAll.mockImplementation(async () => mockScheduled.clear());
+  mockDeleteFile.mockReset();
 });
 
 describe("deleteAllAppData", () => {
   it("leaves no data, notification or export file behind", async () => {
-    await useTheApp();
+    await leaveDataEverywhere();
 
     await deleteAllAppData();
 
@@ -64,12 +76,48 @@ describe("deleteAllAppData", () => {
     expect([...mockFiles]).toEqual([]);
   });
 
+  it("deletes notifications and exports before the database", async () => {
+    // So a kill part-way leaves the data, and the lock with it, to try again
+    // with, rather than an empty database and reminders still due to fire.
+    await leaveDataEverywhere();
+    const daysLeft: number[] = [];
+    const countDays = async () => {
+      daysLeft.push((await getAllDays()).length);
+    };
+    mockCancelAll.mockImplementationOnce(async () => {
+      await countDays();
+      mockScheduled.clear();
+    });
+    mockDeleteFile.mockImplementation(countDays);
+
+    await deleteAllAppData();
+
+    expect(daysLeft).toEqual([1, 1, 1, 1]);
+    expect(await getAllDays()).toEqual([]);
+  });
+
+  it("leaves the database as a fresh install has it", async () => {
+    await leaveDataEverywhere();
+    const catalogueInvalidated = jest.fn();
+    onCatalogueInvalidated(catalogueInvalidated);
+
+    await deleteAllAppData();
+
+    expect((await getAllSymptoms()).map((symptom) => symptom.name)).toEqual(
+      symptomOptions,
+    );
+    expect((await getAllSettings()).map((setting) => setting.name)).toEqual([
+      "databaseInitialSetup",
+    ]);
+    expect(catalogueInvalidated).toHaveBeenCalled();
+  });
+
   it("finishes when no export was ever made", async () => {
     await expect(deleteAllAppData()).resolves.toBeUndefined();
   });
 
   it("tries every step when one fails, and says so", async () => {
-    await useTheApp();
+    await leaveDataEverywhere();
     mockCancelAll.mockRejectedValueOnce(new Error("notifications unavailable"));
 
     await expect(deleteAllAppData()).rejects.toThrow();
@@ -80,7 +128,7 @@ describe("deleteAllAppData", () => {
   });
 
   it("finishes the job when tried again after a failure", async () => {
-    await useTheApp();
+    await leaveDataEverywhere();
     mockCancelAll.mockRejectedValueOnce(new Error("notifications unavailable"));
     await expect(deleteAllAppData()).rejects.toThrow();
 

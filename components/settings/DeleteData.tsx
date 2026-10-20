@@ -14,7 +14,12 @@ import {
   Button,
 } from "react-native-paper";
 import { StyleSheet, Dimensions, Alert, View } from "react-native";
-import { useSelectedDate } from "@/stores/calendar-storage";
+import {
+  useDatabaseChangeNotifier,
+  usePredictedCycle,
+  useSelectedDate,
+} from "@/stores/calendar-storage";
+import { usePregnancySelectedDate } from "@/stores/pregnancy-storage";
 
 function DeleteDataModal({ onDismiss }: { onDismiss: () => void }) {
   const theme = useTheme();
@@ -24,6 +29,9 @@ function DeleteDataModal({ onDismiss }: { onDismiss: () => void }) {
   const [buttonDisabled, setButtonDisabled] = useState(true);
   const [loading, setLoading] = useState(false);
   const { setDate } = useSelectedDate();
+  const { setDate: setPregnancyDate } = usePregnancySelectedDate();
+  const { setPredictedCycle } = usePredictedCycle();
+  const { setDatabaseChange } = useDatabaseChangeNotifier();
 
   const onDismissModal = () => {
     onDismiss();
@@ -31,22 +39,34 @@ function DeleteDataModal({ onDismiss }: { onDismiss: () => void }) {
 
   const handleDeleteData = async () => {
     setLoading(true);
+    let deleted = true;
     try {
       await deleteAllAppData();
     } catch {
+      deleted = false;
+    }
+
+    // The tabs stay mounted behind Settings, holding what they last read. The
+    // database goes last and may be empty even when an earlier step failed,
+    // so after any attempt they let go and read again. A day view left open
+    // would otherwise save its deleted day back on the next edit.
+    setDate("");
+    setPregnancyDate("");
+    setPredictedCycle([]);
+    setDatabaseChange(Date.now().toString());
+    setLoading(false);
+
+    if (!deleted) {
       // The confirmation stays typed, so trying again is one tap.
       Alert.alert(
         "Data not deleted",
-        "Not all data could be deleted from this device. Try again.",
+        "Not all data could be deleted. Try again.",
       );
       return;
-    } finally {
-      setLoading(false);
     }
     setInputValue("");
     setButtonDisabled(true);
     Alert.alert("Data deleted", "All data has been deleted from this device.");
-    setDate("");
   };
 
   return (

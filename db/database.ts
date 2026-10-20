@@ -7,7 +7,11 @@ import { deleteAllMoodEntries } from "@/db/operations/moodEntries";
 import { deleteAllMoods, insertMood } from "@/db/operations/moods";
 import { deleteAllSymptomEntries } from "@/db/operations/symptomEntries";
 import { deleteAllSymptoms, insertSymptom } from "@/db/operations/symptoms";
-import { getSetting, updateSetting } from "@/db/operations/settings";
+import {
+  getSetting,
+  insertSetting,
+  updateSetting,
+} from "@/db/operations/settings";
 import { symptomOptions } from "@/constants/Symptoms";
 import { moodOptions } from "@/constants/Moods";
 import { medicationOptions } from "@/constants/Medications";
@@ -180,15 +184,46 @@ const TABLES_CHILDREN_FIRST: SQLiteTable[] = [
  * expo-sqlite one commits as soon as the callback returns, awaited or not.
  *
  * VACUUM afterwards rebuilds the file without the free pages the deleted rows
- * would otherwise stay in until something overwrote them.
+ * would otherwise stay in until something overwrote them. It rewrites the
+ * whole file through the journal, so a nearly full disk refuses it; the delete
+ * stands then, and the rows stay in free pages, encrypted, until later writes
+ * reuse them. Reporting that as a failed delete would be wrong, and a retry on
+ * the same disk would fail the same way.
  */
 export async function deleteAllDataInDatabase() {
   db.transaction((tx) => {
-    for (const table of TABLES_CHILDREN_FIRST) tx.delete(table).run();
+    for (const table of TABLES_CHILDREN_FIRST) {
+      // A DELETE with no WHERE empties the table without visiting its rows,
+      // so the update hook expo-sqlite's change listener rests on never fires
+      // and useLiveQuery screens keep drawing what was deleted (38e0064 met
+      // this on the calendar). One row deleted by key reports the table as
+      // changed; the rest then go at once.
+      tx.run(
+        sql`DELETE FROM ${table} WHERE rowid IN (SELECT rowid FROM ${table} LIMIT 1)`,
+      );
+      tx.delete(table).run();
+    }
     // The highest id each table has issued, which still counts what there was.
     tx.run(sql`DELETE FROM sqlite_sequence`);
   });
-  db.run(sql`VACUUM`);
+  try {
+    db.run(sql`VACUUM`);
+  } catch (error) {
+    console.error("Deleted every row, but VACUUM failed:", error);
+  }
+}
+
+/**
+ * Seeds the default catalogue unless this database already has it: at launch,
+ * and right after Delete Data, which empties it with everything else. Until
+ * it is seeded the app offers nothing to log, and an entry logged under a name
+ * the stale cache still showed is deleted by setupEntryTypes at the next launch.
+ */
+export async function seedEntryTypesOnce() {
+  const isDatabaseSetup = await getSetting(SettingsKeys.databaseInitialSetup);
+  if (isDatabaseSetup?.value === "0000") return;
+  await setupEntryTypes();
+  await insertSetting(SettingsKeys.databaseInitialSetup, "0000");
 }
 
 // This is used the first time the app is opened to insert the default

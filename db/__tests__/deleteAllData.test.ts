@@ -5,7 +5,9 @@ import * as schema from "@/db/schema";
 import {
   getDatabase,
   getTestDatabase,
+  recordQueries,
   resetTestDatabase,
+  withForeignKeysOff,
 } from "@/__tests__/helpers/testDatabase";
 
 jest.mock("@/db/operations/setup", () =>
@@ -101,6 +103,19 @@ function seedEveryTable() {
     .run();
 }
 
+/**
+ * An error's message and those of the errors it wraps: drizzle wraps SQLite's.
+ *
+ * Read by shape, not instanceof: better-sqlite3 binds its error class once per
+ * worker process, so in every suite but the first its errors come from
+ * another realm and are not instances of this one's Error.
+ */
+const messages = (error: unknown): string[] => {
+  if (typeof error !== "object" || error === null) return [];
+  const { message, cause } = error as { message?: unknown; cause?: unknown };
+  return [String(message), ...messages(cause)];
+};
+
 /** Tables a seeded database left empty, which would make the test vacuous. */
 const emptyTables = (counts: Record<string, number>) =>
   Object.entries(counts)
@@ -110,6 +125,7 @@ const emptyTables = (counts: Record<string, number>) =>
 beforeEach(() => {
   resetTestDatabase();
 });
+afterEach(() => jest.restoreAllMocks());
 
 describe("deleteAllDataInDatabase", () => {
   it("covers every table in the schema, and the schema covers the database", () => {
@@ -142,9 +158,8 @@ describe("deleteAllDataInDatabase", () => {
       );
 
       try {
-        await expect(deleteAllDataInDatabase()).rejects.toThrow(
-          "disk I/O error",
-        );
+        const error = await deleteAllDataInDatabase().catch((e) => e);
+        expect(messages(error)).toContain("disk I/O error");
       } finally {
         connection.exec("DROP TRIGGER refuse_delete");
       }
@@ -152,6 +167,35 @@ describe("deleteAllDataInDatabase", () => {
       expect(rowCounts()).toEqual(before);
     },
   );
+
+  /**
+   * Screens built on useLiveQuery refresh when expo-sqlite's change listener
+   * reports their table, and the listener is SQLite's update hook. SQLite calls
+   * it from the Delete opcode, row by row. A DELETE with no WHERE, when foreign
+   * keys are off as on the device, compiles to Clear instead and reports
+   * nothing, so the calendar went on drawing every deleted day. The hook itself
+   * is out of reach here (better-sqlite3 has no update hook), so this reads the
+   * compiled statements.
+   */
+  it("reports a deleted row from every table to the change listener", async () => {
+    seedEveryTable();
+
+    const { queries } = await recordQueries(() => deleteAllDataInDatabase());
+
+    const reported = new Set<string>();
+    withForeignKeysOff(() => {
+      for (const query of queries) {
+        const steps = getDatabase().prepare(`EXPLAIN ${query}`).all() as {
+          opcode: string;
+          p4: string | null;
+        }[];
+        for (const { opcode, p4 } of steps) {
+          if (opcode === "Delete" && p4) reported.add(p4);
+        }
+      }
+    });
+    expect(SCHEMA_TABLES.filter((name) => !reported.has(name))).toEqual([]);
+  });
 
   it("leaves no deleted rows in free pages", async () => {
     const db = getTestDatabase();
@@ -164,6 +208,21 @@ describe("deleteAllDataInDatabase", () => {
     await deleteAllDataInDatabase();
 
     expect(getDatabase().pragma("freelist_count", { simple: true })).toBe(0);
+  });
+
+  it("stands by a delete that VACUUM then fails to tidy", async () => {
+    // VACUUM rewrites the file through the journal, so a nearly full disk
+    // refuses it. The rows are gone by then, and a retry on the same disk
+    // would fail the same way.
+    seedEveryTable();
+    jest.spyOn(getTestDatabase(), "run").mockImplementationOnce(() => {
+      throw new Error("database or disk is full");
+    });
+
+    await expect(deleteAllDataInDatabase()).resolves.toBeUndefined();
+
+    const counts = rowCounts();
+    expect(emptyTables(counts).sort()).toEqual(Object.keys(counts).sort());
   });
 
   it("keeps the record of which migrations have run", async () => {
