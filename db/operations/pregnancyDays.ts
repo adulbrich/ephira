@@ -10,6 +10,26 @@ export const getPregnancyDay = async (date: string) => {
   });
 };
 
+/**
+ * A `symptoms` or `moods` column read back into names.
+ *
+ * `upsertPregnancyDay` writes these with JSON.stringify, so anything else is a
+ * row it did not write. That reads as no names rather than throwing: the
+ * export reads every row at once, and one unreadable column must not cost
+ * the user the rest.
+ */
+export const parseStoredNames = (stored: string | null): string[] => {
+  if (!stored) return [];
+  try {
+    const parsed: unknown = JSON.parse(stored);
+    return Array.isArray(parsed)
+      ? parsed.filter((name): name is string => typeof name === "string")
+      : [];
+  } catch {
+    return [];
+  }
+};
+
 export const getAllPregnancyDays = async () => {
   return db.select().from(pregnancyDays).orderBy(pregnancyDays.date);
 };

@@ -20,21 +20,21 @@ import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import migrations from "@/drizzle/migrations";
 import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
-import { AUTH_TYPES, SettingsKeys, TRACKING_MODES } from "@/constants/Settings";
+import { AUTH_TYPES, SettingsKeys } from "@/constants/Settings";
 import {
   discardUnreadableDatabase,
   getDatabase,
   getDatabaseStatus,
   getDrizzleDatabase,
   getSetting,
-  insertSetting,
-  setupEntryTypes,
+  seedCatalogueOnce,
 } from "@/db/database";
 import { readAuthenticationChoiceSync } from "@/db/authenticationChoice";
 import { appLockAction } from "@/services/appLock";
 import DatabaseUnavailable from "@/components/DatabaseUnavailable";
 import DatabaseMigrationError from "@/components/DatabaseMigrationError";
 import PasswordAuthenticationView from "@/components/PasswordAuthenticationView";
+import { useAppRestart } from "@/stores/app-restart";
 import { getTheme } from "@/components/ThemeHandler";
 import {
   useCalendarFilters,
@@ -45,6 +45,8 @@ import {
 import {
   loadCalendarFilters,
   loadCyclePredictionChoice,
+  loadThemeColor,
+  loadTrackingMode,
 } from "@/db/preferences";
 import * as Notifications from "expo-notifications";
 import { takeNotificationRoute } from "@/services/notificationRouting";
@@ -92,25 +94,13 @@ function AppShell() {
   useEffect(() => {
     if (!success) return;
 
-    async function fetchThemeColor() {
-      const savedTheme = await getSetting("theme");
-      if (savedTheme?.value) {
-        setThemeColor(savedTheme.value);
-      } else {
-        setThemeColor("purple");
-      }
-    }
-    fetchThemeColor();
+    loadThemeColor().then(setThemeColor);
   }, [setThemeColor, success]);
 
   useEffect(() => {
     if (!success) return;
 
-    async function fetchTrackingMode() {
-      const saved = await getSetting(SettingsKeys.trackingMode);
-      setTrackingMode(saved?.value ?? TRACKING_MODES.CYCLE);
-    }
-    fetchTrackingMode();
+    loadTrackingMode().then(setTrackingMode);
   }, [setTrackingMode, success]);
 
   // Durable preferences hydrate in the shell, not on the screen that happens
@@ -143,6 +133,13 @@ function AppShell() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isPasswordModalVisible, setIsPasswordModalVisible] = useState(false);
   const router = useRouter();
+  // Delete Data starts the app again from app/index.tsx: no navigator for one
+  // commit, then a new one, as after the lock.
+  const restarting = useAppRestart((state) => state.restarting);
+  const finishRestart = useAppRestart((state) => state.finishRestart);
+  useEffect(() => {
+    if (restarting) finishRestart();
+  }, [restarting, finishRestart]);
 
   const checkAuthentication = useCallback(async () => {
     try {
@@ -214,13 +211,7 @@ function AppShell() {
     if (!success) return;
 
     const initializeDatabase = async () => {
-      const isDatabaseSetup = await getSetting(
-        SettingsKeys.databaseInitialSetup,
-      );
-      if (isDatabaseSetup?.value !== "0000") {
-        await setupEntryTypes();
-        await insertSetting(SettingsKeys.databaseInitialSetup, "0000");
-      }
+      await seedCatalogueOnce();
 
       if (loaded) {
         checkAuthentication();
@@ -293,12 +284,14 @@ function AppShell() {
           <SafeAreaView
             style={{ flex: 1, backgroundColor: theme.colors.background }}
           >
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="index" />
-              <Stack.Screen name="(onboarding)" />
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="(pregnancy-tabs)" />
-            </Stack>
+            {restarting ? null : (
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="index" />
+                <Stack.Screen name="(onboarding)" />
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="(pregnancy-tabs)" />
+              </Stack>
+            )}
 
             <StatusBar style="auto" />
           </SafeAreaView>

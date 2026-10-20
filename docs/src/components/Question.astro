@@ -1,0 +1,22 @@
+---
+// One question in the landing page FAQ. The answer is the slot, so it can hold
+// a link.
+interface Props {
+  question: string;
+}
+
+const { question } = Astro.props;
+---
+
+<details class="group py-5">
+  <summary
+    class="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-medium text-white [&::-webkit-details-marker]:hidden"
+  >
+    {question}
+    <span
+      aria-hidden="true"
+      class="text-2xl leading-none text-cream transition group-open:rotate-45">+</span
+    >
+  </summary>
+  <p class="mt-3 text-white/70"><slot /></p>
+</details>

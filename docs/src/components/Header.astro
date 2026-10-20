@@ -1,13 +1,27 @@
 ---
+// The name is a link, not a heading: each page has its one h1 in its content.
 import { Picture } from "astro:assets";
-import logoImage from "../assets/logo.png";
+import logo from "../assets/logo.png";
 ---
 
-<header
-  class="flex justify-between items-center shadow-md w-full shadow-slate-600 p-4 md:px-12"
->
-  <Picture src={logoImage} formats={["avif", "webp"]} alt="logo" />
-  <h1 class="font-serif text-3xl font-bold text-white lowercase">
-    <a href="/">ephira</a>
-  </h1>
+<header class="sticky top-0 z-20 border-b border-white/10 bg-plum-950/85 backdrop-blur">
+  <div class="mx-auto flex max-w-6xl items-center justify-between px-5 py-3 md:px-8">
+    <a href="/" class="flex items-center gap-2.5 font-serif text-2xl font-bold text-white">
+      <Picture
+        src={logo}
+        widths={[40, 80]}
+        sizes="40px"
+        formats={["avif", "webp"]}
+        alt=""
+        loading="eager"
+        class="size-10"
+      />
+      ephira
+    </a>
+    <a
+      href="/#download"
+      class="rounded-full bg-cream px-4 py-2 text-sm font-semibold text-plum-950 hover:bg-white"
+      >Download</a
+    >
+  </div>
 </header>

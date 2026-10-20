@@ -58,6 +58,9 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: theme.colors.primary,
+        // The default inactive tint comes from React Navigation's theme, which this
+        // app never sets; that theme stays light, so the tint vanishes on a dark bar.
+        tabBarInactiveTintColor: theme.colors.onSurfaceVariant,
         headerShown: false,
 
         // Keep your existing default behavior
