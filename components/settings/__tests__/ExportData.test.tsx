@@ -23,7 +23,7 @@ describe("Export Data", () => {
 
       expect(
         screen.getByText(
-          /your pregnancy days and appointments, whichever tracking mode is on\.$/,
+          /also includes any pregnancy days and appointments, whichever tracking mode is on\.$/,
         ),
       ).toBeTruthy();
     },

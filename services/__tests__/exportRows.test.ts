@@ -190,7 +190,7 @@ describe("groupEntriesByMonth", () => {
     expect(groups.map((g) => g.key)).toEqual(["2026-08", "2026-05", "2026-03"]);
   });
 
-  it("orders the days within a month oldest first", () => {
+  it("orders the Days within a month oldest first", () => {
     const groups = groupEntriesByMonth([
       entry("2026-08-31"),
       entry("2026-08-01"),
@@ -246,7 +246,7 @@ describe("monthLabel", () => {
 
   it("writes the month in English when the font cannot draw the phone's", () => {
     // On a Russian phone the month is "август 2026 г.", which the PDF's font
-    // cannot draw, so every heading printed as question marks.
+    // cannot draw.
     expect(monthLabel("2026-08", nothing)).toBe("August 2026");
   });
 });
@@ -460,7 +460,7 @@ describe("dayLabel", () => {
   });
 
   it("writes the day in English when the font cannot draw the phone's", () => {
-    // Arabic and Bengali phones write the digits in their own script too.
+    // An Arabic phone writes the weekday in Arabic script.
     expect(dayLabel("2026-08-01", nothing)).toBe("01 Sat");
   });
 });

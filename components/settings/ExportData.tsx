@@ -28,7 +28,7 @@ const exportDescriptions: Record<string, string> = {
 // too, and the file goes wherever the user shares it, so they should know
 // before they choose where.
 const exportContents =
-  "Every format includes your cycle days and, if you have logged any, your pregnancy days and appointments, whichever tracking mode is on.";
+  "Each format also includes any pregnancy days and appointments, whichever tracking mode is on.";
 
 async function exportCsvOrJson(data: string, fileType: string) {
   const fileName = `ephira_data.${fileType}`;

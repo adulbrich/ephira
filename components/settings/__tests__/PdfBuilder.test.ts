@@ -9,7 +9,7 @@ import type { ExportData, ExportDayEntry } from "@/constants/Interfaces";
 
 const written: string[] = [];
 const mockPaths = {
-  written: [] as string[],
+  writtenTo: [] as string[],
   deleted: [] as string[],
   shared: [] as string[],
 };
@@ -19,7 +19,7 @@ jest.mock("expo-file-system/legacy", () => ({
   documentDirectory: "file:///documents/",
   EncodingType: { Base64: "base64" },
   writeAsStringAsync: async (path: string, contents: string) => {
-    mockPaths.written.push(path);
+    mockPaths.writtenTo.push(path);
     written.push(contents);
   },
   deleteAsync: async (path: string) => {
@@ -165,13 +165,13 @@ describe("where the PDF is written", () => {
     // It was written to Documents, which iOS backs up, and never removed, so
     // a backup held every Day in plaintext beside a database it cannot read.
     // The cache is not backed up; the CSV and JSON exports already use it.
-    mockPaths.written.length = 0;
+    mockPaths.writtenTo.length = 0;
     mockPaths.deleted.length = 0;
     mockPaths.shared.length = 0;
 
     await exportPDF(data);
 
-    expect(mockPaths.written).toEqual(["file:///cache/ephira.pdf"]);
+    expect(mockPaths.writtenTo).toEqual(["file:///cache/ephira.pdf"]);
     expect(mockPaths.shared).toEqual(["file:///cache/ephira.pdf"]);
     expect(mockPaths.deleted).toEqual(["file:///documents/ephira.pdf"]);
   });
