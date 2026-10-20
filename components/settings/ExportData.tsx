@@ -24,6 +24,12 @@ const exportDescriptions: Record<string, string> = {
   json: "JSON (JavaScript Object Notation) files are easier to read than CSV files and still editable in a text editor. This format is ideal for developers or users who want to work with the data programmatically. The file size is larger than the CSV option.",
 };
 
+// Said under every format. An export made in cycle mode carries pregnancy data
+// too, and the file goes wherever the user shares it, so they should know
+// before they choose where.
+const exportContents =
+  "Every format includes your cycle days and, if you have logged any, your pregnancy days and appointments, whichever tracking mode is on.";
+
 async function exportCsvOrJson(data: string, fileType: string) {
   const fileName = `ephira_data.${fileType}`;
   const mimeType = fileType === "csv" ? "text/csv" : "application/json";
@@ -123,7 +129,7 @@ function ExportDataModal({ onDismiss }: { onDismiss: () => void }) {
               ]}
             />
             <Text variant="bodyLarge" style={styles.exportDescriptions}>
-              {exportDescriptions[value]}
+              {`${exportDescriptions[value]} ${exportContents}`}
             </Text>
 
             <Button
