@@ -9,11 +9,11 @@
  * database wait and the splash screen, so this reads the source, as
  * `modalBack.test.ts` does, but through the TypeScript parser. Every `<Tabs>`
  * must set both tints in its own `screenOptions={{ }}`, spelled
- * `theme.colors.<key>`; a tint written as an object property anywhere else in
- * the layout, or under a key computed from a variable, fails. Each colour is
- * then measured against the theme's background. Android's bar is that
- * background; iOS's is a blur of the screen behind it, which the background
- * only approximates.
+ * `theme.colors.<key>`; a tint declared as a member of an object or a class
+ * anywhere else in the layout, or under a key computed from a variable, fails.
+ * Each colour is then measured against the theme's background. Android's bar
+ * is that background; iOS's is a blur of the screen behind it, which the
+ * background only approximates.
  *
  * What it cannot see:
  * - a tab bar outside a `_layout.tsx` under `app/`, or not written as `<Tabs`;
@@ -123,20 +123,22 @@ function scan(source: string) {
     ts.forEachChild(node, findBars);
   };
   const findTints = (node: ts.Node) => {
-    if (
-      ts.isPropertyAssignment(node) ||
-      ts.isShorthandPropertyAssignment(node) ||
-      ts.isMethodDeclaration(node) ||
-      ts.isGetAccessorDeclaration(node)
-    ) {
-      const option = keyOf(node.name);
+    // Any named member of an object literal or a class: a property, a
+    // shorthand, a method, an accessor or a field. Type members are not values.
+    const name =
+      (ts.isObjectLiteralElementLike(node) && !ts.isSpreadAssignment(node)) ||
+      ts.isClassElement(node)
+        ? node.name
+        : undefined;
+    if (name) {
+      const option = keyOf(name);
       if (option === undefined || TINT_OPTIONS.includes(option)) {
         const value = ts.isPropertyAssignment(node)
           ? node.initializer.getText().replace(/\s+/g, "")
           : undefined;
         const bar = bars.indexOf(node.parent as ts.ObjectLiteralExpression);
         tints.push({
-          option: option ?? node.name.getText(),
+          option: option ?? name.getText(),
           value,
           key:
             option === undefined || value === undefined
@@ -261,6 +263,18 @@ describe("the measure", () => {
         },
       ],
     });
+  });
+
+  it("reads a tint declared as a setter or a class field, not as a type", () => {
+    const { tints } = scan(`
+      type Options = { tabBarActiveTintColor: string };
+      <Tabs.Screen options={{ set tabBarInactiveTintColor(value: string) {} }} />;
+      class Fields { tabBarActiveTintColor = "#1C1C1E"; }
+    `);
+    expect(tints.map(({ option, bar, key }) => [option, bar, key])).toEqual([
+      ["tabBarInactiveTintColor", undefined, undefined],
+      ["tabBarActiveTintColor", undefined, undefined],
+    ]);
   });
 
   it("gives no bar to screenOptions written as a function", () => {
