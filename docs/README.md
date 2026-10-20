@@ -11,8 +11,8 @@ Two unrelated things share this directory, and the name says only one of them.
 
 An architecture decision record goes in `adr/`, numbered in sequence, when a
 decision would otherwise be re-litigated. Implementation plans go in `plans/`,
-and the instructions the agent skills read go in `agents/`. Documentation never
-goes under `src/`: that is the website.
+and the instructions the agent skills read go in `agents/`. The website's rules
+are in `AGENTS.md`. Documentation never goes under `src/`: that is the website.
 
 The rest of this file is about the website.
 
@@ -21,7 +21,6 @@ The rest of this file is about the website.
 - [astro](https://docs.astro.build/en/getting-started/)
 - [tailwindcss](https://tailwindcss.com/)
 - [tailwind typography](https://github.com/tailwindlabs/tailwindcss-typography)
-- [heroicons](https://heroicons.com/)
 
 `npm audit` reports 3 high advisories, all one `path-to-regexp` issue counted
 through `@astrojs/vercel` → `@vercel/routing-utils`, which pins it to exactly
@@ -40,9 +39,16 @@ Inside of your Astro project, you'll see the following folders and files:
 │   └── favicon.svg
 ├── src/
 │   ├── assets/
+│   │   ├── app-store-badge.svg
+│   │   ├── logo.png
+│   │   ├── logo_x10.png
+│   │   └── screens/
 │   ├── components/
+│   │   ├── Download.astro
+│   │   ├── Footer.astro
 │   │   ├── Header.astro
-│   │   └── Footer.astro
+│   │   ├── Question.astro
+│   │   └── Shot.astro
 │   ├── layouts/
 │   │   └── Layout.astro
 │   ├── pages/
@@ -70,6 +76,14 @@ dropped the Astro integration in favour of a Vite plugin, which does not inject
 the stylesheet for you: remove that import and every page still builds and still
 deploys, with no styles at all.
 
+## Screenshots
+
+The landing page shows stills, not video: the screen recordings it used to
+autoplay cost a visitor about 47 MB. `src/assets/screens/` holds one WebP per
+screen, and `Shot.astro` asks Astro for 360 and 720 px AVIF and
+WebP copies, so a phone downloads only what fits its screen. To retake one, follow
+the `run-on-device` skill's `screenshots.md`.
+
 ## Commands
 
 All commands are run from the root of the project, from a terminal:
@@ -92,6 +106,4 @@ same as at the branch's last successful deployment or, before it has one, the
 same as on `main`. Its header says what counts as the website.
 
 A dashboard Redeploy runs that step too, and cancels. To force a rebuild,
-untick "Use project's Ignore Build Step" in the Redeploy dialog. The footer's
-year is rendered at build time, so after New Year it stays behind until the
-next website change or a forced Redeploy.
+untick "Use project's Ignore Build Step" in the Redeploy dialog.

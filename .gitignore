@@ -54,6 +54,9 @@ yarn-error.*
 # local env files
 .env*.local
 
+# throwaway modules, such as seed data for screenshots
+*.local.ts
+
 # typescript
 *.tsbuildinfo
 

@@ -1,0 +1,38 @@
+---
+// The download links, served from this site. Apple's badge used to be
+// hotlinked, which sent every visitor's address to two Apple hosts before they
+// had clicked anything; the SVG is Apple's own, downloaded unchanged. Apple's
+// badge license allows one App Store badge per layout, so a page renders this
+// component once.
+//
+// There is no Google Play badge: Play cannot take a new version, and the build
+// it serves predates the encryption this site describes. Android comes back
+// here once it ships elsewhere (#304).
+import appStore from "../assets/app-store-badge.svg";
+
+interface Props {
+  id?: string;
+  class?: string;
+}
+
+const { id, class: className } = Astro.props;
+---
+
+<div id={id} class={className}>
+  <a class="inline-block" href="https://apps.apple.com/us/app/ephira/id6741593838?platform=iphone">
+    <img
+      src={appStore.src}
+      alt="Download on the App Store"
+      width={appStore.width}
+      height={appStore.height}
+      class="h-12 w-auto"
+    />
+  </a>
+  <p class="mt-3 text-sm text-white/60">
+    On Android? The Google Play version is older and does not encrypt your data. New releases
+    are moving off Google Play.
+    <a class="text-cream underline" href="https://github.com/adulbrich/ephira/issues/304"
+      >Follow along on GitHub</a
+    >.
+  </p>
+</div>

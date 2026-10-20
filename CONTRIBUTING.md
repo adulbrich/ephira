@@ -204,4 +204,4 @@ Found a bug? Open a **GitHub Issue** with:
 - **Team Members:** Post in the iMessage group for quick questions.
 - **Docs:** decisions are in `docs/adr/`; `docs/README.md` says what else lives
   in `docs/`. Rules for one directory sit in that directory's `AGENTS.md`
-  (`db/`, `hooks/`), and the testing guide is `__tests__/README.md`.
+  (`db/`, `docs/`, `hooks/`), and the testing guide is `__tests__/README.md`.
