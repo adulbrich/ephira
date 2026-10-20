@@ -5,7 +5,7 @@ import { ThemedView } from "@/components/ThemedView";
 // The website's page is the only copy of the policy (#240), so the app and the
 // site cannot say different things. An in-app browser, not Linking: on iOS it
 // keeps the app active, so the lock does not drop the user back on Home.
-const PRIVACY_POLICY_URL = "https://ephira.capucity.be/privacy";
+export const PRIVACY_POLICY_URL = "https://ephira.capucity.be/privacy";
 
 export default function PrivacyPolicy() {
   return (

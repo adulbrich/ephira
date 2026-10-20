@@ -1,4 +1,5 @@
-import { ScrollView, View, StyleSheet, Linking } from "react-native";
+import * as WebBrowser from "expo-web-browser";
+import { ScrollView, View, StyleSheet } from "react-native";
 import {
   Dialog,
   Portal,
@@ -9,8 +10,10 @@ import {
 } from "react-native-paper";
 import type { CyclePhaseDefinition } from "@/constants/CyclePhases";
 
+// An in-app browser keeps the app active on iOS, so the lock does not drop the
+// user back on Home, as PrivacyPolicy does.
 const handleOpenUrl = (url: string) => {
-  Linking.openURL(url);
+  WebBrowser.openBrowserAsync(url);
 };
 
 interface PhaseInfoModalProps {
