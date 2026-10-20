@@ -8,6 +8,11 @@ import { deleteAllMoods, insertMood } from "@/db/operations/moods";
 import { deleteAllSymptomEntries } from "@/db/operations/symptomEntries";
 import { deleteAllSymptoms, insertSymptom } from "@/db/operations/symptoms";
 import {
+  getAllPregnancyDays,
+  parseStoredNames,
+} from "@/db/operations/pregnancyDays";
+import { getAllPregnancyAppointments } from "@/db/operations/pregnancyAppointments";
+import {
   getSetting,
   insertSetting,
   updateSetting,
@@ -73,6 +78,8 @@ export async function getAllDataAsJson() {
         birth_control: [],
       },
       dailyData: {},
+      pregnancyDays: {},
+      pregnancyAppointments: {},
     };
 
     for (const entry of joinedEntries) {
@@ -143,6 +150,27 @@ export async function getAllDataAsJson() {
           exportData.headers.birth_control.push(entry.medication_name);
         }
       }
+    }
+
+    // Pregnancy mode's tables, whichever mode is on now: the privacy policy
+    // tells people to export before they change phones, and a mode switched
+    // off still has its rows. The Pregnancy Anchor in settings is not here.
+    for (const day of await getAllPregnancyDays()) {
+      exportData.pregnancyDays[day.date] = {
+        kicks: day.kicks ?? undefined,
+        symptoms: parseStoredNames(day.symptoms),
+        moods: parseStoredNames(day.moods),
+        notes: day.notes || undefined,
+      };
+    }
+
+    for (const appointment of await getAllPregnancyAppointments()) {
+      exportData.pregnancyAppointments[appointment.date] ??= [];
+      exportData.pregnancyAppointments[appointment.date].push({
+        title: appointment.title,
+        type: appointment.type || undefined,
+        notes: appointment.notes || undefined,
+      });
     }
 
     return exportData;

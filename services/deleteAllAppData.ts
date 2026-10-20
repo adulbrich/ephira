@@ -6,7 +6,7 @@ import {
   DATABASE_STEP,
   DeletionIncomplete,
 } from "@/services/deletionIncomplete";
-import { EXPORT_FILES } from "@/services/exportFiles";
+import { EXPORT_FILES, LEGACY_PDF_EXPORT } from "@/services/exportFiles";
 
 /** What a step deletes, for the error, and the call that deletes it. */
 type Step = [name: string, run: () => Promise<unknown>];
@@ -51,6 +51,10 @@ async function deleteEverything(): Promise<void> {
         () => FileSystem.deleteAsync(uri, { idempotent: true }),
       ],
     ),
+    [
+      "pdf export an older build left in Documents",
+      () => FileSystem.deleteAsync(LEGACY_PDF_EXPORT, { idempotent: true }),
+    ],
     [DATABASE_STEP, deleteAllDataInDatabase],
     // Again: a prediction refresh that read the flow before the database went
     // can have scheduled since the first cancel. One still scheduling now can

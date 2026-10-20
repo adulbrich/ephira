@@ -11,11 +11,12 @@ export const getPregnancyAppointmentsForDate = async (date: string) => {
     .where(eq(pregnancyAppointments.date, date));
 };
 
+// A date can hold several; id keeps them in the order they were added.
 export const getAllPregnancyAppointments = async () => {
   return db
     .select()
     .from(pregnancyAppointments)
-    .orderBy(pregnancyAppointments.date);
+    .orderBy(pregnancyAppointments.date, pregnancyAppointments.id);
 };
 
 export const insertPregnancyAppointment = async (

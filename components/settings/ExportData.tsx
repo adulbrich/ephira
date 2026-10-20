@@ -15,8 +15,7 @@ import {
   Button,
 } from "react-native-paper";
 import { StyleSheet, Dimensions, View } from "react-native";
-import type { ExportData as ExportDataInterface } from "@/constants/Interfaces";
-import { toCsv } from "@/services/exportRows";
+import { toCsv, toJson } from "@/services/exportRows";
 import { exportPDF } from "@/components/settings/PdfBuilder";
 import { EXPORT_FILES } from "@/services/exportFiles";
 
@@ -25,6 +24,12 @@ const exportDescriptions: Record<string, string> = {
   pdf: "PDF (Portable Document Format) files are convenient for viewing and sharing. Your data will be organized in a clean, easy-to-read layout and can be opened with any PDF reader. The file may be slightly larger than the CSV or JSON option.",
   json: "JSON (JavaScript Object Notation) files are easier to read than CSV files and still editable in a text editor. This format is ideal for developers or users who want to work with the data programmatically. The file size is larger than the CSV option.",
 };
+
+// Said under every format. An export made in cycle mode carries pregnancy data
+// too, and the file goes wherever the user shares it, so they should know
+// before they choose where.
+const exportContents =
+  "Each format also includes any pregnancy days and appointments, whichever tracking mode is on.";
 
 async function exportCsvOrJson(data: string, fileType: "csv" | "json") {
   const mimeType = fileType === "csv" ? "text/csv" : "application/json";
@@ -75,13 +80,10 @@ function ExportDataModal({ onDismiss }: { onDismiss: () => void }) {
           break;
         }
         case "pdf":
-          await exportPDF(exportData.dailyData);
+          await exportPDF(exportData);
           break;
         case "json":
-          await exportCsvOrJson(
-            JSON.stringify(exportData.dailyData, null, 2),
-            "json",
-          );
+          await exportCsvOrJson(toJson(exportData), "json");
           break;
       }
     } catch (error) {
@@ -127,7 +129,7 @@ function ExportDataModal({ onDismiss }: { onDismiss: () => void }) {
               ]}
             />
             <Text variant="bodyLarge" style={styles.exportDescriptions}>
-              {exportDescriptions[value]}
+              {`${exportDescriptions[value]} ${exportContents}`}
             </Text>
 
             <Button

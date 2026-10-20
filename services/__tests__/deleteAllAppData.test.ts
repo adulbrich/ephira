@@ -24,7 +24,7 @@ import { getAllMoods } from "@/db/operations/moods";
 import { getAllSettings, insertSetting } from "@/db/operations/settings";
 import { getAllSymptoms, insertSymptom } from "@/db/operations/symptoms";
 import { deleteAllAppData } from "@/services/deleteAllAppData";
-import { EXPORT_FILES } from "@/services/exportFiles";
+import { EXPORT_FILES, LEGACY_PDF_EXPORT } from "@/services/exportFiles";
 import { resetTestDatabase } from "@/__tests__/helpers/testDatabase";
 
 jest.mock("@/db/operations/setup", () =>
@@ -64,6 +64,7 @@ async function leaveDataEverywhere() {
   mockScheduled.add("Period Expected Tomorrow");
   mockPresented.add("Period Coming Soon");
   for (const uri of Object.values(EXPORT_FILES)) mockFiles.add(uri);
+  mockFiles.add(LEGACY_PDF_EXPORT);
 }
 
 beforeEach(() => {
@@ -90,6 +91,24 @@ describe("deleteAllAppData", () => {
     expect([...mockFiles]).toEqual([]);
   });
 
+  it("removes each export where this build and older ones wrote it", async () => {
+    // Literal paths rather than EXPORT_FILES: a test that read the list on
+    // both sides could not see an entry move. Older builds wrote the PDF to
+    // Documents, which iOS backs up; this one writes it to the cache.
+    for (const uri of [
+      "file:///cache/ephira_data.csv",
+      "file:///cache/ephira_data.json",
+      "file:///cache/ephira.pdf",
+      "file:///documents/ephira.pdf",
+    ]) {
+      mockFiles.add(uri);
+    }
+
+    await deleteAllAppData();
+
+    expect([...mockFiles]).toEqual([]);
+  });
+
   it("deletes notifications and exports before the database", async () => {
     // So a kill part-way leaves the data, and the lock with it, to try again
     // with, rather than an empty database and reminders still due to fire.
@@ -106,7 +125,7 @@ describe("deleteAllAppData", () => {
 
     await deleteAllAppData();
 
-    expect(daysLeft).toEqual([1, 1, 1, 1]);
+    expect(daysLeft).toEqual([1, 1, 1, 1, 1]);
     expect(await getAllDays()).toEqual([]);
   });
 
