@@ -187,7 +187,7 @@ function cycleRow(entry: ExportDayEntry): string[] {
   const combinedMedList = [medList, bcList].filter(Boolean).join(", ");
 
   return [
-    flowMap[entry.flow_intensity ?? 0],
+    flowMap[entry.flow_intensity] ?? "",
     entry.moods.join(", "),
     entry.symptoms.join(", "),
     combinedMedList,

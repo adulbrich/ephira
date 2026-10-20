@@ -176,3 +176,16 @@ describe("where the PDF is written", () => {
     expect(mockPaths.deleted).toEqual(["file:///documents/ephira.pdf"]);
   });
 });
+
+describe("a flow the app never writes", () => {
+  it("prints as blank rather than failing the export", async () => {
+    // flowMap has five entries; a 5 or a -1 gave undefined, and drawing it
+    // threw, so the whole PDF failed for one row.
+    const [cycle] = await pagesOfText({
+      ...data,
+      dailyData: { "2026-06-01": { ...cycleDay, flow_intensity: 7 } },
+    });
+
+    expect(cycle).toContain("cramps all day");
+  });
+});
