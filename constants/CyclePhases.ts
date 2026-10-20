@@ -10,10 +10,6 @@ export interface CyclePhaseDefinition {
   shortDescription: string;
   color: string;
   gradientColors: [string, string, string];
-  typicalDays: {
-    start: number;
-    end: number;
-  };
   bodyDescription: string;
   commonSymptoms: string[];
   hormoneInfo: string;
@@ -25,10 +21,9 @@ export const CYCLE_PHASES: Record<CyclePhaseId, CyclePhaseDefinition> = {
   menstrual: {
     id: "menstrual",
     name: "Menstrual",
-    shortDescription: "Days 1-5: Your period",
+    shortDescription: "Your period",
     color: "#E62929",
     gradientColors: ["#990000", "#E62929", "#FF7272"],
-    typicalDays: { start: 1, end: 5 },
     bodyDescription:
       "The uterine lining is being shed. Estrogen and progesterone are at their lowest levels, which triggers menstruation.",
     commonSymptoms: [
@@ -51,10 +46,9 @@ export const CYCLE_PHASES: Record<CyclePhaseId, CyclePhaseDefinition> = {
   follicular: {
     id: "follicular",
     name: "Follicular",
-    shortDescription: "Days 6-13: Building up",
+    shortDescription: "Building up",
     color: "#FFA770",
     gradientColors: ["#E6B657", "#FFA770", "#FFD4B3"],
-    typicalDays: { start: 6, end: 13 },
     bodyDescription:
       "Follicles in the ovaries begin to develop. One egg matures while estrogen rises, preparing the body for ovulation.",
     commonSymptoms: [
@@ -77,10 +71,9 @@ export const CYCLE_PHASES: Record<CyclePhaseId, CyclePhaseDefinition> = {
   ovulation: {
     id: "ovulation",
     name: "Ovulation",
-    shortDescription: "Days 14-16: Peak fertility",
+    shortDescription: "Peak fertility",
     color: "#88A87D",
     gradientColors: ["#6B8F5E", "#88A87D", "#A8C99B"],
-    typicalDays: { start: 14, end: 16 },
     bodyDescription:
       "An egg is released from the ovary and travels down the fallopian tube. This is your most fertile window of the cycle.",
     commonSymptoms: [
@@ -103,10 +96,9 @@ export const CYCLE_PHASES: Record<CyclePhaseId, CyclePhaseDefinition> = {
   luteal: {
     id: "luteal",
     name: "Luteal",
-    shortDescription: "Days 17-28: Pre-menstrual",
+    shortDescription: "Pre-menstrual",
     color: "#809BFF",
     gradientColors: ["#5A7AE6", "#809BFF", "#B3C4FF"],
-    typicalDays: { start: 17, end: 28 },
     bodyDescription:
       "The body prepares for potential pregnancy. The corpus luteum produces progesterone. If no pregnancy occurs, hormone levels drop, leading to menstruation.",
     commonSymptoms: [
