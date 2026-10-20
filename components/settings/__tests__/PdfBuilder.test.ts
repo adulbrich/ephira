@@ -180,13 +180,14 @@ describe("where the PDF is written", () => {
 describe("a flow the app never writes", () => {
   it("prints as blank rather than failing the export", async () => {
     // flowMap has five entries, so a 5 or a -1 gave undefined, which threw
-    // before anything was drawn: the whole PDF failed for one row.
-    const [cycle] = await pagesOfText({
-      ...data,
-      dailyData: { "2026-06-01": { ...cycleDay, flow_intensity: 7 } },
-    });
+    // before the file was saved: the whole PDF failed for one row.
+    const page = (flow_intensity: number) =>
+      pagesOfText({
+        ...data,
+        dailyData: { "2026-06-01": { ...cycleDay, flow_intensity } },
+      });
 
-    expect(cycle).toContain("cramps all day");
-    expect(cycle).not.toMatch(/\b(Spotting|Light|Medium|Heavy)\b/);
+    // The same page as a day with no flow logged, so nothing stands in for it.
+    expect(await page(7)).toEqual(await page(0));
   });
 });
