@@ -9,18 +9,20 @@
  * database wait and the splash screen, so this reads the source, as
  * `modalBack.test.ts` does, but through the TypeScript parser. Every `<Tabs>`
  * must set both tints in its own `screenOptions={{ }}`, spelled
- * `theme.colors.<key>`; a tint named anywhere else in the layout, or under a
- * key computed from a variable, fails. Each colour is then measured against the
- * theme's background. Android's bar is that background; iOS's is a blur of the
- * screen behind it, which the background only approximates.
+ * `theme.colors.<key>`; a tint written as an object property anywhere else in
+ * the layout, or under a key computed from a variable, fails. Each colour is
+ * then measured against the theme's background. Android's bar is that
+ * background; iOS's is a blur of the screen behind it, which the background
+ * only approximates.
  *
  * What it cannot see:
  * - a tab bar outside a `_layout.tsx` under `app/`, or not written as `<Tabs`;
  * - a route file's own `<Tabs.Screen options>`, which overrides the tints while
  *   that tab is focused;
+ * - a tint assigned to an options object after it is built;
  * - a `tabBarLabelStyle` colour, or an icon or label that ignores the colour it
  *   is handed;
- * - a spread inside `screenOptions`;
+ * - a spread inside `screenOptions`, or of props onto `<Tabs>`;
  * - a `theme` that is not the one Paper's `useTheme()` returns;
  * - a bar painted other than `colors.background`.
  *
