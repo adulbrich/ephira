@@ -191,9 +191,9 @@ const TABLES_CHILDREN_FIRST: SQLiteTable[] = [
  * retry on the same disk would fail the same way.
  */
 export async function deleteAllDataInDatabase() {
-  // SQLCipher builds have it on already; this does not rely on that. all, not
-  // run: the pragma answers with a row, expo-sqlite's run stops at that row,
-  // and a statement left mid-step makes SQLite refuse the VACUUM below.
+  // SQLCipher turns it on when a key is set; the plaintext fallback has it off.
+  // all, not run: the pragma answers with a row, expo-sqlite's run stops at
+  // that row, and a statement left mid-step makes SQLite refuse the VACUUM.
   db.all(sql`PRAGMA secure_delete = ON`);
   db.transaction((tx) => {
     for (const table of TABLES_CHILDREN_FIRST) {
