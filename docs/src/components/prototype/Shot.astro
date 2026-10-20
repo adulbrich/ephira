@@ -1,0 +1,90 @@
+---
+// PROTOTYPE: one screenshot, optionally in a CSS phone frame. `widths` and
+// `sizes` keep the browser on a 360 or 720 px file instead of the 1080 px
+// source. With no `shot`, it draws a labelled empty frame for `missing`.
+import { Picture } from "astro:assets";
+import type { ShotData } from "./screens";
+
+interface Props {
+  shot?: ShotData;
+  missing?: string;
+  frame?: boolean;
+  eager?: boolean;
+  sizes?: string;
+  widths?: number[];
+  class?: string;
+  imgClass?: string;
+  label?: boolean;
+  fill?: boolean;
+}
+
+const {
+  shot,
+  missing,
+  frame = false,
+  eager = false,
+  sizes = "240px",
+  widths = [360, 720],
+  class: className,
+  imgClass,
+  label = true,
+  fill = false,
+} = Astro.props;
+
+// The stale label is positioned against the figure, so the figure needs a
+// position, but `relative` would override a caller's `absolute`.
+const positioned = /\babsolute\b/.test(className ?? "") ? null : "relative";
+---
+
+<figure
+  class:list={[
+    positioned,
+    frame &&
+      "rounded-[2rem] bg-[#0d0b0f] p-1.5 shadow-2xl shadow-black/40 ring-1 ring-white/10",
+    className,
+  ]}
+>
+  {
+    shot ? (
+      <Picture
+        src={shot.src}
+        alt={shot.alt}
+        widths={widths}
+        sizes={sizes}
+        formats={["avif", "webp"]}
+        loading={eager ? "eager" : "lazy"}
+        pictureAttributes={{ class: "contents" }}
+        class:list={[
+          "block w-full",
+          fill ? "h-full object-cover" : "h-auto",
+          frame && "rounded-[1.6rem]",
+          imgClass,
+        ]}
+      />
+    ) : (
+      <div
+        role="img"
+        aria-label={`${missing} screenshot, not captured yet`}
+        class:list={[
+          "flex aspect-[1080/2104] w-full flex-col items-center justify-center gap-1 rounded-[1.6rem] border-2 border-dashed border-current p-4 text-center text-xs opacity-60",
+          imgClass,
+        ]}
+      >
+        <span class="font-semibold uppercase tracking-wider">Shot needed</span>
+        <span>{missing}</span>
+      </div>
+    )
+  }
+  {
+    shot?.stale && label && (
+      <figcaption
+        class:list={[
+          "proto-label absolute left-3 z-10 rounded-full bg-amber-300 px-2 py-0.5 font-sans text-[10px] font-semibold whitespace-nowrap text-amber-950 shadow",
+          frame ? "-top-2.5" : "top-2",
+        ]}
+      >
+        Stand-in: May 2025 build
+      </figcaption>
+    )
+  }
+</figure>

@@ -1,0 +1,207 @@
+---
+// PROTOTYPE variant B, "Bento": light paper, product first. A split hero with
+// three fanned phones, then a grid of tiles that each crop one detail out of a
+// screen, a strip of all twelve themes, and the promises on a dark band.
+import ProtoFooter from "./ProtoFooter.astro";
+import Shot from "./Shot.astro";
+import StoreBadges from "./StoreBadges.astro";
+import Wordmark from "./Wordmark.astro";
+import { shots, themes } from "./screens";
+
+const promises = [
+  ["Stays on your phone", "No server, no cloud copy."],
+  ["Encrypted", "AES-256, with a key that never leaves the phone."],
+  ["No account", "No email, no sign-up."],
+  ["Open source", "MIT licensed, on GitHub."],
+];
+---
+
+<div class="min-h-screen bg-paper text-ink">
+  <header class="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 md:px-8">
+    <Wordmark class="text-ink" />
+    <a
+      href="#b-get"
+      class="rounded-full bg-ink px-4 py-2 text-sm font-medium text-paper hover:bg-plum-800"
+      >Get the app</a
+    >
+  </header>
+
+  <main>
+    <section
+      class="mx-auto grid max-w-6xl items-center gap-14 px-5 pt-8 pb-20 md:grid-cols-2 md:px-8 md:pt-16"
+    >
+      <div>
+        <h1
+          class="font-serif text-4xl leading-[1.05] font-bold text-balance text-ink md:text-6xl"
+        >
+          Track your cycle. Keep it to yourself.
+        </h1>
+        <p class="mt-6 max-w-md text-lg text-ink/70">
+          An encrypted period tracker that never asks for an account and never sends what you
+          log anywhere.
+        </p>
+        <StoreBadges id="b-get" class="mt-8" />
+        <p class="mt-6 text-sm text-ink/55">Open source · No account · iOS and Android</p>
+      </div>
+      <div class="relative mx-auto h-[25rem] w-full max-w-sm md:h-[33rem] md:max-w-md">
+        <Shot
+          shot={shots.logChips}
+          frame
+          sizes="(min-width: 768px) 208px, 160px"
+          class="absolute top-12 left-0 w-40 -rotate-6 md:w-52"
+        />
+        <Shot
+          shot={shots.filterDialog}
+          frame
+          sizes="(min-width: 768px) 208px, 160px"
+          class="absolute top-12 right-0 w-40 rotate-6 md:w-52"
+        />
+        <Shot
+          shot={shots.calMonth}
+          frame
+          eager
+          sizes="(min-width: 768px) 240px, 192px"
+          class="absolute top-0 left-1/2 z-10 w-48 -translate-x-1/2 md:w-60"
+        />
+      </div>
+    </section>
+
+    <section class="mx-auto max-w-6xl px-5 pb-20 md:px-8" aria-labelledby="b-features">
+      <h2 id="b-features" class="font-serif text-3xl font-bold md:text-4xl">
+        Everything on one calendar
+      </h2>
+      <div class="mt-10 grid gap-4 md:grid-cols-3">
+        <article
+          class="flex flex-col overflow-hidden rounded-3xl bg-white ring-1 ring-ink/5 md:col-span-2 md:row-span-2"
+        >
+          <div class="p-7">
+            <h3 class="text-xl font-semibold">Log what you want, how you want</h3>
+            <p class="mt-2 max-w-md text-ink/70">
+              Flow, symptoms, moods, medications, birth control and notes, plus entries you add
+              yourself.
+            </p>
+          </div>
+          <div class="relative mx-7 mb-7 min-h-64 grow overflow-hidden rounded-2xl bg-[#fdf8ff]">
+            <Shot
+              shot={shots.logChips}
+              sizes="(min-width: 768px) 640px, 90vw"
+              widths={[720, 1080]}
+              class="absolute inset-0"
+              fill
+              imgClass="object-[50%_86%]"
+            />
+          </div>
+        </article>
+
+        <article class="flex flex-col overflow-hidden rounded-3xl bg-plum-900 text-white">
+          <div class="p-7">
+            <h3 class="text-xl font-semibold">A lock only you can open</h3>
+            <p class="mt-2 text-white/70">Face ID, fingerprint, or a password just for ephira.</p>
+          </div>
+          <div class="relative mx-7 mb-7 h-44 overflow-hidden rounded-2xl">
+            <Shot
+              shot={shots.lock}
+              sizes="(min-width: 768px) 320px, 90vw"
+              class="absolute inset-0"
+              fill
+              imgClass="object-[50%_48%]"
+            />
+          </div>
+        </article>
+
+        <article class="flex flex-col overflow-hidden rounded-3xl bg-[#ece6f6]">
+          <div class="p-7">
+            <h3 class="text-xl font-semibold">Filter the legend</h3>
+            <p class="mt-2 text-ink/70">Show only the symptoms, moods and medications you want.</p>
+          </div>
+          <div class="relative mx-7 mb-7 h-44 overflow-hidden rounded-2xl">
+            <Shot
+              shot={shots.filterDialog}
+              sizes="(min-width: 768px) 320px, 90vw"
+              class="absolute inset-0"
+              fill
+              imgClass="object-[50%_3%]"
+            />
+          </div>
+        </article>
+
+        <article class="flex flex-col overflow-hidden rounded-3xl bg-white ring-1 ring-ink/5">
+          <div class="p-7">
+            <h3 class="text-xl font-semibold">Your own entries</h3>
+            <p class="mt-2 text-ink/70">Add a symptom, mood or medication the app did not think of.</p>
+          </div>
+          <div class="relative mx-7 mb-7 h-44 overflow-hidden rounded-2xl">
+            <Shot
+              shot={shots.customEntry}
+              sizes="(min-width: 768px) 320px, 90vw"
+              class="absolute inset-0"
+              fill
+              imgClass="object-top"
+            />
+          </div>
+        </article>
+
+        <article class="flex flex-col rounded-3xl bg-white p-7 ring-1 ring-ink/5">
+          <h3 class="text-xl font-semibold">Cycle predictions</h3>
+          <p class="mt-2 text-ink/70">
+            Your phase and next predicted period, after two complete cycles. Off in Settings if
+            you prefer.
+          </p>
+          <Shot missing="Cycle tab, cropped to the prediction card" class="mt-5 w-28 text-ink" />
+        </article>
+
+        <article class="flex flex-col rounded-3xl bg-white p-7 ring-1 ring-ink/5">
+          <h3 class="text-xl font-semibold">Export to PDF</h3>
+          <p class="mt-2 text-ink/70">Your full history, for you or a clinician, from Settings.</p>
+          <Shot missing="Export flow, cropped to the PDF" class="mt-5 w-28 text-ink" />
+        </article>
+
+        <article class="overflow-hidden rounded-3xl bg-white p-7 ring-1 ring-ink/5 md:col-span-3">
+          <h3 class="text-xl font-semibold">
+            Six colour themes, light and dark
+            <span
+              class="proto-label ml-2 rounded-full bg-amber-300 px-2 py-0.5 align-middle font-sans text-[10px] font-semibold text-amber-950"
+              >Stand-in: May 2025 build</span
+            >
+          </h3>
+          <p class="mt-2 text-ink/70">Light or dark follows your phone.</p>
+          <ul class="-mx-7 mt-6 flex gap-3 overflow-x-auto px-7 pb-2">
+            {
+              themes.map((t) => (
+                <li class="w-20 shrink-0 md:w-auto md:flex-1">
+                  <Shot
+                    shot={t}
+                    label={false}
+                    sizes="96px"
+                    widths={[120, 240]}
+                    imgClass="rounded-xl ring-1 ring-ink/10"
+                  />
+                </li>
+              ))
+            }
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="mx-auto max-w-6xl px-5 pb-20 md:px-8" aria-labelledby="b-promises">
+      <div class="rounded-3xl bg-plum-900 px-7 py-12 text-white md:px-12">
+        <h2 id="b-promises" class="font-serif text-3xl font-bold text-cream">
+          Private by design, not by setting
+        </h2>
+        <ul class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {
+            promises.map(([title, body]) => (
+              <li>
+                <h3 class="font-semibold">{title}</h3>
+                <p class="mt-1 text-sm text-white/70">{body}</p>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <ProtoFooter tone="light" />
+</div>

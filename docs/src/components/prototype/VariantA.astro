@@ -1,0 +1,181 @@
+---
+// PROTOTYPE variant A, "Editorial": text first, one column, the current dark
+// plum. One framed phone under the headline, the promises as a numbered row,
+// then compact alternating feature rows with small phones.
+import ProtoFooter from "./ProtoFooter.astro";
+import Shot from "./Shot.astro";
+import StoreBadges from "./StoreBadges.astro";
+import Wordmark from "./Wordmark.astro";
+import { shots, themes } from "./screens";
+
+const promises = [
+  {
+    title: "Stays on your phone",
+    body: "Nothing you log is sent to a server. There is no cloud copy.",
+  },
+  {
+    title: "Encrypted",
+    body: "SQLCipher with AES-256, under a key that never leaves your phone.",
+  },
+  {
+    title: "No account",
+    body: "Install it and start logging. No email, no sign-up.",
+  },
+  {
+    title: "Open source",
+    body: "MIT licensed. Read the code instead of taking our word for it.",
+  },
+];
+
+const features = [
+  {
+    eyebrow: "Lock",
+    title: "A lock only you can open",
+    body: "Face ID, fingerprint, or a password just for ephira. The lock lives on your phone, not in an account.",
+    shot: shots.lock,
+  },
+  {
+    eyebrow: "Log",
+    title: "Log what you want, how you want",
+    body: "Flow, symptoms, moods, medications, birth control and notes, plus any entry you add yourself.",
+    shot: shots.logChips,
+  },
+  {
+    eyebrow: "Filter",
+    title: "See only what matters",
+    body: "Filter the calendar legend down to the symptoms, moods and medications you care about.",
+    shot: shots.filterDialog,
+  },
+  {
+    eyebrow: "Predict",
+    title: "Cycle insights and predictions",
+    body: "Your current phase, the predicted start of your next period, and averages from your own history. Predictions start after two complete cycles and switch off in Settings.",
+    missing: "Cycle tab",
+  },
+  {
+    eyebrow: "Export",
+    title: "Take your history with you",
+    body: "Export everything as a PDF from Settings, to keep or to share with a clinician.",
+    missing: "Export flow",
+  },
+];
+---
+
+<div class="min-h-screen bg-plum-900 text-white/90">
+  <header class="mx-auto flex max-w-5xl items-center justify-between px-5 py-5 md:px-8">
+    <Wordmark class="text-white" />
+    <nav class="flex gap-5 text-sm text-white/70">
+      <a href="/privacy" class="hover:text-cream">Privacy</a>
+      <a href="https://github.com/adulbrich/ephira" class="hover:text-cream">GitHub</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="mx-auto max-w-3xl px-5 pt-10 pb-20 text-center md:px-8 md:pt-20">
+      <h1
+        class="font-serif text-4xl leading-tight font-bold text-balance text-white md:text-6xl"
+      >
+        Your cycle stays on your phone. Nowhere else.
+      </h1>
+      <p class="mx-auto mt-6 max-w-xl text-lg text-pretty text-cream/90">
+        ephira is an encrypted, open-source period tracker for iOS and Android. No
+        account, no cloud, no ads.
+      </p>
+      <StoreBadges class="mt-8 justify-center" />
+      <Shot
+        shot={shots.calMonth}
+        frame
+        eager
+        sizes="(min-width: 768px) 288px, 240px"
+        class="mx-auto mt-16 w-60 md:w-72"
+      />
+    </section>
+
+    <section class="border-y border-white/10 bg-plum-950/60" aria-labelledby="a-promises">
+      <h2 id="a-promises" class="sr-only">What ephira promises</h2>
+      <ol class="mx-auto grid max-w-5xl gap-10 px-5 py-14 sm:grid-cols-2 md:px-8 lg:grid-cols-4">
+        {
+          promises.map((p, i) => (
+            <li>
+              <span class="font-serif text-4xl text-cream/50">0{i + 1}</span>
+              <h3 class="mt-2 font-semibold text-white">{p.title}</h3>
+              <p class="mt-1 text-sm text-white/70">{p.body}</p>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+
+    <section class="mx-auto max-w-4xl px-5 py-20 md:px-8" aria-labelledby="a-features">
+      <h2 id="a-features" class="font-serif text-3xl font-bold text-cream md:text-4xl">
+        What it does
+      </h2>
+      <div class="mt-6 divide-y divide-white/10">
+        {
+          features.map((f, i) => (
+            <article
+              class:list={[
+                "grid items-center gap-8 py-12 md:gap-16",
+                i % 2 ? "md:grid-cols-[14rem_1fr]" : "md:grid-cols-[1fr_14rem]",
+              ]}
+            >
+              <div class:list={[i % 2 && "md:order-2"]}>
+                <p class="text-xs font-semibold tracking-widest text-cream/70 uppercase">
+                  {f.eyebrow}
+                </p>
+                <h3 class="mt-2 font-serif text-2xl text-white">{f.title}</h3>
+                <p class="mt-3 text-white/75">{f.body}</p>
+              </div>
+              <Shot
+                shot={f.shot}
+                missing={f.missing}
+                frame
+                sizes="224px"
+                class="mx-auto w-48 md:w-56"
+              />
+            </article>
+          ))
+        }
+        <article class="grid items-center gap-8 py-12 md:grid-cols-[1fr_14rem] md:gap-16">
+          <div>
+            <p class="text-xs font-semibold tracking-widest text-cream/70 uppercase">Themes</p>
+            <h3 class="mt-2 font-serif text-2xl text-white">Six colour themes, light and dark</h3>
+            <p class="mt-3 text-white/75">
+              Pick a colour in Settings. Light or dark follows your phone.
+            </p>
+          </div>
+          <div class="mx-auto flex w-64 gap-3 md:w-56">
+            <Shot shot={themes[1]} frame sizes="112px" class="w-1/2" />
+            <Shot shot={themes[10]} frame label={false} sizes="112px" class="mt-8 w-1/2" />
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="border-t border-white/10 bg-plum-950/60" aria-labelledby="a-open">
+      <div class="mx-auto max-w-3xl px-5 py-20 md:px-8">
+        <h2 id="a-open" class="font-serif text-3xl font-bold text-cream md:text-4xl">
+          Built in the open
+        </h2>
+        <p class="mt-4 text-lg text-white/75">
+          ephira is MIT licensed and its code is on GitHub, so you can check how your data is
+          stored rather than trust a promise.
+        </p>
+        <ul class="mt-8 grid gap-2 font-mono text-sm text-white/60 sm:grid-cols-2">
+          <li>React Native and Expo</li>
+          <li>SQLite, encrypted with SQLCipher</li>
+          <li>Drizzle ORM</li>
+          <li>React Native Paper</li>
+        </ul>
+        <a
+          href="https://github.com/adulbrich/ephira"
+          class="mt-10 inline-flex rounded-full border border-cream/60 px-5 py-2.5 text-sm font-medium text-cream hover:bg-cream hover:text-plum-900"
+        >
+          Read the source on GitHub
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <ProtoFooter />
+</div>

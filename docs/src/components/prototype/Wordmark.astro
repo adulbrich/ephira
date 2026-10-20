@@ -1,0 +1,25 @@
+---
+// PROTOTYPE: the logo and name, linking home. Not a heading: each variant has
+// exactly one h1, in its hero.
+import { Picture } from "astro:assets";
+import logo from "../../assets/logo.png";
+
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<a href="/" class:list={["flex items-center gap-2.5 font-serif text-2xl font-bold", className]}>
+  <Picture
+    src={logo}
+    widths={[40, 80]}
+    sizes="40px"
+    formats={["avif", "webp"]}
+    alt=""
+    loading="eager"
+    class="size-10"
+  />
+  ephira
+</a>

@@ -8,3 +8,15 @@
 
 /* v4 loads plugins from CSS. `prose` is used on /contact and /privacy. */
 @plugin "@tailwindcss/typography";
+
+/* The brand colours, once, as utilities: bg-plum-900, text-cream, and so on. */
+@theme {
+  --color-plum-950: #241e28;
+  --color-plum-900: #312935;
+  --color-plum-800: #3e3543;
+  --color-mauve: #9892a0;
+  --color-cream: #f2e4bf;
+  --color-paper: #f8f3ea;
+  --color-ink: #2b2430;
+  --color-iris: #6750a4;
+}

@@ -1,0 +1,39 @@
+---
+// PROTOTYPE: both store links, with no third-party request. The App Store
+// badge is a CSS stand-in until Apple's SVG is downloaded and self-hosted.
+import { Picture } from "astro:assets";
+import googlePlay from "../../assets/google-play-badge.png";
+
+interface Props {
+  class?: string;
+  id?: string;
+}
+
+const { class: className, id } = Astro.props;
+---
+
+<div id={id} class:list={["flex flex-wrap items-center gap-3", className]}>
+  <a
+    href="https://apps.apple.com/us/app/ephira/id6741593838?platform=iphone"
+    class="relative inline-flex h-12 items-center rounded-lg bg-black px-4 text-left font-sans text-white ring-1 ring-white/40"
+  >
+    <span class="flex flex-col leading-none">
+      <span class="text-[10px]">Download on the</span>
+      <span class="text-xl font-semibold tracking-tight">App Store</span>
+    </span>
+    <span
+      class="proto-label absolute -top-2.5 right-2 rounded-full bg-amber-300 px-1.5 text-[9px] font-semibold text-amber-950"
+      >stand-in</span
+    >
+  </a>
+  <a href="https://play.google.com/store/apps/details?id=com.capucity.ephira">
+    <Picture
+      src={googlePlay}
+      widths={[162, 270]}
+      sizes="162px"
+      formats={["avif", "webp"]}
+      alt="Get it on Google Play"
+      class="h-12 w-auto"
+    />
+  </a>
+</div>

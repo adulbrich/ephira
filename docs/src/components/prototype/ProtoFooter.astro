@@ -1,0 +1,26 @@
+---
+// PROTOTYPE: the footer all three variants share, in a dark or light tone.
+interface Props {
+  tone?: "dark" | "light";
+}
+
+const { tone = "dark" } = Astro.props;
+---
+
+<footer
+  class:list={[
+    "border-t text-sm",
+    tone === "dark" ? "border-white/10 text-white/60" : "border-ink/10 text-ink/60",
+  ]}
+>
+  <div
+    class="mx-auto flex max-w-6xl flex-col gap-4 px-5 py-8 sm:flex-row sm:items-center sm:justify-between md:px-8"
+  >
+    <p><span class="font-serif font-bold">ephira</span>. Open source, MIT licensed.</p>
+    <nav class="flex gap-5">
+      <a class="hover:underline" href="https://github.com/adulbrich/ephira">GitHub</a>
+      <a class="hover:underline" href="/privacy">Privacy</a>
+      <a class="hover:underline" href="/contact">Contact</a>
+    </nav>
+  </div>
+</footer>

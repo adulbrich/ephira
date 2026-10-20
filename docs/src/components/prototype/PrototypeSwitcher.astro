@@ -1,0 +1,61 @@
+---
+// PROTOTYPE: the floating bar that flips between variants. index.astro mounts
+// it only under `astro dev`; window.protoShow, defined there, does the work.
+interface Props {
+  variants: { key: string; name: string }[];
+}
+
+const { variants } = Astro.props;
+---
+
+<div
+  id="proto-switcher"
+  class="fixed right-4 bottom-4 z-50 flex items-center gap-1 rounded-full bg-black/90 p-1 font-sans text-sm text-white shadow-2xl ring-1 ring-white/25"
+>
+  <button
+    type="button"
+    data-step="-1"
+    aria-label="Previous variant"
+    class="rounded-full px-3 py-1.5 hover:bg-white/15">&larr;</button
+  >
+  <span id="proto-current" class="min-w-32 text-center"></span>
+  <button
+    type="button"
+    data-step="1"
+    aria-label="Next variant"
+    class="rounded-full px-3 py-1.5 hover:bg-white/15">&rarr;</button
+  >
+  <button
+    type="button"
+    id="proto-labels"
+    class="rounded-full px-3 py-1.5 text-xs text-white/70 hover:bg-white/15">labels</button
+  >
+</div>
+
+<script is:inline define:vars={{ variants }}>
+  const keys = variants.map((v) => v.key);
+  const current = document.getElementById("proto-current");
+  const active = () => document.documentElement.dataset.variant ?? keys[0];
+  const render = () => {
+    const v = variants.find((x) => x.key === active());
+    current.textContent = `${v.key}: ${v.name}`;
+  };
+  const step = (by) => {
+    const i = keys.indexOf(active());
+    window.protoShow(keys[(i + by + keys.length) % keys.length]);
+    window.scrollTo(0, 0);
+    render();
+  };
+  for (const button of document.querySelectorAll("#proto-switcher [data-step]")) {
+    button.addEventListener("click", () => step(Number(button.dataset.step)));
+  }
+  document.getElementById("proto-labels").addEventListener("click", () => {
+    document.documentElement.classList.toggle("proto-hide-labels");
+  });
+  addEventListener("keydown", (e) => {
+    if (e.target instanceof Element && e.target.closest("input, textarea, [contenteditable]")) return;
+    if (e.key === "ArrowLeft") step(-1);
+    if (e.key === "ArrowRight") step(1);
+  });
+  render();
+</script>
