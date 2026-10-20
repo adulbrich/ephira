@@ -4,6 +4,7 @@ import {
   csvField,
   dayLabel,
   groupEntriesByMonth,
+  monthLabel,
   pregnancyEntries,
   toCsv,
   toJson,
@@ -227,15 +228,26 @@ describe("groupEntriesByMonth", () => {
     expect(groups.map((g) => g.key)).toEqual(["2026-12", "2026-06", "2026-01"]);
   });
 
-  it("still offers a human label for each group", () => {
-    const [group] = groupEntriesByMonth([entry("2026-08-15")]);
-
-    expect(group.label).toMatch(/2026/);
-    expect(group.label.length).toBeGreaterThan(4);
-  });
-
   it("returns nothing for no entries", () => {
     expect(groupEntriesByMonth([])).toEqual([]);
+  });
+});
+
+const anything = () => true;
+const nothing = () => false;
+
+describe("monthLabel", () => {
+  it("offers a human label for a group's key", () => {
+    const label = monthLabel("2026-08", anything);
+
+    expect(label).toMatch(/2026/);
+    expect(label.length).toBeGreaterThan(4);
+  });
+
+  it("writes the month in English when the font cannot draw the phone's", () => {
+    // On a Russian phone the month is "август 2026 г.", which the PDF's font
+    // cannot draw, so every heading printed as question marks.
+    expect(monthLabel("2026-08", nothing)).toBe("August 2026");
   });
 });
 
@@ -272,7 +284,7 @@ describe("appointmentDetail", () => {
 });
 
 describe("toJson", () => {
-  it("writes cycle days exactly as the export always has", () => {
+  it("writes cycle Days exactly as the export always has", () => {
     // The file used to be JSON.stringify(dailyData, null, 2). Without
     // pregnancy data it still is, byte for byte.
     const dailyData = {
@@ -288,7 +300,7 @@ describe("toJson", () => {
     );
   });
 
-  it("orders dates across cycle days, pregnancy days and appointments", () => {
+  it("orders dates across cycle Days, pregnancy days and appointments", () => {
     const json = toJson(
       exportOf(
         {
@@ -414,7 +426,7 @@ describe("pregnancyEntries", () => {
     ]);
   });
 
-  it("groups into months like the cycle days do", () => {
+  it("groups into months like the cycle Days do", () => {
     const entries = pregnancyEntries(
       exportOf(
         {},
@@ -442,8 +454,13 @@ describe("dayLabel", () => {
     // Jest runs in Berlin, east of it, so this case alone cannot show that;
     // run it under TZ=America/Los_Angeles with the boundaries runner in
     // .claude/skills/correctness-review to see it.
-    expect(dayLabel("2026-08-01")).toMatch(/\b01\b/);
-    expect(dayLabel("2026-08-31")).toMatch(/\b31\b/);
-    expect(dayLabel("2026-03-29")).toMatch(/\b29\b/); // Berlin's DST change
+    expect(dayLabel("2026-08-01", anything)).toMatch(/\b01\b/);
+    expect(dayLabel("2026-08-31", anything)).toMatch(/\b31\b/);
+    expect(dayLabel("2026-03-29", anything)).toMatch(/\b29\b/); // Berlin's DST change
+  });
+
+  it("writes the day in English when the font cannot draw the phone's", () => {
+    // Arabic and Bengali phones write the digits in their own script too.
+    expect(dayLabel("2026-08-01", nothing)).toBe("01 Sat");
   });
 });

@@ -8,15 +8,29 @@ import { exportPDF } from "@/components/settings/PdfBuilder";
 import type { ExportData, ExportDayEntry } from "@/constants/Interfaces";
 
 const written: string[] = [];
+const mockPaths = {
+  written: [] as string[],
+  deleted: [] as string[],
+  shared: [] as string[],
+};
 
 jest.mock("expo-file-system/legacy", () => ({
+  cacheDirectory: "file:///cache/",
   documentDirectory: "file:///documents/",
   EncodingType: { Base64: "base64" },
-  writeAsStringAsync: async (_path: string, contents: string) => {
+  writeAsStringAsync: async (path: string, contents: string) => {
+    mockPaths.written.push(path);
     written.push(contents);
   },
+  deleteAsync: async (path: string) => {
+    mockPaths.deleted.push(path);
+  },
 }));
-jest.mock("expo-sharing", () => ({ shareAsync: async () => undefined }));
+jest.mock("expo-sharing", () => ({
+  shareAsync: async (path: string) => {
+    mockPaths.shared.push(path);
+  },
+}));
 
 /** The text drawn on each page of the PDF exportPDF wrote, one line per draw. */
 async function pagesOfText(data: ExportData): Promise<string[]> {
@@ -99,7 +113,7 @@ describe("exportPDF", () => {
     }
   });
 
-  it("starts on the pregnancy heading when there are no cycle days", async () => {
+  it("starts on the pregnancy heading when there are no cycle Days", async () => {
     const pages = await pagesOfText({ ...data, dailyData: {} });
 
     expect(pages).toHaveLength(1);
@@ -142,5 +156,22 @@ describe("text the PDF's font cannot draw", () => {
     expect(cycle).toContain("cramps ? all day");
     expect(pregnancy).toContain("kicked ? hard, café");
     expect(pregnancy).toContain("???");
+  });
+});
+
+describe("where the PDF is written", () => {
+  it("leaves it out of iOS backups and removes the copy an older export left", async () => {
+    // It was written to Documents, which iOS backs up, and never removed, so
+    // a backup held every Day in plaintext beside a database it cannot read.
+    // The cache is not backed up; the CSV and JSON exports already use it.
+    mockPaths.written.length = 0;
+    mockPaths.deleted.length = 0;
+    mockPaths.shared.length = 0;
+
+    await exportPDF(data);
+
+    expect(mockPaths.written).toEqual(["file:///cache/ephira.pdf"]);
+    expect(mockPaths.shared).toEqual(["file:///cache/ephira.pdf"]);
+    expect(mockPaths.deleted).toEqual(["file:///documents/ephira.pdf"]);
   });
 });

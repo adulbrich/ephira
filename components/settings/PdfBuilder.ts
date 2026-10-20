@@ -12,8 +12,10 @@ import {
   appointmentsDetail,
   birthControlDetail,
   dayLabel,
+  type CanDraw,
   groupEntriesByMonth,
   kicksText,
+  monthLabel,
   pregnancyEntries,
   type PregnancyExportEntry,
 } from "@/services/exportRows";
@@ -29,18 +31,19 @@ const flowMap = ["", "Spotting", "Light", "Medium", "Heavy"];
 const lightGray = rgb(0.95, 0.95, 0.95);
 
 /**
- * `text` with each character the font cannot encode replaced by "?".
+ * `text` with each character the font cannot encode replaced: whitespace by a
+ * space, anything else by "?".
  *
  * The standard fonts draw WinAnsi only, and pdf-lib throws on anything else, so
- * one emoji in a note, or a month name in a non-Latin script, used to fail the
- * whole export. The PDF is a copy to read; the JSON and CSV keep the text as
- * written. Whitespace stays: wrapText splits on it before anything is drawn.
+ * one emoji in a note used to fail the whole export. The PDF is a copy to read;
+ * the JSON and CSV keep the text as written. Dates and month names are the
+ * app's own and are written in English instead (`dayLabel`, `monthLabel`).
  */
-function drawable(text: string, encodable: Set<number>): string {
+function drawableText(text: string, encodable: Set<number>): string {
   let out = "";
   for (const char of text) {
-    const codePoint = char.codePointAt(0) ?? 0;
-    out += /\s/.test(char) || encodable.has(codePoint) ? char : "?";
+    if (encodable.has(char.codePointAt(0) ?? 0)) out += char;
+    else out += /\s/.test(char) ? " " : "?";
   }
   return out;
 }
@@ -119,10 +122,23 @@ function drawRowText(
  * them off the device are two things rather than one. It rejects rather than
  * logging: a failed export used to be indistinguishable from a successful one
  * from the user's side.
+ *
+ * The file goes to the cache, as the CSV and JSON exports do. It used to go to
+ * Documents, which iOS backs up, so a backup held every Day in plaintext beside
+ * a database it cannot read. An older export's copy there is removed.
  */
 async function shareFinishedPdf(pdfDoc: PDFDocument) {
   const pdfBase64 = await pdfDoc.saveAsBase64();
-  const pdfPath = `${FileSystem.documentDirectory}ephira.pdf`;
+  try {
+    await FileSystem.deleteAsync(`${FileSystem.documentDirectory}ephira.pdf`, {
+      idempotent: true,
+    });
+  } catch {
+    // The user is waiting for this export, not for that cleanup; the next
+    // export tries again.
+    console.warn("Could not remove the PDF an older export left in Documents");
+  }
+  const pdfPath = `${FileSystem.cacheDirectory}ephira.pdf`;
   await FileSystem.writeAsStringAsync(pdfPath, pdfBase64, {
     encoding: FileSystem.EncodingType.Base64,
   });
@@ -151,7 +167,7 @@ const pregnancyColumns = [
   "Notes",
 ];
 
-function cycleRow(entry: ExportDayEntry): string[] {
+function cycleRow(entry: ExportDayEntry, canDraw: CanDraw): string[] {
   const medList = entry.medications.map((m) => m.name).join(", ");
 
   const bcList = entry.birth_control
@@ -164,7 +180,7 @@ function cycleRow(entry: ExportDayEntry): string[] {
   const combinedMedList = [medList, bcList].filter(Boolean).join(", ");
 
   return [
-    dayLabel(entry.date),
+    dayLabel(entry.date, canDraw),
     flowMap[entry.flow_intensity ?? 0],
     entry.moods.join(", "),
     entry.symptoms.join(", "),
@@ -173,9 +189,12 @@ function cycleRow(entry: ExportDayEntry): string[] {
   ];
 }
 
-function pregnancyRow({ date, day, appointments }: PregnancyExportEntry) {
+function pregnancyRow(
+  { date, day, appointments }: PregnancyExportEntry,
+  canDraw: CanDraw,
+) {
   return [
-    dayLabel(date),
+    dayLabel(date, canDraw),
     kicksText(day),
     day?.moods.join(", ") ?? "",
     day?.symptoms.join(", ") ?? "",
@@ -195,6 +214,8 @@ export async function exportPDF(data: ExportData) {
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
     const encodable = new Set(font.getCharacterSet());
+    const canDraw = (label: string) =>
+      [...label].every((char) => encodable.has(char.codePointAt(0) ?? 0));
 
     let page = pdfDoc.addPage();
     const { width, height } = page.getSize();
@@ -232,14 +253,14 @@ export async function exportPDF(data: ExportData) {
       });
     };
 
-    const drawMonthLabel = (monthLabel: string) => {
+    const drawMonthLabel = (heading: string) => {
       if (y < margin + 5 * lineHeight) {
         addPage();
       }
 
       y -= lineHeight * 2;
 
-      page.drawText(drawable(monthLabel, encodable), {
+      page.drawText(drawableText(heading, encodable), {
         x: margin,
         y,
         size: fontSize + 2,
@@ -282,25 +303,27 @@ export async function exportPDF(data: ExportData) {
     const drawMonths = <T extends { date: string }>(
       entries: T[],
       columns: string[],
-      toRow: (entry: T) => string[],
+      toRow: (entry: T, canDraw: CanDraw) => string[],
     ) => {
-      for (const {
-        label: monthLabel,
-        entries: monthEntries,
-      } of groupEntriesByMonth(entries)) {
+      for (const { key, entries: monthEntries } of groupEntriesByMonth(
+        entries,
+      )) {
+        const label = monthLabel(key, canDraw);
         // add month header & column headers
-        drawMonthLabel(monthLabel);
+        drawMonthLabel(label);
         drawColumnHeaders(columns);
 
         let rowNum = 0;
         for (const entry of monthEntries) {
-          const row = toRow(entry).map((cell) => drawable(cell, encodable));
+          const row = toRow(entry, canDraw).map((cell) =>
+            drawableText(cell, encodable),
+          );
           const rowHeight = getRowHeight(row);
 
           // check if we need to add a new page, if so, add page and headers
           if (y - rowHeight < margin + lineHeight) {
             addPage();
-            drawMonthLabel(`${monthLabel} (continued)`);
+            drawMonthLabel(`${label} (continued)`);
             drawColumnHeaders(columns);
           }
 
@@ -326,11 +349,11 @@ export async function exportPDF(data: ExportData) {
     const cycleDays = Object.values(data.dailyData);
     drawMonths(cycleDays, cycleColumns, cycleRow);
 
-    const pregnancy = pregnancyEntries(data);
-    if (pregnancy.length > 0) {
+    const pregnancyByDate = pregnancyEntries(data);
+    if (pregnancyByDate.length > 0) {
       if (cycleDays.length > 0) addPage();
       drawSectionTitle("Pregnancy");
-      drawMonths(pregnancy, pregnancyColumns, pregnancyRow);
+      drawMonths(pregnancyByDate, pregnancyColumns, pregnancyRow);
     }
 
     drawPageNumber();

@@ -278,20 +278,12 @@ export function pregnancyEntries({
   }));
 }
 
-/** The entries of one calendar month, with a label to print above them. */
+/** The entries of one calendar month. */
 export type MonthGroup<T extends { date: string }> = {
   /** `YYYY-MM`. Sorts correctly as a string and does not depend on a locale. */
   key: string;
-  /** For display only. Never parsed back. */
-  label: string;
   /** Oldest first. */
   entries: T[];
-};
-
-const MONTH_LABEL_OPTIONS: Intl.DateTimeFormatOptions = {
-  month: "long",
-  year: "numeric",
-  timeZone: "UTC",
 };
 
 /**
@@ -303,7 +295,7 @@ const MONTH_LABEL_OPTIONS: Intl.DateTimeFormatOptions = {
  * names. On a French device that label is "août 2026" and on a Spanish one
  * "agosto de 2026", so the lookup returned undefined, `Date.UTC` returned NaN,
  * and the comparator ordered the months arbitrarily. A label is for reading;
- * it is not an identifier.
+ * it is not an identifier, and `monthLabel` makes it from the key.
  */
 export function groupEntriesByMonth<T extends { date: string }>(
   entries: T[],
@@ -321,12 +313,44 @@ export function groupEntriesByMonth<T extends { date: string }>(
     .sort(([a], [b]) => b.localeCompare(a))
     .map(([key, monthEntries]) => ({
       key,
-      label: new Date(`${key}-01T00:00:00Z`).toLocaleString(
-        undefined,
-        MONTH_LABEL_OPTIONS,
-      ),
       entries: [...monthEntries].sort((a, b) => a.date.localeCompare(b.date)),
     }));
+}
+
+/** Whether the PDF's font can draw every character of a label. */
+export type CanDraw = (label: string) => boolean;
+
+/**
+ * An instant as the phone's locale writes it, or in English when the PDF's
+ * font cannot draw that.
+ *
+ * The standard PDF fonts draw WinAnsi only. Russian month names, Arabic and
+ * Bengali digits and Japanese day marks are none of it, so on those phones
+ * every date in the PDF printed as question marks. These labels are the app's
+ * own, unlike a note, so they can be written another way.
+ */
+function readableLabel(
+  instant: Date,
+  options: Intl.DateTimeFormatOptions,
+  canDraw: CanDraw,
+): string {
+  const label = instant.toLocaleString(undefined, options);
+  return canDraw(label) ? label : instant.toLocaleString("en", options);
+}
+
+const MONTH_LABEL_OPTIONS: Intl.DateTimeFormatOptions = {
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+};
+
+/** A month group's key as a PDF heading, such as "August 2026". */
+export function monthLabel(key: string, canDraw: CanDraw): string {
+  return readableLabel(
+    new Date(`${key}-01T00:00:00Z`),
+    MONTH_LABEL_OPTIONS,
+    canDraw,
+  );
 }
 
 const DAY_LABEL_OPTIONS: Intl.DateTimeFormatOptions = {
@@ -344,9 +368,10 @@ const DAY_LABEL_OPTIONS: Intl.DateTimeFormatOptions = {
  * Read and formatted in UTC, like the month label above, a date is the same
  * day everywhere.
  */
-export function dayLabel(date: string): string {
-  return new Date(`${date}T00:00:00Z`).toLocaleString(
-    undefined,
+export function dayLabel(date: string, canDraw: CanDraw): string {
+  return readableLabel(
+    new Date(`${date}T00:00:00Z`),
     DAY_LABEL_OPTIONS,
+    canDraw,
   );
 }

@@ -86,7 +86,7 @@ async function seedPregnancy() {
   await insertPregnancyAppointment("2026-09-10", "Blood draw", "Lab Work");
 }
 
-// The cycle days as main wrote them before pregnancy data joined the export,
+// The cycle Days as main wrote them before pregnancy data joined the export,
 // captured from that code. Every key is here in the order it was written.
 const cycleDaysJson = {
   "2026-07-30": {
