@@ -20,8 +20,21 @@ type Step = [name: string, run: () => Promise<unknown>];
  * so trying again after a rejection finishes the job. The database goes last,
  * so a kill part-way leaves the data and the lock in place to try again with,
  * rather than an empty database and reminders still due to fire.
+ *
+ * One runs at a time, and a call while one runs joins it: two overlapping
+ * runs can interleave one's delete with the other's reseed and leave an empty
+ * catalogue marked as seeded.
  */
-export async function deleteAllAppData(): Promise<void> {
+export function deleteAllAppData(): Promise<void> {
+  running ??= deleteEverything().finally(() => {
+    running = undefined;
+  });
+  return running;
+}
+
+let running: Promise<void> | undefined;
+
+async function deleteEverything(): Promise<void> {
   const steps: Step[] = [
     [
       "scheduled notifications",

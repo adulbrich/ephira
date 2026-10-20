@@ -7,7 +7,8 @@ import { birthControlOptions } from "@/constants/BirthControlTypes";
 import { medicationOptions } from "@/constants/Medications";
 import { moodOptions } from "@/constants/Moods";
 import { symptomOptions } from "@/constants/Symptoms";
-import { onCatalogueInvalidated } from "@/db/catalogue";
+import { loadCatalogue, onCatalogueInvalidated } from "@/db/catalogue";
+import * as database from "@/db/database";
 import { getAllDays, insertDay } from "@/db/operations/days";
 import {
   getAllPregnancyDays,
@@ -67,7 +68,9 @@ beforeEach(() => {
   mockFiles.clear();
   mockCancelAll.mockImplementation(async () => mockScheduled.clear());
   mockDeleteFile.mockReset();
+  mockCancelAll.mockClear();
 });
+afterEach(() => jest.restoreAllMocks());
 
 describe("deleteAllAppData", () => {
   it("leaves no data, notification or export file behind", async () => {
@@ -132,6 +135,44 @@ describe("deleteAllAppData", () => {
     await deleteAllAppData();
 
     expect([...mockScheduled]).toEqual([]);
+  });
+
+  it("tells the Catalogue's readers once the defaults are back", async () => {
+    await leaveDataEverywhere();
+    let symptomsSeen: Promise<string[]> | undefined;
+    onCatalogueInvalidated(() => {
+      symptomsSeen = loadCatalogue().then((catalogue) => catalogue.symptoms);
+    });
+
+    await deleteAllAppData();
+
+    expect(await symptomsSeen).toEqual(symptomOptions);
+  });
+
+  it("reports the delete done when only the reseed fails", async () => {
+    // The data is gone; the next launch seeds the catalogue instead.
+    await leaveDataEverywhere();
+    jest
+      .spyOn(database, "seedCatalogueOnce")
+      .mockRejectedValueOnce(new Error("database or disk is full"));
+    const catalogueInvalidated = jest.fn();
+    onCatalogueInvalidated(catalogueInvalidated);
+
+    await expect(deleteAllAppData()).resolves.toBeUndefined();
+
+    expect(await getAllPregnancyDays()).toEqual([]);
+    expect(catalogueInvalidated).toHaveBeenCalled();
+  });
+
+  it("runs one delete at a time", async () => {
+    // Overlapping runs can interleave one's delete with the other's reseed
+    // and leave an empty catalogue marked as seeded.
+    await leaveDataEverywhere();
+
+    await Promise.all([deleteAllAppData(), deleteAllAppData()]);
+
+    expect(mockCancelAll).toHaveBeenCalledTimes(2);
+    expect(await getAllSymptoms()).toHaveLength(symptomOptions.length);
   });
 
   it("finishes when no export was ever made", async () => {
