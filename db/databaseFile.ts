@@ -75,6 +75,8 @@ export interface DatabaseFiles<Connection> {
 export interface OpenedDatabase<Connection> {
   status: DatabaseStatus;
   connection: Connection;
+  /** The file the connection is on. */
+  name: string;
 }
 
 interface Verified<Connection> {
@@ -140,6 +142,40 @@ export function discardUnreadableDatabase<C>(files: DatabaseFiles<C>): void {
 }
 
 /**
+ * For Delete Data: closes the database, deletes every file the launch
+ * sequence knows, and stores a new key, so the next openDatabaseFile creates
+ * an empty file as a fresh install does. A table added later goes with the
+ * file, and the old key no longer opens a copy a backup kept.
+ *
+ * The file the connection was on goes last, so until that one unlink nothing
+ * the next launch would open instead of it is left: a stale ephira.db beside
+ * the encrypted file is gone before the encrypted file, and cannot be upgraded
+ * in its place. The key changes only once every file is gone. A kill at any
+ * point leaves either the old file under the old key or no file, which the
+ * next launch treats as a fresh install, reusing the old key if the kill came
+ * before the key write. Throws, with the open file and the key unchanged, when
+ * a file cannot be deleted or the new key is not one; a key that cannot be
+ * stored is not thrown, since the data has gone by then.
+ */
+export function deleteDatabase<C>(
+  files: DatabaseFiles<C>,
+  opened: OpenedDatabase<C>,
+): void {
+  files.close(opened.connection);
+  const key = newKey(files);
+  const names = [ENCRYPTED_DATABASE, PENDING_DATABASE, PLAINTEXT_DATABASE];
+  for (const name of names) {
+    if (name !== opened.name) files.remove(name);
+  }
+  if (names.includes(opened.name)) files.remove(opened.name);
+  try {
+    storeKey(files, key);
+  } catch (error) {
+    console.warn("Could not confirm the new database key", error);
+  }
+}
+
+/**
  * Opens the encrypted file. Returns undefined for the two cases where it is
  * not the truth, both with a plaintext file beside it: a leftover export that
  * cannot be deleted (the copy may be partial), and an empty file. An upgrade
@@ -186,7 +222,11 @@ function openEncrypted<C>(
     }
     removeLeftover(files, PLAINTEXT_DATABASE);
   }
-  return { status: "ready", connection: verified.connection };
+  return {
+    status: "ready",
+    connection: verified.connection,
+    name: ENCRYPTED_DATABASE,
+  };
 }
 
 /** Moves a plaintext database into an encrypted one. Only the rename commits. */
@@ -232,7 +272,7 @@ function create<C>(files: DatabaseFiles<C>): OpenedDatabase<C> {
     const key = usableKey(files);
     const { connection } = openVerified(files, ENCRYPTED_DATABASE, key);
     removeLeftover(files, PENDING_DATABASE);
-    return { status: "ready", connection };
+    return { status: "ready", connection, name: ENCRYPTED_DATABASE };
   } catch (error) {
     console.warn("Could not create an encrypted database", error);
     return fallBackToPlaintext(files);
@@ -286,16 +326,28 @@ function openVerified<C>(
 function usableKey<C>(files: DatabaseFiles<C>): string {
   const stored = files.readKey();
   if (stored !== null && isDatabaseKey(stored)) return stored;
+  const key = newKey(files);
+  storeKey(files, key);
+  return key;
+}
 
+/** A new random key. Throws if the random source did not give one. */
+function newKey<C>(files: DatabaseFiles<C>): string {
   const key = Array.from(files.randomBytes(KEY_BYTES), (byte) =>
     byte.toString(16).padStart(2, "0"),
   ).join("");
+  if (!isDatabaseKey(key)) {
+    throw new Error("The random source did not give a database key");
+  }
+  return key;
+}
+
+/** Stores the key and reads it back before anything is encrypted with it. */
+function storeKey<C>(files: DatabaseFiles<C>, key: string): void {
   files.writeKey(key);
-  // Prove the store keeps it before anything is encrypted with it.
   if (files.readKey() !== key) {
     throw new Error("The key store did not keep the database key");
   }
-  return key;
 }
 
 /**
@@ -307,14 +359,22 @@ function fallBackToPlaintext<C>(files: DatabaseFiles<C>): OpenedDatabase<C> {
   if (!files.exists(ENCRYPTED_DATABASE)) {
     removeLeftover(files, PENDING_DATABASE);
   }
-  return { status: "ready", connection: files.open(PLAINTEXT_DATABASE) };
+  return {
+    status: "ready",
+    connection: files.open(PLAINTEXT_DATABASE),
+    name: PLAINTEXT_DATABASE,
+  };
 }
 
 function unavailable<C>(
   files: DatabaseFiles<C>,
   status: UnavailableStatus,
 ): OpenedDatabase<C> {
-  return { status, connection: files.open(IN_MEMORY_DATABASE) };
+  return {
+    status,
+    connection: files.open(IN_MEMORY_DATABASE),
+    name: IN_MEMORY_DATABASE,
+  };
 }
 
 /**

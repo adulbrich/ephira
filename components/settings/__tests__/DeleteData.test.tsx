@@ -51,12 +51,16 @@ const databaseGoneButNotAll = () =>
 /** A delete that rolled back: the database holds everything it held. */
 const databaseKept = () => new DeletionIncomplete([DATABASE_STEP]);
 
+/** What the success alert says goes. */
+const DELETED_MESSAGE =
+  "Your logged data, pregnancy data, custom entries, settings and app lock have been deleted from this device.";
+
 /** The failure alert's Try Again button, as Alert.alert was handed it. */
 function tryAgainButton() {
-  const call = jest
+  const buttons = jest
     .mocked(Alert.alert)
-    .mock.calls.find(([title]) => title === "Data not deleted");
-  return call?.[2]?.find((button) => button.text === "Try Again");
+    .mock.calls.flatMap(([, , buttons]) => buttons ?? []);
+  return buttons.find((button) => button.text === "Try Again");
 }
 
 /** Lets a chain of resolved promises and database reads run out. */
@@ -157,15 +161,25 @@ beforeEach(() => {
 afterEach(() => jest.restoreAllMocks());
 
 describe("Delete Data", () => {
-  it("says the data is gone once it is", async () => {
+  it("says before it starts that the settings and the app lock go too", async () => {
+    // Delete Data returns the app to a fresh install: a user who reads only
+    // "data" would not expect the lock to be off afterwards.
+    await render(<DeleteData />, { wrapper: PaperProvider });
+    await fireEvent.press(screen.getByText("Delete all data from this device"));
+
+    expect(
+      within(screen.getByTestId("modal")).getByText(
+        /every setting, and the app lock and its password/,
+      ),
+    ).toBeOnTheScreen();
+  });
+
+  it("says the data, the settings and the lock are gone once they are", async () => {
     mockDeleteAllAppData.mockResolvedValue(undefined);
 
     await confirmDelete();
 
-    expect(Alert.alert).toHaveBeenCalledWith(
-      "Data deleted",
-      "All data has been deleted from this device.",
-    );
+    expect(Alert.alert).toHaveBeenCalledWith("Data deleted", DELETED_MESSAGE);
   });
 
   it("has the open screens let go of what they hold", async () => {
@@ -193,6 +207,13 @@ describe("Delete Data", () => {
     await confirmDelete();
 
     expect(useAppRestart.getState().restarting).toBe(true);
+    // The data went, so the alert does not say it was not deleted.
+    expect(Alert.alert).toHaveBeenCalledWith(
+      "Delete Data did not finish",
+      "Your logged data, pregnancy data, custom entries, settings and app lock have been deleted, but not every step finished.",
+      expect.anything(),
+    );
+    expect(tryAgainButton()).toBeDefined();
   });
 
   it("starts again when the failure does not say what it left, offering no retry", async () => {
@@ -220,6 +241,12 @@ describe("Delete Data", () => {
 
     expect(mockDeleteAllAppData).toHaveBeenCalledTimes(2);
     expect(tryAgainButton()).toBeDefined();
+    // The data went on the first run, so the retry does not say otherwise.
+    expect(Alert.alert).toHaveBeenCalledWith(
+      "Delete Data did not finish",
+      expect.any(String),
+      expect.anything(),
+    );
   });
 
   it("offers to try again from the alert, since the restart closed this screen", async () => {
@@ -238,10 +265,7 @@ describe("Delete Data", () => {
     await settle();
 
     expect(mockDeleteAllAppData).toHaveBeenCalledTimes(2);
-    expect(Alert.alert).toHaveBeenCalledWith(
-      "Data deleted",
-      "All data has been deleted from this device.",
-    );
+    expect(Alert.alert).toHaveBeenCalledWith("Data deleted", DELETED_MESSAGE);
   });
 
   it("offers to try again once more when a retry from the alert fails unknowably", async () => {

@@ -12,12 +12,15 @@ import { File } from "expo-file-system";
 import * as SecureStore from "expo-secure-store";
 import * as SQLite from "expo-sqlite";
 import { drizzle } from "drizzle-orm/expo-sqlite";
+import { migrate } from "drizzle-orm/expo-sqlite/migrator";
+import migrations from "@/drizzle/migrations";
 import * as schema from "@/db/schema";
 import {
   type DatabaseFiles,
   type DatabaseStatus,
   type OpenedDatabase,
   WrongKeyError,
+  deleteDatabase,
   discardUnreadableDatabase as discardFrom,
   isDatabaseKey,
   openDatabaseFile,
@@ -99,7 +102,20 @@ const openOnce = () => {
   return opened;
 };
 
-export const getDatabase = () => openOnce().connection;
+/**
+ * What every module holds instead of the connection itself. Each one under
+ * db/operations captured its handle at import, and replaceDatabase swaps the
+ * connection underneath them.
+ */
+const database = new Proxy({} as SQLite.SQLiteDatabase, {
+  get: (_target, property) => {
+    const { connection } = openOnce();
+    const value = Reflect.get(connection, property);
+    return typeof value === "function" ? value.bind(connection) : value;
+  },
+});
+
+export const getDatabase = () => database;
 
 /**
  * Whether the database opened. Anything but "ready" means getDatabase() is an
@@ -111,6 +127,30 @@ export const getDatabaseStatus = (): DatabaseStatus => openOnce().status;
 export const discardUnreadableDatabase = () => discardFrom(files);
 
 const db = drizzle(getDatabase(), { schema });
+
+/**
+ * Delete Data's database step: deletes the files and stores a new key. Rejects,
+ * with the old database open again, when the new key is not one or a file
+ * could not be deleted; nothing has gone then.
+ */
+export async function replaceDatabase() {
+  const current = openOnce();
+  opened = undefined;
+  try {
+    deleteDatabase(files, current);
+  } catch (error) {
+    openOnce();
+    throw error;
+  }
+}
+
+/**
+ * Opens the new file and creates its tables, as a launch does; the shell's
+ * useMigrations ran at launch and does not run again. Its own step, because a
+ * failure here comes after the data has gone. The open is the first use of
+ * the proxy after replaceDatabase.
+ */
+export const migrateDatabase = () => migrate(db, migrations);
 
 export const getDrizzleDatabase = () => {
   return db;

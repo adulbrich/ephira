@@ -24,8 +24,7 @@ import { birthControlOptions } from "@/constants/BirthControlTypes";
 import { SettingsKeys } from "@/constants/Settings";
 import { getDrizzleDatabase } from "@/db/operations/setup";
 import * as schema from "@/db/schema";
-import { eq, sql } from "drizzle-orm";
-import type { SQLiteTable } from "drizzle-orm/sqlite-core";
+import { eq } from "drizzle-orm";
 import type { ExportData } from "@/constants/Interfaces";
 
 const db = getDrizzleDatabase();
@@ -180,74 +179,8 @@ export async function getAllDataAsJson() {
 }
 
 /**
- * Every table that holds what the user stored, children before parents, since
- * foreign keys are on in tests.
- *
- * A list rather than every table in sqlite_master: the device also has
- * drizzle's __drizzle_migrations, and emptying it would make the next launch
- * run every migration again. db/__tests__/deleteAllData.test.ts fails when a
- * table in db/schema.ts is missing here.
- */
-const TABLES_CHILDREN_FIRST: SQLiteTable[] = [
-  schema.medicationEntries,
-  schema.moodEntries,
-  schema.symptomEntries,
-  schema.medications,
-  schema.moods,
-  schema.symptoms,
-  schema.days,
-  schema.predictionSnapshots,
-  schema.pregnancyDays,
-  schema.pregnancyAppointments,
-  schema.settings,
-];
-
-/**
- * Deletes every row the app has stored, or none, and rejects if it could not.
- *
- * One transaction, so a failure or a kill part-way leaves the database as it
- * was. Before it was one, a kill after the catalogue went but before settings
- * did left databaseInitialSetup saying a catalogue had been seeded, and none
- * ever was again. The callback is synchronous because both drivers are: the
- * expo-sqlite one commits as soon as the callback returns, awaited or not.
- *
- * secure_delete is on, so SQLite overwrites what it deletes with zeros instead
- * of leaving it in free pages. VACUUM afterwards
- * rebuilds the file, which also drops what earlier, ordinary deletes left
- * there. It rewrites the whole file through the journal, so a nearly full disk
- * refuses it; the delete stands then, and is not reported as failed, since a
- * retry on the same disk would fail the same way.
- */
-export async function deleteAllDataInDatabase() {
-  // SQLCipher turns it on when a key is set; the plaintext fallback has it off.
-  // all, not run: the pragma answers with a row, expo-sqlite's run stops at
-  // that row, and a statement left mid-step makes SQLite refuse the VACUUM.
-  db.all(sql`PRAGMA secure_delete = ON`);
-  db.transaction((tx) => {
-    for (const table of TABLES_CHILDREN_FIRST) {
-      // A DELETE with no WHERE empties the table without visiting its rows,
-      // so the update hook expo-sqlite's change listener rests on never fires
-      // and useLiveQuery screens keep drawing what was deleted (38e0064 met
-      // this on the calendar). One row deleted by key reports the table as
-      // changed; the rest then go at once.
-      tx.run(
-        sql`DELETE FROM ${table} WHERE rowid IN (SELECT rowid FROM ${table} LIMIT 1)`,
-      );
-      tx.delete(table).run();
-    }
-    // The highest id each table has issued, which still counts what there was.
-    tx.run(sql`DELETE FROM sqlite_sequence`);
-  });
-  try {
-    db.run(sql`VACUUM`);
-  } catch (error) {
-    console.error("Deleted every row, but VACUUM failed:", error);
-  }
-}
-
-/**
  * Seeds the default catalogue unless this database already has it: at launch,
- * and right after Delete Data, which empties it with everything else. Until
+ * and right after Delete Data, which replaces the file. Until
  * it is seeded the app offers nothing to log, and an entry logged under a name
  * the stale cache still showed is deleted by setupEntryTypes at the next launch.
  */
@@ -266,8 +199,7 @@ export const setupEntryTypes = async () => {
   // mood_entries and medication_entries reference these rows, and clearing the
   // catalogue without them leaves entries pointing at ids that no longer
   // exist. On device foreign keys are off, so that failure is silent and the
-  // user's history simply stops joining. deleteAllDataInDatabase above has
-  // always had this order; this function did not.
+  // user's history simply stops joining.
   await deleteAllSymptomEntries();
   await deleteAllSymptoms();
   await deleteAllMoodEntries();

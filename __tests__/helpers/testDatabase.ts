@@ -97,6 +97,15 @@ export const getDatabaseStatus = () => "ready" as const;
 /** Nothing to discard: the test handle is never unreadable. */
 export const discardUnreadableDatabase = () => undefined;
 
+/**
+ * Delete Data's new file, as far as a test can tell: every table empty, the
+ * schema at head. The connection itself cannot be swapped (see above).
+ */
+export const replaceDatabase = async () => resetTestDatabase();
+
+/** The test schema is at head already. */
+export const migrateDatabase = async () => undefined;
+
 /** The same handle, for tests that want to assert against it directly. */
 export const getTestDatabase = () => open().database;
 

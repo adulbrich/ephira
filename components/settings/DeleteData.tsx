@@ -22,6 +22,13 @@ import { useAppRestart } from "@/stores/app-restart";
 import { forgetDeletedData } from "@/stores/forget-deleted-data";
 
 /**
+ * What Delete Data removes, as both its alerts name it. The modal says the
+ * same in its own words.
+ */
+const WHAT_DELETE_DATA_REMOVES =
+  "Your logged data, pregnancy data, custom entries, settings and app lock";
+
+/**
  * Deletes everything, then lets the app go on as after a launch whenever the
  * database went, and says how it went. Outside the modal, because the restart
  * can close the modal before the user answers the alert, and its Try Again
@@ -33,15 +40,16 @@ async function deleteAndStartAgain(retrying = false): Promise<void> {
   let deleted = true;
   // Whether the screens behind Settings may now hold rows that are gone.
   let screensOutOfDate = true;
-  // Whether the lock is known to be gone with the database, on this run or
-  // on the one this retries, so that no lock can sit under the alert.
-  let lockGone = true;
+  // After a failure: whether the database, and the lock with it, is known to
+  // be gone, on this run or on the one this retries, so that no lock can sit
+  // under the alert.
+  let dataGone = false;
   try {
     await deleteAllAppData();
   } catch (error) {
     deleted = false;
     screensOutOfDate = databaseMayBeGone(error);
-    lockGone =
+    dataGone =
       retrying ||
       (error instanceof DeletionIncomplete && error.databaseDeleted);
   }
@@ -52,27 +60,34 @@ async function deleteAndStartAgain(retrying = false): Promise<void> {
     // again from the first screen, as a launch does: screens that read once
     // on mount (the lock setting, pregnancy Home, notification settings)
     // would go on showing what was deleted, and write it back on their next
-    // save. After a rollback the database kept everything, so there is
-    // nothing to let go of. The exports and reminders removed before the
-    // database step stay removed. Reminders come back at the next refresh,
-    // or within moments if the cycle calendar is mounted with predictions
-    // shown and the rollback came after the keyed delete on days: the update
-    // hook reported that delete, so the calendar reads the kept flow again.
+    // save. When the database step failed the old file is open again with
+    // everything in it, so there is nothing to let go of. The exports and
+    // reminders removed before it stay removed; reminders come back at the
+    // next refresh.
     await forgetDeletedData();
     useAppRestart.getState().restart();
   }
 
   if (deleted) {
-    Alert.alert("Data deleted", "All data has been deleted from this device.");
+    Alert.alert(
+      "Data deleted",
+      `${WHAT_DELETE_DATA_REMOVES} have been deleted from this device.`,
+    );
   } else {
     // Try Again only when no lock can be left under the alert, which can
     // outlive a trip to the background and sit above the lock view, where a
     // retry would delete behind it. After a first run's rollback the lock is
     // still there, and so is this screen with the confirmation typed.
+    const [title, message] = dataGone
+      ? [
+          "Delete Data did not finish",
+          `${WHAT_DELETE_DATA_REMOVES} have been deleted, but not every step finished.`,
+        ]
+      : ["Data not deleted", "Not all data could be deleted."];
     Alert.alert(
-      "Data not deleted",
-      "Not all data could be deleted.",
-      lockGone
+      title,
+      message,
+      dataGone
         ? [
             { text: "Cancel", style: "cancel" },
             {
@@ -99,8 +114,8 @@ function DeleteDataModal({ onDismiss }: { onDismiss: () => void }) {
   const handleDeleteData = async () => {
     setLoading(true);
     await deleteAndStartAgain();
-    // Only a rollback leaves this screen open, with the confirmation typed;
-    // every other outcome restarts the app, which closes it.
+    // Only a failed database delete leaves this screen open, with the
+    // confirmation typed; every other outcome restarts the app, which closes it.
     setLoading(false);
   };
 
@@ -129,8 +144,14 @@ function DeleteDataModal({ onDismiss }: { onDismiss: () => void }) {
           ) : (
             <ThemedView style={{ paddingLeft: 15, paddingRight: 15, gap: 10 }}>
               <Text>
+                This deletes everything the app keeps on this device: your
+                logged data, pregnancy data, custom entries, every setting, and
+                the app lock and its password. The app starts again as if newly
+                installed.
+              </Text>
+              <Text>
                 Data is stored only on this device and cannot be recovered once
-                deleted, are you sure you want to delete it?
+                deleted. Are you sure you want to delete it?
               </Text>
               <TextInput
                 mode="outlined"
