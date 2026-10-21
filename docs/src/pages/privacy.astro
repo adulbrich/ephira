@@ -24,23 +24,50 @@ import Layout from "../layouts/Layout.astro";
     </p>
     <p>This includes:</p>
     <ul>
-      <li>settings</li>
-      <li>menstrual cycle tracking data</li>
+      <li>settings, including the app lock</li>
+      <li>the days you log: flow, symptoms, moods, medications, birth control, intercourse and notes</li>
+      <li>symptoms, moods and medications you add yourself</li>
+      <li>the history of your period predictions</li>
+      <li>pregnancy mode's start date, days and appointments</li>
     </ul>
     <p>
       The data is used to display statistics and apply fertility awareness
-      rules. This data cannot be accessed by other apps. If you wish to delete
-      all your app data you can do so by navigating to <strong
-        >Settings › Data › Delete Data</strong
-      >, type in <em>delete data</em> and finally press <strong>Delete Data</strong> to confirm. 
-      This can also be done by uninstalling the app.
+      rules. This data cannot be accessed by other apps.
+    </p>
+    <p>
+      To delete your data, go to <strong>Settings › Data › Delete Data</strong>,
+      type in <em>delete data</em> and press <strong>Delete Data</strong>. This
+      deletes the days you log, the symptoms, moods and medications you add,
+      and your settings, including the app lock. <strong class="font-serif">ephira</strong> 1.5.0 keeps your pregnancy
+      days and appointments, the history of your period predictions, scheduled
+      reminders and any export files; uninstalling the app deletes those too.
     </p>
     <p>
       <strong class="font-serif">ephira</strong> encrypts your data with a key
-      that never leaves your phone. Backups of your phone made since ephira
-      began encrypting hold nothing that can be read; an older backup may still
-      hold a readable copy until your phone replaces it. Your data does not move
-      to a new phone, so to keep a copy when you change phones, export it first.
+      that never leaves your phone, so a backup holds nothing readable without
+      that phone. Restoring an encrypted backup (iCloud, or an encrypted computer
+      backup) to the same iPhone brings back the data it held. The exceptions:
+    </p>
+    <ul>
+      <li>
+        If ephira cannot set up encryption, for example because your phone's
+        secure key storage fails, it keeps your data unencrypted, without
+        telling you, and tries again at each launch.
+      </li>
+      <li>
+        On iPhone, a PDF exported with ephira 1.5.0 or earlier is kept where
+        backups include it.
+      </li>
+      <li>
+        A backup made before ephira finished encrypting your data, and deleting
+        the unencrypted copy, may still hold a readable copy until your phone
+        replaces it.
+      </li>
+    </ul>
+    <p>
+      The encrypted database does not move to a new phone. To keep a copy when you change
+      phones, export it first, though the export does not yet carry everything
+      ephira stores (<a href="https://github.com/adulbrich/ephira/issues/298">issue 298</a>).
     </p>
     <h2>Permissions</h2>
     <p>
@@ -55,6 +82,17 @@ import Layout from "../layouts/Layout.astro";
     <p>
       If your device's biometric system requires access to hardware components like the camera for setup or authentication 
       (e.g., for facial recognition), this is managed entirely by your device and not by <strong class="font-serif">ephira</strong>.
+    </p>
+    <p>
+      When you turn on notifications in Settings, <strong class="font-serif">ephira</strong>
+      asks for permission to send reminders about your cycle. They are
+      scheduled on your phone, and nothing is sent to a server. Their text, such
+      as "Period Expected Tomorrow" or a note that your period is late, can show
+      on your lock screen.
+    </p>
+    <p>
+      Links to websites, such as the sources on cycle phases, open in a web
+      browser.
     </p>
     <h2>Changes to this Privacy Policy</h2>
     <p>
