@@ -12,9 +12,9 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/vercel": "^11.0.7",
+    "@astrojs/vercel": "^11.0.17",
     "@tailwindcss/vite": "^4.3.3",
-    "astro": "^7.2.4",
+    "astro": "^7.4.4",
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
